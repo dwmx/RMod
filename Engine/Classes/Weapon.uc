@@ -242,6 +242,7 @@ function ClientWeaponEvent(name EventType);
 
 function int CalculateDamage(actor Victim)
 {
+	local Pawn PVictim;
 	local int newDamage;
 
 	newDamage = Damage;
@@ -256,15 +257,30 @@ function int CalculateDamage(actor Victim)
 		newDamage = 0; // Shield could be sticking out of the neutral zone, but the owner is inside
 
 	// [RMod]
-	// Commented out so that GameInfo can handle friendly fire
-	//if (Level.Game.bTeamGame
-	//&& Pawn(Victim) != None
-	//&& Pawn(Owner) != None
-	//&& Pawn(Victim).PlayerReplicationInfo != None
-	//&& Pawn(Owner).PlayerReplicationInfo != None
-	//&& Pawn(Victim).PlayerReplicationInfo.Team != 255 
-	//&& Pawn(Victim).PlayerReplicationInfo.Team == Pawn(Owner).PlayerReplicationInfo.Team)
-	//	newDamage = 0; // Don't hurt the victim if on the same team
+	// Modify damage for friendly fire dealt to Pawn or Pawn's shield
+	if(Level.Game.bTeamGame)
+	{
+		PVictim = None;
+		if(Pawn(Victim) != None)
+		{
+			PVictim = Pawn(Victim);
+		}
+		else if(Shield(Victim) != None
+		&& Pawn(Victim.Owner) != None)
+		{
+			PVictim = Pawn(Victim.Owner);
+		}
+
+		if(PVictim != None
+		&& PVictim.PlayerReplicationInfo != None
+		&& Owner != None
+		&& Pawn(Owner) != None
+		&& Pawn(Owner).PlayerReplicationInfo != None
+		&& PVictim.PlayerReplicationInfo.Team == Pawn(Owner).PlayerReplicationInfo.Team)
+		{
+			newDamage = int(float(newDamage) * Level.Game.FriendlyFireMultiplier);
+		}
+	}
 
 //	if (Owner != None && Pawn(Owner) != None)
 //		newDamage += Pawn(Owner).Strength * 0.25;
