@@ -1853,7 +1853,6 @@ state Swinging
 					if(Pawn(A) != None && Pawn(A).Shield != None)
 					{
 						SpawnHitEffect(HitLoc, HitNorm, LowMask, HighMask, Pawn(A).Shield);
-						PlayHitMatterSound(MATTER_SHIELD);
 					}
 					else
 					{
