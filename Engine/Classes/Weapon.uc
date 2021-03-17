@@ -1853,6 +1853,12 @@ state Swinging
 					if(Pawn(A) != None && Pawn(A).Shield != None)
 					{
 						SpawnHitEffect(HitLoc, HitNorm, LowMask, HighMask, Pawn(A).Shield);
+
+						// Play sound so that all clients can hear the hit
+						if(Owner != None && Owner.RemoteRole != ROLE_AutonomousProxy)
+						{
+							Pawn(A).Shield.PlayHitSound(DamageType);
+						}
 					}
 					else
 					{
