@@ -130,6 +130,11 @@ var globalconfig float ParticlePercentage;		// Percentage of nomral particles sp
 
 var() config bool bAllowLimbSever;		//RUNE: Allow arms to be chopped-off
 
+//=============================================================================
+// [RMod]
+// RMod variables
+var float FriendlyFireMultiplier;	// In team games, the team damage multiplier
+
 //------------------------------------------------------------------------------
 // Admin
 
@@ -1758,4 +1763,5 @@ defaultproperties
      DebrisPercentage=0.900000
      ParticlePercentage=1.000000
      bAllowLimbSever=True
+	 FriendlyFireMultiplier=0.0
 }
