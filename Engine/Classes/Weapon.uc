@@ -255,9 +255,13 @@ function int CalculateDamage(actor Victim)
 	else if(Victim.Owner != None && Victim.Owner.Region.Zone.bNeutralZone)
 		newDamage = 0; // Shield could be sticking out of the neutral zone, but the owner is inside
 
-	if (Level.Game.bTeamGame && Pawn(Victim) != None && Pawn(Owner) != None 
-		&& Pawn(Victim).PlayerReplicationInfo.Team != 255 
-		&& Pawn(Victim).PlayerReplicationInfo.Team == Pawn(Owner).PlayerReplicationInfo.Team)
+	if (Level.Game.bTeamGame
+	&& Pawn(Victim) != None
+	&& Pawn(Owner) != None
+	&& Pawn(Victim).PlayerReplicationInfo != None
+	&& Pawn(Owner).PlayerReplicationInfo != None
+	&& Pawn(Victim).PlayerReplicationInfo.Team != 255 
+	&& Pawn(Victim).PlayerReplicationInfo.Team == Pawn(Owner).PlayerReplicationInfo.Team)
 		newDamage = 0; // Don't hurt the victim if on the same team
 
 //	if (Owner != None && Pawn(Owner) != None)
@@ -1657,15 +1661,25 @@ function bool DoWeaponSwipe(Actor A, int LowMask, int HighMask, vector HitLoc, v
 		return(true);
 	}
 */
-	if (Level.Game.bTeamGame && Pawn(A)!=None && Pawn(Owner)!=None && Pawn(A).PlayerReplicationInfo.Team != 255 &&
-		Pawn(A).PlayerReplicationInfo.Team == Pawn(Owner).PlayerReplicationInfo.Team)
+	if (Level.Game.bTeamGame
+	&& Pawn(A) != None
+	&& Pawn(Owner) != None
+	&& Pawn(A).PlayerReplicationInfo != None
+	&& Pawn(Owner).PlayerReplicationInfo != None
+	&& Pawn(A).PlayerReplicationInfo.Team != 255
+	&& Pawn(A).PlayerReplicationInfo.Team == Pawn(Owner).PlayerReplicationInfo.Team)
 	{	// Don't hit teammates
 		return true;
 	}
 
-	if(A.IsA('Shield') && Level.Game.bTeamGame && Pawn(A.Owner)!=None && Pawn(Owner)!=None 
-		&& Pawn(A.Owner).PlayerReplicationInfo.Team != 255 
-		&& Pawn(A.Owner).PlayerReplicationInfo.Team == Pawn(Owner).PlayerReplicationInfo.Team)
+	if(A.IsA('Shield')
+	&& Level.Game.bTeamGame
+	&& Pawn(A.Owner)!=None
+	&& Pawn(Owner)!=None
+	&& Pawn(A.Owner).PlayerReplicationInfo != None
+	&& Pawn(Owner).PlayerReplicationInfo != None
+	&& Pawn(A.Owner).PlayerReplicationInfo.Team != 255
+	&& Pawn(A.Owner).PlayerReplicationInfo.Team == Pawn(Owner).PlayerReplicationInfo.Team)
 	{	// Don't hit teammates shields
 		return true;
 	}
