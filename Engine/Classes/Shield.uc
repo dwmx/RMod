@@ -81,14 +81,43 @@ function inventory SpawnCopy( pawn Other )
 	return Copy;
 }
 
-
+//=============================================================================
+//
+// [RMod]
+// CheckIsShieldHitStunEnabled
+//
+// Returns whether or not hit stun is enabled for shields
+//
+//=============================================================================
+function bool CheckIsShieldHitStunEnabled()
+{
+	// TODO: Implement this as a game option
+	return true;
+}
 
 function bool JointDamaged(int Damage, Pawn EventInstigator, vector HitLoc, vector Momentum, name DamageType, int joint)
 {
 	local vector AdjMomentum;
 	local Pawn P;
+	local Pawn POwner;
 
 	PlayHitSound(DamageType);
+
+	// [RMod]
+	// Cause the owner to enter into HitStun
+	// Copy from Pawn.DamageBodyPart, to avoid modifying Pawn
+	if(Owner != None && Pawn(Owner) != None && CheckIsShieldHitStunEnabled())
+	{
+		POwner = Pawn(Owner);
+		if (POwner.GetStateName() != 'Pain' && POwner.GetStateName() != 'pain')
+		{
+			POwner.NextStateAfterPain = POwner.GetStateName();
+
+			// Play pain anim
+			POwner.PlayTakeHit(0.1, Damage, HitLoc, DamageType, Momentum, joint);
+			POwner.GotoState('Pain');
+		}
+	}
 
 	if (bBreakable)
 	{
