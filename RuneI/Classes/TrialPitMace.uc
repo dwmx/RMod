@@ -262,4 +262,5 @@ defaultproperties
      Skeletal=SkelModel'weapons.TrialMace'
      SkelGroupSkins(0)=Texture'weapons.TrialMacetrialpit_mace'
      SkelGroupSkins(1)=Texture'weapons.TrialMacetrialpit_mace'
+	 ShieldDamageMultiplier=1.75
 }
