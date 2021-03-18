@@ -3,5 +3,6 @@
 !.gitignore
 !Engine/
 !RuneI/
+!RMod/
 */Backup/*
 */Inc/*
