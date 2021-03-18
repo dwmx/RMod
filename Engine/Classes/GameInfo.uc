@@ -133,8 +133,9 @@ var() config bool bAllowLimbSever;		//RUNE: Allow arms to be chopped-off
 //=============================================================================
 // [RMod]
 // RMod variables
-var bool bShieldHitStun;
-var bool bShieldTakesAllHits;
+var bool bAllowHeadSever;			// Whether or not decapitations can happen
+var bool bShieldHitStun;			// If true, shield hits cause hit-stun
+var bool bShieldTakesAllHits;		// It true, shields act as armor
 var float FriendlyFireMultiplier;	// In team games, the team damage multiplier
 //=============================================================================
 
@@ -1766,6 +1767,7 @@ defaultproperties
      DebrisPercentage=0.900000
      ParticlePercentage=1.000000
      bAllowLimbSever=True
+	 bAllowHeadSever=True
 	 bShieldHitStun=True
 	 bShieldTakesAllHits=True
 	 FriendlyFireMultiplier=0.0
