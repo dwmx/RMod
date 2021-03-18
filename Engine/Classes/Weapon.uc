@@ -172,6 +172,12 @@ var(Anims) name A_LeverTrigger;
 
 // more to come....
 
+//=============================================================================
+// [RMod]
+// RMod variables
+var bool bThrowBlockable;
+//=============================================================================
+
 replication
 {
 	reliable if (Role==ROLE_Authority)
@@ -1151,7 +1157,12 @@ state Throw
 				}
 				else if(P.Weapon != None && P.AnimProxy.GetStateName() == 'Attacking')
 				{
-					HitActor = P.Weapon;
+					// [RMod]
+					// Only block the throw if the weapon can be blocked
+					if(bThrowBlockable)
+					{
+						HitActor = P.Weapon;
+					}
 				}
 			}
 		}
@@ -2040,4 +2051,5 @@ defaultproperties
      CollisionHeight=10.000000
      Mass=10.000000
      Buoyancy=4.000000
+	 bThrowBlockable=True
 }
