@@ -1649,8 +1649,7 @@ function bool SwipeArrayCheck(Actor A, int LowMask, int HighMask)
 //=============================================================================
 function bool CheckRouteAllPawnHitsToPawnShield()
 {
-	// TODO: Implement as game option
-	return true;
+	return Level.Game.bShieldTakesAllHits;
 }
 
 //=============================================================================
