@@ -187,6 +187,9 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 	local float XL,YL;
 	local int AwardPos;
 	local float TeamScore;
+	local R_PlayerReplicationInfo RPRI;
+	local Color DrawColor, ColorT0, ColorT1;
+	local float InterpTime;
 
 	PlayerOwner = PlayerPawn(Owner);
 	bLocalPlayer = (PRI.PlayerName == PlayerOwner.PlayerReplicationInfo.PlayerName);
@@ -245,19 +248,61 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 	else
 		Canvas.Font = RegFont;
 
+	// RPRI
+	RPRI = R_PlayerReplicationInfo(PRI);
+
 	// Draw Score
 	Canvas.SetPos(Canvas.ClipX*0.5, YOffset);
-	Canvas.DrawText(int(PRI.Score), false);
+	if(RPRI != None)
+	{
+		InterpTime = Level.TimeSeconds - RPRI.ScoreTracker.TimeSeconds;
+		ColorT0 = ColorsClass.Static.ColorGreen();
+		ColorT1 = ColorsClass.Static.ColorWhite();
+		DrawColor = Canvas.DrawColor;
+		Canvas.DrawColor = UtilitiesClass.Static.InterpQuadratic_Color(InterpTime, ColorT0, ColorT1, 2.0);
+		Canvas.DrawText(int(PRI.Score), false);
+		Canvas.DrawColor = DrawColor;
+	}
+	else
+	{
+		Canvas.DrawText(int(PRI.Score), false);
+	}
 
 	// Draw Deaths
 	Canvas.SetPos(Canvas.ClipX*0.6, YOffset);
-	Canvas.DrawText(int(PRI.Deaths), false);
+	if(RPRI != None)
+	{
+		InterpTime = Level.TimeSeconds - RPRI.DeathsTracker.TimeSeconds;
+		ColorT0 = ColorsClass.Static.ColorRed();
+		ColorT1 = ColorsClass.Static.ColorWhite();
+		DrawColor = Canvas.DrawColor;
+		Canvas.DrawColor = UtilitiesClass.Static.InterpQuadratic_Color(InterpTime, ColorT0, ColorT1, 2.0);
+		Canvas.DrawText(int(PRI.Deaths), false);
+		Canvas.DrawColor = DrawColor;
+	}
+	else
+	{
+		Canvas.DrawText(int(PRI.Deaths), false);
+	}
 
 	if (Canvas.ClipX > 512 && Level.Netmode != NM_Standalone)
 	{
 		// Draw Ping
 		Canvas.SetPos(Canvas.ClipX*0.7, YOffset);
-		Canvas.DrawText(PRI.Ping, false);
+		if(RPRI != None)
+		{
+			InterpTime = float(PRI.Ping);
+			ColorT0 = ColorsClass.Static.ColorGreen();
+			ColorT1 = ColorsClass.Static.ColorRed() * 0.75;
+			DrawColor = Canvas.DrawColor;
+			Canvas.DrawColor = UtilitiesClass.Static.InterpLinear_Color(float(PRI.Ping), ColorT0, ColorT1, 160.0);
+			Canvas.DrawText(PRI.Ping, false);
+			Canvas.DrawColor = DrawColor;
+		}
+		else
+		{
+			Canvas.DrawText(PRI.Ping, false);
+		}
 
 		// Packetloss
 

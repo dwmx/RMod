@@ -596,7 +596,7 @@ defaultproperties
 {
      RunePlayerClass=Class'RMod.R_RunePlayer'
      SpectatorMarkerClass=Class'RMod.R_ASpectatorMarker'
-     PlayerReplicationInfoClass=Class'Engine.PlayerReplicationInfo'
+     PlayerReplicationInfoClass=Class'RMod.R_PlayerReplicationInfo'
      GamePresetsClass=Class'RMod.R_GamePresets'
      UtilitiesClass=Class'RMod.R_AUtilities'
      bMarkSpawnedActorsAsNativeToLevel=True

@@ -153,6 +153,11 @@ event PreBeginPlay()
 {
 	Enable('Tick');
 
+	if(R_GameInfo(Level.Game) != None)
+	{
+		PlayerReplicationInfoClass = R_GameInfo(Level.Game).PlayerReplicationInfoClass;
+	}
+
 	Super(PlayerPawn).PreBeginPlay();
 
 	// Spawn Torso Animation proxy

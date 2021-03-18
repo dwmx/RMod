@@ -38,6 +38,28 @@ static function float InterpQuadratic(float t, float b, float e, float d)
     return c * t * t + b;
 }
 
+static function Color InterpLinear_Color(float t, Color b, Color e, float d)
+{
+    local Color Result;
+
+    Result.R = byte(InterpLinear(t, float(b.R), float(e.R), d));
+    Result.G = byte(InterpLinear(t, float(b.G), float(e.G), d));
+    Result.B = byte(InterpLinear(t, float(b.B), float(e.B), d));
+
+    return Result;
+}
+
+static function Color InterpQuadratic_Color(float t, Color b, Color e, float d)
+{
+    local Color Result;
+
+    Result.R = byte(InterpQuadratic(t, float(b.R), float(e.R), d));
+    Result.G = byte(InterpQuadratic(t, float(b.G), float(e.G), d));
+    Result.B = byte(InterpQuadratic(t, float(b.B), float(e.B), d));
+
+    return Result;
+}
+
 /////////////////////////////////////////////////////////////////////////////////
 //  GetTimeString functions
 //
