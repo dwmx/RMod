@@ -335,7 +335,16 @@ function bool BodyPartSeverable(int BodyPart)
 	switch(BodyPart)
 	{
 		case BODYPART_HEAD:
-			return true;
+			// [RMod]
+			// Enable / disable headshots
+			if(Level.Game != None)
+			{
+				return (Level.NetMode != NM_StandAlone && Level.Game.bAllowHeadSever);
+			}
+			else
+			{
+				return (Level.NetMode != NM_StandAlone);
+			}
 		case BODYPART_LARM1:
 		case BODYPART_RARM1:
 			if(Level.Game != None)
