@@ -1789,7 +1789,7 @@ function bool DoWeaponSwipe(Actor A, int LowMask, int HighMask, vector HitLoc, v
 						}
 						else
 						{
-							if(!A.JointDamaged(DamageAmount, Pawn(Owner), HitLoc, Momentum, DamageType, 0))
+							if(!A.JointDamaged(DamageAmount, Pawn(Owner), HitLoc, Momentum, DamageType, j))
 							{
 								return false;
 							}
@@ -1798,7 +1798,7 @@ function bool DoWeaponSwipe(Actor A, int LowMask, int HighMask, vector HitLoc, v
 					// Original code
 					else
 					{
-						if(!A.JointDamaged(DamageAmount, Pawn(Owner), HitLoc, Momentum, DamageType, 0))
+						if(!A.JointDamaged(DamageAmount, Pawn(Owner), HitLoc, Momentum, DamageType, j))
 						{
 							return false;
 						}
