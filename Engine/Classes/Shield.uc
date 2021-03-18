@@ -91,8 +91,7 @@ function inventory SpawnCopy( pawn Other )
 //=============================================================================
 function bool CheckIsShieldHitStunEnabled()
 {
-	// TODO: Implement this as a game option
-	return true;
+	return Level.Game.bShieldHitStun;
 }
 
 function bool JointDamaged(int Damage, Pawn EventInstigator, vector HitLoc, vector Momentum, name DamageType, int joint)
