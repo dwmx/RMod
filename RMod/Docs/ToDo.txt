@@ -1,0 +1,41 @@
+
+- Implement working arena mode
+- DM+, TDM+, AR+, etc
+	- Maybe this should be made into a mutator or a setting that can just be turned on / off (like hardcore mode)
+- Display which player you're spectating
+- Hide spectator chat from players, unless spec is admin maybe?
+- Alt fire to go backwars through players?
+- Maybe a new mini scoreboard option?
+- Fix player pitch after falling in water
+- Get arena mode set up
+
+Wishlist:
+- Dual wielding capability
+	- Requires Ragnar to be rigged (need to do this for RuneArena anyways)
+	- Requires new animation sets
+	- Requires inventory code alterations
+
+- Idle animations using the cinematic anims
+
+BUGS:
+- Invisible inventory traveling between maps
+- Player names disappear from sent messages when they leave the server
+- Player messages are not aligned correctly in-game
+- Slade received many of the following errors during gameplay:
+	ScriptWarning: R_RunePlayerHUD DM-ColbyFinish8.R-RunePlayerHUD0 (Function RMod.R_RunePlayerHUD.DrawMessages:04FA) Accessed None
+- Players occasionally freeze as a result of client adjust position changes
+- SessionKey does not function as intended, should replace with IP ties to player rep infos
+- Player arms are not hidden when severed
+- Spectator view pitch does not show correctly when view target is in climb state
+- Phantom spectator (this is indeed the RuneAdminSpectator spawned by WebAdmin. Should be able to fix by checking bIsPlayer)
+
+TODO:
+- MakeTeam clanwar feature did not work great, since players teams reset every time map changes
+- Add player names to spectator mode
+- Mini scoreboard for spec mode
+- Segregate spectator chat
+- Add kill message feed
+- Add in-game command to update the MOTD
+- Change name of game types to original, like RMod.RuneMultiPlayer, so they show up in server list
+- Add player names and time logs to all console messages
+- Update end game camera to orbit around players and switch between them
