@@ -175,7 +175,8 @@ var(Anims) name A_LeverTrigger;
 //=============================================================================
 // [RMod]
 // RMod variables
-var bool bThrowBlockable;
+var bool bThrowBlockable;			// Throw block toggle
+var float ShieldDamageMultiplier;	// Multiplies damage dealt to shields
 //=============================================================================
 
 replication
@@ -286,6 +287,13 @@ function int CalculateDamage(actor Victim)
 		{
 			newDamage = int(float(newDamage) * Level.Game.FriendlyFireMultiplier);
 		}
+	}
+
+	// [RMod]
+	// Shield damage multiplier
+	if(Shield(Victim) != None)
+	{
+		newDamage = newDamage * ShieldDamageMultiplier;
 	}
 
 //	if (Owner != None && Pawn(Owner) != None)
@@ -2052,4 +2060,5 @@ defaultproperties
      Mass=10.000000
      Buoyancy=4.000000
 	 bThrowBlockable=True
+	 ShieldDamageMultiplier=1.0
 }
