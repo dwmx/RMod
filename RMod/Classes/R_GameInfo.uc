@@ -7,6 +7,8 @@ var class<PlayerReplicationInfo> PlayerReplicationInfoClass;
 var class<R_GamePresets> GamePresetsClass;
 var class<R_AUtilities> UtilitiesClass;
 
+var private String OldGamePassword;
+
 // If true, all incoming players are forced to spectator mode
 var bool bGameLocked;
 var int SessionKey; // Players with this key can join locked games
@@ -16,6 +18,25 @@ var bool bMarkSpawnedActorsAsNativeToLevel;
 
 // Gameplay modifications
 var bool bRModEnabled;
+
+event Tick(float DeltaSeconds)
+{
+	local String CurrentGamePassword;
+	local R_RunePlayer RP;
+
+	// Game password updates
+	CurrentGamePassword = ConsoleCommand("Get Engine.GameInfo GamePassword");
+
+	// Watch for changes and send updates to players
+	if(OldGamePassword != CurrentGamePassword)
+	{
+		OldGamePassword = CurrentGamePassword;
+		foreach AllActors(class'RMod.R_RunePlayer', RP)
+		{
+			RP.ClientReceiveUpdatedGamePassword(CurrentGamePassword);
+		}
+	}
+}
 
 function bool CheckMapExists(String MapString)
 {
@@ -176,11 +197,16 @@ function PlayerMakeTeam(PlayerPawn P, int TeamID, string PlayerIDs)
 
 event PostBeginPlay()
 {
+	local String CurrentGamePassword;
+
 	Super.PostBeginPlay();
 	
 	// Actors spawned after this point are not a part of the level's original
 	// state, so they won't be respawned on level reset
 	bMarkSpawnedActorsAsNativeToLevel = false;
+
+	CurrentGamePassword = ConsoleCommand("Get Engine.GameInfo GamePassword");
+	OldGamePassword = CurrentGamePassword;
 }
 
 /////////////////////////////////////////////////////////////////////////////////

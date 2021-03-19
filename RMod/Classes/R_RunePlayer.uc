@@ -29,6 +29,7 @@ replication
 		Camera;
 
 	reliable if(Role == ROLE_Authority && RemoteRole == ROLE_AutonomousProxy)
+		ClientReceiveUpdatedGamePassword,
 		ClientReceiveSessionKey;
 
 	reliable if(Role < ROLE_Authority)
@@ -65,6 +66,12 @@ function ServerCauseEvent(Name N)
 		}
 		slog(triggerCount $ " actor(s) triggered");
 	}
+}
+
+function ClientReceiveUpdatedGamePassword(String NewGamePassword)
+{
+	UpdateURL("Password", NewGamePassword, false);
+	ClientMessage("Local password has been updated:" @ NewGamePassword);
 }
 
 exec function CauseEvent( name N )
