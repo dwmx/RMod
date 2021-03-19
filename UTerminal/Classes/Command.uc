@@ -36,8 +36,9 @@ enum EParameterType
 const MAX_PARAMETERS = 16;
 var private struct FParameterDecl
 {
-    var EParameterType Type;
-    var String VariableName;
+    var EParameterType Type;    // Enum parameter type
+    var String ParameterName;    // String name of the exposed parameter
+    var bool bPassedIn;         // Has this parameter been passed in or not
 } ParameterDecls[16];
 var int ParameterDeclCount;
 
@@ -45,8 +46,13 @@ var int ParameterDeclCount;
 final function Initialize(String Arguments)
 {
     local String ArgumentToken;
+    local int i;
 
     ParameterDeclCount = 0;
+    for(i = 0; i < MAX_PARAMETERS; ++i)
+    {
+        ParameterDecls[i].bPassedIn = false;
+    }
     ExposeParameters();
 
     while(Arguments != "")
@@ -58,7 +64,7 @@ final function Initialize(String Arguments)
 
 final function ParseArgument(String Argument)
 {
-    local String VariableName;
+    local String ParameterName;
     local String VariableValue;
     local int Index;
     local int i;
@@ -66,14 +72,14 @@ final function ParseArgument(String Argument)
     Index = InStr(Argument, "=");
     if(Index != -1)
     {
-        VariableName = Left(Argument, Index);
+        ParameterName = Left(Argument, Index);
         VariableValue = Mid(Argument, Index + 1);
     }
 
     // Find a matching exposed variable
     for(i = 0; i < ParameterDeclCount; ++i)
     {
-        if(Caps(ParameterDecls[i].VariableName) == Caps(VariableName))
+        if(Caps(ParameterDecls[i].ParameterName) == Caps(ParameterName))
         {
             break;
         }
@@ -87,42 +93,57 @@ final function ParseArgument(String Argument)
 
     // TODO: Perform value verification based on param type
 
-    SetPropertyText(VariableName, VariableValue);
+    ParameterDecls[i].bPassedIn = true;
+    SetPropertyText(ParameterName, VariableValue);
+}
+
+final function bool CheckParameterPassedIn(String ParameterName)
+{
+    local int i;
+
+    for(i = 0; i < ParameterDeclCount; ++i)
+    {
+        if(ParameterDecls[i].ParameterName == ParameterName)
+        {
+            return ParameterDecls[i].bPassedIn;
+        }
+    }
+    return false;
 }
 
 final function ExposeParameter(
     EParameterType Type,
-    String VariableName)
+    String ParameterName)
 {
     if(ParameterDeclCount >= MAX_PARAMETERS)
     {
-        Warn("Too many parameters declared for command, failed to declare:" @ VariableName);
+        Warn("Too many parameters declared for command, failed to declare:" @ ParameterName);
         return;
     }
 
     ParameterDecls[ParameterDeclCount].Type = Type;
-    ParameterDecls[ParameterDeclCount].VariableName = VariableName;
+    ParameterDecls[ParameterDeclCount].ParameterName = ParameterName;
     ++ParameterDeclCount;
 }
 
-final function ExposeBoolParameter(String VariableName)
+final function ExposeBoolParameter(String ParameterName)
 {
-    ExposeParameter(PT_Bool, VariableName);
+    ExposeParameter(PT_Bool, ParameterName);
 }
 
-final function ExposeIntParameter(String VariableName)
+final function ExposeIntParameter(String ParameterName)
 {
-    ExposeParameter(PT_Int, VariableName);
+    ExposeParameter(PT_Int, ParameterName);
 }
 
-final function ExposeFloatParameter(String VariableName)
+final function ExposeFloatParameter(String ParameterName)
 {
-    ExposeParameter(PT_Float, VariableName);
+    ExposeParameter(PT_Float, ParameterName);
 }
 
-final function ExposeStringParameter(String VariableName)
+final function ExposeStringParameter(String ParameterName)
 {
-    ExposeParameter(PT_String, VariableName);
+    ExposeParameter(PT_String, ParameterName);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

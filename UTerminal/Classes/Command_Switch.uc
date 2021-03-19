@@ -6,6 +6,7 @@ class Command_Switch extends UTerminal.Command;
 
 var String Level;
 var String Game;
+var String Password;
 
 static function String HelpString_Basic()
 {
@@ -16,40 +17,48 @@ function ExposeParameters()
 {
     ExposeStringParameter("Level");
     ExposeStringParameter("Game");
+    ExposeStringParameter("Password");
 }
 
 function Execute()
 {
     local String TravelURL;
 
-    // Do nothing if no arguments
-    if(Level == Class.Default.Level && Game == Class.Default.Game)
+    // Handle password parameter
+    if(CheckParameterPassedIn("Password"))
     {
-        ErrorString = "No level or game specified.";
-        return;
+        HandlePasswordParameter();
     }
 
-    // Verify the level argument is installed
-    if(Level == Class.Default.Level)
+    // Handle level or argument args
+    if(CheckParameterPassedIn("Level") || CheckParameterPassedIn("Game"))
     {
-        Level = TerminalInstance.Level.GetURLMap();
-    }
-    else
-    {
-        if(!CheckMapExists(Level))
+        if(Level == Class.Default.Level)
         {
-            ErrorString = Level @ "is not installed on this server";
-            return;
+            Level = TerminalInstance.Level.GetURLMap();
         }
-    }
+        else
+        {
+            if(!CheckMapExists(Level))
+            {
+                ErrorString = Level @ "is not installed on this server";
+                return;
+            }
+        }
 
-    TravelURL = Level;
-    if(Game != Class.Default.Game)
-    {
-        TravelURL = TravelURL $ "?game=" $ Game;
+        TravelURL = Level;
+        if(Game != Class.Default.Game)
+        {
+            TravelURL = TravelURL $ "?game=" $ Game;
+        }
+        
+        TerminalInstance.Level.ServerTravel(TravelURL, false);
     }
-    
-    TerminalInstance.Level.ServerTravel(TravelURL, false);
+}
+
+function HandlePasswordParameter()
+{
+    TerminalInstance.BroadcastMessage("You passed in a password:" @ Password);
 }
 
 // Check whether or not a map is installed on this server
@@ -69,4 +78,5 @@ defaultproperties
     ExecString="Switch"
     Level=""
     Game=""
+    Password=""
 }
