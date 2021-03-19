@@ -58,7 +58,15 @@ function Execute()
 
 function HandlePasswordParameter()
 {
-    TerminalInstance.BroadcastMessage("You passed in a password:" @ Password);
+    local String ConsoleCommand;
+    local String GamePasswordResult;
+
+    ConsoleCommand = "Set Engine.GameInfo GamePassword" @ Password;
+    TerminalInstance.Level.Game.ConsoleCommand(ConsoleCommand);
+
+    ConsoleCommand = "Get Engine.GameInfo GamePassword";
+    GamePasswordResult = TerminalInstance.Level.Game.ConsoleCommand(ConsoleCommand);
+    TerminalInstance.BroadcastMessage("Game has been passworded:" @ GamePasswordResult);
 }
 
 // Check whether or not a map is installed on this server
