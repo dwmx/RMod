@@ -1768,7 +1768,7 @@ defaultproperties
      ParticlePercentage=1.000000
      bAllowLimbSever=True
 	 bAllowHeadSever=True
-	 bShieldHitStun=True
-	 bShieldTakesAllHits=True
+	 bShieldHitStun=False
+	 bShieldTakesAllHits=False
 	 FriendlyFireMultiplier=0.0
 }
