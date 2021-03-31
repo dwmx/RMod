@@ -6,6 +6,15 @@ var class<R_AUtilities> UtilitiesClass;
 const SCOREBOARD_NOTES_COUNT = 5;
 var String ScoreboardNotes[5];
 
+var float RelPosX_Name;
+var float RelPosX_Score;
+var float RelPosX_Deaths;
+var float RelPosX_DamageDealt;
+var float RelPosX_Ping;
+var float RelPosX_Awards;
+
+var localized String DamageDealtText;
+
 // Used for relative Canvas drawing
 struct FCanvasContext
 {
@@ -151,25 +160,29 @@ simulated function DrawTableHeadings( canvas Canvas)
 	YOffset += 48.0;
 
 	// Name
-	Canvas.SetPos(Canvas.ClipX*0.1, YOffset);
+	Canvas.SetPos(Canvas.ClipX*RelPosX_Name, YOffset);
 	Canvas.DrawText(NameText, false);
 
 	// Score
-	Canvas.SetPos(Canvas.ClipX*0.5, YOffset);
+	Canvas.SetPos(Canvas.ClipX*RelPosX_Score, YOffset);
 	Canvas.DrawText(FragsText, false);
 
 	// Draw Deaths
-	Canvas.SetPos(Canvas.ClipX*0.6, YOffset);
+	Canvas.SetPos(Canvas.ClipX*RelPosX_Deaths, YOffset);
 	Canvas.DrawText(DeathsText, false);
 
+	// Draw Damage Dealt
+	Canvas.SetPos(Canvas.ClipX*RelPosX_DamageDealt, YOffset);
+	Canvas.DrawText(DamageDealtText, false);
+
 	// Draw Awards
-	Canvas.SetPos(Canvas.ClipX*0.8, YOffset);
+	Canvas.SetPos(Canvas.ClipX*RelPosX_Awards, YOffset);
 	Canvas.DrawText(AwardsText, false);
 
 	if (Canvas.ClipX > 512)
 	{
 		// Ping
-		Canvas.SetPos(Canvas.ClipX*0.7, YOffset);
+		Canvas.SetPos(Canvas.ClipX*RelPosX_Ping, YOffset);
 		Canvas.DrawText(PingText, false);
 	}
 
@@ -218,6 +231,7 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 	local PlayerPawn PlayerOwner;
 	local float XL,YL;
 	local int AwardPos;
+	local R_PlayerReplicationInfo RPRI;
 
 	PlayerOwner = PlayerPawn(Owner);
 	bLocalPlayer = (PRI.PlayerName == PlayerOwner.PlayerReplicationInfo.PlayerName);
@@ -259,7 +273,7 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 			Canvas.Font = RegFont;
 	}
 
-	Canvas.SetPos(Canvas.ClipX*0.1, YOffset);
+	Canvas.SetPos(Canvas.ClipX*RelPosX_Name, YOffset);
 	Canvas.DrawText(PRI.PlayerName, false);
 		//FONT ALTER
 	//Canvas.Font = RegFont;
@@ -269,13 +283,22 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 		Canvas.Font = RegFont;
 
 	// Draw Deaths
-	Canvas.SetPos(Canvas.ClipX*0.6, YOffset);
+	Canvas.SetPos(Canvas.ClipX*RelPosX_Deaths, YOffset);
 	Canvas.DrawText(int(PRI.Deaths), false);
+
+	// RMod stuff
+	RPRI = R_PlayerReplicationInfo(PRI);
+	if(RPRI != None)
+	{
+		// Draw Damage Dealt
+		Canvas.SetPos(Canvas.ClipX*RelPosX_DamageDealt, YOffset);
+		Canvas.DrawText(RPRI.DamageDealt, false);
+	}
 
 	if (Canvas.ClipX > 512 && Level.Netmode != NM_Standalone)
 	{
 		// Draw Ping
-		Canvas.SetPos(Canvas.ClipX*0.7, YOffset);
+		Canvas.SetPos(Canvas.ClipX*RelPosX_Ping, YOffset);
 		Canvas.DrawText(PRI.Ping, false);
 
 		// Packetloss
@@ -290,7 +313,7 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 	}
 
 	// Draw Awards
-	AwardPos = Canvas.ClipX*0.8;
+	AwardPos = Canvas.ClipX*RelPosX_Awards;
 	Canvas.DrawColor = WhiteColor;
 		//FONT ALTER
 	//Canvas.Font = Font'SmallFont';
@@ -343,4 +366,11 @@ defaultproperties
      ScoreboardNotes(2)="Thrown weapons of tier 1-3 cannot be blocked, but tiers 4-5 can be blocked"
      ScoreboardNotes(3)="Increased attack range of the DwarfBattleSword and SigurdAxe"
      ScoreboardNotes(4)="Enabled blade weaving for VikingAxe and SigurdAxe"
+	 RelPosX_Name=0.1
+	RelPosX_Score=0.35
+	RelPosX_Deaths=0.45
+	RelPosX_DamageDealt=0.55
+	RelPosX_Awards=0.8
+	RelPosX_Ping=0.7
+	DamageDealtText="Damage"
 }

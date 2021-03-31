@@ -84,77 +84,6 @@ function SortScores(int N)
 	}
 }
 
-function DrawTableHeadings( canvas Canvas)
-{
-	local float XL, YL;
-	local float YOffset;
-	local String SpectatorsString;
-
-	Canvas.DrawColor = GoldColor;
-	Canvas.StrLen("00", XL, YL);
-	YOffset = Canvas.CurY;
-
-	// Draw seperator
-	Canvas.DrawColor = WhiteColor;
-	Canvas.SetPos(Canvas.ClipX*0.1, YOffset);
-	Canvas.DrawTile(Seperator, Canvas.ClipX*0.8, YL*0.5, 0, 0, Seperator.USize, Seperator.VSize);
-	YOffset += YL*0.75;
-	Canvas.SetPos(Canvas.ClipX*0.1, YOffset);
-	
-	// Scrolling message
-	DrawTextScrolling(
-		Canvas, Canvas.ClipX * 0.1, YOffset, Canvas.ClipX * 0.8, 24.0, GetMOTDString());
-	
-	// Scrolling spectators list
-	YOffset += 24.0;
-	SpectatorsString = GetSpectatorsString();
-	DrawTextScrolling(
-		Canvas, Canvas.ClipX * 0.1, YOffset, Canvas.ClipX * 0.8, 24.0, SpectatorsString);
-
-	Canvas.DrawColor = GoldColor;
-	YOffset += 24.0;
-	
-	// Draw seperator
-	Canvas.DrawColor = WhiteColor;
-	Canvas.SetPos(Canvas.ClipX*0.1, YOffset);
-	Canvas.DrawTile(Seperator, Canvas.ClipX*0.8, YL*0.5, 0, 0, Seperator.USize, Seperator.VSize);
-	YOffset += YL*0.75;
-	Canvas.SetPos(Canvas.ClipX*0.1, YOffset);
-
-	YOffset += 48.0;
-
-	// Name
-	Canvas.SetPos(Canvas.ClipX*0.13, YOffset);
-	Canvas.DrawText(NameText, false);
-
-	// Score
-	Canvas.SetPos(Canvas.ClipX*0.5, YOffset);
-	Canvas.DrawText(FragsText, false);
-
-	// Draw Deaths
-	Canvas.SetPos(Canvas.ClipX*0.6, YOffset);
-	Canvas.DrawText(DeathsText, false);
-
-	// Draw Awards
-	Canvas.SetPos(Canvas.ClipX*0.8, YOffset);
-	Canvas.DrawText(AwardsText, false);
-
-	if (Canvas.ClipX > 512)
-	{
-		// Ping
-		Canvas.SetPos(Canvas.ClipX*0.7, YOffset);
-		Canvas.DrawText(PingText, false);
-	}
-
-	// Draw seperator
-	YOffset += YL*1.25;
-	Canvas.DrawColor = WhiteColor;
-	Canvas.SetPos(Canvas.ClipX*0.1, YOffset);
-	Canvas.DrawTile(Seperator, Canvas.ClipX*0.8, YL*0.5, 0, 0, Seperator.USize, Seperator.VSize);
-	YOffset += YL*0.75;
-	Canvas.SetPos(Canvas.ClipX*0.1, YOffset);
-}
-
 function DrawTeamInfo( canvas Canvas, TeamInfo TI, float XOffset, float YOffset)
 {
 	local float XL1, YL1, XL2, YL2;
@@ -239,7 +168,7 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 			Canvas.Font = RegFont;
 	}
 
-	Canvas.SetPos(Canvas.ClipX*0.13, YOffset);
+	Canvas.SetPos(Canvas.ClipX*(RelPosX_Name+0.03), YOffset);
 	Canvas.DrawText(PRI.PlayerName, false);
 			//FONT ALTER
 	//Canvas.Font = RegFont;
@@ -252,7 +181,7 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 	RPRI = R_PlayerReplicationInfo(PRI);
 
 	// Draw Score
-	Canvas.SetPos(Canvas.ClipX*0.5, YOffset);
+	Canvas.SetPos(Canvas.ClipX*RelPosX_Score, YOffset);
 	if(RPRI != None)
 	{
 		InterpTime = Level.TimeSeconds - RPRI.ScoreTracker.TimeSeconds;
@@ -269,7 +198,7 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 	}
 
 	// Draw Deaths
-	Canvas.SetPos(Canvas.ClipX*0.6, YOffset);
+	Canvas.SetPos(Canvas.ClipX*RelPosX_Deaths, YOffset);
 	if(RPRI != None)
 	{
 		InterpTime = Level.TimeSeconds - RPRI.DeathsTracker.TimeSeconds;
@@ -278,6 +207,23 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 		DrawColor = Canvas.DrawColor;
 		Canvas.DrawColor = UtilitiesClass.Static.InterpQuadratic_Color(InterpTime, ColorT0, ColorT1, 2.0);
 		Canvas.DrawText(int(PRI.Deaths), false);
+		Canvas.DrawColor = DrawColor;
+	}
+	else
+	{
+		Canvas.DrawText(int(PRI.Deaths), false);
+	}
+
+	// Draw Damage Dealt
+	Canvas.SetPos(Canvas.ClipX*RelPosX_DamageDealt, YOffset);
+	if(RPRI != None)
+	{
+		InterpTime = Level.TimeSeconds - RPRI.DamageDealtTracker.TimeSeconds;
+		ColorT0 = ColorsClass.Static.ColorRed();
+		ColorT1 = ColorsClass.Static.ColorWhite();
+		DrawColor = Canvas.DrawColor;
+		Canvas.DrawColor = UtilitiesClass.Static.InterpQuadratic_Color(InterpTime, ColorT0, ColorT1, 2.0);
+		Canvas.DrawText(RPRI.DamageDealt, false);
 		Canvas.DrawColor = DrawColor;
 	}
 	else

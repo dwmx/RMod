@@ -3,6 +3,8 @@
 //=============================================================================
 class R_PlayerReplicationInfo extends Engine.PlayerReplicationInfo;
 
+var int DamageDealt; // Cumulative damage dealt throughout the game
+
 struct FStatTracker
 {
     var int Cached;
@@ -10,7 +12,14 @@ struct FStatTracker
 };
 var FStatTracker ScoreTracker;
 var FStatTracker DeathsTracker;
+var FStatTracker DamageDealtTracker;
 var FStatTracker PingTracker;
+
+replication
+{
+    reliable if(Role == ROLE_Authority)
+        DamageDealt;
+}
 
 simulated function UpdateStatTracker(out FStatTracker StatTracker, int Value)
 {
@@ -31,6 +40,7 @@ simulated event Tick(float DeltaSeconds)
     {
         UpdateStatTracker(ScoreTracker, int(Score));
         UpdateStatTracker(DeathsTracker, int(Deaths));
+        UpdateStatTracker(DamageDealtTracker, DamageDealt);
         UpdateStatTracker(PingTracker, Ping);
     }
 }
@@ -38,4 +48,5 @@ simulated event Tick(float DeltaSeconds)
 defaultproperties
 {
     RemoteRole=ROLE_SimulatedProxy
+    DamageDealt=0
 }
