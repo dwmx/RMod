@@ -288,7 +288,25 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 	}
 
 	Canvas.SetPos(Canvas.ClipX*RelPosX_Name, YOffset);
-	Canvas.DrawText(PRI.PlayerName, false);
+	//Canvas.DrawText(PRI.PlayerName, false);
+
+// If spectating this player, draw an indicator
+	if(Owner != None
+	&& Owner.GetStateName() == 'PlayerSpectating'
+	&& R_RunePlayer(Owner) != None
+	&& R_RunePlayer(Owner).Camera != None
+	&& R_RunePlayer(Owner).Camera.ViewTarget != None
+	&& PlayerPawn(R_RunePlayer(Owner).Camera.ViewTarget) != None
+	&& PlayerPawn(R_RunePlayer(Owner).Camera.ViewTarget).PlayerReplicationInfo != None
+	&& PlayerPawn(R_RunePlayer(Owner).Camera.ViewTarget).PlayerReplicationInfo == PRI)
+	{
+		Canvas.DrawText(PRI.PlayerName @ " [SPECTATING]", false);
+	}
+	else
+	{
+		Canvas.DrawText(PRI.PlayerName, false);
+	}
+
 		//FONT ALTER
 	//Canvas.Font = RegFont;
 	if(MyFonts != None)
