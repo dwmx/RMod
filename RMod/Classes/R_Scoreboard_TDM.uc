@@ -86,9 +86,16 @@ function SortScores(int N)
 
 function DrawTeamInfo( canvas Canvas, TeamInfo TI, float XOffset, float YOffset)
 {
+	local Color TeamBackgroundColor;
 	local float XL1, YL1, XL2, YL2;
 
+	// Draw backdrop
+	Canvas.AlphaScale = 0.1;
+	Canvas.Style = ERenderStyle.STY_AlphaBlend;
 	Canvas.DrawColor = GetTeamColor(TI.TeamIndex);
+	Canvas.SetPos(Canvas.ClipX * 0.1, YOffset);
+	Canvas.DrawTile(Background, Canvas.ClipX * 0.8, 18, 0, 0, Background.USize, Background.VSize);
+
 	Canvas.StrLen("00", XL1, YL1);
 		//FONT ALTER
 	//Canvas.Font = Canvas.BigFont;
@@ -98,9 +105,24 @@ function DrawTeamInfo( canvas Canvas, TeamInfo TI, float XOffset, float YOffset)
 		Canvas.Font = Canvas.BigFont;
 
 	Canvas.StrLen("00", XL2, YL2);
-	Canvas.SetPos(Canvas.ClipX*0.1, YOffset-((YL2-YL1)*0.5));
+
+	Canvas.DrawColor = ColorsClass.Static.ColorWhite();
+	Canvas.Style = ERenderStyle.STY_Normal;
+
+	// Draw Name
+	Canvas.Font = Canvas.BigFont;
+	Canvas.SetPos(Canvas.ClipX*RelPosX_Name, YOffset);//-((YL2-YL1)*0.5));
+	Canvas.DrawText(TI.TeamName);
+
+	if(MyFonts != None)
+		Canvas.Font = MyFonts.GetStaticMedFont();
+	else
+		Canvas.Font = RegFont;
+
+	// Draw Score
+	Canvas.SetPos(Canvas.ClipX*RelPosX_Score, YOffset + 2);//-((YL2-YL1)*0.5));
 	Canvas.DrawText(int(TI.Score), false);
-	Canvas.DrawColor = WhiteColor;
+
 		//FONT ALTER
 	//Canvas.Font = RegFont;
 	if(MyFonts != None)
@@ -113,22 +135,7 @@ function DrawPlayerBackground(Canvas Canvas, PlayerReplicationInfo PRI, float XO
 {
 	local Color PlayerBackgroundColor;
 
-	// Select background color based on team
-	switch(PRI.Team)
-	{
-	case 0:
-		PlayerBackgroundColor = ColorsClass.Static.ColorRed();
-		break;
-	case 1:
-		PlayerBackgroundColor = ColorsClass.Static.ColorBlue();
-		break;
-	case 2:
-		PlayerBackgroundColor = ColorsClass.Static.ColorGreen();
-		break;
-	case 3:
-		PlayerBackgroundColor = ColorsClass.Static.ColorGold();
-		break;
-	}
+	PlayerBackgroundColor = GetTeamColor(PRI.Team);
 
 	// Draw a background tile
 	Canvas.DrawColor = PlayerBackgroundColor;
@@ -136,7 +143,7 @@ function DrawPlayerBackground(Canvas Canvas, PlayerReplicationInfo PRI, float XO
 
 	if(PRIIndex % 2 == 0)
 	{
-		Canvas.AlphaScale = 0.3;
+		Canvas.AlphaScale = 0.225;
 	}
 	else
 	{
@@ -209,6 +216,7 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 	}
 
 	Canvas.SetPos(Canvas.ClipX*(RelPosX_Name+0.03), YOffset);
+	Canvas.DrawColor = ColorsClass.Static.ColorWhite();
 	Canvas.DrawText(PRI.PlayerName, false);
 			//FONT ALTER
 	//Canvas.Font = RegFont;
@@ -466,6 +474,7 @@ PlayerCount=0;
 		if (TeamPlayerCount > 0)
 		{
 			DrawTeamInfo(Canvas, OrderedTeams[t], 0, YStart);
+			YStart += 20;
 
 			//	draw the PRIs
 			for (i=0; i<TeamPlayerCount; i++ )
