@@ -17,6 +17,15 @@ var private float ViewRotPovYaw;
 
 var private bool bForceClientAdjustPosition;
 
+// PainSkin arrays
+const MAX_PAIN_SKINS = 16;
+struct FPainSkinArray
+{
+	var Texture Textures[16];
+};
+// Indexed by BODYPART consts
+var FPainSkinArray PainSkinArrays[16];
+
 replication
 {	
 	reliable if(Role == ROLE_Authority && bNetInitial)
@@ -39,11 +48,39 @@ replication
 		ServerTimeLimit,
 		ServerSetGameLocked,
 		ServerMakeTeam,
-		ServerCauseEvent;
+		ServerCauseEvent,
+		ServerLogTextures;
 		
 	unreliable if(Role == ROLE_Authority && RemoteRole != ROLE_AutonomousProxy)
 		ViewRotPovPitch,
 		ViewRotPovYaw;
+}
+
+exec function LogTextures()
+{
+	local int i, j;
+
+	ServerLogTextures();
+
+	for(i = 0; i < NUM_BODYPARTS; ++i)
+	{
+		for(j = 0; j < MAX_PAIN_SKINS; ++j)
+		{
+			Log(PainSkinArrays[i].Textures[j]);
+		}
+	}
+}
+
+function ServerLogTextures()
+{
+	local int i, j;
+	for(i = 0; i < NUM_BODYPARTS; ++i)
+	{
+		for(j = 0; j < MAX_PAIN_SKINS; ++j)
+		{
+			Log(PainSkinArrays[i].Textures[j]);
+		}
+	}
 }
 
 function ServerCauseEvent(Name N)
@@ -185,7 +222,7 @@ event PreBeginPlay()
 function ApplySubClass(class<RunePlayer> subClass)
 {
 	local RunePlayer Dummy;
-    local int i;
+    local int i, j;
 	
     Self.WeaponPickupSound          = subClass.Default.WeaponPickupSound;
     Self.WeaponThrowSound           = subClass.Default.WeaponThrowSound;
@@ -251,6 +288,30 @@ function ApplySubClass(class<RunePlayer> subClass)
 			Self.RunePlayerSeveredHeadClass = Dummy.SeveredLimbClass(BODYPART_HEAD);
 			Self.RunePlayerSeveredLimbClass = Dummy.SeveredLimbClass(BODYPART_LARM1);
 			
+			// Initialize PainSkins
+			for(i = 0; i < NUM_BODYPARTS; ++i)
+			{
+				for(j = 0; j < MAX_PAIN_SKINS; ++j)
+				{
+					PainSkinArrays[i].Textures[j] = None;
+				}
+			}
+
+			// Extract PainSkin info
+			for(i = 0; i < NUM_BODYPARTS; ++i)
+			{
+				for(j = 0; j < MAX_PAIN_SKINS; ++j)
+				{
+					Dummy.SkelGroupSkins[j] = None;
+				}
+
+				Dummy.PainSkin(i);
+				for(j = 0; j < MAX_PAIN_SKINS; ++j)
+				{
+					PainSkinArrays[i].Textures[j] = Dummy.SkelGroupSkins[j];
+				}
+			}
+
 			for(i = 0; i < 16; ++i)
 				Self.PolyGroupBodyParts[i] = Dummy.BodyPartForPolyGroup(i);
 			
@@ -561,21 +622,37 @@ function Texture PainSkin(int BodyPart) // override
 
 function ApplyGoreCap(int BodyPart) // override
 {
-	switch(BodyPart)
+	local int i;
+
+	if(BodyPart < 0 || BodyPart >= NUM_BODYPARTS)
 	{
-		case BODYPART_LARM1:
-			SkelGroupSkins[10] = Texture'runefx.gore_bone';
-			SkelGroupFlags[10] = SkelGroupFlags[10] & ~POLYFLAG_INVISIBLE;
-			break;
-		case BODYPART_RARM1:
-			SkelGroupSkins[5] = Texture'runefx.gore_bone';
-			SkelGroupFlags[5] = SkelGroupFlags[5] & ~POLYFLAG_INVISIBLE;
-			break;
-		case BODYPART_HEAD:
-			SkelGroupSkins[11] = Texture'runefx.gore_bone';
-			SkelGroupFlags[11] = SkelGroupFlags[11] & ~POLYFLAG_INVISIBLE;
-			break;
+		return;
 	}
+
+	for(i = 0; i < MAX_PAIN_SKINS; ++i)
+	{
+		if(PainSkinArrays[BodyPart].Textures[i] != None)
+		{
+			SkelGroupSkins[i] = PainSkinArrays[BodyPart].Textures[i];
+			SkelGroupFlags[i] = SkelGroupFlags[i] & ~POLYFLAG_INVISIBLE;
+		}
+	}
+
+	//switch(BodyPart)
+	//{
+	//	case BODYPART_LARM1:
+	//		SkelGroupSkins[10] = Texture'runefx.gore_bone';
+	//		SkelGroupFlags[10] = SkelGroupFlags[10] & ~POLYFLAG_INVISIBLE;
+	//		break;
+	//	case BODYPART_RARM1:
+	//		SkelGroupSkins[5] = Texture'runefx.gore_bone';
+	//		SkelGroupFlags[5] = SkelGroupFlags[5] & ~POLYFLAG_INVISIBLE;
+	//		break;
+	//	case BODYPART_HEAD:
+	//		SkelGroupSkins[11] = Texture'runefx.gore_bone';
+	//		SkelGroupFlags[11] = SkelGroupFlags[11] & ~POLYFLAG_INVISIBLE;
+	//		break;
+	//}
 }
 
 function int BodyPartForPolyGroup(int PolyGroup) // override

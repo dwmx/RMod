@@ -47,6 +47,5 @@ simulated event Tick(float DeltaSeconds)
 
 defaultproperties
 {
-    RemoteRole=ROLE_SimulatedProxy
-    DamageDealt=0
+     RemoteRole=ROLE_SimulatedProxy
 }

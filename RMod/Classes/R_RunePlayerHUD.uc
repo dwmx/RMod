@@ -436,6 +436,7 @@ simulated function PostRender( canvas Canvas )
 	local PlayerPawn thePlayer;
 	local Texture Tex;
 	local float XSize, YSize;
+	local String DrawString;
 
 	thePlayer = PlayerPawn(Owner);
 	//thePlayer = GetPawnContext();

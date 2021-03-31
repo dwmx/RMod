@@ -134,6 +134,7 @@ function DrawTeamInfo( canvas Canvas, TeamInfo TI, float XOffset, float YOffset)
 function DrawPlayerBackground(Canvas Canvas, PlayerReplicationInfo PRI, float XOffset, float YOffset, int PRIIndex)
 {
 	local Color PlayerBackgroundColor;
+	local PlayerPawn POwner;
 
 	PlayerBackgroundColor = GetTeamColor(PRI.Team);
 
@@ -217,7 +218,24 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 
 	Canvas.SetPos(Canvas.ClipX*(RelPosX_Name+0.03), YOffset);
 	Canvas.DrawColor = ColorsClass.Static.ColorWhite();
-	Canvas.DrawText(PRI.PlayerName, false);
+
+	// If spectating this player, draw an indicator
+	if(Owner != None
+	&& Owner.GetStateName() == 'PlayerSpectating'
+	&& R_RunePlayer(Owner) != None
+	&& R_RunePlayer(Owner).Camera != None
+	&& R_RunePlayer(Owner).Camera.ViewTarget != None
+	&& PlayerPawn(R_RunePlayer(Owner).Camera.ViewTarget) != None
+	&& PlayerPawn(R_RunePlayer(Owner).Camera.ViewTarget).PlayerReplicationInfo != None
+	&& PlayerPawn(R_RunePlayer(Owner).Camera.ViewTarget).PlayerReplicationInfo == PRI)
+	{
+		Canvas.DrawText(PRI.PlayerName @ " [SPECTATING]", false);
+	}
+	else
+	{
+		Canvas.DrawText(PRI.PlayerName, false);
+	}
+
 			//FONT ALTER
 	//Canvas.Font = RegFont;
 	if(MyFonts != None)

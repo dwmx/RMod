@@ -377,11 +377,11 @@ defaultproperties
      ScoreboardNotes(2)="Thrown weapons of tier 1-3 cannot be blocked, but tiers 4-5 can be blocked"
      ScoreboardNotes(3)="Increased attack range of the DwarfBattleSword and SigurdAxe"
      ScoreboardNotes(4)="Enabled blade weaving for VikingAxe and SigurdAxe"
-	 RelPosX_Name=0.1
-	RelPosX_Score=0.35
-	RelPosX_Deaths=0.45
-	RelPosX_DamageDealt=0.55
-	RelPosX_Awards=0.8
-	RelPosX_Ping=0.7
-	DamageDealtText="Damage"
+     RelPosX_Name=0.100000
+     RelPosX_Score=0.350000
+     RelPosX_Deaths=0.450000
+     RelPosX_DamageDealt=0.550000
+     RelPosX_Ping=0.700000
+     RelPosX_Awards=0.800000
+     DamageDealtText="Damage"
 }
