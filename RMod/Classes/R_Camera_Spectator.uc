@@ -251,6 +251,7 @@ function SelectNextViewTarget()
 	if(ViewTarget == None)
 	{
 		ViewTarget = Candidates[0];
+        OnViewTargetChanged();
 		return;
 	}
 	
@@ -265,13 +266,36 @@ function SelectNextViewTarget()
 	if(i == CandidateCount)
 	{
 		ViewTarget = Candidates[0];
+        OnViewTargetChanged();
 		return;
 	}
 	else
 	{
 		ViewTarget = Candidates[(i + 1) % CandidateCount];
+        OnViewTargetChanged();
 		return;
 	}
+}
+
+function OnViewTargetChanged()
+{
+    local String DrawString;
+
+    if(ViewTarget == None)
+    {
+        return;
+    }
+
+    if(ViewTarget.PlayerReplicationInfo != None)
+    {
+        DrawString = ViewTarget.PlayerReplicationInfo.PlayerName;
+    }
+    else
+    {
+        DrawString = String(ViewTarget);
+    }
+    DrawString = "Now spectating" @ DrawString;
+    Pawn(Owner).ClientMessage(DrawString);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
