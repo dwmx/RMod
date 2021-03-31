@@ -109,6 +109,46 @@ function DrawTeamInfo( canvas Canvas, TeamInfo TI, float XOffset, float YOffset)
 		Canvas.Font = RegFont;
 }
 
+function DrawPlayerBackground(Canvas Canvas, PlayerReplicationInfo PRI, float XOffset, float YOffset, int PRIIndex)
+{
+	local Color PlayerBackgroundColor;
+
+	// Select background color based on team
+	switch(PRI.Team)
+	{
+	case 0:
+		PlayerBackgroundColor = ColorsClass.Static.ColorRed();
+		break;
+	case 1:
+		PlayerBackgroundColor = ColorsClass.Static.ColorBlue();
+		break;
+	case 2:
+		PlayerBackgroundColor = ColorsClass.Static.ColorGreen();
+		break;
+	case 3:
+		PlayerBackgroundColor = ColorsClass.Static.ColorGold();
+		break;
+	}
+
+	// Draw a background tile
+	Canvas.DrawColor = PlayerBackgroundColor;
+	Canvas.Style = ERenderStyle.STY_AlphaBlend;
+
+	if(PRIIndex % 2 == 0)
+	{
+		Canvas.AlphaScale = 0.3;
+	}
+	else
+	{
+		Canvas.AlphaScale = 0.15;
+	}
+
+	Canvas.SetPos(Canvas.ClipX * 0.1, YOffset - 2);
+	Canvas.DrawTile(Background, Canvas.ClipX * 0.8, 18, 0, 0, Background.USize, Background.VSize);
+	Canvas.Style = ERenderStyle.STY_Normal;
+	Canvas.AlphaScale = 1.0;
+}
+
 function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset, float YOffset)
 {
 	local bool bLocalPlayer;
@@ -431,6 +471,7 @@ PlayerCount=0;
 			for (i=0; i<TeamPlayerCount; i++ )
 			{
 				YOffset = YStart + i*YL;
+				DrawPlayerBackground(Canvas, Ordered[i], 0, YOffset, i);
 				DrawPlayerInfo(Canvas, Ordered[i], 0, YOffset);
 			}
 

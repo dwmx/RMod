@@ -195,6 +195,17 @@ simulated function DrawTableHeadings( canvas Canvas)
 	Canvas.SetPos(Canvas.ClipX*0.1, YOffset);
 }
 
+simulated function DrawBackground( canvas Canvas, int X, int Y, int W, int H)
+{
+	//Canvas.DrawColor = BackgroundColor;
+	//Canvas.Style = ERenderStyle.STY_AlphaBlend;
+	//Canvas.AlphaScale = BackgroundAlpha;
+	//Canvas.SetPos(X, Y);
+	//Canvas.DrawTile(Background, W, H, 0, 0, Background.USize, Background.VSize);
+	//Canvas.Style = ERenderStyle.STY_Normal;
+	//Canvas.AlphaScale = 1.0;
+}
+
 simulated function String GetSpectatorsString()
 {
 	local PlayerPawn P;
