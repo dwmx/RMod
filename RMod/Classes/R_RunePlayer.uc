@@ -180,6 +180,9 @@ function ApplySubClass(class<RunePlayer> SubClass)
 		}
 		Self.SetCollision(true, true, true);
 	}
+
+	// Extract the menu name so this looks correct in server browser
+	ApplySubClass_ExtractMenuName(SubClass);
 }
 
 function ApplySubClass_ExtractDefaults(class<RunePlayer> SubClass)
@@ -303,6 +306,26 @@ function ApplySubClass_ExtractGoreCapData(class<RunePlayer> SubClass, RunePlayer
 			GoreCapArrays[i].Textures[j] = SubClassInstance.SkelGroupSkins[j];
 		}
 	}
+}
+
+function ApplySubClass_ExtractMenuName(class<RunePlayer> SubClass)
+{
+	local String ClassString;
+	local String EntryString, DescriptionString;
+	local int i;
+
+	ClassString = Level.GetNextInt("RuneI.RunePlayer", 0);
+	for(i = 0; ClassString != ""; ClassString = Level.GetNextInt("RuneI.RunePlayer", ++i))
+	{
+		if(ClassString == String(SubClass))
+		{
+			Level.GetNextIntDesc("RuneI.RunePlayer", i, EntryString, DescriptionString);
+			MenuName = DescriptionString;
+			return;
+		}
+	}
+
+	MenuName = "RMod Rune Player";
 }
 
 static function ApplyDummyTag(Actor A)
