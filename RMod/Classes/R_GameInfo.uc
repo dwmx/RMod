@@ -9,10 +9,6 @@ var class<R_AUtilities> UtilitiesClass;
 
 var private String OldGamePassword;
 
-// If true, all incoming players are forced to spectator mode
-var bool bGameLocked;
-var int SessionKey; // Players with this key can join locked games
-
 // Used at level start to mark actors which stay during level reset
 var bool bMarkSpawnedActorsAsNativeToLevel;
 
@@ -129,70 +125,6 @@ function PlayerSetTimeLimit(PlayerPawn P, int DurationMinutes)
 	SaveConfig();
 	
 	BroadcastMessage("TimeLimit has been set to " $ DurationMinutes $ " minutes.");
-}
-
-function PlayerSetGameLocked(PlayerPawn P, bool bNewGameLocked)
-{
-	if(bGameLocked == bNewGameLocked)
-	{
-		return;
-	}
-	bGameLocked = bNewGameLocked;
-	
-	if(bGameLocked)
-	{
-		LockGame();
-	}
-	else
-	{
-		UnlockGame();
-	}
-}
-
-function LockGame()
-{
-	local R_RunePlayer RP;
-	
-	SessionKey = Rand(MaxInt);
-	UtilitiesClass.Static.RModLog(
-		"Game locked with session key: " $ SessionKey);
-	
-	foreach AllActors(class'RMod.R_RunePlayer', RP)
-	{
-		RP.ReceiveSessionKey(SessionKey);
-	}
-}
-
-function UnlockGame()
-{
-	UtilitiesClass.Static.RModLog("Game unlocked");
-}
-
-function PlayerMakeTeam(PlayerPawn P, int TeamID, string PlayerIDs)
-{
-	local string Token;
-	local int PlayerID;
-	local PlayerPawn PawnToChange;
-	
-	UtilitiesClass.Static.RModLog(
-		"Making team ID " $ TeamID $
-		" with player ID string: " $ PlayerIDs);
-		
-	while(Len(PlayerIDs) > 0)
-	{
-		Token = UtilitiesClass.Static.GetTokenUsingDelimiter(PlayerIDs, ",");
-		if(!UtilitiesClass.Static.StringIsNumeric(Token))
-		{
-			continue;
-		}
-		
-		PlayerID = int(Token);
-		PawnToChange = GetPlayerPawnByID(PlayerID);
-		if(PawnToChange != None)
-		{
-			ChangeTeam(PawnToChange, TeamID);
-		}
-	}
 }
 
 event PostBeginPlay()
@@ -474,20 +406,8 @@ event PlayerPawn Login(
 {
 	local class<PlayerPawn> IncomingClass;
 	local PlayerPawn P;
-	local string Option_SessionKey;
 	
 	IncomingClass = SpawnClass;
-	
-	// If game is locked, player's must have the correct session key or they
-	// will be forced to spectate
-	if(bGameLocked)
-	{
-		Option_SessionKey = ParseOption(Options, "SessionKey");
-		if(int(Option_SessionKey) != SessionKey)
-		{
-			IncomingClass = class'Engine.Spectator';
-		}
-	}
 	
 	SpawnClass = RunePlayerClass;
 	

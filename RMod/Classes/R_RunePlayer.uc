@@ -36,16 +36,13 @@ replication
 		Camera;
 
 	reliable if(Role == ROLE_Authority && RemoteRole == ROLE_AutonomousProxy)
-		ClientReceiveUpdatedGamePassword,
-		ClientReceiveSessionKey;
+		ClientReceiveUpdatedGamePassword;
 
 	reliable if(Role < ROLE_Authority)
 		ServerResetLevel,
 		ServerSwitchGame,
 		ServerSpectate,
 		ServerTimeLimit,
-		ServerSetGameLocked,
-		ServerMakeTeam,
 		ServerCauseEvent;
 		
 	unreliable if(Role == ROLE_Authority && RemoteRole != ROLE_AutonomousProxy)
@@ -97,49 +94,6 @@ exec function LogPlayerIDs()
 			"ID: " $ PRI.PlayerID $ ", " $
 			"Name: " $ PRI.PlayerName);
 	}
-}
-
-exec function MakeTeam(int TeamID, string PlayerIDs)
-{
-	if(Len(PlayerIDs) > 64)
-	{
-		return;
-	}
-	ServerMakeTeam(TeamID, PlayerIDs);
-}
-
-function ServerMakeTeam(int TeamID, string PlayerIDs)
-{
-	local R_GameInfo GI;
-	
-	if(!VerifyAdminWithErrorMessage())
-	{
-		return;
-	}
-	
-	GI = R_GameInfo(Level.Game);
-	if(GI == None)
-	{
-		return;
-	}
-	
-	GI.PlayerMakeTeam(self, TeamID, PlayerIDs);
-}
-
-function ReceiveSessionKey(int SessionKey)
-{
-	if(PlayerReplicationInfo.bIsSpectator)
-	{
-		return;
-	}
-	
-	ClientReceiveSessionKey(SessionKey);
-}
-
-function ClientReceiveSessionKey(int SessionKey)
-{
-	UtilitiesClass.Static.RModLog("Updated session key: " $ SessionKey);
-	UpdateURL("SessionKey", String(SessionKey), true);
 }
 
 function DiscardInventory()
@@ -802,35 +756,6 @@ function ServerTimeLimit(int DurationMinutes)
 	}
 	
 	GI.PlayerSetTimeLimit(self, DurationMinutes);
-}
-
-// LockGame and UnlockGame commands
-exec function LockGame()
-{
-	ServerSetGameLocked(true);
-}
-
-exec function UnlockGame()
-{
-	ServerSetGameLocked(false);
-}
-
-function ServerSetGameLocked(bool bGameLocked)
-{
-	local R_GameInfo GI;
-	
-	if(!VerifyAdminWithErrorMessage())
-	{
-		return;
-	}
-	
-	GI = R_GameInfo(Level.Game);
-	if(GI == None)
-	{
-		return;
-	}
-	
-	GI.PlayerSetGameLocked(self, bGameLocked);
 }
 
 // Spectate command
