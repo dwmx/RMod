@@ -15,6 +15,8 @@ var localized string ChampionsText;
 var localized string ChallengersText;
 var localized string MatchText;
 
+var float RelPosX_Queue;
+
 function DrawTableHeadings(canvas Canvas)
 {
 	local float XL, YL;
@@ -61,25 +63,29 @@ function DrawTableHeadings(canvas Canvas)
 	YOffset = Canvas.CurY + YL;
 
 	// Name
-	Canvas.SetPos(Canvas.ClipX*0.1, YOffset);
+	Canvas.SetPos(Canvas.ClipX*RelPosX_Name, YOffset);
 	Canvas.DrawText(NameText, false);
 
 	// Score
-	Canvas.SetPos(Canvas.ClipX*0.4, YOffset);
+	Canvas.SetPos(Canvas.ClipX*RelPosX_Score, YOffset);
 	Canvas.DrawText(FragsText, false);
 
 	// Draw Deaths
-	Canvas.SetPos(Canvas.ClipX*0.6, YOffset);
+	Canvas.SetPos(Canvas.ClipX*RelPosX_Deaths, YOffset);
 	Canvas.DrawText(DeathsText, false);
 
+	// Draw Damage Dealt
+	Canvas.SetPos(Canvas.ClipX*RelPosX_DamageDealt, YOffset);
+	Canvas.DrawText(DamageDealtText, false);
+
 	//Draw Queue Number - replaced Awards
-	Canvas.SetPos(Canvas.ClipX * 0.8, YOffset);
+	Canvas.SetPos(Canvas.ClipX * RelPosX_Queue, YOffset);
 	Canvas.DrawText(QueueText, false);
 
 	if (Canvas.ClipX > 512)
 	{
 		// Ping
-		Canvas.SetPos(Canvas.ClipX*0.7, YOffset);
+		Canvas.SetPos(Canvas.ClipX*RelPosX_Ping, YOffset);
 		Canvas.DrawText(PingText, false);
 	}
 
@@ -114,6 +120,7 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 	local float XL,YL;
 	local ArenaGameReplicationInfo GRI;
 	local int i;
+	local R_PlayerReplicationInfo RPRI;
 
 	PlayerOwner = PlayerPawn(Owner);
 	bLocalPlayer = (PRI.PlayerName == PlayerOwner.PlayerReplicationInfo.PlayerName);
@@ -158,7 +165,7 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 			Canvas.Font = RegFont;
 	}
 
-	Canvas.SetPos(Canvas.ClipX*0.1, YOffset);
+	Canvas.SetPos(Canvas.ClipX*RelPosX_Name, YOffset);
 	Canvas.DrawText(PRI.PlayerName, false);
 	
 	if(MyFonts != None)
@@ -167,23 +174,32 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 		Canvas.Font = RegFont;
 
 	// Draw Score
-	Canvas.SetPos(Canvas.ClipX*0.4, YOffset);
+	Canvas.SetPos(Canvas.ClipX*RelPosX_Score, YOffset);
 	Canvas.DrawText(int(PRI.Score), false);
 
 	// Draw Deaths
-	Canvas.SetPos(Canvas.ClipX*0.6, YOffset);
+	Canvas.SetPos(Canvas.ClipX*RelPosX_Deaths, YOffset);
 	Canvas.DrawText(int(PRI.Deaths), false);
+
+	// RMod stuff
+	RPRI = R_PlayerReplicationInfo(PRI);
+	if(RPRI != None)
+	{
+		// Draw Damage Dealt
+		Canvas.SetPos(Canvas.ClipX*RelPosX_DamageDealt, YOffset);
+		Canvas.DrawText(RPRI.DamageDealt, false);
+	}
 
 	if (Canvas.ClipX > 512 && Level.Netmode != NM_Standalone)
 	{
 		// Draw Ping
-		Canvas.SetPos(Canvas.ClipX*0.7, YOffset);
+		Canvas.SetPos(Canvas.ClipX*RelPosX_Ping, YOffset);
 		Canvas.DrawText(PRI.Ping, false);
 	}
 
 	if(PRI.TeamID <= 16)
 	{
-		Canvas.SetPos(Canvas.ClipX * 0.8, YOffset);
+		Canvas.SetPos(Canvas.ClipX * RelPosX_Queue, YOffset);
 		Canvas.DrawText(TwoDigitString(PRI.TeamID), false);
 	}
 }
@@ -566,4 +582,5 @@ defaultproperties
      MatchText="Match "
      FragsText="Victories"
      DeathsText="Losses"
+	 RelPosX_Queue=0.8
 }
