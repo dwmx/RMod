@@ -1,0 +1,1 @@
+class ArenaGameInfo extends R_GameInfo_Arena;

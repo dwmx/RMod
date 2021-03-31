@@ -1,4 +1,4 @@
-class R_GameInfo extends RuneMultiPlayer;
+class R_GameInfo extends RuneI.RuneMultiPlayer;
 
 var class<RunePlayer> RunePlayerClass;
 var class<RunePlayer> SpectatorMarkerClass;

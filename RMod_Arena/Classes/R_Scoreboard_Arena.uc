@@ -32,6 +32,7 @@ function DrawTableHeadings(canvas Canvas)
 	YOffset = Canvas.CurY;
 
 	// Draw seperator
+	Canvas.Style = ERenderStyle.STY_Normal;
 	Canvas.DrawColor = WhiteColor;
 	Canvas.SetPos(Canvas.ClipX*0.1, YOffset);
 	Canvas.DrawTile(Seperator, Canvas.ClipX*0.8, YL*0.5, 0, 0, Seperator.USize, Seperator.VSize);
@@ -52,6 +53,7 @@ function DrawTableHeadings(canvas Canvas)
 	YOffset += 24.0;
 	
 	// Draw seperator
+	Canvas.Style = ERenderStyle.STY_Normal;
 	Canvas.DrawColor = WhiteColor;
 	Canvas.SetPos(Canvas.ClipX*0.1, YOffset);
 	Canvas.DrawTile(Seperator, Canvas.ClipX*0.8, YL*0.5, 0, 0, Seperator.USize, Seperator.VSize);
@@ -90,6 +92,7 @@ function DrawTableHeadings(canvas Canvas)
 	}
 
 	// Draw seperator
+	Canvas.Style = ERenderStyle.STY_Normal;
 	YOffset += YL*2.25;
 	Canvas.DrawColor = WhiteColor;
 	Canvas.SetPos(Canvas.ClipX*0.1, YOffset);
@@ -104,12 +107,38 @@ function color GetTeamColor(int team)
 	switch(team)
 	{
 		case 0:
-			return RedColor;
+			return ColorsClass.Static.ColorRed();
 		case 1:
-			return BlueColor;
+			return ColorsClass.Static.ColorBlue();
 
 	}
-	return WhiteColor;
+	return ColorsClass.Static.ColorWhite();
+}
+
+function DrawPlayerBackground(Canvas Canvas, PlayerReplicationInfo PRI, float XOffset, float YOffset, int PRIIndex)
+{
+	local Color PlayerBackgroundColor;
+	local PlayerPawn POwner;
+
+	PlayerBackgroundColor = GetTeamColor(PRI.Team);
+
+	// Draw a background tile
+	Canvas.DrawColor = PlayerBackgroundColor;
+	Canvas.Style = ERenderStyle.STY_AlphaBlend;
+
+	if(PRIIndex % 2 == 0)
+	{
+		Canvas.AlphaScale = 0.225;
+	}
+	else
+	{
+		Canvas.AlphaScale = 0.15;
+	}
+
+	Canvas.SetPos(Canvas.ClipX * 0.1, YOffset - 2);
+	Canvas.DrawTile(Background, Canvas.ClipX * 0.8, 18, 0, 0, Background.USize, Background.VSize);
+	Canvas.Style = ERenderStyle.STY_Normal;
+	Canvas.AlphaScale = 1.0;
 }
 
 function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset, float YOffset)
@@ -450,6 +479,7 @@ function ShowScores( canvas Canvas )
 	for ( I=0; I<PlayerCount; I++ )
 	{
 		YOffset = YStart + I*YL;
+		DrawPlayerBackground(Canvas, Ordered[i], 0, YOffset, i);
 		DrawPlayerInfo(Canvas, Ordered[I], 0, YOffset);
 	}
 

@@ -131,6 +131,7 @@ simulated function DrawTableHeadings( canvas Canvas)
 	YOffset = Canvas.CurY;
 
 	// Draw seperator
+	Canvas.Style = ERenderStyle.STY_Normal;
 	Canvas.DrawColor = WhiteColor;
 	Canvas.SetPos(Canvas.ClipX*0.1, YOffset);
 	Canvas.DrawTile(Seperator, Canvas.ClipX*0.8, YL*0.5, 0, 0, Seperator.USize, Seperator.VSize);
@@ -151,6 +152,7 @@ simulated function DrawTableHeadings( canvas Canvas)
 	YOffset += 24.0;
 	
 	// Draw seperator
+	Canvas.Style = ERenderStyle.STY_Normal;
 	Canvas.DrawColor = WhiteColor;
 	Canvas.SetPos(Canvas.ClipX*0.1, YOffset);
 	Canvas.DrawTile(Seperator, Canvas.ClipX*0.8, YL*0.5, 0, 0, Seperator.USize, Seperator.VSize);
@@ -187,6 +189,7 @@ simulated function DrawTableHeadings( canvas Canvas)
 	}
 
 	// Draw seperator
+	Canvas.Style = ERenderStyle.STY_Normal;
 	YOffset += YL*1.25;
 	Canvas.DrawColor = WhiteColor;
 	Canvas.SetPos(Canvas.ClipX*0.1, YOffset);
