@@ -507,6 +507,28 @@ function ServerMove(
 	ViewRotPovYaw = ViewRotation.Yaw;
 }
 
+// Overridden to keep track of damage dealt through the game
+function bool JointDamaged(int Damage, Pawn EventInstigator, vector HitLoc, vector Momentum, name DamageType, int joint)
+{
+	local int PreviousHealth;
+	local int DamageDealt;
+	local R_PlayerReplicationInfo RPRI;
+	local bool bResult;
+
+	PreviousHealth = Health;
+	bResult = Super.JointDamaged(Damage, EventInstigator, HitLoc, Momentum, DamageType, joint);
+	DamageDealt = PreviousHealth - Health;
+
+	if(EventInstigator != None && EventInstigator.PlayerReplicationInfo != None)
+	{
+		RPRI = R_PlayerReplicationInfo(EventInstigator.PlayerReplicationInfo);
+		if(RPRI != None)
+		{
+			RPRI.DamageDealt += DamageDealt;
+		}
+	}
+}
+
 static function SetSkinActor(actor SkinActor, int NewSkin) // override
 {
 	local R_RunePlayer RP;
