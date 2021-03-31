@@ -29,10 +29,7 @@ var FPainSkinArray PainSkinArrays[16];
 replication
 {	
 	reliable if(Role == ROLE_Authority && bNetInitial)
-		RunePlayerSubClass,
-		RunePlayerSeveredHeadClass,
-		RunePlayerSeveredLimbClass,
-		PolyGroupBodyParts;
+		RunePlayerSubClass;
 	
 	reliable if(Role == ROLE_Authority)
 		Camera;
@@ -49,11 +46,21 @@ replication
 		ServerSetGameLocked,
 		ServerMakeTeam,
 		ServerCauseEvent,
-		ServerLogTextures;
+		ServerLogTextures,
+		TestFunc;
 		
 	unreliable if(Role == ROLE_Authority && RemoteRole != ROLE_AutonomousProxy)
 		ViewRotPovPitch,
 		ViewRotPovYaw;
+}
+
+exec function TestFunc(int i)
+{
+	//BroadcastMessage("TestFund");
+	//SkelGroupSkins[i] = Texture'players.ragnarwolf_chestpain';
+	//SkelGroupSkins[i] = Texture'runefx.gore_bone';
+	//SkelGroupFlags[i] = SkelGroupFlags[i] | POLYFLAG_INVISIBLE;
+	PainSkin(i);
 }
 
 exec function LogTextures()
@@ -284,7 +291,7 @@ function ApplySubClass(class<RunePlayer> subClass)
 			Dummy.SetCollision(false, false, false);
 			Dummy.bHidden = true;
 			
-			// Server gets these and replicates once
+			// Extract severed limb and head classes
 			Self.RunePlayerSeveredHeadClass = Dummy.SeveredLimbClass(BODYPART_HEAD);
 			Self.RunePlayerSeveredLimbClass = Dummy.SeveredLimbClass(BODYPART_LARM1);
 			
@@ -312,8 +319,11 @@ function ApplySubClass(class<RunePlayer> subClass)
 				}
 			}
 
+			// Save the subclass-specific body part mappings
 			for(i = 0; i < 16; ++i)
+			{
 				Self.PolyGroupBodyParts[i] = Dummy.BodyPartForPolyGroup(i);
+			}
 			
 			// Destroy Dummy and turn collision back on
 			//		When you spawn a PlayerPawn, GameInfo.Login does not get called,
@@ -615,52 +625,37 @@ static function SetSkinActor(actor SkinActor, int NewSkin) // override
 	}
 }
 
+// Apply pain skin which was extract from subclass
 function Texture PainSkin(int BodyPart) // override
 {
-	return None;
-}
-
-function ApplyGoreCap(int BodyPart) // override
-{
+	local Texture PainTexture;
 	local int i;
 
 	if(BodyPart < 0 || BodyPart >= NUM_BODYPARTS)
 	{
-		return;
+		return None;
 	}
 
 	for(i = 0; i < MAX_PAIN_SKINS; ++i)
 	{
-		if(PainSkinArrays[BodyPart].Textures[i] != None)
+		PainTexture = PainSkinArrays[BodyPart].Textures[i];
+		if(PainTexture != None)
 		{
-			SkelGroupSkins[i] = PainSkinArrays[BodyPart].Textures[i];
-			SkelGroupFlags[i] = SkelGroupFlags[i] & ~POLYFLAG_INVISIBLE;
+			SkelGroupSkins[i] = PainTexture;
 		}
 	}
-
-	//switch(BodyPart)
-	//{
-	//	case BODYPART_LARM1:
-	//		SkelGroupSkins[10] = Texture'runefx.gore_bone';
-	//		SkelGroupFlags[10] = SkelGroupFlags[10] & ~POLYFLAG_INVISIBLE;
-	//		break;
-	//	case BODYPART_RARM1:
-	//		SkelGroupSkins[5] = Texture'runefx.gore_bone';
-	//		SkelGroupFlags[5] = SkelGroupFlags[5] & ~POLYFLAG_INVISIBLE;
-	//		break;
-	//	case BODYPART_HEAD:
-	//		SkelGroupSkins[11] = Texture'runefx.gore_bone';
-	//		SkelGroupFlags[11] = SkelGroupFlags[11] & ~POLYFLAG_INVISIBLE;
-	//		break;
-	//}
+	
+	return None;
 }
 
 function int BodyPartForPolyGroup(int PolyGroup) // override
 {
-	if(PolyGroup >= 0 && PolyGroup < 16)
-		return Self.PolyGroupBodyParts[PolyGroup];
-	
-	return BODYPART_BODY;
+	if(PolyGroup < 0 || PolyGroup >= 16)
+	{
+		return BODYPART_BODY;
+	}
+
+	return PolyGroupBodyParts[PolyGroup];
 }
 
 function class<Actor> SeveredLimbClass(int BodyPart) // override
