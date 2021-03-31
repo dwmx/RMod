@@ -46,49 +46,11 @@ replication
 		ServerTimeLimit,
 		ServerSetGameLocked,
 		ServerMakeTeam,
-		ServerCauseEvent,
-		ServerLogTextures,
-		TestFunc;
+		ServerCauseEvent;
 		
 	unreliable if(Role == ROLE_Authority && RemoteRole != ROLE_AutonomousProxy)
 		ViewRotPovPitch,
 		ViewRotPovYaw;
-}
-
-exec function TestFunc(int i)
-{
-	//BroadcastMessage("TestFund");
-	//SkelGroupSkins[i] = Texture'players.ragnarwolf_chestpain';
-	//SkelGroupSkins[i] = Texture'runefx.gore_bone';
-	//SkelGroupFlags[i] = SkelGroupFlags[i] | POLYFLAG_INVISIBLE;
-	PainSkin(i);
-}
-
-exec function LogTextures()
-{
-	local int i, j;
-
-	ServerLogTextures();
-
-	for(i = 0; i < NUM_BODYPARTS; ++i)
-	{
-		for(j = 0; j < MAX_SKEL_GROUP_SKINS; ++j)
-		{
-			Log(PainSkinArrays[i].Textures[j]);
-		}
-	}
-}
-
-function ServerLogTextures()
-{
-	local int i, j;
-	for(i = 0; i < NUM_BODYPARTS; ++i)
-	{
-		for(j = 0; j < MAX_SKEL_GROUP_SKINS; ++j)
-		{
-			Log(PainSkinArrays[i].Textures[j]);
-		}
-	}
 }
 
 function ServerCauseEvent(Name N)
