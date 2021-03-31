@@ -18,13 +18,14 @@ var private float ViewRotPovYaw;
 var private bool bForceClientAdjustPosition;
 
 // PainSkin arrays
-const MAX_PAIN_SKINS = 16;
-struct FPainSkinArray
+const MAX_SKEL_GROUP_SKINS = 16;
+struct FSkelGroupSkinArray
 {
 	var Texture Textures[16];
 };
 // Indexed by BODYPART consts
-var FPainSkinArray PainSkinArrays[16];
+var FSkelGroupSkinArray PainSkinArrays[16];
+var FSkelGroupSkinArray GoreCapArrays[16];
 
 replication
 {	
@@ -71,7 +72,7 @@ exec function LogTextures()
 
 	for(i = 0; i < NUM_BODYPARTS; ++i)
 	{
-		for(j = 0; j < MAX_PAIN_SKINS; ++j)
+		for(j = 0; j < MAX_SKEL_GROUP_SKINS; ++j)
 		{
 			Log(PainSkinArrays[i].Textures[j]);
 		}
@@ -83,7 +84,7 @@ function ServerLogTextures()
 	local int i, j;
 	for(i = 0; i < NUM_BODYPARTS; ++i)
 	{
-		for(j = 0; j < MAX_PAIN_SKINS; ++j)
+		for(j = 0; j < MAX_SKEL_GROUP_SKINS; ++j)
 		{
 			Log(PainSkinArrays[i].Textures[j]);
 		}
@@ -226,104 +227,31 @@ event PreBeginPlay()
 	CrouchHeight = CrouchHeight * DrawScale;		
 }
 
-function ApplySubClass(class<RunePlayer> subClass)
+function ApplySubClass(class<RunePlayer> SubClass)
 {
 	local RunePlayer Dummy;
     local int i, j;
 	
-    Self.WeaponPickupSound          = subClass.Default.WeaponPickupSound;
-    Self.WeaponThrowSound           = subClass.Default.WeaponThrowSound;
-    Self.WeaponDropSound            = subClass.Default.WeaponDropSound;
-    for(i = 0; i < 3; ++i)
-        Self.JumpGruntSound[i]      = subClass.Default.JumpGruntSound[i];
-    Self.JumpSound                  = subClass.Default.JumpSound;
-    Self.LandGrunt                  = subClass.Default.LandGrunt;
-    Self.FallingDeathSound          = subClass.Default.FallingDeathSound;
-    Self.FallingScreamSound         = subClass.Default.FallingScreamSound;
-    Self.UnderWaterDeathSound       = subClass.Default.UnderWaterDeathSound;
-    Self.EdgeGrabSound              = subClass.Default.EdgeGrabSound;
-    Self.StepUpSound                = subClass.Default.StepUpSound;
-    Self.KickSound                  = subClass.Default.KickSound;
-    for(i = 0; i < 3; ++i)
-        Self.HitSoundLow[i]         = subClass.Default.HitSoundLow[i];
-    for(i = 0; i < 3; ++i)
-        Self.HitSoundMed[i]         = subClass.Default.HitSoundMed[i];
-    for(i = 0; i < 3; ++i)
-        Self.HitSoundHigh[i]        = subClass.Default.HitSoundHigh[i];
-    for(i = 0; i < 6; ++i)
-        Self.UnderWaterAmbient[i]   = subClass.Default.UnderWaterAmbient[i];
-    Self.BerserkSoundStart          = subClass.Default.BerserkSoundStart;
-    Self.BerserkSoundEnd            = subClass.Default.BerserkSoundEnd;
-    Self.BerserkSoundLoop           = subClass.Default.BerserkSoundLoop;
-    for(i = 0; i < 6; ++i)
-        Self.BerserkYellSound[i]    = subClass.Default.BerserkYellSound[i];
-    Self.CrouchSound                = subClass.Default.CrouchSound;
-    for(i = 0; i < 3; ++i)
-        Self.RopeClimbSound[i]      = subClass.Default.RopeClimbSound[i];
-    Self.Die                        = subClass.Default.Die;
-    Self.Die2                       = subClass.Default.Die2;
-    Self.Die3                       = subClass.Default.Die3;
-    Self.MaxMouthRot                = subClass.Default.MaxMouthRot;
-    Self.MaxMouthRotRate            = subClass.Default.MaxMouthRotRate;
-    Self.SkelMesh                   = subClass.Default.SkelMesh;
-    for(i = 0; i < 16; ++i)
-        Self.SkelGroupSkins[i]      = subClass.Default.SkelGroupSkins[i];
-    for(i = 0; i < 16; ++i)
-        Self.SkelGroupFlags[i]      = subClass.Default.SkelGroupFlags[i];
-    for(i = 0; i < 50; ++i)
-        Self.JointFlags[i]          = subClass.Default.JointFlags[i];
-    for(i = 0; i < 50; ++i)
-        Self.JointChild[i]          = subClass.Default.JointChild[i];
-	Self.SubstituteMesh				= subClass.Default.SubstituteMesh;
-	
-	Self.RunePlayerSubClass = subClass;
+	Self.RunePlayerSubClass = SubClass;
+	ApplySubClass_ExtractDefaults(SubClass);
 	
 	// Spawn a Dummy instance to get info from functions
 	if(Role == ROLE_Authority
 	&& R_GameInfo(Level.Game) != None
-	&& subClass != R_GameInfo(Level.Game).SpectatorMarkerClass)
+	&& SubClass != R_GameInfo(Level.Game).SpectatorMarkerClass)
 	{
 		// Disable collision so Dummy pawn doesn't explode
 		Self.SetCollision(false, false, false);
-		Dummy = Spawn(subClass, self);
+		Dummy = Spawn(SubClass, self);
 		if(Dummy != None)
 		{
 			Dummy.SetCollision(false, false, false);
 			Dummy.bHidden = true;
-			
-			// Extract severed limb and head classes
-			Self.RunePlayerSeveredHeadClass = Dummy.SeveredLimbClass(BODYPART_HEAD);
-			Self.RunePlayerSeveredLimbClass = Dummy.SeveredLimbClass(BODYPART_LARM1);
-			
-			// Initialize PainSkins
-			for(i = 0; i < NUM_BODYPARTS; ++i)
-			{
-				for(j = 0; j < MAX_PAIN_SKINS; ++j)
-				{
-					PainSkinArrays[i].Textures[j] = None;
-				}
-			}
+			Dummy.RemoteRole = ROLE_None;
 
-			// Extract PainSkin info
-			for(i = 0; i < NUM_BODYPARTS; ++i)
-			{
-				for(j = 0; j < MAX_PAIN_SKINS; ++j)
-				{
-					Dummy.SkelGroupSkins[j] = None;
-				}
-
-				Dummy.PainSkin(i);
-				for(j = 0; j < MAX_PAIN_SKINS; ++j)
-				{
-					PainSkinArrays[i].Textures[j] = Dummy.SkelGroupSkins[j];
-				}
-			}
-
-			// Save the subclass-specific body part mappings
-			for(i = 0; i < 16; ++i)
-			{
-				Self.PolyGroupBodyParts[i] = Dummy.BodyPartForPolyGroup(i);
-			}
+			ApplySubClass_ExtractBodyPartData(SubClass, Dummy);
+			ApplySubClass_ExtractPainSkinData(SubClass, Dummy);
+			ApplySubClass_ExtractGoreCapData(SubClass, Dummy);
 			
 			// Destroy Dummy and turn collision back on
 			//		When you spawn a PlayerPawn, GameInfo.Login does not get called,
@@ -335,6 +263,129 @@ function ApplySubClass(class<RunePlayer> subClass)
 			Dummy.Destroy();
 		}
 		Self.SetCollision(true, true, true);
+	}
+}
+
+function ApplySubClass_ExtractDefaults(class<RunePlayer> SubClass)
+{
+	local int i;
+
+	Self.WeaponPickupSound          = SubClass.Default.WeaponPickupSound;
+    Self.WeaponThrowSound           = SubClass.Default.WeaponThrowSound;
+    Self.WeaponDropSound            = SubClass.Default.WeaponDropSound;
+    for(i = 0; i < 3; ++i)
+        Self.JumpGruntSound[i]      = SubClass.Default.JumpGruntSound[i];
+    Self.JumpSound                  = SubClass.Default.JumpSound;
+    Self.LandGrunt                  = SubClass.Default.LandGrunt;
+    Self.FallingDeathSound          = SubClass.Default.FallingDeathSound;
+    Self.FallingScreamSound         = SubClass.Default.FallingScreamSound;
+    Self.UnderWaterDeathSound       = SubClass.Default.UnderWaterDeathSound;
+    Self.EdgeGrabSound              = SubClass.Default.EdgeGrabSound;
+    Self.StepUpSound                = SubClass.Default.StepUpSound;
+    Self.KickSound                  = SubClass.Default.KickSound;
+    for(i = 0; i < 3; ++i)
+        Self.HitSoundLow[i]         = SubClass.Default.HitSoundLow[i];
+    for(i = 0; i < 3; ++i)
+        Self.HitSoundMed[i]         = SubClass.Default.HitSoundMed[i];
+    for(i = 0; i < 3; ++i)
+        Self.HitSoundHigh[i]        = SubClass.Default.HitSoundHigh[i];
+    for(i = 0; i < 6; ++i)
+        Self.UnderWaterAmbient[i]   = SubClass.Default.UnderWaterAmbient[i];
+    Self.BerserkSoundStart          = SubClass.Default.BerserkSoundStart;
+    Self.BerserkSoundEnd            = SubClass.Default.BerserkSoundEnd;
+    Self.BerserkSoundLoop           = SubClass.Default.BerserkSoundLoop;
+    for(i = 0; i < 6; ++i)
+        Self.BerserkYellSound[i]    = SubClass.Default.BerserkYellSound[i];
+    Self.CrouchSound                = SubClass.Default.CrouchSound;
+    for(i = 0; i < 3; ++i)
+        Self.RopeClimbSound[i]      = SubClass.Default.RopeClimbSound[i];
+    Self.Die                        = SubClass.Default.Die;
+    Self.Die2                       = SubClass.Default.Die2;
+    Self.Die3                       = SubClass.Default.Die3;
+    Self.MaxMouthRot                = SubClass.Default.MaxMouthRot;
+    Self.MaxMouthRotRate            = SubClass.Default.MaxMouthRotRate;
+    Self.SkelMesh                   = SubClass.Default.SkelMesh;
+    for(i = 0; i < 16; ++i)
+        Self.SkelGroupSkins[i]      = SubClass.Default.SkelGroupSkins[i];
+    for(i = 0; i < 16; ++i)
+        Self.SkelGroupFlags[i]      = SubClass.Default.SkelGroupFlags[i];
+    for(i = 0; i < 50; ++i)
+        Self.JointFlags[i]          = SubClass.Default.JointFlags[i];
+    for(i = 0; i < 50; ++i)
+        Self.JointChild[i]          = SubClass.Default.JointChild[i];
+	Self.SubstituteMesh				= SubClass.Default.SubstituteMesh;
+}
+
+function ApplySubClass_ExtractBodyPartData(class<RunePlayer> SubClass, RunePlayer SubClassInstance)
+{
+	local int i;
+
+	for(i = 0; i < 16; ++i)
+	{
+		PolyGroupBodyParts[i] = SubClassInstance.BodyPartForPolyGroup(i);
+	}
+
+	RunePlayerSeveredHeadClass = SubClassInstance.SeveredLimbClass(BODYPART_HEAD);
+	RunePlayerSeveredLimbClass = SubClassInstance.SeveredLimbClass(BODYPART_LARM1);
+}
+
+function ApplySubClass_ExtractPainSkinData(class<RunePlayer> SubClass, RunePlayer SubClassInstance)
+{
+	local int i, j;
+
+	// Initialize pain skins
+	for(i = 0; i < NUM_BODYPARTS; ++i)
+	{
+		for(j = 0; j < MAX_SKEL_GROUP_SKINS; ++j)
+		{
+			PainSkinArrays[i].Textures[j] = None;
+		}
+	}
+
+	// Extract from subclass
+	for(i = 0; i < NUM_BODYPARTS; ++i)
+	{
+		for(j = 0; j < MAX_SKEL_GROUP_SKINS; ++j)
+		{
+			SubClassInstance.SkelGroupSkins[i] = None;
+		}
+
+		SubClassInstance.PainSkin(i);
+
+		for(j = 0; j < MAX_SKEL_GROUP_SKINS; ++j)
+		{
+			PainSkinArrays[i].Textures[j] = SubClassInstance.SkelGroupSkins[j];
+		}
+	}
+}
+
+function ApplySubClass_ExtractGoreCapData(class<RunePlayer> SubClass, RunePlayer SubClassInstance)
+{
+	local int i, j;
+
+	// Initialize gore cap skins
+	for(i = 0; i < NUM_BODYPARTS; ++i)
+	{
+		for(j = 0; j < MAX_SKEL_GROUP_SKINS; ++j)
+		{
+			GoreCapArrays[i].Textures[j] = None;
+		}
+	}
+
+	// Extract from subclass
+	for(i = 0; i < NUM_BODYPARTS; ++i)
+	{
+		for(j = 0; j < MAX_SKEL_GROUP_SKINS; ++j)
+		{
+			SubClassInstance.SkelGroupSkins[i] = None;
+		}
+
+		SubClassInstance.ApplyGoreCap(i);
+
+		for(j = 0; j < MAX_SKEL_GROUP_SKINS; ++j)
+		{
+			GoreCapArrays[i].Textures[j] = SubClassInstance.SkelGroupSkins[j];
+		}
 	}
 }
 
@@ -636,7 +687,7 @@ function Texture PainSkin(int BodyPart) // override
 		return None;
 	}
 
-	for(i = 0; i < MAX_PAIN_SKINS; ++i)
+	for(i = 0; i < MAX_SKEL_GROUP_SKINS; ++i)
 	{
 		PainTexture = PainSkinArrays[BodyPart].Textures[i];
 		if(PainTexture != None)
@@ -646,6 +697,28 @@ function Texture PainSkin(int BodyPart) // override
 	}
 	
 	return None;
+}
+
+// Apply gore cap using extracted subclass data
+function ApplyGoreCap(int BodyPart)
+{
+	local Texture GoreTexture;
+	local int i;
+
+	if(BodyPart < 0 || BodyPart >= NUM_BODYPARTS)
+	{
+		return;
+	}
+
+	for(i = 0; i < MAX_SKEL_GROUP_SKINS; ++i)
+	{
+		GoreTexture = GoreCapArrays[BodyPart].Textures[i];
+		if(GoreTexture != None)
+		{
+			SkelGroupSkins[i] = GoreTexture;
+			SkelGroupFlags[i] = SkelGroupFlags[i] & ~POLYFLAG_INVISIBLE;
+		}
+	}
 }
 
 function int BodyPartForPolyGroup(int PolyGroup) // override
