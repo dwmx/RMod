@@ -4,4 +4,5 @@ Object=(Name=UTerminal.Command_HelloWorld,Class=Class,MetaClass=UTerminal.Comman
 Object=(Name=UTerminal.Command_Player_Ban,Class=Class,MetaClass=UTerminal.Command,Description="Ban a player from the server")
 Object=(Name=UTerminal.Command_Player_Kick,Class=Class,MetaClass=UTerminal.Command,Description="Kick a player from the server")
 Object=(Name=UTerminal.Command_Switch,Class=Class,MetaClass=UTerminal.Command,Description="Switch game command")
+Object=(Name=UTerminal.Command_Team,Class=Class,MetaClass=UTerminal.Command,Description="Modify teams command")
 Object=(Name=UTerminal.Command_TeamShuffle,Class=Class,MetaClass=UTerminal.Command,Description="Team shuffle command")
