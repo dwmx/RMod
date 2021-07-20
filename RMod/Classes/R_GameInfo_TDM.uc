@@ -371,14 +371,30 @@ function Killed(pawn killer, pawn Other, name damageType)
 {
 	Super.Killed(killer, Other, damageType);
 
+	if(Other == None)
+	{
+		return;
+	}
+
 	if( (killer == Other) || (killer == None) )
+	{
 		Teams[Other.PlayerReplicationInfo.Team].Score -= 1.0;
+	}
 	else
 	{
-		Teams[killer.PlayerReplicationInfo.Team].Score += 1.0;
+		if(Killer != None && Killer.PlayerReplicationInfo.Team == Other.PlayerReplicationInfo.Team)
+		{
+			Teams[Other.PlayerReplicationInfo.Team].Score -= 1.0;
+		}
+		else
+		{
+			Teams[killer.PlayerReplicationInfo.Team].Score += 1.0;
 
-		if ( (GoalTeamScore > 0) && (Teams[killer.PlayerReplicationInfo.Team].Score >= GoalTeamScore) )
-			EndGame("teamscorelimit");
+			if ( (GoalTeamScore > 0) && (Teams[killer.PlayerReplicationInfo.Team].Score >= GoalTeamScore) )
+			{
+				EndGame("teamscorelimit");
+			}
+		}
 	}
 }
 

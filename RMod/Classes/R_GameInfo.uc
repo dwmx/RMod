@@ -509,6 +509,45 @@ function bool ChangeTeam(Pawn Other, int N)
 	return true;
 }
 
+function ScoreKill(Pawn Killer, Pawn Other)
+{
+    if (Other==None)
+    {
+        log("Warning: ScoreKill (OTHER==NONE): Killer="$Killer@"Other="$Other);
+        return;
+    }
+
+    Other.DieCount++;
+    if (Other.bIsPlayer && Other.PlayerReplicationInfo != None)
+	{
+        Other.PlayerReplicationInfo.Deaths +=1;
+	}
+
+    if( (Killer == Other) || (Killer == None) )
+    {
+        if (Other.PlayerReplicationInfo != None)
+		{
+            Other.PlayerReplicationInfo.Score -= 1;
+		}
+	}
+    else if ( Killer != None )
+    {
+		if(bTeamGame && Killer.PlayerReplicationInfo.Team == Other.PlayerReplicationInfo.Team)
+		{
+			Killer.PlayerReplicationInfo.Score -= 1;
+		}
+		else
+		{
+			Killer.killCount++;
+			if ( Killer.PlayerReplicationInfo != None )
+			{
+				Killer.PlayerReplicationInfo.Score += 1;
+			}
+		}
+	}
+    BaseMutator.ScoreKill(Killer, Other);
+}
+
 function MakePlayerSpectate(R_RunePlayer P)
 {
 	P.GoToState('PlayerSpectating');
