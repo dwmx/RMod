@@ -114,13 +114,8 @@ function DrawTeamInfo( canvas Canvas, TeamInfo TI, float XOffset, float YOffset)
 	Canvas.SetPos(Canvas.ClipX*RelPosX_Name, YOffset);//-((YL2-YL1)*0.5));
 	Canvas.DrawText(TI.TeamName);
 
-	if(MyFonts != None)
-		Canvas.Font = MyFonts.GetStaticMedFont();
-	else
-		Canvas.Font = RegFont;
-
 	// Draw Score
-	Canvas.SetPos(Canvas.ClipX*RelPosX_Score, YOffset + 2);//-((YL2-YL1)*0.5));
+	Canvas.SetPos(Canvas.ClipX*RelPosX_Score, YOffset);//-((YL2-YL1)*0.5));
 	Canvas.DrawText(int(TI.Score), false);
 
 		//FONT ALTER
