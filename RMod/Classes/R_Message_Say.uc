@@ -12,7 +12,14 @@ static function color GetColor(
 	
 	if(RelatedPRI_1 != None)
 	{
-		C = Default.ColorsClass.Static.GetTeamColor(RelatedPRI_1.Team);
+		if(RelatedPRI_1.bIsSpectator)
+		{
+			C = Default.ColorsClass.Static.GetSpectatorColor();
+		}
+		else
+		{
+			C = Default.ColorsClass.Static.GetTeamColor(RelatedPRI_1.Team);
+		}
 	}
 	else
 	{
@@ -30,6 +37,53 @@ static function MangleString(out string MessageText,
 	// HUD will apply the player's name
 	//if (PRI1 != None)
 	//	MessageText = PRI1.PlayerName $ ":" @ MessageText;
+}
+
+static function String GenerateConsoleStringForMessage(String Msg, optional PlayerReplicationInfo PRI)
+{
+	local String Result;
+
+	Result = Msg;
+
+	if(PRI != None)
+	{
+		Result = PRI.PlayerName $ ":" @ Result;
+	}
+	
+	Result = "-" @ Result;
+
+	return Result;
+}
+
+// Handle beeps and console entry for normal text message types
+static function ClientReceiveMessage(
+    PlayerPawn P,
+    String Msg,
+    optional PlayerReplicationInfo PRI)
+{
+	if(Msg == "")
+	{
+		return;
+	}
+
+    if ( Default.bBeep && P.bMessageBeep )
+	{
+        P.PlayBeepSound();
+	}
+
+    if ( Default.bIsConsoleMessage )
+    {
+        if ((P.Player != None) && (P.Player.Console != None))
+		{
+            //P.Player.Console.AddString(Msg);
+			P.Player.Console.AddString(GenerateConsoleStringForMessage(Msg, PRI));
+		}
+    }
+
+    if ( P.myHUD != None )
+	{
+        P.myHUD.LocalizedMessage( Default.Class, 0, PRI, None, None, Msg );
+	}
 }
 
 defaultproperties

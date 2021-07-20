@@ -116,6 +116,15 @@ static function Vector GetTeamColorVector(int TeamIndex)
 	return V;
 }
 
+static function Color GetSpectatorColor()
+{
+    local Color C;
+    C.R = 120;
+    C.G = 120;
+    C.B = 120;
+    return C;
+}
+
 static function GetTeamColorBytes(
     int TeamIndex,
     optional out byte R,
