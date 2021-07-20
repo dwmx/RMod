@@ -578,7 +578,15 @@ function bool JointDamaged(int Damage, Pawn EventInstigator, vector HitLoc, vect
 
 	PreviousHealth = Health;
 	bResult = Super.JointDamaged(Damage, EventInstigator, HitLoc, Momentum, DamageType, joint);
-	DamageDealt = PreviousHealth - Health;
+
+	if(Health < 0)
+	{
+		DamageDealt = PreviousHealth;
+	}
+	else
+	{
+		DamageDealt = PreviousHealth - Health;
+	}
 
 	if(EventInstigator != None && EventInstigator.PlayerReplicationInfo != None)
 	{
