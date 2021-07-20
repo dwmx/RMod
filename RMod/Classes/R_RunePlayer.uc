@@ -27,6 +27,9 @@ struct FSkelGroupSkinArray
 var FSkelGroupSkinArray PainSkinArrays[16];
 var FSkelGroupSkinArray GoreCapArrays[16];
 
+var float SuicideTimeStamp;
+var float SuicideCooldown;
+
 replication
 {	
 	reliable if(Role == ROLE_Authority && bNetInitial)
@@ -878,6 +881,18 @@ exec function TeamSay( string Msg )
 	}
 }
 
+exec function Suicide()
+{
+	// Anti spam
+	if(Level.TimeSeconds - SuicideTimeStamp <= SuicideCooldown)
+	{
+		return;
+	}
+
+	SuicideTimeStamp = Level.TimeSeconds;
+    KilledBy( None );
+}
+
 state PlayerSpectating
 {
 	event BeginState()
@@ -1074,4 +1089,5 @@ defaultproperties
      RunePlayerProxyClass=Class'RMod.R_RunePlayerProxy'
      SpectatorCameraClass=Class'RMod.R_Camera_Spectator'
      bMessageBeep=True
+	 SuicideCooldown=5.0
 }
