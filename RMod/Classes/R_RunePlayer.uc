@@ -805,6 +805,79 @@ function ServerSpectate()
 	}
 }
 
+// Send a message to all players.
+exec function Say( string Msg )
+{
+    local Pawn P;
+	local R_GameInfo RGI;
+
+    if ( Level.Game.AllowsBroadcast(self, Len(Msg)) )
+	{
+		RGI = R_GameInfo(Level.Game);
+        for( P=Level.PawnList; P!=None; P=P.nextPawn )
+		{
+			// Filter spectator messages as necessary
+			if(RGI != None
+			&& !RGI.bAllowSpectatorBroadcastMessage
+			&& P.PlayerReplicationInfo != None
+			&& PlayerReplicationInfo.bIsSpectator
+			&& !P.PlayerReplicationInfo.bIsSpectator)
+			{
+				continue;
+			}
+
+            if( P.bIsPlayer || P.IsA('MessagingSpectator') )
+			{
+                P.TeamMessage( PlayerReplicationInfo, Msg, 'Say', true );
+			}
+		}
+	}
+    return;
+}
+
+exec function TeamSay( string Msg )
+{
+    local Pawn P;
+	local R_GameInfo RGI;
+
+    if ( !Level.Game.bTeamGame )
+    {
+        Say(Msg);
+        return;
+    }
+
+    if ( Msg ~= "Help" )
+    {
+        CallForHelp();
+        return;
+    }
+            
+    if ( Level.Game.AllowsBroadcast(self, Len(Msg)) )
+	{
+		RGI = R_GameInfo(Level.Game);
+        for( P=Level.PawnList; P!=None; P=P.nextPawn )
+		{
+			// Filter spectator messages as necessary
+			if(RGI != None
+			&& !RGI.bAllowSpectatorBroadcastMessage
+			&& P.PlayerReplicationInfo != None
+			&& PlayerReplicationInfo.bIsSpectator
+			&& !P.PlayerReplicationInfo.bIsSpectator)
+			{
+				continue;
+			}
+
+            if( P.bIsPlayer && (P.PlayerReplicationInfo.Team == PlayerReplicationInfo.Team) )
+            {
+                if ( P.IsA('PlayerPawn') )
+				{
+                    P.TeamMessage( PlayerReplicationInfo, Msg, 'TeamSay', true );
+				}
+            }
+		}
+	}
+}
+
 state PlayerSpectating
 {
 	event BeginState()

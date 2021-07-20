@@ -9,6 +9,8 @@ var class<R_AUtilities> UtilitiesClass;
 
 var private String OldGamePassword;
 
+var bool bAllowSpectatorBroadcastMessage;
+
 // Used at level start to mark actors which stay during level reset
 var bool bMarkSpawnedActorsAsNativeToLevel;
 
@@ -589,4 +591,5 @@ defaultproperties
      ScoreBoardType=Class'RMod.R_Scoreboard'
      HUDType=Class'RMod.R_RunePlayerHUD'
      GameReplicationInfoClass=Class'RMod.R_GameReplicationInfo'
+	 bAllowSpectatorBroadcastMessage=false
 }
