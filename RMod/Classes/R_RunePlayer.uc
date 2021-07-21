@@ -950,6 +950,7 @@ state PlayerSpectating
         Self.SetCollision(false, false, false);
         Self.bCollideWorld = false;
         Self.DrawType = DT_None;
+		Self.bHidden = true;
         Self.bAlwaysRelevant = false;
         Self.SetPhysics(PHYS_None);
 		Self.PlayerReplicationInfo.bIsSpectator = true;
@@ -971,6 +972,7 @@ state PlayerSpectating
         Self.SetCollision(true, true, true);
         Self.bCollideWorld = Self.Default.bCollideWorld;
         Self.DrawType = Self.Default.DrawType;
+		Self.bHidden = Self.Default.bHidden;
         Self.bAlwaysRelevant = Self.Default.bAlwaysRelevant;
 		Self.PlayerReplicationInfo.bIsSpectator = false;
 
@@ -1174,4 +1176,5 @@ defaultproperties
      SpectatorCameraClass=Class'RMod.R_Camera_Spectator'
      bMessageBeep=True
 	 SuicideCooldown=5.0
+	 bAlwaysRelevant=True
 }
