@@ -1,0 +1,1 @@
+class R_RunePlayerHUDSpectator extends R_RunePlayerHUD;

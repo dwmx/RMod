@@ -8,6 +8,8 @@ var class<Actor> RunePlayerSeveredHeadClass;
 var class<Actor> RunePlayerSeveredLimbClass;
 var byte PolyGroupBodyParts[16];
 
+var class<HUD> HUDTypeSpectator;
+
 var class<R_ACamera> SpectatorCameraClass;
 var R_ACamera Camera;
 
@@ -36,6 +38,7 @@ replication
 		RunePlayerSubClass;
 	
 	reliable if(Role == ROLE_Authority)
+		HUDTypeSpectator,
 		Camera;
 
 	reliable if(Role == ROLE_Authority && RemoteRole == ROLE_AutonomousProxy)
@@ -51,6 +54,53 @@ replication
 	unreliable if(Role == ROLE_Authority && RemoteRole != ROLE_AutonomousProxy)
 		ViewRotPovPitch,
 		ViewRotPovYaw;
+}
+
+event PostBeginPlay()
+{
+	local R_GameInfo RGI;
+
+	Super.PostBeginPlay();
+
+	RGI = R_GameInfo(Level.Game);
+	if(RGI != None)
+	{
+		HUDTypeSpectator = RGI.HUDTypeSpectator;
+	}
+}
+
+event PreRender( canvas Canvas )
+{
+	if (bDebug==1)
+	{
+		if (myDebugHUD   != None)
+			myDebugHUD.PreRender(Canvas);
+		else if ( Viewport(Player) != None )
+			myDebugHUD = spawn(class'Engine.DebugHUD', self);
+	}
+
+	// Ensure normal hud is in use
+	if(myHUD == None || (myHUD != None && HUDType != None && myHUD.Class != HUDType))
+	{
+		if(myHUD == None)
+		{
+			myHUD.Destroy();
+		}
+		myHUD = Spawn(HUDType, Self);
+	}
+
+	if(myHUD != None)
+	{
+		myHUD.PreRender(Canvas);
+	}
+
+	if (bClientSideAlpha)
+	{
+		OldStyle = Style;
+		OldScale = AlphaScale;
+		Style = STY_AlphaBlend;
+		AlphaScale = ClientSideAlphaScale;
+	}
 }
 
 function ServerCauseEvent(Name N)
@@ -896,7 +946,7 @@ exec function Suicide()
 state PlayerSpectating
 {
 	event BeginState()
-    {	
+    {
         Self.SetCollision(false, false, false);
         Self.bCollideWorld = false;
         Self.DrawType = DT_None;
@@ -950,6 +1000,40 @@ state PlayerSpectating
 		}
     }
 	
+	event PreRender( canvas Canvas )
+	{
+		if (bDebug==1)
+		{
+			if (myDebugHUD   != None)
+				myDebugHUD.PreRender(Canvas);
+			else if ( Viewport(Player) != None )
+				myDebugHUD = spawn(class'Engine.DebugHUD', self);
+		}
+	
+		// Ensure spectator hud is in use
+		if(myHUD == None || (myHUD != None && HUDTypeSpectator != None && myHUD.Class != HUDTypeSpectator))
+		{
+			if(myHUD == None)
+			{
+				myHUD.Destroy();
+			}
+			myHUD = Spawn(HUDTypeSpectator, Self);
+		}
+
+		if(myHUD != None)
+		{
+			myHUD.PreRender(Canvas);
+		}
+	
+		if (bClientSideAlpha)
+		{
+			OldStyle = Style;
+			OldScale = AlphaScale;
+			Style = STY_AlphaBlend;
+			AlphaScale = ClientSideAlphaScale;
+		}
+	}
+
 	event PostRender(Canvas C)
 	{
 		Global.PostRender(C);

@@ -9,6 +9,7 @@ var class<R_AUtilities> UtilitiesClass;
 
 var private String OldGamePassword;
 
+var class<HUD> HUDTypeSpectator;
 var bool bAllowSpectatorBroadcastMessage;
 
 // Used at level start to mark actors which stay during level reset
@@ -590,6 +591,7 @@ defaultproperties
      bRModEnabled=True
      ScoreBoardType=Class'RMod.R_Scoreboard'
      HUDType=Class'RMod.R_RunePlayerHUD'
+	 HUDTypeSpectator=Class'RMod.R_RunePlayerHUDSpectator'
      GameReplicationInfoClass=Class'RMod.R_GameReplicationInfo'
 	 bAllowSpectatorBroadcastMessage=false
 }
