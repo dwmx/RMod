@@ -80,6 +80,11 @@ event PreRender( canvas Canvas )
 	}
 
 	// Ensure normal hud is in use
+	if(myHUD != None && R_RunePlayerHUDSpectator(myHUD) != None)
+	{
+		myHUD.Destroy();
+	}
+
 	if(myHUD == None || (myHUD != None && HUDType != None && myHUD.Class != HUDType))
 	{
 		if(myHUD == None)
