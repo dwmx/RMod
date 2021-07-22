@@ -2,6 +2,148 @@ class R_RunePlayerHUD extends RuneHUD;
 
 var class<R_AColors> ColorsClass;
 
+// Extended localized message struct for player name coloring
+struct FHUDLocalizedMessageExtended
+{
+    var Class<LocalMessage> Message;
+    var int Switch;
+    var PlayerReplicationInfo RelatedPRI;
+    var Object OptionalObject;
+    var float EndOfLife;
+    var float LifeTime;
+    var bool bDrawing;
+    var int numLines;
+    var string StringMessage;
+    var color DrawColor;
+    var font StringFont;
+    var float XL, YL;
+    var float YPos;
+
+	// Extension
+	var String PlayerName;
+};
+var FHUDLocalizedMessageExtended MessageQueueExtended[4];
+
+function ClearMessageExtended(out FHUDLocalizedMessageExtended M)
+{
+    M.Message = None;
+    M.Switch = 0;
+    M.RelatedPRI = None;
+    M.OptionalObject = None;
+    M.EndOfLife = 0;
+    M.StringMessage = "";
+    M.DrawColor = WhiteColor;
+    M.XL = 0;
+    M.bDrawing = false;
+
+	// Extension
+	M.PlayerName = "";
+}
+
+function CopyMessageExtended(out FHUDLocalizedMessageExtended M1, FHUDLocalizedMessageExtended M2)
+{
+    M1.Message = M2.Message;
+    M1.Switch = M2.Switch;
+    M1.RelatedPRI = M2.RelatedPRI;
+    M1.OptionalObject = M2.OptionalObject;
+    M1.EndOfLife = M2.EndOfLife;
+    M1.StringMessage = M2.StringMessage;
+    M1.DrawColor = M2.DrawColor;
+    M1.XL = M2.XL;
+    M1.YL = M2.YL;
+    M1.YPos = M2.YPos;
+    M1.bDrawing = M2.bDrawing;
+    M1.LifeTime = M2.LifeTime;
+    M1.numLines = M2.numLines;
+
+	// Extension
+	M1.PlayerName = M2.PlayerName;
+}
+
+// Entry point for localized messages
+simulated function LocalizedMessage( class<LocalMessage> Message, optional int Switch, optional PlayerReplicationInfo RelatedPRI_1, optional PlayerReplicationInfo RelatedPRI_2, optional Object OptionalObject, optional String CriticalString )
+{
+    local int i;
+
+    if ( Message.Static.KillMessage() )
+        return;
+
+    if ( CriticalString == "" )
+        CriticalString = Message.Static.GetString(Switch, RelatedPRI_1, RelatedPRI_2, OptionalObject);
+
+    Message.Static.MangleString(CriticalString, RelatedPRI_1, RelatedPRI_2, OptionalObject);
+
+    if ( Message.Default.bIsUnique )
+    {   // If unique, stomp any identical existing message
+        for (i=0; i<QueueSize; i++)
+        {
+            if (MessageQueueExtended[i].Message != None)
+            {
+                if (MessageQueueExtended[i].Message == Message)
+                {
+                    MessageQueueExtended[i].Message = Message;
+                    MessageQueueExtended[i].Switch = Switch;
+                    MessageQueueExtended[i].RelatedPRI = RelatedPRI_1;
+                    MessageQueueExtended[i].OptionalObject = OptionalObject;
+                    MessageQueueExtended[i].LifeTime = Message.Static.GetLifeTime(CriticalString);
+                    MessageQueueExtended[i].EndOfLife = MessageQueueExtended[i].LifeTime + Level.TimeSeconds;
+                    MessageQueueExtended[i].StringMessage = CriticalString;
+                    MessageQueueExtended[i].DrawColor = Message.Static.GetColor(Switch, RelatedPRI_1, RelatedPRI_2);
+                    MessageQueueExtended[i].XL = 0;
+
+					if(MessageQueueExtended[i].RelatedPRI != None)
+					{
+						MessageQueueExtended[i].PlayerName = MessageQueueExtended[i].RelatedPRI.PlayerName;
+					}
+
+                    return;
+                }
+            }
+        }
+    }
+    for (i=0; i<QueueSize; i++)
+    {
+        if (MessageQueueExtended[i].Message == None)
+        {
+            MessageQueueExtended[i].Message = Message;
+            MessageQueueExtended[i].Switch = Switch;
+            MessageQueueExtended[i].RelatedPRI = RelatedPRI_1;
+            MessageQueueExtended[i].OptionalObject = OptionalObject;
+            MessageQueueExtended[i].LifeTime = Message.Static.GetLifeTime(CriticalString);
+            MessageQueueExtended[i].EndOfLife = MessageQueueExtended[i].LifeTime + Level.TimeSeconds;
+            MessageQueueExtended[i].StringMessage = CriticalString;
+            MessageQueueExtended[i].DrawColor = Message.Static.GetColor(Switch, RelatedPRI_1, RelatedPRI_2);
+            MessageQueueExtended[i].XL = 0;
+
+			if(MessageQueueExtended[i].RelatedPRI != None)
+			{
+				MessageQueueExtended[i].PlayerName = MessageQueueExtended[i].RelatedPRI.PlayerName;
+			}
+
+            return;
+        }
+    }
+
+    // No empty slots.  Force a message out.
+    for (i=0; i<QueueSize-1; i++)
+        CopyMessageExtended(MessageQueueExtended[i],MessageQueueExtended[i+1]);
+
+    MessageQueueExtended[QueueSize-1].Message = Message;
+    MessageQueueExtended[QueueSize-1].Switch = Switch;
+    MessageQueueExtended[QueueSize-1].RelatedPRI = RelatedPRI_1;
+    MessageQueueExtended[QueueSize-1].OptionalObject = OptionalObject;
+    MessageQueueExtended[QueueSize-1].LifeTime = Message.Static.GetLifeTime(CriticalString);
+    MessageQueueExtended[QueueSize-1].EndOfLife = MessageQueueExtended[QueueSize-1].LifeTime + Level.TimeSeconds;
+    MessageQueueExtended[QueueSize-1].StringMessage = CriticalString;
+    MessageQueueExtended[QueueSize-1].DrawColor = Message.Static.GetColor(Switch, RelatedPRI_1, RelatedPRI_2);              
+    MessageQueueExtended[QueueSize-1].XL = 0;
+
+	if(MessageQueueExtended[i].RelatedPRI != None)
+	{
+		MessageQueueExtended[i].PlayerName = MessageQueueExtended[i].RelatedPRI.PlayerName;
+	}
+}
+
 // Draw messages in the RuneMessageQueue
 simulated function DrawMessages(canvas Canvas)
 {
@@ -13,11 +155,11 @@ simulated function DrawMessages(canvas Canvas)
 
 	for (i=0; i<QueueSize; i++)
 	{
-		if ( MessageQueue[i].Message != None )
+		if ( MessageQueueExtended[i].Message != None )
 		{
-			if (MessageQueue[i].Message.Default.bFadeMessage && Level.bHighDetailMode)
+			if (MessageQueueExtended[i].Message.Default.bFadeMessage && Level.bHighDetailMode)
 			{
-				FadeValue = (MessageQueue[i].EndOfLife - Level.TimeSeconds);
+				FadeValue = (MessageQueueExtended[i].EndOfLife - Level.TimeSeconds);
 				if (FadeValue <= 0.0)
 					continue;
 			}
@@ -30,134 +172,134 @@ simulated function DrawMessages(canvas Canvas)
 			else
 				Canvas.Font = Canvas.BigFont;
 
-			if (MessageQueue[i].Message.Default.bCenter)
+			if (MessageQueueExtended[i].Message.Default.bCenter)
 				Canvas.bCenter = true;
 			Canvas.StrLen("TEST", XL, YL);
-			if ( bResChanged || MessageQueue[i].XL == 0 )
+			if ( bResChanged || MessageQueueExtended[i].XL == 0 )
 			{	// Determine dimensions of text
-				if ( MessageQueue[i].Message.Default.bComplexString )
-					Canvas.StrLen(MessageQueue[i].Message.Static.AssembleString( 
+				if ( MessageQueueExtended[i].Message.Default.bComplexString )
+					Canvas.StrLen(MessageQueueExtended[i].Message.Static.AssembleString( 
 											self,
-											MessageQueue[i].Switch,
-											MessageQueue[i].RelatedPRI,
-											MessageQueue[i].StringMessage), 
-								   MessageQueue[i].XL, MessageQueue[i].YL);
+											MessageQueueExtended[i].Switch,
+											MessageQueueExtended[i].RelatedPRI,
+											MessageQueueExtended[i].StringMessage), 
+								   MessageQueueExtended[i].XL, MessageQueueExtended[i].YL);
 				else
 				{
-					if(MessageQueue[i].Message == class'RMod.R_Message_Say')
+					if(MessageQueueExtended[i].Message == class'RMod.R_Message_Say')
 					{
 						Canvas.StrLen(
-							MessageQueue[i].RelatedPRI.PlayerName $ ":" @ MessageQueue[i].StringMessage,
-							MessageQueue[i].XL, MessageQueue[i].YL);
+							MessageQueueExtended[i].PlayerName $ ":" @ MessageQueueExtended[i].StringMessage,
+							MessageQueueExtended[i].XL, MessageQueueExtended[i].YL);
 					}
 					else
 					{
-						Canvas.StrLen(MessageQueue[i].StringMessage, MessageQueue[i].XL, MessageQueue[i].YL);
+						Canvas.StrLen(MessageQueueExtended[i].StringMessage, MessageQueueExtended[i].XL, MessageQueueExtended[i].YL);
 					}
 				}
-				MessageQueue[i].numLines = Max(1, MessageQueue[i].YL / YL);
+				MessageQueueExtended[i].numLines = Max(1, MessageQueueExtended[i].YL / YL);
 			}
 
 			//// Set the position
-			//MessageQueue[i].YPos = MessageQueue[i].Message.Static.GetOffset(MessageQueue[i].Switch, MessageQueue[i].YL, Canvas.ClipY);
-			//if (MessageQueue[i].YPos == 0)
+			//MessageQueueExtended[i].YPos = MessageQueueExtended[i].Message.Static.GetOffset(MessageQueueExtended[i].Switch, MessageQueueExtended[i].YL, Canvas.ClipY);
+			//if (MessageQueueExtended[i].YPos == 0)
 			//{
 			//	Canvas.SetPos(0, 2 + YL * YPos);
-			//	YPos += MessageQueue[i].numLines;
+			//	YPos += MessageQueueExtended[i].numLines;
 			//}
 			//else
 			//{
-			//	Canvas.SetPos(0, MessageQueue[i].YPos);
+			//	Canvas.SetPos(0, MessageQueueExtended[i].YPos);
 			//}
 
 			// Draw the text
-			if(MessageQueue[i].Message == class'RMod.R_Message_Say')
+			if(MessageQueueExtended[i].Message == class'RMod.R_Message_Say')
 			{
 				// Set the position
-				MessageQueue[i].YPos = MessageQueue[i].Message.Static.GetOffset(MessageQueue[i].Switch, MessageQueue[i].YL, Canvas.ClipY);
-				if (MessageQueue[i].YPos == 0)
+				MessageQueueExtended[i].YPos = MessageQueueExtended[i].Message.Static.GetOffset(MessageQueueExtended[i].Switch, MessageQueueExtended[i].YL, Canvas.ClipY);
+				if (MessageQueueExtended[i].YPos == 0)
 				{
 					Canvas.SetPos(0, 2 + YL * YPos);
-					YPos += MessageQueue[i].numLines;
+					YPos += MessageQueueExtended[i].numLines;
 				}
 				else
 				{
-					Canvas.SetPos(0, MessageQueue[i].YPos);
+					Canvas.SetPos(0, MessageQueueExtended[i].YPos);
 				}
 				
 				// Draw Player name
-				if (MessageQueue[i].Message.Default.bFadeMessage && Level.bHighDetailMode)
+				if (MessageQueueExtended[i].Message.Default.bFadeMessage && Level.bHighDetailMode)
 				{
 					Canvas.Style = ERenderStyle.STY_Translucent;
-					Canvas.DrawColor = MessageQueue[i].DrawColor * (FadeValue/MessageQueue[i].LifeTime);
+					Canvas.DrawColor = MessageQueueExtended[i].DrawColor * (FadeValue/MessageQueueExtended[i].LifeTime);
 				}
 				else
 				{
-					Canvas.DrawColor = MessageQueue[i].Message.Default.DrawColor;
+					Canvas.DrawColor = MessageQueueExtended[i].Message.Default.DrawColor;
 				}
-				Canvas.StrLen(MessageQueue[i].RelatedPRI.PlayerName $ ": ", XL, YL);
-				SavedX = -MessageQueue[i].XL * 0.5;
+				Canvas.StrLen(MessageQueueExtended[i].PlayerName $ ": ", XL, YL);
+				SavedX = -MessageQueueExtended[i].XL * 0.5;
 				SavedY = Canvas.CurY;
 				Canvas.SetPos(SavedX, SavedY);
-				Canvas.DrawText(MessageQueue[i].RelatedPRI.PlayerName $ ": ", False);
+				Canvas.DrawText(MessageQueueExtended[i].PlayerName $ ": ", False);
 				
 				// Draw player message
-				if (MessageQueue[i].Message.Default.bFadeMessage && Level.bHighDetailMode)
+				if (MessageQueueExtended[i].Message.Default.bFadeMessage && Level.bHighDetailMode)
 				{
 					Canvas.Style = ERenderStyle.STY_Translucent;
-					Canvas.DrawColor = ColorsClass.Static.ColorWhite() * (FadeValue/MessageQueue[i].LifeTime);
+					Canvas.DrawColor = ColorsClass.Static.ColorWhite() * (FadeValue/MessageQueueExtended[i].LifeTime);
 				}
 				else
 				{
 					Canvas.DrawColor = ColorsClass.Static.ColorWhite();
 				}
-				Canvas.StrLen(MessageQueue[i].StringMessage, XL, YL);
-				SavedX = MessageQueue[i].XL * 0.5;
+				Canvas.StrLen(MessageQueueExtended[i].StringMessage, XL, YL);
+				SavedX = MessageQueueExtended[i].XL * 0.5;
 				Canvas.SetPos(SavedX, SavedY);
-				Canvas.DrawText(MessageQueue[i].StringMessage, False);
+				Canvas.DrawText(MessageQueueExtended[i].StringMessage, False);
 			}
 			else
 			{
 				// Set the position
-				MessageQueue[i].YPos = MessageQueue[i].Message.Static.GetOffset(MessageQueue[i].Switch, MessageQueue[i].YL, Canvas.ClipY);
-				if (MessageQueue[i].YPos == 0)
+				MessageQueueExtended[i].YPos = MessageQueueExtended[i].Message.Static.GetOffset(MessageQueueExtended[i].Switch, MessageQueueExtended[i].YL, Canvas.ClipY);
+				if (MessageQueueExtended[i].YPos == 0)
 				{
 					Canvas.SetPos(0, 2 + YL * YPos);
-					YPos += MessageQueue[i].numLines;
+					YPos += MessageQueueExtended[i].numLines;
 				}
 				else
 				{
-					Canvas.SetPos(0, MessageQueue[i].YPos);
+					Canvas.SetPos(0, MessageQueueExtended[i].YPos);
 				}
 				
 				// Draw the message
-				if ( MessageQueue[i].Message.Default.bComplexString )
+				if ( MessageQueueExtended[i].Message.Default.bComplexString )
 				{
 					// Use this for string messages with multiple colors.
-					MessageQueue[i].Message.Static.RenderComplexMessage( 
+					MessageQueueExtended[i].Message.Static.RenderComplexMessage( 
 						Canvas,
-						MessageQueue[i].XL,  YL,
-						MessageQueue[i].StringMessage,
-						MessageQueue[i].Switch,
-						MessageQueue[i].RelatedPRI,
+						MessageQueueExtended[i].XL,  YL,
+						MessageQueueExtended[i].StringMessage,
+						MessageQueueExtended[i].Switch,
+						MessageQueueExtended[i].RelatedPRI,
 						None,
-						MessageQueue[i].OptionalObject
+						MessageQueueExtended[i].OptionalObject
 						);
 				} 
 				else
 				{
-					if (MessageQueue[i].Message.Default.bFadeMessage && Level.bHighDetailMode)
+					if (MessageQueueExtended[i].Message.Default.bFadeMessage && Level.bHighDetailMode)
 					{
 						Canvas.Style = ERenderStyle.STY_Translucent;
-						Canvas.DrawColor = MessageQueue[i].DrawColor * (FadeValue/MessageQueue[i].LifeTime);
+						Canvas.DrawColor = MessageQueueExtended[i].DrawColor * (FadeValue/MessageQueueExtended[i].LifeTime);
 					}
 					else
 					{
-						Canvas.DrawColor = MessageQueue[i].Message.Default.DrawColor;
+						Canvas.DrawColor = MessageQueueExtended[i].Message.Default.DrawColor;
 					}
 					
-					Canvas.DrawText(MessageQueue[i].StringMessage, False);
-//					Canvas.DrawText(YPos@MessageQueue[i].StringMessage @ "NL="$MessageQueue[i].numLines @ "YL="$YL, False);
+					Canvas.DrawText(MessageQueueExtended[i].StringMessage, False);
+//					Canvas.DrawText(YPos@MessageQueueExtended[i].StringMessage @ "NL="$MessageQueueExtended[i].numLines @ "YL="$YL, False);
 				}
 			}
 
