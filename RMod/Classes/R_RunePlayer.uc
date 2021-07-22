@@ -175,6 +175,12 @@ function DiscardInventory()
 	Self.StowSpot[2] = None;
 }
 
+function ChangeName( coerce string S )
+{
+    // Last arg = true causes GameInfo to broadcast a message
+	Level.Game.ChangeName( self, S, true );
+}
+
 event PreBeginPlay()
 {
 	Enable('Tick');
