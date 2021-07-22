@@ -215,6 +215,8 @@ simulated function DrawMessages(canvas Canvas)
 			// Draw the text
 			if(MessageQueueExtended[i].Message == class'RMod.R_Message_Say')
 			{
+				Canvas.bCenter = false;
+
 				// Set the position
 				MessageQueueExtended[i].YPos = MessageQueueExtended[i].Message.Static.GetOffset(MessageQueueExtended[i].Switch, MessageQueueExtended[i].YL, Canvas.ClipY);
 				if (MessageQueueExtended[i].YPos == 0)
@@ -238,7 +240,9 @@ simulated function DrawMessages(canvas Canvas)
 					Canvas.DrawColor = MessageQueueExtended[i].Message.Default.DrawColor;
 				}
 				Canvas.StrLen(MessageQueueExtended[i].PlayerName $ ": ", XL, YL);
-				SavedX = -MessageQueueExtended[i].XL * 0.5;
+				//SavedX = -MessageQueueExtended[i].XL * 0.5;
+				//SavedX = -MessageQueueExtended[i].XL * 0.5;
+				SavedX = Canvas.ClipX * 0.5 - MessageQueueExtended[i].XL * 0.5;
 				SavedY = Canvas.CurY;
 				Canvas.SetPos(SavedX, SavedY);
 				Canvas.DrawText(MessageQueueExtended[i].PlayerName $ ": ", False);
@@ -253,8 +257,9 @@ simulated function DrawMessages(canvas Canvas)
 				{
 					Canvas.DrawColor = ColorsClass.Static.ColorWhite();
 				}
-				Canvas.StrLen(MessageQueueExtended[i].StringMessage, XL, YL);
-				SavedX = MessageQueueExtended[i].XL * 0.5;
+				//Canvas.StrLen(MessageQueueExtended[i].StringMessage, XL, YL);
+				//SavedX = MessageQueueExtended[i].XL * 0.5;
+				SavedX += XL;
 				Canvas.SetPos(SavedX, SavedY);
 				Canvas.DrawText(MessageQueueExtended[i].StringMessage, False);
 			}
