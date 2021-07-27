@@ -42,7 +42,8 @@ replication
 		Camera;
 
 	reliable if(Role == ROLE_Authority && RemoteRole == ROLE_AutonomousProxy)
-		ClientReceiveUpdatedGamePassword;
+		ClientReceiveUpdatedGamePassword,
+		ClientPreTeleport;
 
 	reliable if(Role < ROLE_Authority)
 		ServerResetLevel,
@@ -66,6 +67,50 @@ event PostBeginPlay()
 	if(RGI != None)
 	{
 		HUDTypeSpectator = RGI.HUDTypeSpectator;
+	}
+}
+
+event bool PreTeleport(Teleporter InTeleporter)
+{
+	if(Role == ROLE_Authority)
+	{
+		ClientPreTeleport(InTeleporter);
+	}
+	DoPreTeleport(InTeleporter);
+	return true;
+}
+
+simulated function ClientPreTeleport(Teleporter InTeleporter)
+{
+	DoPreTeleport(InTeleporter);
+}
+
+simulated function DoPreTeleport(Teleporter InTeleporter)
+{
+	local Rotator NewRotation;
+	local Vector NewLocation;
+	local Rotator NewViewRotation;
+
+	// Client-side prediction
+	if(Role < ROLE_Authority)
+	{
+		NewRotation = InTeleporter.Rotation;
+		NewRotation.Pitch = 0;
+		NewRotation.Roll = 0;
+
+		NewLocation = InTeleporter.Location;
+
+		OldCameraStart = (OldCameraStart - Location) + NewLocation;
+		SavedCameraLoc = (SavedCameraLoc - Location) + NewLocation;
+		
+		NewViewRotation = NewRotation;
+		NewViewRotation.Pitch = ViewRotation.Pitch;
+
+		ViewLocation = SavedCameraLoc;
+		ViewRotation = NewViewRotation;
+
+		SetLocation(NewLocation);
+		SetRotation(NewRotation);
 	}
 }
 
