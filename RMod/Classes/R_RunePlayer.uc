@@ -72,6 +72,11 @@ event PostBeginPlay()
 
 event bool PreTeleport(Teleporter InTeleporter)
 {
+	if(!Super.PreTeleport(InTeleporter))
+	{
+		return false;
+	}
+
 	if(Role == ROLE_Authority)
 	{
 		ClientPreTeleport(InTeleporter);
