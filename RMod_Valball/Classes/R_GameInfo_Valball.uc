@@ -1,7 +1,6 @@
 class R_GameInfo_Valball extends R_GameInfo_DM;
 
 var float BallSpawnTimeStampSeconds; // Time stamp when the last ball spawn happened
-var float BallSpawnGraceTimeSeconds; // How long it takes for the ball to spawn
 var bool bBallSpawned;
 
 function Vector SelectBallSpawnLocation()
@@ -29,7 +28,6 @@ function bool SpawnBall()
 
     SpawnLocation = SelectBallSpawnLocation();
     SpawnedBall = Spawn(Class'RMod_Valball.R_Ball',,,SpawnLocation);
-    Log("Ball spawned at" @ SpawnLocation @ SpawnedBall);
     return true;
 }
 
@@ -46,20 +44,20 @@ event Tick(float DeltaSeconds)
     local R_Ball Ball;
     local R_Runeplayer Holder;
     local R_PlayerReplicationInfo_Valball PRI;
+    local bool bBallNeedsSpawn;
 
     Super.Tick(DeltaSeconds);
 
-    // Spawn ball if necessary
-    if(!bBallSpawned)
+    // Respawn ball if necessary
+    bBallNeedsSpawn = true;
+    foreach AllActors(Class'RMod_Valball.R_Ball', Ball)
     {
-        if(Level.TimeSeconds - BallSpawnTimeStampSeconds > BallSpawnGraceTimeSeconds)
-        {
-            bBallSpawned = SpawnBall();
-            if(bBallSpawned)
-            {
-                BallSpawnTimeStampSeconds = Level.TimeSeconds;
-            }
-        }
+        bBallNeedsSpawn = false;
+        break;
+    }
+    if(bBallNeedsSpawn)
+    {
+        SpawnBall();
     }
 
     // Tick hold time for players
@@ -83,6 +81,5 @@ defaultproperties
     HUDType=Class'RMod_Valball.R_RunePlayerHUD_Valball'
     ScoreBoardType=Class'RMod_Valball.R_Scoreboard_Valball'
     PlayerReplicationInfoClass=Class'RMod_Valball.R_PlayerReplicationInfo_Valball'
-    BallSpawnGraceTimeSeconds=15.0
     bBallSpawned=False
 }
