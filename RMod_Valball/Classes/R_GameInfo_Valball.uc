@@ -79,7 +79,9 @@ event Tick(float DeltaSeconds)
 
 defaultproperties
 {
+    RunePlayerClass=Class'RMod_Valball.R_RunePlayer_Valball'
     HUDType=Class'RMod_Valball.R_RunePlayerHUD_Valball'
+    ScoreBoardType=Class'RMod_Valball.R_Scoreboard_Valball'
     PlayerReplicationInfoClass=Class'RMod_Valball.R_PlayerReplicationInfo_Valball'
     BallSpawnGraceTimeSeconds=15.0
     bBallSpawned=False
