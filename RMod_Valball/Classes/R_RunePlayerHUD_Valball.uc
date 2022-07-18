@@ -59,6 +59,42 @@ simulated function DrawBallHUD(Canvas C, R_Ball Ball, String StringText)
     C.Font = SavedFont;
 }
 
+simulated function DrawRing(Canvas C)
+{
+    local Vector RingOrigin;
+    local float RingRadius;
+    local int RingSegments;
+    local int i;
+    local float t;
+
+    local Vector P0, P1;
+
+    RingRadius = 512.0;
+    RingSegments = 64;
+
+    RingOrigin.X = 0.0;
+    RingOrigin.Y = 0.0;
+    RingOrigin.Z = 0.0;
+
+    P0.X = 1.0;
+    P0.Y = 0.0;
+    P0.Z = 0.0;
+    P0 = P0 * RingRadius;
+
+    for(i = 1; i <= RingSegments; ++i)
+    {
+        t = float(i) / float(RingSegments);
+        t = t * 2.0 * Pi;
+        P1.X = Cos(t) * RingRadius;
+        P1.Y = Sin(t) * RingRadius;
+        P1.Z = 0.0;
+
+        C.DrawLine3D(P0, P1, 1.0,1.0,1.0);
+
+        P0 = P1;
+    }
+}
+
 simulated event PostRender(Canvas C)
 {
     local R_Ball Ball;
@@ -85,4 +121,6 @@ simulated event PostRender(Canvas C)
         }
         DrawBallHUD(C, Ball, StringText);
     }
+
+    DrawRing(C);
 }
