@@ -1,6 +1,7 @@
 class R_Ball extends Head;
 
 var R_BallState BallState;
+var R_BallEffects BallEffects;
 
 replication
 {
@@ -8,11 +9,21 @@ replication
 		BallState;
 }
 
-event PostBeginPlay()
+simulated event PostBeginPlay()
 {
 	Super.PostBeginPlay();
 
-	BallState = Spawn(Class'RMod_Valball.R_BallState', self);
+	// Ball state child actor
+	if(Role == ROLE_Authority)
+	{
+		BallState = Spawn(Class'RMod_Valball.R_BallState', self);
+	}
+
+	// Client-side ball effects actor
+	if(Role < ROLE_Authority || Level.NetMode == NM_StandAlone)
+	{
+		BallEffects = Spawn(Class'RMod_Valball.R_BallEffects', Self);
+	}
 }
 
 event Destroyed()
@@ -20,6 +31,11 @@ event Destroyed()
 	if(BallState != None)
 	{
 		BallState.Destroy();
+	}
+
+	if(BallEffects != None)
+	{
+		BallEffects.Destroy();
 	}
 }
 
@@ -31,6 +47,11 @@ simulated function Name GetCurrentBallStateName()
 	}
 
 	return BallState.CurrentBallState;
+}
+
+simulated function float GetBallPreSpawnTimeRemainingSeconds()
+{
+	return 2.0;
 }
 
 auto state Pickup
@@ -45,10 +66,27 @@ auto state Pickup
 	}
 }
 
+state Active
+{
+	event BeginState()
+	{
+		Super.BeginState();
+
+		if(Pawn(Owner) != None)
+		{
+			BroadcastMessage(Pawn(Owner).PlayerReplicationInfo.PlayerName @ "has the ball");
+		}
+	}
+}
+
 defaultproperties
 {
 	bAlwaysRelevant=True
 	bExpireWhenTossed=False
 	bNeverExpire=True
 	LifeSpan=0
+	Damage=1000
+	DrawScale=3.0
+	CollisionHeight=32.0
+	CollisionRadius=32.0
 }

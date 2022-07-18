@@ -24,6 +24,172 @@ struct FHUDLocalizedMessageExtended
 };
 var FHUDLocalizedMessageExtended MessageQueueExtended[4];
 
+// For drawing players through walls
+struct FSavedActorDrawData
+{
+    var Vector          DesiredColorAdjust;
+    var Vector          ColorAdjust;
+    var bool            bUnlit;
+    var bool            bHidden;
+    var float           AlphaScale;
+    var ERenderStyle    Style;
+    var float           DrawScale;
+    var byte            Fatness;
+    var byte            DesiredFatness;
+    var Texture         SkelGroupSkins[16];
+};
+
+//==============================================================================
+//  CheckActorObscured
+//  Returns true if Actor A is visually obscured.
+simulated function bool CheckActorObscured(Actor A)
+{
+    local Vector TraceStart;
+    local Vector TraceEnd;
+
+    TraceStart  = Pawn(Owner).ViewLocation;
+    TraceEnd    = A.Location;
+
+    if(FastTrace(TraceEnd, TraceStart))
+    {
+        return false;
+    }    
+    return true;
+}
+
+//==============================================================================
+//  GetActorTransformedDrawPointAndScale
+//
+//  Get the point directly above a pawn's head, used for drawing things like
+//  team indicator and chat bubble.
+simulated function GetActorTransformedDrawPointAndScale(
+    Canvas C, Actor A,
+    out float PosX,
+    out float PosY,
+    out float Scale)
+{
+    local Vector    WorldLocation;
+    local float     ViewDistance;
+    local int       CPosX, CPosY;
+
+    WorldLocation = A.Location;
+    WorldLocation.Z += A.CollisionHeight;
+    WorldLocation.Z += 16.0;
+
+    C.TransformPoint(WorldLocation, CPosX, CPosY);
+    PosX = float(CPosX);
+    PosY = float(CPosY);
+
+    ViewDistance = VSize(WorldLocation - Pawn(Owner).ViewLocation);
+    Scale = 256.0 / ViewDistance;
+    Scale = FClamp(Scale, 0.3, 1.0);
+}
+
+//==============================================================================
+simulated function private SaveActorDrawData(
+    Actor A, out FSavedActorDrawData DrawData)
+{
+    local int i;
+    DrawData.DesiredColorAdjust    = A.DesiredColorAdjust;
+    DrawData.ColorAdjust           = A.ColorAdjust;
+    DrawData.bUnlit                = A.bUnlit;
+    DrawData.bHidden               = A.bHidden;
+    DrawData.AlphaScale            = A.AlphaScale;
+    DrawData.Style                 = A.Style;
+    DrawData.DrawScale             = A.DrawScale;
+    DrawData.DesiredFatness        = A.DesiredFatness;
+    DrawData.Fatness               = A.Fatness;
+    for(i = 0; i < 16; ++i)
+    {
+        DrawData.SkelGroupSkins[i] = A.SkelGroupSkins[i];
+    }
+}
+
+simulated function private RestoreActorDrawData(
+    Actor A, out FSavedActorDrawData DrawData)
+{
+    local int i;
+    A.DesiredColorAdjust    = DrawData.DesiredColorAdjust;
+    A.ColorAdjust           = DrawData.ColorAdjust;
+    A.bUnlit                = DrawData.bUnlit;
+    A.bHidden               = DrawData.bHidden;
+    A.AlphaScale            = DrawData.AlphaScale;
+    A.Style                 = DrawData.Style;
+    A.DrawScale             = DrawData.DrawScale;
+    A.DesiredFatness        = DrawData.DesiredFatness;
+    A.Fatness               = DrawData.Fatness;
+    for(i = 0; i < 16; ++i)
+    {
+        A.SkelGroupSkins[i] = DrawData.SkelGroupSkins[i];
+    }
+}
+
+//==============================================================================
+//  DrawActorSilhouette
+//  Draw a colored silhouette in place of the Actor.
+simulated function DrawActorSilhouette(
+    Canvas C, Actor A, Color DrawColor, bool bClearZ, optional byte Fatness)
+{
+    local Vector                VectorColor;
+    local Actor                 ActorArray[3];
+    local FSavedActorDrawData   ActorArraySaved[3];
+    local int                   ActorCount;
+    local int                   i, j;
+
+    if(Fatness == 0)
+    {
+        Fatness = A.Fatness;
+    }
+
+    VectorColor.X = DrawColor.R;
+    VectorColor.Y = DrawColor.G;
+    VectorColor.Z = DrawColor.B;
+
+    ActorCount = 0;
+    ActorArray[ActorCount++] = A;
+    if(Pawn(A) != None)
+    {
+        if(Pawn(A).Weapon != None)
+        {
+            ActorArray[ActorCount++] = Pawn(A).Weapon;
+        }
+        if(Pawn(A).Shield != None)
+        {
+            ActorArray[ActorCount++] = Pawn(A).Shield;
+        }
+    }
+
+    // Saved Actor properties and apply silhouette properties
+    // TODO: Perform this for stowed but visible inventories as well
+    for(i = 0; i < ActorCount; ++i)
+    {
+        SaveActorDrawData(ActorArray[i], ActorArraySaved[i]);
+        //for(j = 0; j < 16; ++j)
+        //{
+        //    ActorArray[i].SkelGroupSkins[j] = Texture'RMenu.icons.stonemenub';
+        //}
+        
+        ActorArray[i].DesiredColorAdjust    = VectorColor;
+        ActorArray[i].ColorAdjust           = VectorColor;
+        ActorArray[i].bUnlit                = true;
+        ActorArray[i].bHidden               = false;
+        ActorArray[i].AlphaScale            = 1.0;
+        ActorArray[i].Style                 = STY_AlphaBlend;
+        ActorArray[i].DesiredFatness        = Fatness;
+        ActorArray[i].Fatness               = Fatness;
+    }
+
+    // Draw only the recieved Actor. If Actor is a Pawn, its Weapon and Shield 
+    // will also be drawn.
+    C.DrawActor(A, false, bClearZ);
+
+    // Restore Actor properties
+    for(i = 0; i < ActorCount; ++i)
+    {
+        RestoreActorDrawData(ActorArray[i], ActorArraySaved[i]);
+    }
+}
+
 function ClearMessageExtended(out FHUDLocalizedMessageExtended M)
 {
     M.Message = None;

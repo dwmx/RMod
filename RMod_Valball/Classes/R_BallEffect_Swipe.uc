@@ -42,5 +42,5 @@ simulated function SwipeSystemTick(float DeltaTime)
 defaultproperties
 {
      ParticleTexture(0)=Texture'RuneFX.swipe_yellow'
-     SwipeSpeed=2.000000
+     SwipeSpeed=2.0
 }
