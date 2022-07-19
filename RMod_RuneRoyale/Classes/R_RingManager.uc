@@ -20,7 +20,7 @@ event PostBeginPlay()
     RingOrigin_Active.X = 0.0;
     RingOrigin_Active.Y = 0.0;
     RingOrigin_Active.Z = 0.0;
-    RingRadius_Active = 1024.0;
+    RingRadius_Active = 2048.0;
 
     RingOrigin_Current = RingOrigin_Active;
     RingOrigin_Staged = RingOrigin_Active;
@@ -153,7 +153,7 @@ state RingStaged
 
     function StageNextRing()
     {
-        CalcNewRing(RingOrigin_Current, RingRadius_Current, 0.75, RingOrigin_Staged, RingRadius_Staged);
+        CalcNewRing(RingOrigin_Current, RingRadius_Current, 0.5, RingOrigin_Staged, RingRadius_Staged);
     }
 }
 
@@ -182,6 +182,29 @@ state RingInterpolating
             RingOrigin_Staged, RingRadius_Staged,
             t,
             RingOrigin_Active, RingRadius_Active);
+    }
+}
+
+function bool CheckIsActorInsideRing(Actor A)
+{
+    local Vector RingOrigin2D;
+    local Vector ActorLocation2D;
+    local Vector Delta;
+
+    RingOrigin2D = RingOrigin_Active;
+    RingOrigin2D.Z = 0.0;
+
+    ActorLocation2D = A.Location;
+    ActorLocation2D.Z = 0.0;
+
+    Delta = ActorLocation2D - RingOrigin2D;
+    if(VSize(Delta) <= RingRadius_Active)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
     }
 }
 

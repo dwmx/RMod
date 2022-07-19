@@ -9,10 +9,10 @@ simulated function RenderRing(Canvas C, Vector RingOrigin, float RingRadius, Col
 
     RingSegments = 64;
 
-    P0.X = 1.0;
-    P0.Y = 0.0;
-    P0.Z = 32.0;
-    P0 = RingOrigin + (P0 * RingRadius);
+    P0.X = Cos(0.0) * RingRadius;
+    P0.Y = Sin(0.0) * RingRadius;
+    P0.Z = 0.0;
+    P0 = RingOrigin + P0;
 
     for(i = 1; i <= RingSegments; ++i)
     {
@@ -20,7 +20,8 @@ simulated function RenderRing(Canvas C, Vector RingOrigin, float RingRadius, Col
         t = t * 2.0 * Pi;
         P1.X = Cos(t) * RingRadius;
         P1.Y = Sin(t) * RingRadius;
-        P1.Z = 32.0;
+        P1.Z = 0.0;
+        P1 = RingOrigin + P1;
 
         C.DrawLine3D(P0, P1, 1.0,1.0,1.0);
 
@@ -83,7 +84,7 @@ simulated function StateBasedRingRender_RingStaged(Canvas C)
         RingColor_Staged.B = 0;
 
         RenderRing(C, GRI.RingOrigin_Current, GRI.RingRadius_Current, RingColor_Current);
-        RenderRing(C, GRI.RingOrigin_Staged, GRI.RingRadius_Staged, RingColor_Staged);
+        //RenderRing(C, GRI.RingOrigin_Staged, GRI.RingRadius_Staged, RingColor_Staged);
     }
 }
 
