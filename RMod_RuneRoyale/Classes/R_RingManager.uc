@@ -16,17 +16,81 @@ var float RingRadius_Active;
 
 event PostBeginPlay()
 {
+    local Vector InitialRingOrigin;
+    local float InitialRingRadius;
+
+    GetInitialRingProperties(InitialRingOrigin, InitialRingRadius);
+
     // Initial ring parameters
-    RingOrigin_Active.X = 0.0;
-    RingOrigin_Active.Y = 0.0;
-    RingOrigin_Active.Z = 0.0;
-    RingRadius_Active = 2048.0;
+    RingOrigin_Active = InitialRingOrigin;
+    RingRadius_Active = InitialRingRadius;
 
     RingOrigin_Current = RingOrigin_Active;
     RingOrigin_Staged = RingOrigin_Active;
 
     RingRadius_Current = RingRadius_Active;
     RingRadius_Staged = RingRadius_Active;
+}
+
+//==============================================================================
+// GetInitialRingProperties
+// Build the initial ring radius and origin based on a bounding box surrounding
+// all available player starts
+function GetInitialRingProperties(out Vector OutRingOrigin, out float OutRingRadius)
+{
+    local Vector AABBMin, AABBMax, AABBMid;
+    local PlayerStart PS;
+    local int NumSamples;
+    local Vector CurrentLocation;
+    local float WorkingRadius, CurrentDistance;
+
+    AABBMin.X = 10000000.0;
+    AABBMin.Y = 10000000.0;
+    AABBMin.Z = 0.0;
+    AABBMax.X = -10000000.0;
+    AABBMax.Y = -10000000.0;
+    AABBMax.Z = 0.0;
+
+    // Build AABB around all player starts
+    NumSamples = 0;
+    foreach AllActors(Class'Engine.PlayerStart', PS)
+    {
+        if(PS.Location.X < AABBMin.X)    AABBMin.X = PS.Location.X;
+        if(PS.Location.Y < AABBMin.Y)    AABBMin.Y = PS.Location.Y;
+        if(PS.Location.X > AABBMax.X)    AABBMax.X = PS.Location.X;
+        if(PS.Location.Y > AABBMax.Y)    AABBMax.Y = PS.Location.Y;
+        ++NumSamples;
+    }
+
+    // In some event where there are no player starts, return a default ring
+    if(NumSamples == 0)
+    {
+        OutRingOrigin.X = 0.0;
+        OutRingOrigin.Y = 0.0;
+        OutRingOrigin.Z = 0.0;
+        OutRingRadius = 4096.0;
+    }
+
+    // Mid point of the AABB
+    AABBMid = AABBMin + ((AABBMax - AABBMin) * 0.5);
+    AABBMid.Z = 0.0;
+
+    // Starting radius will be based on the point furthest from the mid point
+    WorkingRadius = 0.0;
+    foreach AllActors(Class'Engine.PlayerStart', PS)
+    {
+        CurrentLocation = PS.Location;
+        CurrentLocation.Z = 0.0;
+        CurrentDistance = VSize(CurrentLocation - AABBMid);
+        if(CurrentDistance > WorkingRadius)
+        {
+            WorkingRadius = CurrentDistance;
+        }
+    }
+
+    // Return
+    OutRingOrigin = AABBMid;
+    OutRingRadius = WorkingRadius * 1.25; // 25% larger than farthest point
 }
 
 function ReplicateRingStateName()
@@ -62,6 +126,19 @@ function ReplicateRingStaged()
     {
         GRI.RingOrigin_Staged = RingOrigin_Staged;
         GRI.RingRadius_Staged = RingRadius_Staged;
+        GRI.RingInterpolationTimeSeconds = RingInterpolationTimeSeconds;
+    }
+}
+
+function ReplicateRingStateTimers()
+{
+    local R_GameReplicationInfo_RuneRoyale GRI;
+
+    GRI = R_GameReplicationInfo_RuneRoyale(Level.Game.GameReplicationInfo);
+    if(GRI != None)
+    {
+        GRI.RingIdleTimeSeconds = RingIdleTimeSeconds;
+        GRI.RingStagedTimeSeconds = RingStagedTimeSeconds;
         GRI.RingInterpolationTimeSeconds = RingInterpolationTimeSeconds;
     }
 }
@@ -113,6 +190,7 @@ auto state RingIdle
         ReplicateRingStateName();
         FinalizeCurrentRing();
         ReplicateRingCurrent();
+        ReplicateRingStateTimers();
     }
 
     event Tick(float DeltaSeconds)
@@ -141,6 +219,7 @@ state RingStaged
         ReplicateRingStateName();
         StageNextRing();
         ReplicateRingStaged();
+        ReplicateRingStateTimers();
     }
 
     event Tick(float DeltaSeconds)
@@ -153,7 +232,7 @@ state RingStaged
 
     function StageNextRing()
     {
-        CalcNewRing(RingOrigin_Current, RingRadius_Current, 0.5, RingOrigin_Staged, RingRadius_Staged);
+        CalcNewRing(RingOrigin_Current, RingRadius_Current, 0.75, RingOrigin_Staged, RingRadius_Staged);
     }
 }
 
@@ -163,6 +242,7 @@ state RingInterpolating
     {
         TimeStampSeconds = Level.TimeSeconds;
         ReplicateRingStateName();
+        ReplicateRingStateTimers();
     }
 
     event Tick(float DeltaSeconds)
@@ -212,6 +292,6 @@ defaultproperties
 {
     RemoteRole=ROLE_None
     RingIdleTimeSeconds=10.0
-    RingStagedTimeSeconds=5.0
-    RingInterpolationTimeSeconds=3.0
+    RingStagedTimeSeconds=15.0
+    RingInterpolationTimeSeconds=15.0
 }

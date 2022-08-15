@@ -124,9 +124,132 @@ simulated function StateBasedRingRender_RingInterpolating(Canvas C)
     }
 }
 
+simulated function RenderGameMessage(Canvas C, String DrawString)
+{
+    local float DrawX, DrawY;
+    local float StrW, StrH;
+    local Font SavedFont;
+    local Texture BackdropTexture;
+    local float BackdropPadding;
+
+    SavedFont = C.Font;
+    C.Font = C.BigFont;
+    C.StrLen(DrawString, StrW, StrH);
+
+    DrawX = (C.ClipX * 0.5) - (StrW * 0.5);
+    DrawY = (C.ClipY * 0.9) - (StrH * 0.5);
+
+    // Draw a backdrop for added contrast
+    BackdropTexture = Texture'RuneFX.swipe_gray';
+    BackdropPadding = 4.0;
+    C.Style = ERenderStyle.STY_AlphaBlend;
+    C.AlphaScale = 0.5;
+    C.DrawColor = ColorsClass.Static.ColorWhite();
+    C.SetPos(DrawX - BackdropPadding, DrawY - BackdropPadding);
+    C.DrawTile
+    (
+        BackdropTexture,
+        StrW + (BackdropPadding * 2.0),
+        StrH + (BackdropPadding * 2.0),
+        0.0, 0.0,
+        StrW + (BackdropPadding * 2.0),
+        StrH + (BackdropPadding * 2.0)
+    );
+
+    C.Style = ERenderStyle.STY_Normal;
+    C.SetPos(DrawX, DrawY);
+    C.DrawText(DrawString);
+
+    C.Font = SavedFont;
+}
+
+simulated function RenderGameWarningMessage(Canvas C, String DrawString)
+{
+    local float DrawX, DrawY;
+    local float StrW, StrH;
+    local Font SavedFont;
+    local Texture BackdropTexture;
+    local float BackdropPadding;
+    local Color BackdropColorT0, BackdropColorT1;
+    local float GlowT;
+    local Color BackdropColor;
+
+    SavedFont = C.Font;
+    C.Font = C.BigFont;
+    C.StrLen(DrawString, StrW, StrH);
+
+    DrawX = (C.ClipX * 0.5) - (StrW * 0.5);
+    DrawY = (C.ClipY * 0.9) - (StrH * 0.5);
+
+    // Backdrop color Interp
+    GlowT = (Sin(Level.TimeSeconds * 2.0 * Pi) + 1.0) / 2.0;
+    BackdropColorT0 = ColorsClass.Static.ColorRed();
+    BackdropColorT1 = ColorsClass.Static.ColorWhite();
+    BackdropColor.R = byte((1.0 - GlowT) * float(BackdropColorT0.R) + GlowT * float(BackdropColorT1.R));
+    BackdropColor.G = byte((1.0 - GlowT) * float(BackdropColorT0.G) + GlowT * float(BackdropColorT1.G));
+    BackdropColor.B = byte((1.0 - GlowT) * float(BackdropColorT0.B) + GlowT * float(BackdropColorT1.B));
+
+    // Draw a backdrop for added contrast
+    BackdropTexture = Texture'RuneFX.swipe_gray';
+    BackdropPadding = 4.0;
+    C.Style = ERenderStyle.STY_AlphaBlend;
+    C.AlphaScale = 0.5;
+    C.DrawColor = BackdropColor;
+    C.SetPos(DrawX - BackdropPadding, DrawY - BackdropPadding);
+    C.DrawTile
+    (
+        BackdropTexture,
+        StrW + (BackdropPadding * 2.0),
+        StrH + (BackdropPadding * 2.0),
+        0.0, 0.0,
+        StrW + (BackdropPadding * 2.0),
+        StrH + (BackdropPadding * 2.0)
+    );
+
+    C.Style = ERenderStyle.STY_Normal;
+    C.SetPos(DrawX, DrawY);
+    C.DrawText(DrawString);
+
+    C.DrawColor = ColorsClass.Static.ColorWhite();
+    C.Font = SavedFont;
+}
+
+simulated function StateBasedMessageRender(Canvas C)
+{
+    local R_GameReplicationInfo_RuneRoyale GRI;
+    GRI = R_GameReplicationInfo_RuneRoyale(PlayerPawn(Owner).GameReplicationInfo);
+    if(GRI != None)
+    {
+        if(GRI.RingStateName == 'RingIdle')
+        {
+        }
+        else if(GRI.RingStateName == 'RingStaged')
+        {
+            StateBasedMessageRender_RingStaged(C);
+        }
+        else if(GRI.RingStateName == 'RingInterpolating')
+        {
+        }
+    }
+}
+
+simulated event StateBasedMessageRender_RingStaged(Canvas C)
+{
+    local R_GameReplicationInfo_RuneRoyale GRI;
+    local float TimeRemainingSeconds;
+    local String DrawString;
+
+    GRI = R_GameReplicationInfo_RuneRoyale(PlayerPawn(Owner).GameReplicationInfo);
+    TimeRemainingSeconds = GRI.GetRemainingStateTimeSeconds();
+    DrawString = "Ring closing in" @ int(TimeRemainingSeconds + 1.0) $ "...";
+
+    RenderGameWarningMessage(C, DrawString);
+}
+
 simulated event PostRender(Canvas C)
 {
     Super.PostRender(C);
 
     StateBasedRingRender(C);
+    StateBasedMessageRender(C);
 }
