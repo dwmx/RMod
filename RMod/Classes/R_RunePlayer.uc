@@ -992,6 +992,47 @@ exec function TeamSay( string Msg )
 	}
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// DoTryPlayTorsoAnim
+// Override (RunePlayer)
+// This function actually means "Try playing the AnimProxy's (torso's) animation
+// on the RunePlayer (legs)". This fixes client-side leg animations by
+// force-playing the specified animations.
+simulated function DoTryPlayTorsoAnim(name TorsoAnim, float speed, float tween)
+{
+	if(Role == ROLE_AutonomousProxy || Level.NetMode == NM_Standalone)
+	{
+		if(TorsoAnim == 'neutral_kick'
+		|| TorsoAnim == 'PumpTrigger'
+		|| TorsoAnim == 'LevelTrigger'
+		|| TorsoAnim == 'S3_Taunt')
+		{
+			PlayAnim(TorsoAnim, speed, tween);
+			return;
+		}
+
+		if(Weapon != None)
+		{
+			if(TorsoAnim == Weapon.A_JumpAttack
+			|| TorsoAnim == Weapon.A_Taunt
+			|| TorsoAnim == Weapon.A_PumpTrigger
+			|| TorsoAnim == Weapon.A_LeverTrigger)
+			{
+				PlayAnim(TorsoAnim, speed, tween);
+				return;
+			}
+
+			if(Physics == PHYS_Walking && VSize2D(Acceleration) < 1000.0f)
+			{
+				PlayAnim(TorsoAnim, speed, tween);
+				return;
+			}
+		}
+	}
+
+	Super.DoTryPlayTorsoAnim(TorsoAnim, speed, tween);
+}
+
 exec function Suicide()
 {
 	// Anti spam
