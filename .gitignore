@@ -3,6 +3,7 @@
 !.gitignore
 !ENVIRONMENT_SETUP.md
 !LICENSE.md
+!dockerfile
 !RModBuild.bat
 !RModLaunch.bat
 !RmodServer.bat
