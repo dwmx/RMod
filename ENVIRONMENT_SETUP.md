@@ -6,6 +6,7 @@ Windows Users:
 	- mklink /D .\Rune <local rune installation path>
 
 - Inside of your local rune installation directory, create the following symlinks:
+	- Config directory:			mklink /D .\RMod_Config <RepositoryDirectory\RMod_Config>
 	- If you wish to build RMod: 		mklink /D .\RMod <RepositoryDirectory\RMod>
 	- If you wish to build RMod_Arena:	mklink /D .\RMod_Arena <RepositoryDirectory\RMod_Arena>
 	- If you wish to build RMod_RuneRoyale:	mklink /D .\RMod_RuneRoyale <RepositoryDirectory\RMod_RuneRoyale>

@@ -7,8 +7,8 @@
 !RModBuild.bat
 !RModLaunch.bat
 !RmodServer.bat
-!Engine/
-!RuneI/
+!/RMod_Override_Engine/
+!/RMod_Override_RuneI/
 !/RMod/
 !/RMod_Arena/
 !/RMod_Config/
