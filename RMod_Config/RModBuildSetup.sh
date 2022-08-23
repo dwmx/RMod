@@ -34,3 +34,7 @@ ln -s $RModPath/RMod/ $RunePath/RMod
 ln -s $RModPath/RMod_Arena/ $RunePath/RMod_Arena
 ln -s $RModPath/RMod_RuneRoyale/ $RunePath/RMod_RuneRoyale
 ln -s $RModPath/RMod_Valball/ $RunePath/RMod_Valball
+
+# Rename original package files so that UCC make will recompile the game code
+mv $RunePath/System/Engine.u $RunePath/System/Engine.backup.u
+mv $RunePath/System/RuneI.u $RunePath/System/RuneI.backup.u
