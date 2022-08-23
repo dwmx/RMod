@@ -29,16 +29,15 @@ RUN cd ~
 RUN 7z x /RuneBase/RuneArtifacts/Rune106.min.7z -o/RuneBase/Rune/
 
 # -------------------------------------------
-# Clone RMod and setup symlinks for build
+# Clone RMod and run the build setup script
 # -------------------------------------------
 RUN git clone https://github.com/dwmx/rmod /RuneBase/RMod/
-RUN /RuneBase/RMod/RMod_Config/RModBuildSetup.sh /RuneBase/RMod/ /RuneBase/Rune/Rune106/
-RUN chmod 755 /RuneBase/Rune/Rune106/System/RuneI.u
+RUN /RuneBase/RMod/RMod_Config/RModBuildSetup.sh /RuneBase/RMod/ /RuneBase/Rune/
 
 # -------------------------------------------
 # Build RMod packages
 # -------------------------------------------
-#RUN wine /RuneBase/Rune/Rune106/System/UCC.exe make -ini=/RuneBase/RMod/RMod_Config/RModBuild.ini
+RUN wine /RuneBase/Rune/Rune106/System/UCC.exe make -ini=/RuneBase/RMod/RMod_Config/RModBuild.ini
 
 # -------------------------------------------
 # Build

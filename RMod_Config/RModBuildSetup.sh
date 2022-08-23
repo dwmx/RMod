@@ -15,6 +15,21 @@ if [ ! -d $RunePath ]; then
 	exit 2;
 fi
 
+# Create an Engine and RuneI package folder so that core game files can be modded
+mkdir $RunePath/Engine/
+mkdir $RunePath/RuneI/
+
+# Link asset directories from the min Rune106 installation so that UC will compile correctly
+ln -s $RunePath/EngineAssets/Textures $RunePath/Engine/Textures
+ln -s $RunePath/RuneIAssets/MODELS $RunePath/RuneI/MODELS
+ln -s $RunePath/RuneIAssets/Sounds $RunePath/RuneI/Sounds
+ln -s $RunePath/RuneIAssets/Textures $RunePath/RuneI/Textures
+
+# Link ONLY the Classes directories from RMod packages to override the original game code
+ln -s $RModPath/RMod_Override_Engine/Classes $RunePath/Engine/Classes
+ln -s $RModPath/RMod_Override_RuneI/Classes $RunePath/RuneI/Classes
+
+# Link all other RMod package directories
 ln -s $RModPath/RMod/ $RunePath/RMod
 ln -s $RModPath/RMod_Arena/ $RunePath/RMod_Arena
 ln -s $RModPath/RMod_RuneRoyale/ $RunePath/RMod_RuneRoyale
