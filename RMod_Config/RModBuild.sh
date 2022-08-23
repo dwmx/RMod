@@ -1,1 +1,2 @@
-echo "We in business now"
+echo $RUNE_PATH
+echo $REPOSITORY_PATH
