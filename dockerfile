@@ -7,6 +7,7 @@ RUN apt update
 RUN apt install -y wget
 RUN apt install -y p7zip-full
 RUN apt install -y git
+RUN apt install -yqq ssh
 
 # -------------------------------------------
 # Install Wine
@@ -29,17 +30,13 @@ RUN cd ~
 RUN 7z x /RuneBase/RuneArtifacts/Rune106.min.7z -o/RuneBase/Rune/
 
 # -------------------------------------------
-# Clone RMod and run the build setup script
+# Run
 # -------------------------------------------
-RUN git clone https://github.com/dwmx/rmod /RuneBase/RMod/
-RUN /RuneBase/RMod/RMod_Config/RModBuildSetup.sh /RuneBase/RMod/ /RuneBase/Rune/
-
-# -------------------------------------------
-# Build RMod packages
-# -------------------------------------------
-RUN wine /RuneBase/Rune/Rune106/System/UCC.exe make -ini=/RuneBase/RMod/RMod_Config/RModBuild.ini
-
-# -------------------------------------------
-# Build
-# -------------------------------------------
-CMD [ "bash", "-c", "cd /RuneBase/ && ls -la && cd /RuneBase/RuneArtifacts/ && ls -la && cd /RuneBase/Rune/Rune106/System/ && ls -la" ]
+CMD [ "bash", "-c", \
+"\
+git clone $REPOSITORY /RuneBase/Repository && \
+export RUNE_PATH=/RuneBase/Rune && \
+export REPOSITORY_PATH=/RuneBase/Repository && \
+/RuneBase/Repository/$BUILDSCRIPT \
+"\
+]

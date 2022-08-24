@@ -23,3 +23,15 @@ ln -s $REPOSITORY_PATH/RMod_Valball/ $RUNE_PATH/RMod_Valball
 # Rename original package files so that UCC make will recompile the game code
 mv $RUNE_PATH/System/Engine.u $RUNE_PATH/System/Engine.backup.u
 mv $RUNE_PATH/System/RuneI.u $RUNE_PATH/System/RuneI.backup.u
+
+# Delete RMod pakage files if they exist
+rm $RUNE_PATH/System/RMod.u
+rm $RUNE_PATH/System/RMod_Arena.u
+rm $RUNE_PATH/System/RMod_RuneRoyale.u
+rm $RUNE_PATH/System/RMod_Valball.u
+
+# Link build config into System directory so that configured relative paths work
+ln -s $REPOSITORY_PATH/RMod_Config/RModBuild.ini $RUNE_PATH/System/RModBuild.ini
+
+# Build
+wine $RUNE_PATH/System/UCC.exe make -ini=$RUNE_PATH/System/RModBuild.ini
