@@ -35,3 +35,11 @@ ln -s $REPOSITORY_PATH/RMod_Config/RModBuild.ini $RUNE_PATH/System/RModBuild.ini
 
 # Build
 wine $RUNE_PATH/System/UCC.exe make -ini=$RUNE_PATH/System/RModBuild.ini
+
+# Copy build artifacts into artifact directory
+cp $RUNE_PATH/System/Engine.u $ARTIFACT_PATH
+cp $RUNE_PATH/System/RuneI.u $ARTIFACT_PATH
+cp $RUNE_PATH/System/RMod.u $ARTIFACT_PATH
+cp $RUNE_PATH/System/RMod_Arena.u $ARTIFACT_PATH
+cp $RUNE_PATH/System/RMod_RuneRoyale.u $ARTIFACT_PATH
+cp $RUNE_PATH/System/RMod_Valball.u $ARTIFACT_PATH
