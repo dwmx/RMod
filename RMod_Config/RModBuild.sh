@@ -36,6 +36,10 @@ ln -s $REPOSITORY_PATH/RMod_Config/RModBuild.ini $RUNE_PATH/System/RModBuild.ini
 # Build
 wine $RUNE_PATH/System/UCC.exe make -ini=$RUNE_PATH/System/RModBuild.ini
 
+# Conform overridden packages to maintain client compatibility
+wine $RUNE_PATH/System/UCC.exe conform $RUNE_PATH/System/Engine.u $RUNE_PATH/System/Engine.backup.u
+wine $RUNE_PATH/System/UCC.exe conform $RUNE_PATH/System/RuneI.u $RUNE_PATH/System/RuneI.backup.u
+
 # Copy build artifacts into artifact directory
 cp $RUNE_PATH/System/Engine.u $ARTIFACT_PATH
 cp $RUNE_PATH/System/RuneI.u $ARTIFACT_PATH
