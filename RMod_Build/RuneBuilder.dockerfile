@@ -37,6 +37,6 @@ CMD [ "bash", "-c", \
 git clone $REPOSITORY /RuneBase/Repository && \
 export RUNE_PATH=/RuneBase/Rune && \
 export REPOSITORY_PATH=/RuneBase/Repository && \
-/RuneBase/Repository/$BUILDSCRIPT \
+/RuneBase/Repository/$BUILD_SCRIPT \
 "\
 ]
