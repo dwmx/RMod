@@ -1045,6 +1045,12 @@ exec function Suicide()
     KilledBy( None );
 }
 
+function bool CheckShouldSpectateAfterDying()
+{
+	// If unable to restart, then go into spectator mode
+	return !bCanRestart;
+}
+
 state PlayerSpectating
 {
 	event BeginState()
@@ -1055,7 +1061,7 @@ state PlayerSpectating
 		//Self.bHidden = true;
         Self.bAlwaysRelevant = false;
         Self.SetPhysics(PHYS_None);
-		Self.PlayerReplicationInfo.bIsSpectator = true;
+		//Self.PlayerReplicationInfo.bIsSpectator = true;
 		
 		if(Role == ROLE_Authority)
 		{
@@ -1076,7 +1082,7 @@ state PlayerSpectating
         Self.DrawType = Self.Default.DrawType;
 		//Self.bHidden = Self.Default.bHidden;
         Self.bAlwaysRelevant = Self.Default.bAlwaysRelevant;
-		Self.PlayerReplicationInfo.bIsSpectator = false;
+		//Self.PlayerReplicationInfo.bIsSpectator = false;
 
 		if(Role == ROLE_Authority)
 		{
@@ -1218,6 +1224,15 @@ state Dying
 	{
 		Super.EndState();
 		bForceClientAdjustPosition = true;
+	}
+
+	function AnimEnd()
+	{
+		Super.AnimEnd();
+		if(CheckShouldSpectateAfterDying())
+		{
+			GotoState('PlayerSpectating');
+		}
 	}
 }
 
