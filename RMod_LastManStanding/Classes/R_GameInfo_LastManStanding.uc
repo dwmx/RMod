@@ -5,6 +5,27 @@ var float LiveRoundDurationSeconds;
 var float PostRoundDurationSeconds;
 var float GameStateTimeStampSeconds;
 
+//event bool IsRelevant(Actor A)
+//{
+//    // All native (level placed) inventories need to be destroyed
+//    if(!Super.IsRelevant(A))
+//    {
+//        return false;
+//    }
+//
+//    if(CheckActorNativeToLevel(A) && Inventory(A) != None)
+//    {
+//        return false;
+//    }
+//
+//    return true;
+//}
+//
+//function AddDefaultInventory(Pawn PlayerPawn)
+//{
+//    // Do not grant any default inventory
+//}
+
 function Killed(pawn killer, pawn Other, name damageType)
 {
     local R_RunePlayer LocalRunePlayer;
@@ -130,9 +151,10 @@ state PostRound
 
 defaultproperties
 {
+    RunePlayerClass=Class'RMod_LastManStanding.R_RunePlayer_LastManStanding'
     GameReplicationInfoClass=Class'RMod_LastManStanding.R_GameReplicationInfo_LastManStanding'
     HUDType=Class'RMod_LastManStanding.R_RunePlayerHUD_LastManStanding'
     PreRoundDurationSeconds=5.0
-    LiveRoundDurationSeconds=15.0
+    LiveRoundDurationSeconds=60.0
     PostRoundDurationSeconds=5.0
 }
