@@ -3,14 +3,22 @@ class R_GameInfo_ArenaFreezeTag extends R_GameInfo_Arena;
 function NotifyFrozen(R_RunePlayer Victim, R_RunePlayer Instigator)
 {
     // This is a copy from HandleKill in Arena game info
-    if(IsPlaying(Victim, LTYPE_Champion))
-    {
-        ChampionsLeft--;
-    }
-    else if(IsPlaying(Victim, LTYPE_Challenger))
-    {
-        ChallengersLeft--;
-    }
+	if(Victim != None)
+	{
+		if(IsPlaying(Victim, LTYPE_Champion))
+		{
+			ChampionsLeft--;
+		}
+		else if(IsPlaying(Victim, LTYPE_Challenger))
+		{
+			ChallengersLeft--;
+		}
+	}
+
+	if(Instigator != None && R_PlayerReplicationInfo_ArenaFreezeTag(Instigator.PlayerReplicationInfo) != None)
+	{
+		R_PlayerReplicationInfo_ArenaFreezeTag(Instigator.PlayerReplicationInfo).PlayerFreezes += 1.0;
+	}
 
     if(ClearList(DetermineLoser()))
     {
@@ -21,14 +29,22 @@ function NotifyFrozen(R_RunePlayer Victim, R_RunePlayer Instigator)
 
 function NotifyThawed(R_RunePlayer Victim, R_RunePlayer Instigator)
 {
-    if(IsPlaying(Victim, LTYPE_Champion))
-    {
-        ChampionsLeft++;
-    }
-    else if(IsPlaying(Victim, LTYPE_Challenger))
-    {
-        ChallengersLeft++;
-    }
+	if(Victim != None)
+	{
+		if(IsPlaying(Victim, LTYPE_Champion))
+		{
+			ChampionsLeft++;
+		}
+		else if(IsPlaying(Victim, LTYPE_Challenger))
+		{
+			ChallengersLeft++;
+		}
+	}
+
+	if(Instigator != None && R_PlayerReplicationInfo_ArenaFreezeTag(Instigator.PlayerReplicationInfo) != None)
+	{
+		R_PlayerReplicationInfo_ArenaFreezeTag(Instigator.PlayerReplicationInfo).PlayerThaws += 1.0;
+	}
 }
 
 //==============================================================
@@ -56,9 +72,9 @@ function bool ClearList(byte lType)
 				aPlayer.PlayerReplicationInfo.Team = 255;
 			}
 
-            if(R_RunePlayer_LastManStanding(aPlayer) != None)
+            if(R_RunePlayer_FreezeTag(aPlayer) != None)
             {
-                R_RunePlayer_LastManStanding(aPlayer).NotifyEjectedFromArena();
+                R_RunePlayer_FreezeTag(aPlayer).NotifyEjectedFromArena();
             }
 
 			ClearFighterList(ChampionList[i]);
@@ -83,9 +99,9 @@ function bool ClearList(byte lType)
 				aPlayer.PlayerReplicationInfo.Team = 255;
 			}
 
-            if(R_RunePlayer_LastManStanding(aPlayer) != None)
+            if(R_RunePlayer_FreezeTag(aPlayer) != None)
             {
-                R_RunePlayer_LastManStanding(aPlayer).NotifyEjectedFromArena();
+                R_RunePlayer_FreezeTag(aPlayer).NotifyEjectedFromArena();
             }
 
 			ClearFighterList(ChallengerList[i]);
@@ -103,7 +119,9 @@ function bool ClearList(byte lType)
 
 defaultproperties
 {
-    RunePlayerClass=Class'RMod_LastManStanding.R_RunePlayer_LastManStanding'
-    //GameReplicationInfoClass=Class'RMod_LastManStanding.R_GameReplicationInfo_LastManStanding'
-    //HUDType=Class'RMod_LastManStanding.R_RunePlayerHUD_LastManStanding'
+    RunePlayerClass=Class'RMod_FreezeTag.R_RunePlayer_FreezeTag'
+	PlayerReplicationInfoClass=Class'RMod_FreezeTag.R_PlayerReplicationInfo_ArenaFreezeTag'
+    GameReplicationInfoClass=Class'Arena.ArenaGameReplicationInfo'
+    HUDType=Class'RMod_Arena.R_RunePlayerHUD_Arena'
+	ScoreBoardType=Class'RMod_FreezeTag.R_Scoreboard_ArenaFreezeTag'
 }

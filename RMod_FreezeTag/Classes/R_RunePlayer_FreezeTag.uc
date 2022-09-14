@@ -1,4 +1,4 @@
-class R_RunePlayer_LastManStanding extends R_RunePlayer;
+class R_RunePlayer_FreezeTag extends R_RunePlayer;
 
 var R_IceStatueProxy IceStatueProxy;
 var bool bInFrozenState;
@@ -306,28 +306,24 @@ function Died(pawn Killer, name DamageType, vector HitLocation)
 {
     local R_GameInfo_ArenaFreezeTag GI;
 
-    Health = 1;
-    Instigator = Killer;
-    GotoState('Frozen');
-
-    //if(Role == ROLE_Authority)
-    //{
-    //    GI = R_GameInfo_ArenaFreezeTag(Level.Game);
-    //    if(GI != None)
-    //    {
-    //        // Only become frozen if this player is in the arena
-    //        if(GI.IsPlaying(Self, GI.LTYPE_Champion) || GI.IsPlaying(Self, GI.LTYPE_Challenger))
-    //        {
-    //            Health = 1;
-    //            Instigator = Killer;
-    //            GotoState('Frozen');
-    //        }
-    //        else
-    //        {
-    //            Super.Died(Killer, DamageType, HitLocation);
-    //        }
-    //    }
-    //}
+    if(Role == ROLE_Authority)
+    {
+        GI = R_GameInfo_ArenaFreezeTag(Level.Game);
+        if(GI != None)
+        {
+            // Only become frozen if this player is in the arena
+            if(GI.IsPlaying(Self, GI.LTYPE_Champion) || GI.IsPlaying(Self, GI.LTYPE_Challenger))
+            {
+                Health = 1;
+                Instigator = Killer;
+                GotoState('Frozen');
+            }
+            else
+            {
+                Super.Died(Killer, DamageType, HitLocation);
+            }
+        }
+    }
 }
 
 function bool ReceiveIceStatueProxyJointDamaged(int Damage, Pawn EventInstigator, Vector HitLoc, Vector Momentum, Name DamageType, int Joint)
@@ -392,6 +388,8 @@ state Frozen extends PlayerWalking
         bSweepable = false;
         bForceClientAdjustPosition = true;
 
+        PlaySound(Sound'WeaponsSnd.Powerups.atfreezeice01', SLOT_Interface, 0.75);
+
         if(Role == ROLE_Authority)
         {
             SpawnIceStatueProxy();
@@ -405,7 +403,7 @@ state Frozen extends PlayerWalking
     function SpawnIceStatueProxy()
     {
         DestroyIceStatueProxy();
-        IceStatueProxy = Spawn(Class'RMod_LastManStanding.R_IceStatueProxy', Self);
+        IceStatueProxy = Spawn(Class'RMod_FreezeTag.R_IceStatueProxy', Self);
     }
 
     event EndState()
@@ -422,6 +420,9 @@ state Frozen extends PlayerWalking
         DestroyIceStatueProxy();
         RemoveStatueFeatures();
         bForceClientAdjustPosition = true;
+
+        PlaySound(Sound'WeaponsSnd.impcrashes.crashglass02', SLOT_Pain, 0.35);
+        SpawnDebris();
 
         if(Role == ROLE_Authority)
         {
@@ -500,6 +501,8 @@ state Frozen extends PlayerWalking
         // If struck by a teammate, then thaw
         if(EventInstigator != None && EventInstigator.PlayerReplicationInfo != None && EventInstigator.PlayerReplicationInfo.Team == PlayerReplicationInfo.Team)
         {
+            SpawnDebris(,2);
+            //PlaySound(Sound'WeaponsSnd.impcrashes.crashglass02', SLOT_Pain, 0.35);
             FrozenHealth = Clamp(FrozenHealth - Damage, 0.0, FrozenMaxHealth);
             if(FrozenHealth == 0.0)
             {
@@ -511,6 +514,38 @@ state Frozen extends PlayerWalking
     function bool JointDamaged(int Damage, Pawn EventInstigator, Vector HitLoc, Vector Momentum, Name DamageType, int Joint)
     {
         return true;
+    }
+
+    function SpawnDebris(optional vector Momentum, optional int NumChunks)
+    {
+        local debris d;
+        local vector loc;
+        local float scale;
+        local int i;
+
+        // Find appropriate size of chunks
+        if(NumChunks == 0)
+        {
+            NumChunks = Clamp(Mass/10, 2, 15);
+        }
+        
+        scale = (CollisionRadius*CollisionRadius*CollisionHeight) / (NumChunks*500);
+        scale = scale ** 0.3333333;
+
+        // Spawn debris
+        for (i=0; i<NumChunks; i++)
+        {
+            loc = Location;
+            loc.X += (FRand()*2-1)*CollisionRadius;
+            loc.Y += (FRand()*2-1)*CollisionRadius;
+            loc.Z += (FRand()*2-1)*CollisionHeight;
+            d = Spawn(class'debrisice',,,loc);
+            if (d != None)
+            {
+                d.SetSize(scale);
+                d.SetMomentum(Momentum);
+            }
+        }
     }
 }
 

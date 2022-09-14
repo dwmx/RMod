@@ -1,4 +1,4 @@
-class R_GameReplicationInfo_LastManStanding extends R_GameReplicationInfo;
+class R_GameReplicationInfo_ArenaFreezeTag extends R_GameReplicationInfo;
 
 var Name GameStateName;
 

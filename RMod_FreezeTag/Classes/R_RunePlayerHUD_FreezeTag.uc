@@ -1,0 +1,1 @@
+class R_RunePlayerHUD_FreezeTag extends R_RunePlayerHUD;

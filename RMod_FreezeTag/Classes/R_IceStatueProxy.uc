@@ -19,7 +19,7 @@ event PostBeginPlay()
     
     if(Role == ROLE_Authority)
     {
-        PlayerReplicationInfo = Spawn(class'RMod_LastManStanding.R_IceStatueProxyPRI', Self);
+        PlayerReplicationInfo = Spawn(class'RMod_FreezeTag.R_IceStatueProxyPRI', Self);
     }
 }
 
@@ -34,13 +34,18 @@ function ApplyStatueFeaturesToActor(Actor A)
 
 function bool JointDamaged(int Damage, Pawn EventInstigator, vector HitLoc, vector Momentum, name DamageType, int Joint)
 {
-    local R_RunePlayer_LastManStanding RP;
-    RP = R_RunePlayer_LastManStanding(Owner);
+    local R_RunePlayer_FreezeTag RP;
+    RP = R_RunePlayer_FreezeTag(Owner);
     if(RP != None)
     {
         return RP.ReceiveIceStatueProxyJointDamaged(Damage, EventInstigator, HitLoc, Momentum, DamageType, Joint);
     }
-    return true;
+    return false;
+}
+
+function EMatterType MatterForJoint(int joint)
+{
+    return MATTER_ICE;
 }
 
 simulated event Tick(float DeltaSeconds)
