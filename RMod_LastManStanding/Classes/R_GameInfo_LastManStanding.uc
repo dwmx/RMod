@@ -36,7 +36,7 @@ function Killed(pawn killer, pawn Other, name damageType)
     if(LocalRunePlayer != None)
     {
         LocalRunePlayer.bCanRestart = false;
-        LocalRunePlayer.GotoState('PlayerSpectating');
+        //LocalRunePlayer.GotoState('PlayerSpectating');
     }
 }
 

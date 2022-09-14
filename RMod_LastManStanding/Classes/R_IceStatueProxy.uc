@@ -9,16 +9,27 @@ class R_IceStatueProxy extends Pawn;
 
 event PostBeginPlay()
 {
+    local Inventory I;
+
     Super.PostBeginPlay();
-    SetLocation(Owner.Location);
-    PlayerReplicationInfo = Spawn(class'RMod_LastManStanding.R_IceStatueProxyPRI', Self);
+    CopyParent();
+    ApplyStatueFeaturesToActor(Self);
+    
+    DesiredFatness = 255;
+    
+    if(Role == ROLE_Authority)
+    {
+        PlayerReplicationInfo = Spawn(class'RMod_LastManStanding.R_IceStatueProxyPRI', Self);
+    }
 }
 
-function ApplyProxy(Actor InActor)
+function ApplyStatueFeaturesToActor(Actor A)
 {
-    Skeletal = InActor.Skeletal;
-    SubstituteMesh = InActor.SubstituteMesh;
-    SkelMesh = InActor.SkelMesh;
+    local int i;
+    for(i = 0; i < 16; ++i)
+    {
+        A.SkelGroupSkins[i] = Texture'statues.ice1';
+    }
 }
 
 function bool JointDamaged(int Damage, Pawn EventInstigator, vector HitLoc, vector Momentum, name DamageType, int Joint)
@@ -32,13 +43,42 @@ function bool JointDamaged(int Damage, Pawn EventInstigator, vector HitLoc, vect
     return true;
 }
 
+simulated event Tick(float DeltaSeconds)
+{
+    if(Role >= ROLE_AutonomousProxy)
+    {
+        Super.Tick(DeltaSeconds);
+    }
+    
+    CopyParent();
+}
+
+simulated function CopyParent()
+{
+    SetLocation(Owner.Location);
+    SetRotation(Owner.Rotation);
+    Skeletal = Owner.Skeletal;
+    SubstituteMesh = Owner.SubstituteMesh;
+    SkelMesh = Owner.SkelMesh;
+    AnimSequence = Owner.AnimSequence;
+    AnimFrame = Owner.AnimFrame;
+    if(AnimProxy != None && Owner.AnimProxy != None)
+    {
+        AnimProxy.AnimSequence = Owner.AnimProxy.AnimSequence;
+        AnimProxy.AnimFrame = Owner.AnimProxy.AnimFrame;
+    }
+    DesiredColorAdjust = Owner.DesiredColorAdjust;
+    ColorAdjust = Owner.ColorAdjust;
+}
+
 defaultproperties
 {
-    RemoteRole=ROLE_None
+    RemoteRole=ROLE_AutonomousProxy
+    Style=STY_Translucent
     DrawType=DT_SkeletalMesh
     bCollideActors=True
     bBlockActors=False
     bBlockPlayers=False
-    bHidden=True
+    bHidden=False
     bSweepable=True
 }
