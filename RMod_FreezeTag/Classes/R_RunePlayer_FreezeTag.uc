@@ -18,9 +18,6 @@ replication
 
     reliable if(Role == ROLE_Authority)
         ClientThaw;
-
-    reliable if(Role == ROLE_AutonomousProxy)
-        ServerThaw;
 }
 
 // Note:
@@ -254,32 +251,21 @@ simulated function TickFrozenState(float DeltaSeconds)
     }
 }
 
-exec function ExecThaw()
-{
-    ServerThaw();
-}
-
-function ServerThaw()
-{
-    Thaw();
-}
-
 function Thaw()
 {
-    if(Role < ROLE_AutonomousProxy)
+    if(GetStateName() == 'Frozen')
     {
-        return;
+        if(Role == ROLE_Authority)
+        {
+            ClientThaw();
+            PerformThaw();
+            Health = Maxhealth;
+        }
+        else if(Role == ROLE_AutonomousProxy)
+        {
+            PerformThaw();
+        }
     }
-
-    if(GetStateName() != 'Frozen')
-    {
-        return;
-    }
-
-    ClientThaw();
-    PerformThaw();
-
-    Health = Maxhealth;
 }
 
 function ClientThaw()
