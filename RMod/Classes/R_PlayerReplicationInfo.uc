@@ -45,7 +45,21 @@ simulated event Tick(float DeltaSeconds)
     }
 }
 
+function ResetPlayerReplicationInfo()
+{
+    Score = Default.Score;
+    Deaths = Default.Deaths;
+    bFirstBlood = Default.bFirstBlood;
+    MaxSpree = Default.MaxSpree;
+    HeadKills = Default.HeadKills;
+}
+
 defaultproperties
 {
-     RemoteRole=ROLE_SimulatedProxy
+    RemoteRole=ROLE_SimulatedProxy
+    Score=0
+    Deaths=0
+    bFirstBlood=False
+    MaxSpree=0
+    HeadKills=0
 }

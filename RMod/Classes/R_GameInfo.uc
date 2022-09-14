@@ -286,11 +286,19 @@ function ResetPlayerReplicationInfos()
 	
 	foreach AllActors(class'Engine.PlayerReplicationInfo', PRI)
 	{
-		PRI.Score = 0;
-		PRI.Deaths = 0;
-		PRI.bFirstBlood = false;
-		PRI.MaxSpree = 0;
-		PRI.HeadKills = 0;
+		if(R_PlayerReplicationInfo(PRI) != None)
+		{
+			R_PlayerReplicationInfo(PRI).ResetPlayerReplicationInfo();
+		}
+		else
+		{
+			PRI.Score = 0;
+			PRI.Deaths = 0;
+			PRI.bFirstBlood = false;
+			PRI.MaxSpree = 0;
+			PRI.HeadKills = 0;
+		}
+		
 	}
 }
 
