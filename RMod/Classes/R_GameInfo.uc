@@ -286,11 +286,19 @@ function ResetPlayerReplicationInfos()
 	
 	foreach AllActors(class'Engine.PlayerReplicationInfo', PRI)
 	{
-		PRI.Score = 0;
-		PRI.Deaths = 0;
-		PRI.bFirstBlood = false;
-		PRI.MaxSpree = 0;
-		PRI.HeadKills = 0;
+		if(R_PlayerReplicationInfo(PRI) != None)
+		{
+			R_PlayerReplicationInfo(PRI).ResetPlayerReplicationInfo();
+		}
+		else
+		{
+			PRI.Score = 0;
+			PRI.Deaths = 0;
+			PRI.bFirstBlood = false;
+			PRI.MaxSpree = 0;
+			PRI.HeadKills = 0;
+		}
+		
 	}
 }
 
@@ -320,6 +328,7 @@ function ResetPlayerPawnStatistics()
 	}
 }
 
+// Performs a hard level reset - resets all stats, restarts players, restores level
 function ResetLevel(optional int DelaySeconds)
 {
 	local PlayerPawn P;
@@ -353,7 +362,45 @@ function ResetLevel(optional int DelaySeconds)
 	{
 		// Do not restart spectators
 		if(Spectator(P) != None
-		|| P.GetStateName() == 'PlayerSpectating')
+		|| P.PlayerReplicationInfo.bIsSpectator)
+		{
+			continue;
+		}
+		
+		Level.Game.RestartPlayer(P);
+	}
+}
+
+// Performs a soft level reset - same as ResetLevel, but stats stay
+// This is for game types where resetting the level is a part of the game
+function ResetLevelSoft(optional int DelaySeconds)
+{
+	local PlayerPawn P;
+	local R_GameResetAgent GRA;
+	
+	DelaySeconds = Clamp(DelaySeconds, 0, 10);
+	if(DelaySeconds > 0)
+	{
+		// GameResetAgent will call back after countdown
+		GRA = Spawn(class'RMod.R_GameResetAgent');
+		if(GRA != None)
+		{
+			GRA.DurationSeconds = DelaySeconds;
+		}
+		return;
+	}
+	
+	UtilitiesClass.Static.RModLog("Soft-Resetting level");
+	
+	// Remove non-native actors
+	NativeLevelCleanup();
+
+	// Restart all players
+	foreach AllActors(class'Engine.PlayerPawn', P)
+	{
+		// Do not restart spectators
+		if(Spectator(P) != None
+		|| P.PlayerReplicationInfo.bIsSpectator)
 		{
 			continue;
 		}
@@ -369,6 +416,7 @@ function bool RestartPlayer( pawn aPlayer )
 		R_RunePlayer(aPlayer).DiscardInventory();
 	}
 	DiscardInventory(aPlayer);
+	aPlayer.GotoState('PlayerWalking');
 	return Super.RestartPlayer(aPlayer);
 }
 
@@ -553,8 +601,11 @@ function ScoreKill(Pawn Killer, Pawn Other)
 
 function MakePlayerSpectate(R_RunePlayer P)
 {
+	// This is not the same as a player being in 'PlayerSpectating' state.
+	// When this function is called, the player is considered a non-active player
 	P.GoToState('PlayerSpectating');
 	P.PlayerReplicationInfo.Team = 255;
+	P.PlayerReplicationInfo.bIsSpectator = true;
 }
 
 function RequestSpectate(R_RunePlayer P)

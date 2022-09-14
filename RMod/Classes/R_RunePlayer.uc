@@ -17,7 +17,7 @@ var R_ACamera Camera;
 var private float ViewRotPovPitch;
 var private float ViewRotPovYaw;
 
-var private bool bForceClientAdjustPosition;
+var bool bForceClientAdjustPosition;
 
 // PainSkin arrays
 const MAX_SKEL_GROUP_SKINS = 16;
@@ -1045,6 +1045,12 @@ exec function Suicide()
     KilledBy( None );
 }
 
+function bool CheckShouldSpectateAfterDying()
+{
+	// If unable to restart, then go into spectator mode
+	return !bCanRestart;
+}
+
 state PlayerSpectating
 {
 	event BeginState()
@@ -1055,7 +1061,7 @@ state PlayerSpectating
 		//Self.bHidden = true;
         Self.bAlwaysRelevant = false;
         Self.SetPhysics(PHYS_None);
-		Self.PlayerReplicationInfo.bIsSpectator = true;
+		//Self.PlayerReplicationInfo.bIsSpectator = true;
 		
 		if(Role == ROLE_Authority)
 		{
@@ -1076,7 +1082,7 @@ state PlayerSpectating
         Self.DrawType = Self.Default.DrawType;
 		//Self.bHidden = Self.Default.bHidden;
         Self.bAlwaysRelevant = Self.Default.bAlwaysRelevant;
-		Self.PlayerReplicationInfo.bIsSpectator = false;
+		//Self.PlayerReplicationInfo.bIsSpectator = false;
 
 		if(Role == ROLE_Authority)
 		{
@@ -1207,6 +1213,30 @@ state Pain
 }
 
 state Dying
+{
+	event BeginState()
+	{
+		Super.BeginState();
+		bForceClientAdjustPosition = true;
+	}
+	
+	event EndState()
+	{
+		Super.EndState();
+		bForceClientAdjustPosition = true;
+	}
+
+	function AnimEnd()
+	{
+		Super.AnimEnd();
+		if(CheckShouldSpectateAfterDying())
+		{
+			GotoState('PlayerSpectating');
+		}
+	}
+}
+
+state PlayerWalking
 {
 	event BeginState()
 	{

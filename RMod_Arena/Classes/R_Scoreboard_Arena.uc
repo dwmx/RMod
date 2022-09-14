@@ -221,11 +221,11 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 
 	// Draw Score
 	Canvas.SetPos(Canvas.ClipX*RelPosX_Score, YOffset);
-	Canvas.DrawText(int(PRI.Score), false);
+	Canvas.DrawText(GetValueForScoreField(PRI), false);
 
 	// Draw Deaths
 	Canvas.SetPos(Canvas.ClipX*RelPosX_Deaths, YOffset);
-	Canvas.DrawText(int(PRI.Deaths), false);
+	Canvas.DrawText(GetValueForDeathsField(PRI), false);
 
 	// RMod stuff
 	RPRI = R_PlayerReplicationInfo(PRI);
@@ -233,14 +233,14 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 	{
 		// Draw Damage Dealt
 		Canvas.SetPos(Canvas.ClipX*RelPosX_DamageDealt, YOffset);
-		Canvas.DrawText(RPRI.DamageDealt, false);
+		Canvas.DrawText(GetValueForDamageDealtField(PRI), false);
 	}
 
 	if (Canvas.ClipX > 512 && Level.Netmode != NM_Standalone)
 	{
 		// Draw Ping
 		Canvas.SetPos(Canvas.ClipX*RelPosX_Ping, YOffset);
-		Canvas.DrawText(PRI.Ping, false);
+		Canvas.DrawText(GetValueForPingField(PRI), false);
 	}
 
 	if(PRI.TeamID <= 16)
@@ -248,6 +248,29 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 		Canvas.SetPos(Canvas.ClipX * RelPosX_Queue, YOffset);
 		Canvas.DrawText(TwoDigitString(PRI.TeamID), false);
 	}
+}
+
+function int GetValueForScoreField(PlayerReplicationInfo PRI)
+{
+	return int(PRI.Score);
+}
+
+function int GetValueForDeathsField(PlayerReplicationInfo PRI)
+{
+	return int(PRI.Deaths);
+}
+
+function int GetValueForDamageDealtField(PlayerReplicationInfo PRI)
+{
+	if(R_PlayerReplicationInfo(PRI) != None)
+	{
+		return R_PlayerReplicationInfo(PRI).DamageDealt;
+	}
+}
+
+function int GetValueForPingField(PlayerReplicationInfo PRI)
+{
+	return PRI.Ping;
 }
 
 function DrawHeader( canvas Canvas )
