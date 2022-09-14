@@ -17,7 +17,7 @@ var R_ACamera Camera;
 var private float ViewRotPovPitch;
 var private float ViewRotPovYaw;
 
-var private bool bForceClientAdjustPosition;
+var bool bForceClientAdjustPosition;
 
 // PainSkin arrays
 const MAX_SKEL_GROUP_SKINS = 16;
@@ -1233,6 +1233,21 @@ state Dying
 		{
 			GotoState('PlayerSpectating');
 		}
+	}
+}
+
+state PlayerWalking
+{
+	event BeginState()
+	{
+		Super.BeginState();
+		bForceClientAdjustPosition = true;
+	}
+	
+	event EndState()
+	{
+		Super.EndState();
+		bForceClientAdjustPosition = true;
 	}
 }
 
