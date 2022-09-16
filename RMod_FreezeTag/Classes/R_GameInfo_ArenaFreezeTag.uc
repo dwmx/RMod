@@ -117,6 +117,51 @@ function bool ClearList(byte lType)
 	return false;
 }
 
+//==============================================================
+//
+// CheckWinState
+// Overridden to check the arena state with each call, instead
+// of relying on the challengers left and champions left vars.
+//
+//==============================================================
+function bool CheckWinState(byte aType)
+{
+	local int TotalChallengersCount;
+	local int TotalChampionsCount;
+	local Pawn P;
+	local R_RunePlayer_FreezeTag RP;
+
+	TotalChallengersCount = 0;
+	TotalChampionsCount = 0;
+
+	foreach AllActors(Class'Engine.Pawn', P)
+	{
+		RP = R_RunePlayer_FreezeTag(P);
+		if(P.Health > 1 || (RP != None && !RP.bInFrozenState))
+		{
+			if(IsPlaying(P, LTYPE_Challenger))
+			{
+				++TotalChallengersCount;
+			}
+			else if(IsPlaying(P, LTYPE_Champion))
+			{
+				++TotalChampionsCount;
+			}
+		}
+	}
+	
+	if(aType == LTYPE_Challenger && TotalChampionsCount == 0)
+	{
+		return true;
+	}
+	else if(aType == LTYPE_Champion && TotalChallengersCount == 0)
+	{
+		return true;
+	}
+
+	return false;
+}
+
 defaultproperties
 {
     RunePlayerClass=Class'RMod_FreezeTag.R_RunePlayer_FreezeTag'
