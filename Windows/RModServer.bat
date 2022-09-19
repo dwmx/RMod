@@ -1,1 +1,1 @@
-..\Rune\System\UCC.exe server DM-Bothvar?Game=RMod.R_GameInfo_DM
+..\Rune\System\UCC.exe server AR-Champions?Game=RMod_FreezeTag.R_GameInfo_ArenaFreezeTag?timelimit=15?mutator=WarVote.WarVoteMutator

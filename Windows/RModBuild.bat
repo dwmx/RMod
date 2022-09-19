@@ -18,7 +18,10 @@ if exist ..\Rune\System\RMod_RuneRoyale.u (
 if exist ..\Rune\System\RMod_Valball.u (
     del ..\Rune\System\RMod_Valball.u
 )
-..\Rune\System\UCC.exe make ini=.\..\RMod_Config\RModBuild.ini
+if exist ..\Rune\System\RMod_FreezeTag.u (
+    del ..\Rune\System\RMod_FreezeTag.u 
+)
+..\Rune\System\UCC.exe make ini=.\..\RMod_Build\RModBuild.ini
 goto Finish
 
 :Error
