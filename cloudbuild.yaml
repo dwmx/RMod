@@ -1,0 +1,7 @@
+steps:
+  - name: 'gcr.io/runermod/rmod_builder:latest'
+    volumes:
+      - name: 'output_volume'
+        path: '/output'
+    env:
+      - 'OUTPUT_DIRECTORY=/output'
