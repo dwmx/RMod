@@ -2,3 +2,7 @@ steps:
   - name: 'gcr.io/runermod/rmod_builder:latest'
     env:
       - 'OUTPUT_DIRECTORY=/workspace/build'
+artifacts:
+  objects:
+    location: 'gs://rmod_artifacts/RMod/'
+    paths: ['/build/*']
