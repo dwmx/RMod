@@ -5,4 +5,4 @@ steps:
 artifacts:
   objects:
     location: 'gs://rmod_artifacts/RMod/'
-    paths: ['/build/*']
+    paths: ['/workspace/build/*']
