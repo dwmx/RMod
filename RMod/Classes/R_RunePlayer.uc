@@ -57,6 +57,11 @@ replication
 		ViewRotPovYaw;
 }
 
+exec function SampleFunction()
+{
+	Log("SampleFunction was called");
+}
+
 event PostBeginPlay()
 {
 	local R_GameInfo RGI;
