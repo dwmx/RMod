@@ -280,6 +280,13 @@ function PerformThaw()
 
 exec function Suicide()
 {
+    // Anti spam
+	if(Level.TimeSeconds - SuicideTimeStamp <= SuicideCooldown)
+	{
+		return;
+	}
+
+	SuicideTimeStamp = Level.TimeSeconds;
     KilledBy(Self);
 }
 
