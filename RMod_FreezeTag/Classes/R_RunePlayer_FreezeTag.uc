@@ -280,6 +280,13 @@ function PerformThaw()
 
 exec function Suicide()
 {
+    // Anti spam
+	if(Level.TimeSeconds - SuicideTimeStamp <= SuicideCooldown)
+	{
+		return;
+	}
+
+	SuicideTimeStamp = Level.TimeSeconds;
     KilledBy(Self);
 }
 
@@ -382,6 +389,7 @@ state Frozen extends PlayerWalking
             if(R_GameInfo_ArenaFreezeTag(Level.Game) != None)
             {
                 R_GameInfo_ArenaFreezeTag(Level.Game).NotifyFrozen(Self, FrozenInstigator);
+                FrozenInstigator = None;
             }
         }
     }
@@ -415,6 +423,7 @@ state Frozen extends PlayerWalking
             if(R_GameInfo_ArenaFreezeTag(Level.Game) != None)
             {
                 R_GameInfo_ArenaFreezeTag(Level.Game).NotifyThawed(Self, FrozenInstigator);
+                FrozenInstigator = None;
             }
         }
     }
