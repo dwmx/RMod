@@ -2,6 +2,12 @@ class R_GameInfo_ArenaFreezeTag extends R_GameInfo_Arena;
 
 function NotifyFrozen(R_RunePlayer Victim, R_RunePlayer Instigator)
 {
+    // Ignore unless game is in progress
+    if(GameState != ASTATE_DuringMatch)
+    {
+        return;
+    }
+
     // This is a copy from HandleKill in Arena game info
 	if(Victim != None)
 	{
