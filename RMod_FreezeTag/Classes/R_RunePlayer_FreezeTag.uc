@@ -389,6 +389,7 @@ state Frozen extends PlayerWalking
             if(R_GameInfo_ArenaFreezeTag(Level.Game) != None)
             {
                 R_GameInfo_ArenaFreezeTag(Level.Game).NotifyFrozen(Self, FrozenInstigator);
+                FrozenInstigator = None;
             }
         }
     }
@@ -422,6 +423,7 @@ state Frozen extends PlayerWalking
             if(R_GameInfo_ArenaFreezeTag(Level.Game) != None)
             {
                 R_GameInfo_ArenaFreezeTag(Level.Game).NotifyThawed(Self, FrozenInstigator);
+                FrozenInstigator = None;
             }
         }
     }
