@@ -1,22 +1,30 @@
+//==============================================================================
+//  R_RunePlayer
+//  Base player class for all players in RMod.
+//  For custom player classes in custom game modes, modify
+//  R_GameInfo.RunePlayerClass.
+//==============================================================================
 class R_RunePlayer extends RunePlayer config(RMod);
 
-var class<R_AUtilities> UtilitiesClass;
+var Class<R_AUtilities> UtilitiesClass;
 
-var class<RunePlayer> RunePlayerSubClass;
-var class<RunePlayerProxy> RunePlayerProxyClass;
-var class<Actor> RunePlayerSeveredHeadClass;
-var class<Actor> RunePlayerSeveredLimbClass;
+var Class<RunePlayer> RunePlayerSubClass;
+var Class<RunePlayerProxy> RunePlayerProxyClass;
+var Class<Actor> RunePlayerSeveredHeadClass;
+var Class<Actor> RunePlayerSeveredLimbClass;
 var byte PolyGroupBodyParts[16];
 
-var class<HUD> HUDTypeSpectator;
+var Class<HUD> HUDTypeSpectator;
 
-var class<R_ACamera> SpectatorCameraClass;
+var Class<R_ACamera> SpectatorCameraClass;
 var R_ACamera Camera;
 
 // Replicated POV view rotation
 var private float ViewRotPovPitch;
 var private float ViewRotPovYaw;
 
+// When bForceClientAdjustPosition is true, ServerMove will force a client
+// adjust on the owning player
 var bool bForceClientAdjustPosition;
 
 // PainSkin arrays
@@ -49,19 +57,49 @@ replication
 		ServerResetLevel,
 		ServerSwitchGame,
 		ServerSpectate,
-		ServerTimeLimit,
-		ServerCauseEvent;
+		ServerTimeLimit;
 		
 	unreliable if(Role == ROLE_Authority && RemoteRole != ROLE_AutonomousProxy)
 		ViewRotPovPitch,
 		ViewRotPovYaw;
 }
 
-exec function SampleFunction()
+/**
+*   PreBeginPlay (override)
+*   Overridden to allow player replication info and anim proxy to be spawned
+*   based on classes.
+*/
+event PreBeginPlay()
 {
-	Log("SampleFunction was called");
+	Enable('Tick');
+
+	if(R_GameInfo(Level.Game) != None)
+	{
+		PlayerReplicationInfoClass = R_GameInfo(Level.Game).PlayerReplicationInfoClass;
+	}
+
+    // Bypass RunePlayer's PreBeginPlay, because it will respawn anim proxy
+	Super(PlayerPawn).PreBeginPlay();
+
+	// Spawn Torso Animation proxy
+	AnimProxy = Spawn(Self.RunePlayerProxyClass, Self);
+
+	OldCameraStart = Location;
+	OldCameraStart.Z += CameraHeight;
+
+	CurrentDist = CameraDist;
+	LastTime = 0;
+	CurrentTime = 0;
+	CurrentRotation = Rotation;
+
+	// Adjust CrouchHeight to new DrawScale
+	CrouchHeight = CrouchHeight * DrawScale;		
 }
 
+/**
+*   PostBeginPlay (override)
+*   Grab additional data from R_GameInfo at startup
+*/
 event PostBeginPlay()
 {
 	local R_GameInfo RGI;
@@ -75,6 +113,11 @@ event PostBeginPlay()
 	}
 }
 
+/**
+*   PreTeleport (override)
+*   Overridden to bypass camera interpolation and make teleporting feel
+*   seamless (still needs work).
+*/
 event bool PreTeleport(Teleporter InTeleporter)
 {
 	if(!Super.PreTeleport(InTeleporter))
@@ -90,12 +133,17 @@ event bool PreTeleport(Teleporter InTeleporter)
 	return true;
 }
 
-simulated function ClientPreTeleport(Teleporter InTeleporter)
+function ClientPreTeleport(Teleporter InTeleporter)
 {
 	DoPreTeleport(InTeleporter);
 }
 
-simulated function DoPreTeleport(Teleporter InTeleporter)
+/**
+*   DoPreTeleport
+*   Runs on both server and client. Updates all variables involved
+*   in camera interpolation to make teleporting feel seamless.
+*/
+function DoPreTeleport(Teleporter InTeleporter)
 {
 	local Rotator NewRotation;
 	local Vector NewLocation;
@@ -124,6 +172,11 @@ simulated function DoPreTeleport(Teleporter InTeleporter)
 	}
 }
 
+/**
+*   PreRender (override)
+*   Overridden to ensure that when the player is not in spectator state,
+*   they will use the normal HUD. Spectator state applies a different HUD.
+*/
 event PreRender( canvas Canvas )
 {
 	if (bDebug==1)
@@ -131,7 +184,7 @@ event PreRender( canvas Canvas )
 		if (myDebugHUD   != None)
 			myDebugHUD.PreRender(Canvas);
 		else if ( Viewport(Player) != None )
-			myDebugHUD = spawn(class'Engine.DebugHUD', self);
+			myDebugHUD = spawn(Class'Engine.DebugHUD', self);
 	}
 
 	// Ensure normal hud is in use
@@ -163,45 +216,110 @@ event PreRender( canvas Canvas )
 	}
 }
 
-function ServerCauseEvent(Name N)
+/**
+*   AdminLogin (override)
+*   Overridden to log AdminLogin attempts.
+*/
+exec function AdminLogin(String Password)
 {
-	local actor A;
-	local int triggerCount;
+    local String PlayerName;
 
-	if(!VerifyAdminWithErrorMessage())
-	{
-		return;
-	}
+    PlayerName = "";
+    if(PlayerReplicationInfo != None)
+    {
+        PlayerName = PlayerReplicationInfo.PlayerName;
+    }
 
-	if( (bAdmin || (Level.Netmode == NM_Standalone)) && (N != '') )
-	{
-		triggerCount = 0;
-		foreach AllActors( class 'Actor', A, N )
-		{
-			A.Trigger( Self, Self );
-			triggerCount++;
-		}
-		slog(triggerCount $ " actor(s) triggered");
-	}
+    UtilitiesClass.Static.RModLog
+    (
+        "AdminLogin attempt from player" @ PlayerName @ "(" $ Self $ "):" @ Password
+    );
+
+    Level.Game.AdminLogin(Self, Password);
 }
 
+/**
+*   AdminLogout (override)
+*   Overridden to log AdminLogout attempts.
+*/
+exec function AdminLogout()
+{
+    local String PlayerName;
+
+    PlayerName = "";
+    if(PlayerReplicationInfo != None)
+    {
+        PlayerName = PlayerReplicationInfo.PlayerName;
+    }
+
+    UtilitiesClass.Static.RModLog
+    (
+        "AdminLogout attempt from player" @ PlayerName @ "(" $ Self $ "):" @ Password
+    );
+
+    Level.Game.AdminLogout( Self );
+}
+
+/**
+*   VerifyAdminWithErrorMessage
+*   Check if this player has admin rights and send a client message if not.
+*/
+function bool VerifyAdminWithErrorMessage()
+{
+	if(bAdmin)
+	{
+		return true;
+	}
+	else
+	{
+		ClientMessage("You need administrator rights");
+		return false;
+	}
+	return false;
+}
+
+/**
+*   Admin (override)
+*   Overridden to route all admin commands through verification function.
+*/
+exec function Admin(String CommandLine)
+{
+    local String Result;
+
+    if(!VerifyAdminWithErrorMessage())
+    {
+        return;
+    }
+
+    Result = ConsoleCommand(CommandLine);
+    if(Result != "")
+    {
+        ClientMessage(Result);
+    }
+}
+
+/**
+*   ClientReceiveUpdatedGamePassword
+*   Called from R_GameInfo when game password is updated. This allows
+*   administrators to password the server without losing everyone on
+*   map change. Useful for competitive games.
+*/
 function ClientReceiveUpdatedGamePassword(String NewGamePassword)
 {
 	UpdateURL("Password", NewGamePassword, false);
 	ClientMessage("Local password has been updated:" @ NewGamePassword);
 }
 
-exec function CauseEvent( name N )
-{
-	ServerCauseEvent(N);
-}
-
+/**
+*   LogPlayerIDs
+*   Print all player IDs to the client's log.
+*/
 exec function LogPlayerIDs()
 {
 	local PlayerReplicationInfo PRI;
 	
 	UtilitiesClass.Static.RModLog("LogPlayerIDs output:");
-	foreach AllActors(class'Engine.PlayerReplicationInfo', PRI)
+	foreach AllActors(Class'Engine.PlayerReplicationInfo', PRI)
 	{
 		UtilitiesClass.Static.RModLog(
 			"ID: " $ PRI.PlayerID $ ", " $
@@ -209,6 +327,11 @@ exec function LogPlayerIDs()
 	}
 }
 
+/**
+*   DiscardInventory
+*   Clear this player's entire inventory. GameInfo has a DiscardInventory
+*   function of its own and I don't fully remember why this is here.
+*/
 function DiscardInventory()
 {
 	local Inventory Curr;
@@ -230,39 +353,24 @@ function DiscardInventory()
 	Self.StowSpot[2] = None;
 }
 
-function ChangeName( coerce string S )
+/**
+*   ChangeName (override)
+*   Overridden to cause GameInfo to broadcast a message
+*   when players change their names.
+*/
+function ChangeName(coerce String S)
 {
     // Last arg = true causes GameInfo to broadcast a message
-	Level.Game.ChangeName( self, S, true );
+	Level.Game.ChangeName(Self, S, true);
 }
 
-event PreBeginPlay()
-{
-	Enable('Tick');
-
-	if(R_GameInfo(Level.Game) != None)
-	{
-		PlayerReplicationInfoClass = R_GameInfo(Level.Game).PlayerReplicationInfoClass;
-	}
-
-	Super(PlayerPawn).PreBeginPlay();
-
-	// Spawn Torso Animation proxy
-	AnimProxy = Spawn(Self.RunePlayerProxyClass, Self);
-
-	OldCameraStart = Location;
-	OldCameraStart.Z += CameraHeight;
-
-	CurrentDist = CameraDist;
-	LastTime = 0;
-	CurrentTime = 0;
-	CurrentRotation = Rotation;
-
-	// Adjust CrouchHeight to new DrawScale
-	CrouchHeight = CrouchHeight * DrawScale;		
-}
-
-function ApplySubClass(class<RunePlayer> SubClass)
+/**
+*   ApplySubClass
+*   The following functions are responsible for extracting all custom skin-based
+*   data from the provided RunePlayer class, and applying it to this instance.
+*   This is called during the login sequence from R_GameInfo.
+*/
+function ApplySubClass(Class<RunePlayer> SubClass)
 {
 	local RunePlayer Dummy;
     local int i, j;
@@ -304,7 +412,33 @@ function ApplySubClass(class<RunePlayer> SubClass)
 	ApplySubClass_ExtractMenuName(SubClass);
 }
 
-function ApplySubClass_ExtractDefaults(class<RunePlayer> SubClass)
+/**
+*   ApplyDummyTag
+*   Apply the tag that R_GameInfo.Logout will look for when ignoring dummies.
+*/
+static function ApplyDummyTag(Actor A)
+{
+	A.Tag = 'RMODDUMMY';
+}
+
+/**
+*   CheckForDummyTag
+*   Check if the provided actor has the dummy tag applied.
+*/
+static function bool CheckForDummyTag(Actor A)
+{
+	if(A.Tag == 'RMODDUMMY')
+	{
+		return true;
+	}
+	return false;
+}
+
+/**
+*   ApplySubClass_ExtractDefaults
+*   Extract all relevant default properties from the RunePlayer class.
+*/
+function ApplySubClass_ExtractDefaults(Class<RunePlayer> SubClass)
 {
 	local int i;
 
@@ -354,7 +488,13 @@ function ApplySubClass_ExtractDefaults(class<RunePlayer> SubClass)
 	Self.SubstituteMesh				= SubClass.Default.SubstituteMesh;
 }
 
-function ApplySubClass_ExtractBodyPartData(class<RunePlayer> SubClass, RunePlayer SubClassInstance)
+/**
+*   ApplySubClass_ExtractBodyPartData
+*   Extracts the classes used for severed limb body parts on the provided class.
+*   This data cannot be extracted (that I'm aware of) from the class, so
+*   it requires an instance of the RunePlayer.
+*/
+function ApplySubClass_ExtractBodyPartData(Class<RunePlayer> SubClass, RunePlayer SubClassInstance)
 {
 	local int i;
 
@@ -367,7 +507,11 @@ function ApplySubClass_ExtractBodyPartData(class<RunePlayer> SubClass, RunePlaye
 	RunePlayerSeveredLimbClass = SubClassInstance.SeveredLimbClass(BODYPART_LARM1);
 }
 
-function ApplySubClass_ExtractPainSkinData(class<RunePlayer> SubClass, RunePlayer SubClassInstance)
+/**
+*   ApplySubClass_ExtractPainSkinData
+*   Extract the pain skin textures from the provided RunePlayer class.
+*/
+function ApplySubClass_ExtractPainSkinData(Class<RunePlayer> SubClass, RunePlayer SubClassInstance)
 {
 	local int i, j;
 
@@ -397,7 +541,11 @@ function ApplySubClass_ExtractPainSkinData(class<RunePlayer> SubClass, RunePlaye
 	}
 }
 
-function ApplySubClass_ExtractGoreCapData(class<RunePlayer> SubClass, RunePlayer SubClassInstance)
+/**
+*   ApplySubClass_ExtractGoreCapData
+*   Extract gore cap textures from the provided RunePlayer class.
+*/
+function ApplySubClass_ExtractGoreCapData(Class<RunePlayer> SubClass, RunePlayer SubClassInstance)
 {
 	local int i, j;
 
@@ -427,7 +575,13 @@ function ApplySubClass_ExtractGoreCapData(class<RunePlayer> SubClass, RunePlayer
 	}
 }
 
-function ApplySubClass_ExtractMenuName(class<RunePlayer> SubClass)
+/**
+*   ApplySubClass_ExtractMenuName
+*   Attempts to extract the menu name for the provided RunePlayer class,
+*   so that when viewed from the server browser, players still see the original
+*   name of the skin being used instead of R_RunePlayer.
+*/
+function ApplySubClass_ExtractMenuName(Class<RunePlayer> SubClass)
 {
 	local String ClassString;
 	local String EntryString, DescriptionString;
@@ -447,24 +601,15 @@ function ApplySubClass_ExtractMenuName(class<RunePlayer> SubClass)
 	MenuName = "RMod Rune Player";
 }
 
-static function ApplyDummyTag(Actor A)
-{
-	A.Tag = 'RMODDUMMY';
-}
-
-static function bool CheckForDummyTag(Actor A)
-{
-	if(A.Tag == 'RMODDUMMY')
-	{
-		return true;
-	}
-	return false;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//	ServerMove
-//	Overridden to replicate player's view pitch, so that spectators can view
-//	in POV.
+/**
+*   ServerMove (override)
+*	Overridden for the following reasons:
+*   -   Clients who have a high net speed variable will have a ClientAdjust
+*       called every single tick. Override implements a fix.
+*   -   bForceClientAdjustPosition, when true, forces a call to ClientAdjust.
+*   -   Client view pitch and view yaw are replicated so that spectators can
+*       view in point-of-view mode.
+*/
 function ServerMove(
 	float TimeStamp, 
 	vector InAccel, 
@@ -687,7 +832,10 @@ function ServerMove(
 	ViewRotPovYaw = ViewRotation.Yaw;
 }
 
-// Overridden to keep track of damage dealt through the game
+/**
+*   JointDamaged (override)
+*   Overridden to keep track of damage dealt statistics.
+*/
 function bool JointDamaged(int Damage, Pawn EventInstigator, vector HitLoc, vector Momentum, name DamageType, int joint)
 {
 	local int PreviousHealth;
@@ -717,23 +865,28 @@ function bool JointDamaged(int Damage, Pawn EventInstigator, vector HitLoc, vect
 	}
 }
 
-static function SetSkinActor(actor SkinActor, int NewSkin) // override
+/**
+*   SetSkinActor (override)
+*   Overridden to apply skin actor in the context of the sub class that would
+*   have been saved during the call to ApplySubClass.
+*/
+static function SetSkinActor(Actor SkinActor, int NewSkin)
 {
 	local R_RunePlayer RP;
-	local class<RunePlayer> RPSubClass;
+	local Class<RunePlayer> RPSubClass;
 	local int i;
 	
 	RP = R_RunePlayer(SkinActor);
 	if(RP == None)
 	{
-		class'RuneI.RunePlayer'.Static.SetSkinActor(SkinActor, NewSkin);
+		Class'RuneI.RunePlayer'.Static.SetSkinActor(SkinActor, NewSkin);
 		return;
 	}
 	
 	RPSubClass = RP.RunePlayerSubClass;
 	if(RPSubClass == None)
 	{
-		RPSubClass = class'RMod.R_RunePlayer';
+		RPSubClass = Class'RMod.R_RunePlayer';
 	}
 	
 	for(i = 0; i < 16; ++i)
@@ -742,8 +895,11 @@ static function SetSkinActor(actor SkinActor, int NewSkin) // override
 	}
 }
 
-// Apply pain skin which was extract from subclass
-function Texture PainSkin(int BodyPart) // override
+/**
+*   PainSkin (override)
+*   Overridden to apply the pain skin that was extracted in ApplySubClass.
+*/
+function Texture PainSkin(int BodyPart)
 {
 	local Texture PainTexture;
 	local int i;
@@ -765,7 +921,10 @@ function Texture PainSkin(int BodyPart) // override
 	return None;
 }
 
-// Apply gore cap using extracted subclass data
+/**
+*   ApplyGoreCap (override)
+*   Overridden to apply the gore cap that was extracted in ApplySubClass.
+*/
 function ApplyGoreCap(int BodyPart)
 {
 	local Texture GoreTexture;
@@ -787,7 +946,11 @@ function ApplyGoreCap(int BodyPart)
 	}
 }
 
-function int BodyPartForPolyGroup(int PolyGroup) // override
+/**
+*   BodyPartForPolyGroup (override)
+*   Overridden to return the body part that was extracted in ApplySubClass.
+*/
+function int BodyPartForPolyGroup(int PolyGroup)
 {
 	if(PolyGroup < 0 || PolyGroup >= 16)
 	{
@@ -797,7 +960,12 @@ function int BodyPartForPolyGroup(int PolyGroup) // override
 	return PolyGroupBodyParts[PolyGroup];
 }
 
-function class<Actor> SeveredLimbClass(int BodyPart) // override
+/**
+*   SeveredLimbClass (override)
+*   Overridden to return the severed limb class that was
+*   extracted in ApplySubClass.
+*/
+function Class<Actor> SeveredLimbClass(int BodyPart)
 {
 	switch(BodyPart)
 	{
@@ -811,6 +979,13 @@ function class<Actor> SeveredLimbClass(int BodyPart) // override
 	return None;
 }
 
+/**
+*   GetViewRotPov
+*   Get the point-of-view view rotation for this player. Called by other
+*   players who are in spectator state.
+*   Note that this needs to be simulated because it's going to be called
+*   client-side by non-owning clients.
+*/
 simulated function Rotator GetViewRotPov()
 {
 	local Rotator ViewRotPov;
@@ -821,27 +996,20 @@ simulated function Rotator GetViewRotPov()
 	return ViewRotPov;
 }
 
-// Admin verification
-function bool VerifyAdminWithErrorMessage()
-{
-	if(bAdmin)
-	{
-		return true;
-	}
-	else
-	{
-		ClientMessage("You need administrator rights");
-		return false;
-	}
-	return false;
-}
-
-// SwitchGame command
+/**
+*   SwitchGame
+*   Custom command for server travel using specific game presets specified
+*   in R_GameInfo.
+*/
 exec function SwitchGame(String S)
 {
 	ServerSwitchGame(S);
 }
 
+/**
+*   ServerSwitchGame
+*   SwitchGame command repliated to server.
+*/
 function ServerSwitchGame(String S)
 {
 	local R_GameInfo GI;
@@ -860,12 +1028,20 @@ function ServerSwitchGame(String S)
 	GI.SwitchGame(Self, S);
 }
 
-// ResetLevel command
+/**
+*   ResetLevel
+*   Performs a soft level reset. Resets the map state without reloading the map.
+*   Useful for restarting maps only after all players have loaded in.
+*/
 exec function ResetLevel(optional int DurationSeconds)
 {
 	ServerResetLevel(DurationSeconds);
 }
 
+/**
+*   ServerResetLevel
+*   ResetLevel command replicated to server.
+*/
 function ServerResetLevel(optional int DurationSeconds)
 {
 	local R_GameInfo GI;
@@ -884,12 +1060,19 @@ function ServerResetLevel(optional int DurationSeconds)
 	GI.ResetLevel(DurationSeconds);
 }
 
-// TimeLimit command
+/**
+*   TimeLimit
+*   Update the game's time limit on the fly.
+*/
 exec function TimeLimit(int DurationMinutes)
 {
 	ServerTimeLimit(DurationMinutes);
 }
 
+/**
+*   ServerTimeLimit
+*   TimeLimit command replicated to server
+*/
 function ServerTimeLimit(int DurationMinutes)
 {
 	local R_GameInfo GI;
@@ -908,12 +1091,19 @@ function ServerTimeLimit(int DurationMinutes)
 	GI.PlayerSetTimeLimit(self, DurationMinutes);
 }
 
-// Spectate command
+/**
+*   Spectate
+*   Allows clients to switch to spectator mode while in-game.
+*/
 exec function Spectate()
 {
 	ServerSpectate();
 }
 
+/**
+*   ServerSpectate
+*   Spectate command replicated to server.
+*/
 function ServerSpectate()
 {
 	local R_GameInfo GI;
@@ -924,7 +1114,10 @@ function ServerSpectate()
 	}
 }
 
-// Send a message to all players.
+/**
+*   Say (override)
+*   Overridden to filter out spectator messages for non-spectator players.
+*/
 exec function Say( string Msg )
 {
     local Pawn P;
@@ -954,6 +1147,10 @@ exec function Say( string Msg )
     return;
 }
 
+/**
+*   TeamSay (override)
+*   Overridden to filter out spectator messages for non-spectator players.
+*/
 exec function TeamSay( string Msg )
 {
     local Pawn P;
@@ -997,13 +1194,18 @@ exec function TeamSay( string Msg )
 	}
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// DoTryPlayTorsoAnim
-// Override (RunePlayer)
-// This function actually means "Try playing the AnimProxy's (torso's) animation
-// on the RunePlayer (legs)". This fixes client-side leg animations by
-// force-playing the specified animations.
-simulated function DoTryPlayTorsoAnim(name TorsoAnim, float speed, float tween)
+/**
+*   DoTryPlayTorsoAnim (override)
+*   This function's name is confusing, but what it actually means is:
+*   "Try to play the AnimProxy's current on animation on the RunePlayer",
+*   which effectively means:
+*   "Whatever animation is playing on the torso, try to play that
+*   animation on the legs as well".
+*   This fixes the client-side leg animations by force-playing the specified
+*   animation. Note that 'simulated' serves no purpose here, and it's only
+*   marked simulated because the original function is marked simulated
+*/
+simulated function DoTryPlayTorsoAnim(Name TorsoAnim, float speed, float tween)
 {
 	if(Role == ROLE_AutonomousProxy || Level.NetMode == NM_Standalone)
 	{
@@ -1038,6 +1240,13 @@ simulated function DoTryPlayTorsoAnim(name TorsoAnim, float speed, float tween)
 	Super.DoTryPlayTorsoAnim(TorsoAnim, speed, tween);
 }
 
+/**
+*   Suicide (override)
+*   Overridden to prevent suicide-spam server attacks.
+*   TODO:
+*   It would be a good idea to implement auto-disconnect functionality here
+*   when the server detects players spamming suicide.
+*/
 exec function Suicide()
 {
 	// Anti spam
@@ -1050,12 +1259,26 @@ exec function Suicide()
     KilledBy( None );
 }
 
+/**
+*   CheckShouldSpectateAfterDying
+*   Dying state calls this function to see whether the player should enter
+*   into spectator state after dying. This is useful for game types like Arena,
+*   to allow players to spectate other players while dead.
+*/
 function bool CheckShouldSpectateAfterDying()
 {
 	// If unable to restart, then go into spectator mode
 	return !bCanRestart;
 }
 
+/**
+*   PlayerSpectating State
+*   Allows players to view in spectator mode without reconnecting as spectators.
+*   Spawns a spectator camera actor and routes most view-related functions to
+*   the camera.
+*   For custom spectator functionality, extend R_ACamera and set the
+*   SpectatorCameraClass variable in this class.
+*/
 state PlayerSpectating
 {
 	event BeginState()
@@ -1122,7 +1345,7 @@ state PlayerSpectating
 			if (myDebugHUD   != None)
 				myDebugHUD.PreRender(Canvas);
 			else if ( Viewport(Player) != None )
-				myDebugHUD = spawn(class'Engine.DebugHUD', self);
+				myDebugHUD = spawn(Class'Engine.DebugHUD', self);
 		}
 	
 		// Ensure spectator hud is in use
@@ -1201,6 +1424,13 @@ state PlayerSpectating
 		}
 	}
 }
+
+//==============================================================================
+//  The following states are only overridden to force a client adjust when
+//  transitioning from one state to another. The client-side jitter fix in
+//  ServerMove has some strange behavior in certain cases, but this solution
+//  appears to fix nearly all of the issues.
+//==============================================================================
 
 state Pain
 {
@@ -1308,10 +1538,10 @@ state GameEnded
 
 defaultproperties
 {
-     UtilitiesClass=Class'RMod.R_AUtilities'
-     RunePlayerProxyClass=Class'RMod.R_RunePlayerProxy'
-     SpectatorCameraClass=Class'RMod.R_Camera_Spectator'
-     bMessageBeep=True
-	 SuicideCooldown=5.0
-	 bAlwaysRelevant=True
+    UtilitiesClass=Class'RMod.R_AUtilities'
+    RunePlayerProxyClass=Class'RMod.R_RunePlayerProxy'
+    SpectatorCameraClass=Class'RMod.R_Camera_Spectator'
+    bMessageBeep=True
+    SuicideCooldown=5.0
+    bAlwaysRelevant=True
 }
