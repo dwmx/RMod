@@ -504,6 +504,9 @@ simulated function Class<LocalMessage> DetermineClass(name MsgType)
 		case 'NoRunePower':
 			MessageClass=class'NoRunePowerMessage';
 			break;
+		case 'LCI':
+			MessageClass=class'RMod.R_LCI_Message';
+			break;
 		case 'CriticalEvent':
 		case 'DeathMessage':
 		case 'Event':
