@@ -645,4 +645,5 @@ defaultproperties
 	 HUDTypeSpectator=Class'RMod.R_RunePlayerHUDSpectator'
      GameReplicationInfoClass=Class'RMod.R_GameReplicationInfo'
 	 bAllowSpectatorBroadcastMessage=false
+     AutoAim=0.0
 }
