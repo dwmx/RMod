@@ -77,7 +77,7 @@ static function Actor PerformActorSubstitution(Actor WorldContextActor, Actor In
     }
 
     // Replace
-    TempActor = WorldContextActor.Spawn(SubstitutionClass);
+    TempActor = WorldContextActor.Spawn(SubstitutionClass,,,InActor.Location, InActor.Rotation);
     if(TempActor == None)
     {
         LogMessage = "Substitution failed for" @ SubstitutionClass;
