@@ -4,11 +4,18 @@
 //  actors with other actors.
 //  R_GameInfo uses this in IsRelevant to swap out normal Rune weapon classes
 //  with the RMod weapon classes.
+//  To implement custom substitutions per game type, extend this class and
+//  override GetActorSubstitutionClass, then update
+//  R_GameInfo.ActorSubstitutionClass.
 //==============================================================================
 class R_AActorSubstitution extends Object abstract;
 
 var Class<R_AUtilities> UtilitiesClass;
 
+/**
+*   GetActorSubstitutionClass
+*   Maps input classes to the class they should be substituted with.
+*/
 static function Class<Actor> GetActorSubstitutionClass(Class<Actor> InClass)
 {
     switch(InClass)
@@ -47,6 +54,10 @@ static function Class<Actor> GetActorSubstitutionClass(Class<Actor> InClass)
     return InClass;
 }
 
+/**
+*   PerformActorSubstitution
+*   Called by R_GameInfo.IsRelevant in order to substitute actors at spawn time.
+*/
 static function Actor PerformActorSubstitution(Actor WorldContextActor, Actor InActor)
 {
     local String LogMessage;
