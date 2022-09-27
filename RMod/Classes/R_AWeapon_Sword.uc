@@ -83,7 +83,7 @@ function SpawnHitEffect(vector HitLoc, vector HitNorm, int LowMask, int HighMask
         case MATTER_SHIELD:
             break;
         case MATTER_ICE:
-            Spawn(class'HitIce',,, HitLoc, rotator(HitNorm));
+            Spawn(class'RMod.R_FX_SwordHitIce',,, HitLoc, rotator(HitNorm));
             break;
         case MATTER_WATER:
             break;
