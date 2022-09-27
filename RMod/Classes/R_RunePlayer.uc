@@ -1544,4 +1544,5 @@ defaultproperties
     bMessageBeep=True
     SuicideCooldown=5.0
     bAlwaysRelevant=True
+    bRotateTorso=False
 }
