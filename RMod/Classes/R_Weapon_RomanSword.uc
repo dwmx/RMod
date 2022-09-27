@@ -108,6 +108,7 @@ defaultproperties
      HitStone(0)=Sound'WeaponsSnd.ImpStone.impactstone16'
      HitMetal(0)=Sound'WeaponsSnd.ImpMetal.impactmetal05'
      HitDirt(0)=Sound'WeaponsSnd.ImpEarth.impactearth01'
+     HitIce(0)=Sound'WeaponsSnd.ImpStone.impactstone16'
      HitShield=Sound'WeaponsSnd.Shields.shield02'
      HitWeapon=Sound'WeaponsSnd.Swords.sword02'
      HitBreakableWood=Sound'WeaponsSnd.ImpWood.impactwood12'
