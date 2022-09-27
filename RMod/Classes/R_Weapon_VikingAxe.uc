@@ -101,7 +101,7 @@ defaultproperties
      A_AttackA=X3_attackA
      A_AttackAReturn=X3_attackAreturn
      A_AttackB=X3_attackB
-     A_AttackBReturn=X3_attackBreturn
+     A_AttackBReturn=None
      A_AttackC=X3_attackC
      A_AttackCReturn=X3_attackCreturn
      A_AttackStandA=X3_StandingAttackA

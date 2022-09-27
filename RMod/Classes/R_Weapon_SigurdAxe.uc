@@ -141,7 +141,7 @@ defaultproperties
      A_AttackA=S4_attackA
      A_AttackAReturn=X4_attackAreturn
      A_AttackB=S4_attackB
-     A_AttackBReturn=X4_attackBreturn
+     A_AttackBReturn=None
      A_AttackC=S4_attackC
      A_AttackCReturn=X4_attackCreturn
      A_AttackStandA=X4_StandingAttackA
