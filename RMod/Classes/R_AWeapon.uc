@@ -43,6 +43,11 @@ function PlayHitMatterSound(EMatterType Matter)
             PlaySound(HitIce[i], SLOT_Misc,,,, 1.0 + (FRand()-0.5)*2.0*PitchDeviation);
             break;
         default:
+            if(Matter == MATTER_SNOW)
+            {
+                // For now, treat snow like earth
+                Matter = MATTER_EARTH;
+            }
             Super.PlayHitMatterSound(Matter);
             break;
     }
