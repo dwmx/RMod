@@ -1,4 +1,25 @@
+//==============================================================================
+//  R_AShield
+//  Abstract base shield class which implements core RMod shield functionality.
+//==============================================================================
 class R_AShield extends Shield abstract;
+
+/**
+*   NotifySubstitutedForInstance
+*   Called to notify this Actor that it was spawned as a substitution for
+*   another actor. This is where any important property copying should occur.
+*/
+function NotifySubstitutedForInstance(Actor InActor)
+{
+    // Disable collide world for correct actor placement
+    bCollideWorld = false;
+
+    // Perform important copying
+    SetRotation(InActor.Rotation);
+    SetLocation(InActor.Location);
+    
+    bCollideWorld = InActor.bCollideWorld;
+}
 
 function bool JointDamaged(int Damage, Pawn EventInstigator, vector HitLoc, vector Momentum, name DamageType, int joint)
 {

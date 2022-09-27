@@ -1,15 +1,16 @@
 class R_GameInfo extends RuneI.RuneMultiPlayer;
 
-var class<RunePlayer> RunePlayerClass;
-var class<RunePlayer> SpectatorMarkerClass;
-var class<PlayerReplicationInfo> PlayerReplicationInfoClass;
+var Class<RunePlayer> RunePlayerClass;
+var Class<RunePlayer> SpectatorMarkerClass;
+var Class<PlayerReplicationInfo> PlayerReplicationInfoClass;
 
-var class<R_GamePresets> GamePresetsClass;
-var class<R_AUtilities> UtilitiesClass;
+var Class<R_GamePresets> GamePresetsClass; // TODO: Remove this
+var Class<R_AUtilities> UtilitiesClass;
+var Class<R_AActorSubstitution> ActorSubstitutionClass;
 
 var private String OldGamePassword;
 
-var class<HUD> HUDTypeSpectator;
+var Class<HUD> HUDTypeSpectator;
 var bool bAllowSpectatorBroadcastMessage;
 
 // Used at level start to mark actors which stay during level reset
@@ -453,9 +454,9 @@ event PlayerPawn Login(
 	String Portal,
 	String Options,
 	out String Error,
-	class<PlayerPawn> SpawnClass)
+	Class<PlayerPawn> SpawnClass)
 {
-	local class<PlayerPawn> IncomingClass;
+	local Class<PlayerPawn> IncomingClass;
 	local PlayerPawn P;
 	
 	IncomingClass = SpawnClass;
@@ -468,19 +469,19 @@ event PlayerPawn Login(
 		Error,
 		SpawnClass);
 	
-	if(class<RunePlayer>(IncomingClass) != None
-	&& class<R_RunePlayer>(IncomingClass) == None)
+	if(Class<RunePlayer>(IncomingClass) != None
+	&& Class<R_RunePlayer>(IncomingClass) == None)
 	{
 		UtilitiesClass.Static.RModLog("Incoming player subclass: " $ IncomingClass);
 		if(R_RunePlayer(P) != None)
 		{
-			R_RunePlayer(P).ApplySubClass(class<RunePlayer>(IncomingClass));
+			R_RunePlayer(P).ApplySubClass(Class<RunePlayer>(IncomingClass));
 		}
 	}
-	else if(class<Spectator>(IncomingClass) != None)
+	else if(Class<Spectator>(IncomingClass) != None)
 	{
 		// Destroy PRI for messaging spectators (webadmin spectator)
-		if(class<MessagingSpectator>(IncomingClass) != None)
+		if(Class<MessagingSpectator>(IncomingClass) != None)
 		{
 			P.PlayerReplicationInfo.Destroy();
 		}
@@ -525,6 +526,11 @@ event bool IsRelevant(Actor A)
 	local Vector Loc;
 	local Rotator Rot;
 	
+    if(ActorSubstitutionClass != None)
+    {
+        A = ActorSubstitutionClass.Static.PerformActorSubstitution(Self, A);
+    }
+
 	if(!Super.IsRelevant(A))
 	{
 		return false;
@@ -541,6 +547,63 @@ event bool IsRelevant(Actor A)
 	}
 	
 	return true;
+}
+
+/**
+*   AddDefaultInventory (override)
+*   Overridden to account for spawning substituted classes as defaults.
+*/
+function AddDefaultInventory(Pawn PlayerPawn)
+{
+    local Weapon newWeapon;
+    local Shield newShield;
+
+    PlayerPawn.JumpZ = PlayerPawn.Default.JumpZ * PlayerJumpZScaling();
+     
+    if( PlayerPawn.IsA('Spectator') )
+        return;
+
+    // Spawn default weapon.
+    if (PlayerPawn.Weapon == None)
+    {
+        if( (DefaultWeapon!=None && PlayerPawn.FindInventoryType(DefaultWeapon)==None) ||   // Default weapon exists that player doesn't yet have
+            BaseMutator.MutatedDefaultWeapon()!=None )                                      // Mutators dictating a default weapon
+        {
+            newWeapon = Spawn(BaseMutator.MutatedDefaultWeapon(),,,PlayerPawn.Location);
+            if( newWeapon != None )
+            {
+                newWeapon.bTossedOut = true;
+                newWeapon.Instigator = PlayerPawn;
+                newWeapon.BecomeItem();
+                PlayerPawn.AddInventory(newWeapon);
+                PlayerPawn.AcquireInventory(newWeapon);
+                PlayerPawn.Weapon = newWeapon;
+                newWeapon.GotoState('Active');
+            }
+        }
+    }
+
+    // Spawn default shield
+    if (PlayerPawn.Shield == None)
+    {
+        if( (DefaultShield!=None && PlayerPawn.FindInventoryType(DefaultShield)==None) ||
+            BaseMutator.MutatedDefaultShield()!=None )
+        {
+            newShield = Spawn(BaseMutator.MutatedDefaultShield(),,,PlayerPawn.Location);
+            if( newShield != None )
+            {
+                newShield.bTossedOut = true;
+                newShield.Instigator = PlayerPawn;
+                newShield.BecomeItem();
+                PlayerPawn.AddInventory(newShield);
+                PlayerPawn.AcquireInventory(newShield);
+                PlayerPawn.Shield = newShield;
+                newShield.GotoState('Active');
+            }
+        }
+    }
+
+    BaseMutator.ModifyPlayer(PlayerPawn);
 }
 
 function bool ChangeTeam(Pawn Other, int N)
@@ -638,6 +701,7 @@ defaultproperties
      PlayerReplicationInfoClass=Class'RMod.R_PlayerReplicationInfo'
      GamePresetsClass=Class'RMod.R_GamePresets'
      UtilitiesClass=Class'RMod.R_AUtilities'
+     ActorSubstitutionClass=Class'RMod.R_AActorSubstitution'
      bMarkSpawnedActorsAsNativeToLevel=True
      bRModEnabled=True
      ScoreBoardType=Class'RMod.R_Scoreboard'
@@ -646,4 +710,5 @@ defaultproperties
      GameReplicationInfoClass=Class'RMod.R_GameReplicationInfo'
 	 bAllowSpectatorBroadcastMessage=false
      AutoAim=0.0
+     DefaultWeapon=Class'RMod.R_Weapon_HandAxe'
 }
