@@ -1,3 +1,7 @@
+//==============================================================================
+//  R_GameInfo
+//  Base GameInfo class for all RMod game types.
+//==============================================================================
 class R_GameInfo extends RuneI.RuneMultiPlayer;
 
 var Class<RunePlayer> RunePlayerClass;
@@ -7,6 +11,10 @@ var Class<PlayerReplicationInfo> PlayerReplicationInfoClass;
 var Class<R_GamePresets> GamePresetsClass; // TODO: Remove this
 var Class<R_AUtilities> UtilitiesClass;
 var Class<R_AActorSubstitution> ActorSubstitutionClass;
+
+// RMod Game Options
+var Class<R_GameOptions> GameOptionsClass;
+var R_GameOptions GameOptions;
 
 var private String OldGamePassword;
 
@@ -134,6 +142,7 @@ function PlayerSetTimeLimit(PlayerPawn P, int DurationMinutes)
 event PostBeginPlay()
 {
 	local String CurrentGamePassword;
+    local R_GameReplicationInfo RGRI;
 
 	Super.PostBeginPlay();
 	
@@ -143,6 +152,20 @@ event PostBeginPlay()
 
 	CurrentGamePassword = ConsoleCommand("Get Engine.GameInfo GamePassword");
 	OldGamePassword = CurrentGamePassword;
+
+    // Spawn Game Options
+    if(GameOptionsClass != None)
+    {
+        GameOptions = Spawn(GameOptionsClass);
+        if(GameOptions != None)
+        {
+            RGRI = R_GameReplicationInfo(GameReplicationInfo);
+            if(RGRI != None)
+            {
+                RGRI.GameOptions = GameOptions;
+            }
+        }
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -702,6 +725,7 @@ defaultproperties
      GamePresetsClass=Class'RMod.R_GamePresets'
      UtilitiesClass=Class'RMod.R_AUtilities'
      ActorSubstitutionClass=Class'RMod.R_AActorSubstitution'
+     GameOptionsClass=Class'RMod.R_GameOptions'
      bMarkSpawnedActorsAsNativeToLevel=True
      bRModEnabled=True
      ScoreBoardType=Class'RMod.R_Scoreboard'

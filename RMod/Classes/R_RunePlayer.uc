@@ -834,7 +834,7 @@ function ServerMove(
 
 /**
 *   JointDamaged (override)
-*   Overridden to keep track of damage dealt statistics.
+*   Overridden to keep track of Damage dealt statistics.
 */
 function bool JointDamaged(int Damage, Pawn EventInstigator, vector HitLoc, vector Momentum, name DamageType, int joint)
 {
@@ -863,6 +863,43 @@ function bool JointDamaged(int Damage, Pawn EventInstigator, vector HitLoc, vect
 			RPRI.DamageDealt += DamageDealt;
 		}
 	}
+}
+
+/**
+*   PlayTakeHit (override)
+*   Overridden to avoid playing client flashes in response to shield hit stun
+*/
+function PlayTakeHit(float TweenTime, int Damage, Vector HitLoc, Name DamageType, Vector Momentum, int BodyPart)
+{
+    local float rnd;
+    local float time;
+
+    if(DamageType != 'ShieldHit')
+    {
+        rnd = FClamp(Damage, 10, 40);
+        if (DamageType == 'burned')
+        {
+            ClientFlash(-0.009375 * rnd, rnd * vect(16.41, 11.719, 4.6875));
+        }
+        else if (DamageType == 'corroded')
+        {
+            ClientFlash(-0.01171875 * rnd, rnd * vect(9.375, 14.0625, 4.6875));
+        }
+        else if (DamageType == 'drowned')
+        {
+            ClientFlash(-0.390, vect(312.5,468.75,468.75));
+        }
+        else
+        {
+            ClientFlash(-0.017 * rnd, rnd * vect(24, 4, 4));
+        }
+    }
+
+    time = 0.15 + 0.005 * Damage;
+    ShakeView(time, Damage * 10, time * 0.5);
+
+    // Bypass RunePlayer.PlayTakeHit to avoid client flash
+    Super(PlayerPawn).PlayTakeHit(TweenTime, Damage, HitLoc, DamageType, Momentum, BodyPart);
 }
 
 /**

@@ -21,12 +21,59 @@ function NotifySubstitutedForInstance(Actor InActor)
     bCollideWorld = InActor.bCollideWorld;
 }
 
+/**
+*   CheckIsShieldHitStunEnabled
+*   Server-side check of game options to see if shield hit stun is enabled.
+*/
+function bool CheckIsShieldHitStunEnabled()
+{
+    local R_GameInfo RGI;
+    local R_GameOptions RGO;
+
+    if(Role == ROLE_Authority)
+    {
+        RGI = R_GameInfo(Level.Game);
+        if(RGI != None)
+        {
+            RGO = RGI.GameOptions;
+            if(RGO != None)
+            {
+                return RGO.bOptionShieldHitStun;
+            }
+        }
+    }
+
+	return false;
+}
+
+/**
+*   JointDamaged (override)
+*   Overridden to implement shield hit stun
+*/
 function bool JointDamaged(int Damage, Pawn EventInstigator, vector HitLoc, vector Momentum, name DamageType, int joint)
 {
 	local vector AdjMomentum;
 	local Pawn P;
+	local Pawn POwner;
 
 	PlayHitSound(DamageType);
+
+	// [RMod]
+	// Cause the owner to enter into HitStun
+	// Copy from Pawn.DamageBodyPart, to avoid modifying Pawn
+	if(Owner != None && Pawn(Owner) != None && CheckIsShieldHitStunEnabled())
+	{
+		POwner = Pawn(Owner);
+		if (POwner.GetStateName() != 'Pain' && POwner.GetStateName() != 'pain')
+		{
+			POwner.NextStateAfterPain = POwner.GetStateName();
+
+			// Play pain anim
+			//POwner.PlayTakeHit(0.1, Damage, HitLoc, DamageType, Momentum, joint);
+            POwner.PlayTakeHit(0.1, Damage, HitLoc, 'ShieldHit', Momentum, joint);
+			POwner.GotoState('Pain');
+		}
+	}
 
 	if (bBreakable)
 	{
@@ -52,23 +99,14 @@ function bool JointDamaged(int Damage, Pawn EventInstigator, vector HitLoc, vect
 		P = Pawn(Owner);
 		P.AddVelocity(AdjMomentum);
 
-	// Hitstun pawn owner
-	if(Pawn(Owner) != None)
-	{
-		//Pawn(Owner).DamageBodyPart(
-                //    20, Pawn(Owner), HitLoc, Momentum, 'Blunt', 0);
-		Pawn(Owner).JointDamaged(5, EventInstigator, HitLoc, Momentum, DamageType, 0);
-	}
-/*
-// CJR TEST -- Recoil animation when hit in the shield
+/* CJR TEST -- Recoil animation when hit in the shield
 		if(P.CanGotoPainState() && Health > 0)
 		{ // Recoil from being hit in the shield
 			P.NextState = P.GetStateName();
-			//P.PlayAnim('h3_defendPain', 1.0, 0.01);
+			P.PlayAnim('h3_defendPain', 1.0, 0.01);
 			P.GotoState('Pain');
 		}
 */
-
 	}
 
 	if(Health <= 0)

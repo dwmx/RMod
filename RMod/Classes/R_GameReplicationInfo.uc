@@ -1,5 +1,7 @@
 class R_GameReplicationInfo extends RuneGameReplicationInfo;
 
+var R_GameOptions GameOptions;
+
 var bool bRemainingTimePendingUpdate;
 var bool bRemainingTimePendingUpdateToggle;
 var int NewRemainingTime;
@@ -7,6 +9,7 @@ var int NewRemainingTime;
 replication
 {
 	reliable if(Role == ROLE_Authority)
+        GameOptions,
 		bRemainingTimePendingUpdate,
 		NewRemainingTime;
 }
