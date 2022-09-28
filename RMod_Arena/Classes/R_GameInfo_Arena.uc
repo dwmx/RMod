@@ -123,10 +123,10 @@ function PostBeginPlay()
 	}
 
 // --> Thanks for Lar
-      if (ArenaGameInfo(Level.Game).MaxTeamSupport > 1)
-          Level.Game.bTeamGame = true;     //make this a bonified TeamGame if playing as teams.
-      else                                 //code in the Weapon class prevents teammates from hurting each others shields
-          Level.Game.bTeamGame = false;    //for it to work, bTeamGame MUST me declared true
+      //if (ArenaGameInfo(Level.Game).MaxTeamSupport > 1)
+      //    Level.Game.bTeamGame = true;     //make this a bonified TeamGame if playing as teams.
+      //else                                 //code in the Weapon class prevents teammates from hurting each others shields
+      //    Level.Game.bTeamGame = false;    //for it to work, bTeamGame MUST me declared true
 
       foreach AllActors(class'Inventory', Inv)
       {
