@@ -580,20 +580,31 @@ function AddDefaultInventory(Pawn PlayerPawn)
 {
     local Weapon newWeapon;
     local Shield newShield;
+    local Class<Weapon> SpawnWeaponClass;
+    local Class<Shield> SpawnShieldClass;
 
     PlayerPawn.JumpZ = PlayerPawn.Default.JumpZ * PlayerJumpZScaling();
-     
-    if( PlayerPawn.IsA('Spectator') )
+
+    if(PlayerPawn.IsA('Spectator'))
+    {
         return;
+    }
 
     // Spawn default weapon.
     if (PlayerPawn.Weapon == None)
     {
-        if( (DefaultWeapon!=None && PlayerPawn.FindInventoryType(DefaultWeapon)==None) ||   // Default weapon exists that player doesn't yet have
-            BaseMutator.MutatedDefaultWeapon()!=None )                                      // Mutators dictating a default weapon
+        if((DefaultWeapon != None && PlayerPawn.FindInventoryType(DefaultWeapon)==None)     // Default weapon exists that player doesn't yet have
+        ||  BaseMutator.MutatedDefaultWeapon() != None)                                       // Mutators dictating a default weapon
         {
-            newWeapon = Spawn(BaseMutator.MutatedDefaultWeapon(),,,PlayerPawn.Location);
-            if( newWeapon != None )
+            SpawnWeaponClass = BaseMutator.MutatedDefaultWeapon();
+
+            if(ActorSubstitutionClass != None)
+            {
+                SpawnWeaponClass = Class<Weapon>(ActorSubstitutionClass.Static.GetActorSubstitutionClass(SpawnWeaponClass));
+            }
+
+            newWeapon = Spawn(SpawnWeaponClass,,,PlayerPawn.Location);
+            if(newWeapon != None)
             {
                 newWeapon.bTossedOut = true;
                 newWeapon.Instigator = PlayerPawn;
@@ -609,11 +620,18 @@ function AddDefaultInventory(Pawn PlayerPawn)
     // Spawn default shield
     if (PlayerPawn.Shield == None)
     {
-        if( (DefaultShield!=None && PlayerPawn.FindInventoryType(DefaultShield)==None) ||
-            BaseMutator.MutatedDefaultShield()!=None )
+        if((DefaultShield!=None && PlayerPawn.FindInventoryType(DefaultShield)==None)
+        ||  BaseMutator.MutatedDefaultShield()!=None)
         {
-            newShield = Spawn(BaseMutator.MutatedDefaultShield(),,,PlayerPawn.Location);
-            if( newShield != None )
+            SpawnShieldClass = BaseMutator.MutatedDefaultShield();
+
+            if(ActorSubstitutionClass != None)
+            {
+                SpawnShieldClass = Class<Shield>(ActorSubstitutionClass.Static.GetActorSubstitutionClass(SpawnShieldClass));
+            }
+
+            newShield = Spawn(SpawnShieldClass,,,PlayerPawn.Location);
+            if(newShield != None)
             {
                 newShield.bTossedOut = true;
                 newShield.Instigator = PlayerPawn;
@@ -734,5 +752,6 @@ defaultproperties
      GameReplicationInfoClass=Class'RMod.R_GameReplicationInfo'
 	 bAllowSpectatorBroadcastMessage=false
      AutoAim=0.0
-     DefaultWeapon=Class'RMod.R_Weapon_HandAxe'
+     //DefaultWeapon=Class'RMod.R_Weapon_HandAxe'
+     DefaultShield=Class'RuneI.DwarfWoodShield'
 }
