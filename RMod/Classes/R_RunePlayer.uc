@@ -1066,6 +1066,36 @@ function ServerSwitchGame(String S)
 }
 
 /**
+*   Throw (override)
+*   Overridden to allow player to drop shield with Throw input when they
+*   have to currently equipped weapon.
+*/
+exec function Throw()
+{
+    if(Weapon == None)
+    {
+        if(Shield != None)
+        {
+            DropShield();
+        }
+
+        return;
+    }
+    else
+    {
+        if( bShowMenu || (Level.Pauser!=""))
+        {
+            return;
+        }
+        
+        if(AnimProxy != None && AnimProxy.Throw())
+        {
+            PlayAnim('ATK_ALL_throw1_AA0S', 1.0, 0.1);
+        }
+    }
+}
+
+/**
 *   ResetLevel
 *   Performs a soft level reset. Resets the map state without reloading the map.
 *   Useful for restarting maps only after all players have loaded in.
