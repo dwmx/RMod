@@ -142,8 +142,7 @@ function PlayerSetTimeLimit(PlayerPawn P, int DurationMinutes)
 event PostBeginPlay()
 {
 	local String CurrentGamePassword;
-    local R_GameReplicationInfo RGRI;
-
+    
 	Super.PostBeginPlay();
 	
 	// Actors spawned after this point are not a part of the level's original
@@ -152,6 +151,13 @@ event PostBeginPlay()
 
 	CurrentGamePassword = ConsoleCommand("Get Engine.GameInfo GamePassword");
 	OldGamePassword = CurrentGamePassword;
+
+    SpawnGameOptions();
+}
+
+function SpawnGameOptions()
+{
+    local R_GameReplicationInfo RGRI;
 
     // Spawn Game Options
     if(GameOptionsClass != None)
@@ -590,6 +596,13 @@ function AddDefaultInventory(Pawn PlayerPawn)
         return;
     }
 
+    // If loadouts are enabled, then grant inventory based on loadout
+    if(GameOptions != None && GameOptions.bOptionLoadoutEnabled)
+    {
+        AddDefaultInventory_LoadoutEnabled(PlayerPawn);
+        return;
+    }
+
     // Spawn default weapon.
     if (PlayerPawn.Weapon == None)
     {
@@ -645,6 +658,55 @@ function AddDefaultInventory(Pawn PlayerPawn)
     }
 
     BaseMutator.ModifyPlayer(PlayerPawn);
+}
+
+function AddDefaultInventory_LoadoutEnabled(Pawn PlayerPawn)
+{
+    local R_RunePlayer RP;
+    local R_LoadoutReplicationInfo LRI;
+    local Class<Inventory> LoadoutInventoryClasses[16];
+    local int i;
+    local Class<Inventory> LoadoutInventoryClassCurrent;
+    local Inventory InventoryCurrent;
+
+    RP = R_RunePlayer(PlayerPawn);
+    if(RP != None)
+    {
+        LRI = RP.LoadoutReplicationInfo;
+        if(LRI != None)
+        {
+            LoadoutInventoryClasses[0] = LRI.TertiaryInventoryClass;
+            LoadoutInventoryClasses[1] = LRI.SecondaryInventoryClass;
+            LoadoutInventoryClasses[2] = LRI.PrimaryInventoryClass;
+        }
+    }
+
+    for(i = 0; i < 16; ++i)
+    {
+        LoadoutInventoryClassCurrent = LoadoutInventoryClasses[i];
+        if(LoadoutInventoryClassCurrent != None && PlayerPawn.FindInventoryType(LoadoutInventoryClassCurrent) == None)
+        {
+            if(ActorSubstitutionClass != None)
+            {
+                LoadoutInventoryClassCurrent = Class<Inventory>(ActorSubstitutionClass.Static.GetActorSubstitutionClass(LoadoutInventoryClassCurrent));
+            }
+
+            InventoryCurrent = Spawn(LoadoutInventoryClassCurrent,,, PlayerPawn.Location);
+            InventoryCurrent.Instigator = PlayerPawn;
+            InventoryCurrent.BecomeItem();
+            PlayerPawn.AddInventory(InventoryCurrent);
+            PlayerPawn.AcquireInventory(InventoryCurrent);
+            if(Weapon(InventoryCurrent) != None)
+            {
+                PlayerPawn.Weapon = Weapon(InventoryCurrent);
+            }
+            else if(Shield(InventoryCurrent) != None)
+            {
+                PlayerPawn.Shield = Shield(InventoryCurrent);
+            }
+            InventoryCurrent.GotoState('Active');
+        }
+    }
 }
 
 function bool ChangeTeam(Pawn Other, int N)

@@ -19,6 +19,8 @@ var Class<HUD> HUDTypeSpectator;
 var Class<R_ACamera> SpectatorCameraClass;
 var R_ACamera Camera;
 
+var R_LoadoutReplicationInfo LoadoutReplicationInfo;
+
 // Replicated POV view rotation
 var private float ViewRotPovPitch;
 var private float ViewRotPovYaw;
@@ -50,6 +52,7 @@ replication
 		Camera;
 
 	reliable if(Role == ROLE_Authority && RemoteRole == ROLE_AutonomousProxy)
+        LoadoutReplicationInfo,
 		ClientReceiveUpdatedGamePassword,
 		ClientPreTeleport;
 
@@ -103,6 +106,7 @@ event PreBeginPlay()
 event PostBeginPlay()
 {
 	local R_GameInfo RGI;
+    local R_GameOptions RGO;
 
 	Super.PostBeginPlay();
 
@@ -110,7 +114,34 @@ event PostBeginPlay()
 	if(RGI != None)
 	{
 		HUDTypeSpectator = RGI.HUDTypeSpectator;
+
+        RGO = RGI.GameOptions;
+        if(RGO != None)
+        {
+            if(RGO.bOptionLoadoutEnabled)
+            {
+                SpawnLoadoutReplicationInfo();
+            }
+        }
 	}
+}
+
+function SpawnLoadoutReplicationInfo()
+{
+    if(Role == ROLE_Authority)
+    {
+        LoadoutReplicationInfo = Spawn(Class'RMod.R_LoadoutReplicationInfo', Self);
+    }
+}
+
+event Destroyed()
+{
+    Super.Destroyed();
+
+    if(LoadoutReplicationInfo != None)
+    {
+        LoadoutReplicationInfo.Destroy();
+    }
 }
 
 /**
@@ -1602,6 +1633,45 @@ state GameEnded
 {
 	ignores Throw;
 }
+
+// Loadouts
+exec function Loadout()
+{
+    local WindowConsole WC;
+    local UWindowWindow Window;
+
+    WC = WindowConsole(Player.Console);
+    if(WC == None)
+    {
+        UtilitiesClass.Static.RModLog("Failed to open loadout menu -- Invalid console");
+        return;
+    }
+
+    if(WC.IsInState('UWINDOW') && !WC.bShowConsole)
+    {
+        // Player is in main menu
+        return;
+    }
+
+    if(!WC.bCreatedRoot || WC.Root == None)
+    {
+        WC.CreateRootWindow(None);
+    }
+
+    WC.bQuickKeyEnable = true;
+    WC.LaunchUWindow();
+
+    // SETUP
+    Window = WC.Root.CreateWindow(Class'RMod.R_LoadoutWindow', 128, 256, 400, 128);
+    if(WC.bShowConsole)
+    {
+        WC.HideConsole();
+    }
+
+    Window.bLeaveOnScreen = true;
+    Window.ShowWindow();
+}
+
 
 defaultproperties
 {
