@@ -4,6 +4,7 @@ var Class<R_AUtilities> UtilitiesClass;
 var R_LoadoutListBox LoadoutListBoxPrimary;
 var R_LoadoutListBox LoadoutListBoxSecondary;
 var R_LoadoutListBox LoadoutListBoxTertiary;
+var UWindowCheckbox DoNotShowCheckbox;
 
 function R_LoadoutReplicationInfo GetLoadoutReplicationInfo()
 {
@@ -43,6 +44,7 @@ event Created()
     CreatePrimaryInventoryListBox();
     CreateSecondaryInventoryListBox();
     CreateTertiaryInventoryListBox();
+    CreateDoNotShowCheckbox(32, 72);
 }
 
 function CreatePrimaryInventoryListBox()
@@ -158,6 +160,11 @@ function R_LoadoutListBox CreateLoadoutListBoxFromInventoryArray(
     return Result;
 }
 
+function CreateDoNotShowCheckbox(int LocationX, int LocationY)
+{
+    DoNotShowCheckbox = UWindowCheckbox(CreateControl(Class'UWindow.UWindowCheckbox', LocationX, LocationY, 32, 32));
+}
+
 event Tick(float DeltaSeconds)
 {
     Super.Tick(DeltaSeconds);
@@ -249,6 +256,23 @@ event WindowEvent(WinMessage Msg, Canvas C, float X, float Y, int Key)
 
 event Close(optional bool bByParent)
 {
+    local bool bNewDoNotShow;
+    local R_RunePlayer RRP;
+
+    // Update DoNotClose value
+    bNewDoNotShow = false;
+    if(DoNotShowCheckbox != None)
+    {
+        bNewDoNotShow = DoNotShowCheckbox.bChecked;
+    }
+
+    RRP = R_RunePlayer(GetPlayerOwner());
+    if(RRP != None)
+    {
+        RRP.bLoadoutMenuDoNotShow = bNewDoNotShow;
+    }
+
+    // Close window
     Root.Console.bQuickKeyEnable = false;
     Root.Console.CloseUWindow();
     Super.Close(bByParent);

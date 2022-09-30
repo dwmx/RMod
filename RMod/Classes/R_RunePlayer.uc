@@ -20,6 +20,7 @@ var Class<R_ACamera> SpectatorCameraClass;
 var R_ACamera Camera;
 
 var R_LoadoutReplicationInfo LoadoutReplicationInfo;
+var bool bLoadoutMenuDoNotShow;
 
 // Replicated POV view rotation
 var private float ViewRotPovPitch;
@@ -1644,6 +1645,13 @@ function OpenLoadoutMenu()
     local UWindowWindow Window;
     local bool bLoadoutEnabled;
 
+    // Checks whether or not the DoNotShow option was selected
+    // This can be reverted by called the 'loadout' command
+    if(bLoadoutMenuDoNotShow)
+    {
+        return;
+    }
+
     bLoadoutEnabled = false;
 
     // Verify that loadout is enabled for the current game
@@ -1734,6 +1742,8 @@ function ClientCloseLoadoutMenu()
 
 exec function Loadout()
 {
+    // Always revert the DoNotShow option when user explicitly calls this function
+    bLoadoutMenuDoNotShow = false;
     OpenLoadoutMenu();
 }
 
@@ -1746,4 +1756,5 @@ defaultproperties
     SuicideCooldown=5.0
     bAlwaysRelevant=True
     bRotateTorso=False
+    bLoadoutMenuDoNotShow=False
 }
