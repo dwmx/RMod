@@ -5,13 +5,15 @@ var R_GameOptions GameOptions;
 var bool bRemainingTimePendingUpdate;
 var bool bRemainingTimePendingUpdateToggle;
 var int NewRemainingTime;
+var Name GameStateName;
 
 replication
 {
 	reliable if(Role == ROLE_Authority)
         GameOptions,
 		bRemainingTimePendingUpdate,
-		NewRemainingTime;
+		NewRemainingTime,
+        GameStateName;
 }
 
 simulated event Tick(float DeltaSeconds)

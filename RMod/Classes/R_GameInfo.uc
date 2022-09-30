@@ -195,6 +195,22 @@ function SpawnLoadoutOptionReplicationInfo()
     }
 }
 
+/**
+*   ReplicateCurrentGameState
+*   Replicate the name of the current game state via game rep info.
+*   This is useful info for clients.
+*/
+function ReplicateCurrentGameState()
+{
+    local R_GameReplicationInfo RGRI;
+
+    RGRI = R_GameReplicationInfo(GameReplicationInfo);
+    if(RGRI != None)
+    {
+        RGRI.GameStateName = GetStateName();
+    }
+}
+
 /////////////////////////////////////////////////////////////////////////////////
 //	NativeLevelCleanup
 //	Remove all non-essential actors in the level that were not there at startup
