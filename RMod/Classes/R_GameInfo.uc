@@ -723,6 +723,11 @@ function AddDefaultInventory_LoadoutEnabled(Pawn PlayerPawn)
             }
             else if(Shield(InventoryCurrent) != None)
             {
+                // If equipping a shield, may need to stow whatever is in hands
+                if(RP != None && RP.Weapon != None && RP.Weapon.A_Defend == 'None')
+                {
+                    RP.InstantStow();
+                }
                 PlayerPawn.Shield = Shield(InventoryCurrent);
             }
             InventoryCurrent.GotoState('Active');
