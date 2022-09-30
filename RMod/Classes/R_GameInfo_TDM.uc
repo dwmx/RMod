@@ -529,25 +529,25 @@ function bool CanSpectate( pawn Viewer, actor ViewTarget )
 
 defaultproperties
 {
-     ColorsClass=Class'RMod.R_AColors'
-     MaxTeams=4
-     MaxTeamSize=16
-     NewTeamMessage=" is now on "
-     TEAM_Blue=1
-     TEAM_Green=2
-     TEAM_Gold=3
-     TeamColor(0)="Red"
-     TeamColor(1)="Blue"
-     TeamColor(2)="Green"
-     TeamColor(3)="Gold"
-     VColorRed=(X=255.000000)
-     VColorBlue=(Z=255.000000)
-     VColorGreen=(Y=255.000000)
-     VColorGold=(X=255.000000,Y=255.000000)
-     VColorWhite=(X=255.000000,Y=255.000000,Z=255.000000)
-     bCanChangeSkin=False
-     bTeamGame=True
-     ScoreBoardType=Class'RMod.R_Scoreboard_TDM'
-     BeaconName="Team"
-     GameName="Team Game"
+    ColorsClass=Class'RMod.R_AColors'
+    MaxTeams=4
+    MaxTeamSize=16
+    NewTeamMessage=" is now on "
+    TEAM_Blue=1
+    TEAM_Green=2
+    TEAM_Gold=3
+    TeamColor(0)="Red"
+    TeamColor(1)="Blue"
+    TeamColor(2)="Green"
+    TeamColor(3)="Gold"
+    VColorRed=(X=255.000000)
+    VColorBlue=(Z=255.000000)
+    VColorGreen=(Y=255.000000)
+    VColorGold=(X=255.000000,Y=255.000000)
+    VColorWhite=(X=255.000000,Y=255.000000,Z=255.000000)
+    bCanChangeSkin=False
+    bTeamGame=True
+    ScoreBoardType=Class'RMod.R_Scoreboard_TDM'
+    BeaconName="Team"
+    GameName="Team Game"
 }

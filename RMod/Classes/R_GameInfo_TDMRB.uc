@@ -154,6 +154,15 @@ state LiveRound
             GotoState('PostRound');
         }
     }
+
+    /**
+    *   CheckAllowRestart (override)
+    *   Disallow players from restarting while the round is live
+    */
+    function bool CheckAllowRestart(PlayerPawn P)
+    {
+        return false;
+    }
 }
 
 /**
@@ -183,6 +192,6 @@ defaultproperties
     GameStateDurationSeconds_PreGame=15.0
     GameStateDurationSeconds_Loadout=10.0
     GameStateDurationSeconds_PreRound=5.0
-    GameStateDurationSeconds_LiveRound=15.0
+    GameStateDurationSeconds_LiveRound=30.0
     GameStateDurationSeconds_PostRound=5.0
 }

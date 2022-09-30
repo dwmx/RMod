@@ -839,6 +839,17 @@ function bool SetEndCams(string Reason)
 	return true;
 }
 
+/**
+*   CheckAllowRestart
+*   Allows game modes to allow or deny player restarts.
+*   Note that this works independently from RunePlayer.bCanRestart.
+*   So, both this function AND bCanRestart must be true
+*/
+function bool CheckAllowRestart(PlayerPawn P)
+{
+    return true;
+}
+
 defaultproperties
 {
     RunePlayerClass=Class'RMod.R_RunePlayer'

@@ -1361,6 +1361,31 @@ exec function Suicide()
 }
 
 /**
+*   CheckCanRestart
+*   Returns whether or not this player is allowed to manually restart.
+*   This function includes the original bCanRestart check, but adds an
+*   additional check to R_GameInfo.CheckAllowRestart, to allow game modes
+*   to add their own conditional logic for blocking player restarts.
+*/
+function bool CheckCanRestart()
+{
+    local R_GameInfo RGI;
+
+    if(!bCanRestart)
+    {
+        return false;
+    }
+
+    RGI = R_GameInfo(Level.Game);
+    if(RGI != None && !RGI.CheckAllowRestart(Self))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+/**
 *   CheckShouldSpectateAfterDying
 *   Dying state calls this function to see whether the player should enter
 *   into spectator state after dying. This is useful for game types like Arena,
@@ -1369,7 +1394,7 @@ exec function Suicide()
 function bool CheckShouldSpectateAfterDying()
 {
 	// If unable to restart, then go into spectator mode
-	return !bCanRestart;
+	return !CheckCanRestart();
 }
 
 /**
@@ -1570,6 +1595,45 @@ state Dying
 			GotoState('PlayerSpectating');
 		}
 	}
+
+    /**
+    *   ServerReStartPlayer (override)
+    *   Overridden to add R_GameInfo player restart logic
+    */
+    function ServerReStartPlayer()
+    {
+        local R_GameInfo RGI;
+
+        if(!CheckCanRestart())
+        {
+            return;
+        }
+
+        // Begin PlayerPawn.ServerReStartPlayer
+        if ( Level.NetMode == NM_Client )
+        {
+            return;
+        }
+        if (Level.Game.bGameEnded)
+        {
+            return;
+        }
+        if( Level.Game.RestartPlayer(self) )
+        {
+            ServerTimeStamp = 0;
+            TimeMargin = 0;
+            Enemy = None;
+            Level.Game.StartPlayer(self);
+            ClientReStart();
+        }
+        else
+        {
+            Log("Restartplayer failed");
+        }
+        // End PlayerPawn.ServerReStartPlayer
+
+        PlayerRestart();
+    }
 }
 
 state PlayerWalking
