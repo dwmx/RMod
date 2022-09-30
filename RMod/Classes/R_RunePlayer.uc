@@ -1640,6 +1640,8 @@ exec function Loadout()
     local WindowConsole WC;
     local UWindowWindow Window;
 
+    Log("Loadout Input");
+
     WC = WindowConsole(Player.Console);
     if(WC == None)
     {
@@ -1661,17 +1663,25 @@ exec function Loadout()
     WC.bQuickKeyEnable = true;
     WC.LaunchUWindow();
 
-    // SETUP
-    Window = WC.Root.CreateWindow(Class'RMod.R_LoadoutWindow', 128, 256, 400, 128);
-    if(WC.bShowConsole)
+    // If Loadout menu is already open, then close it
+    Window = WC.Root.FindChildWindow(Class'RMod.R_LoadoutWindow');
+    if(Window != None)
     {
-        WC.HideConsole();
+        Window.Close();
     }
+    else
+    {
+        // SETUP
+        Window = WC.Root.CreateWindow(Class'RMod.R_LoadoutWindow', 128, 256, 400, 128);
+        if(WC.bShowConsole)
+        {
+            WC.HideConsole();
+        }
 
-    Window.bLeaveOnScreen = true;
-    Window.ShowWindow();
+        Window.bLeaveOnScreen = true;
+        Window.ShowWindow();
+    }
 }
-
 
 defaultproperties
 {

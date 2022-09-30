@@ -18,6 +18,22 @@ event Paint(Canvas C, float MouseX, float MouseY)
     Super.Paint(C, MouseX, MouseY);
 }
 
+function SetSelectedLoadoutItemByClass(Class<Inventory> LoadoutInventoryClass)
+{
+    local R_LoadoutListBoxItem LoadoutItem;
+
+    LoadoutItem = R_LoadoutListBoxItem(Items);
+    while(LoadoutItem != None)
+    {
+        if(LoadoutItem.LoadoutInventoryClass == LoadoutInventoryClass)
+        {
+            SetSelectedItem(LoadoutItem);
+        }
+
+        LoadoutItem = R_LoadoutListBoxItem(LoadoutItem.Next);
+    }
+}
+
 event DrawItem(Canvas C, UWindowList Item, float X, float Y, float W, float H)
 {
     local R_LoadoutListBoxItem LoadoutItem;

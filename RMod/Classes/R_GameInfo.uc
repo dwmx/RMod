@@ -16,6 +16,10 @@ var Class<R_AActorSubstitution> ActorSubstitutionClass;
 var Class<R_GameOptions> GameOptionsClass;
 var R_GameOptions GameOptions;
 
+// Loadout options, spawned when loadout option is enabled
+var Class<R_LoadoutOptionReplicationInfo> LoadoutOptionReplicationInfoClass;
+var R_LoadoutOptionReplicationInfo LoadoutOptionReplicationInfo;
+
 var private String OldGamePassword;
 
 var Class<HUD> HUDTypeSpectator;
@@ -170,7 +174,24 @@ function SpawnGameOptions()
             {
                 RGRI.GameOptions = GameOptions;
             }
+
+            if(GameOptions.bOptionLoadoutEnabled)
+            {
+                SpawnLoadoutOptionReplicationInfo();
+            }
         }
+    }
+}
+
+function SpawnLoadoutOptionReplicationInfo()
+{
+    if(LoadoutOptionReplicationInfoClass != None)
+    {
+        LoadoutOptionReplicationInfo = Spawn(LoadoutOptionReplicationInfoClass);
+    }
+    else
+    {
+        UtilitiesClass.Static.Warn("Failed to spawn LoadoutOptionReplicationInfo, no class specified");
     }
 }
 
@@ -806,6 +827,7 @@ defaultproperties
      UtilitiesClass=Class'RMod.R_AUtilities'
      ActorSubstitutionClass=Class'RMod.R_AActorSubstitution'
      GameOptionsClass=Class'RMod.R_GameOptions'
+     LoadoutOptionReplicationInfoClass=Class'RMod.R_LoadoutOptionReplicationInfo'
      bMarkSpawnedActorsAsNativeToLevel=True
      bRModEnabled=True
      ScoreBoardType=Class'RMod.R_Scoreboard'
