@@ -8,6 +8,7 @@ var float GameStateTimeStampSeconds;
 var float GameStateDurationSeconds;
 
 var config float GameStateDurationSeconds_PreGame;
+var config float GameStateDurationSeconds_Loadout;
 var config float GameStateDurationSeconds_PreRound;
 var config float GameStateDurationSeconds_LiveRound;
 var config float GameStateDurationSeconds_PostRound;
@@ -38,6 +39,26 @@ function float GetGameStateTimeRemainingSeconds()
     return TimeRemainingSeconds;
 }
 
+function BroadcastOpenLoadoutMenu()
+{
+    local R_RunePlayer RRP;
+
+    foreach AllActors(Class'RMod.R_RunePlayer', RRP)
+    {
+        RRP.ClientOpenLoadoutMenu();
+    }
+}
+
+function BroadcastCloseLoadoutMenu()
+{
+    local R_RunePlayer RRP;
+
+    foreach AllActors(Class'RMod.R_RunePlayer', RRP)
+    {
+        RRP.ClientCloseLoadoutMenu();
+    }
+}
+
 /**
 *   State PreGame
 *   Warmup game state, gives a buffer to allow players to connect and get ready
@@ -49,6 +70,34 @@ auto state PreGame
         ReplicateCurrentGameState();
         SetGameStateTimerSeconds(GameStateDurationSeconds_PreGame);
         UtilitiesClass.Static.RModLog(Self @ "transitioned to state" @ GetStateName());
+    }
+
+    event Tick(float DeltaSeconds)
+    {
+        if(GetGameStateTimeRemainingSeconds() <= 0.0)
+        {
+            GotoState('Loadout');
+        }
+    }
+}
+
+/**
+*   State Loadout
+*   State in which players are allowed to select their loadouts.
+*/
+state Loadout
+{
+    event BeginState()
+    {
+        ReplicateCurrentGameState();
+        SetGameStateTimerSeconds(GameStateDurationSeconds_Loadout);
+        UtilitiesClass.Static.RModLog(Self @ "transitioned to state" @ GetStateName());
+        BroadcastOpenLoadoutMenu();
+    }
+
+    event EndState()
+    {
+        BroadcastCloseLoadoutMenu();
     }
 
     event Tick(float DeltaSeconds)
@@ -124,7 +173,7 @@ state PostRound
     {
         if(GetGameStateTimeRemainingSeconds() <= 0.0)
         {
-            GotoState('PreRound');
+            GotoState('Loadout');
         }
     }
 }
@@ -132,6 +181,7 @@ state PostRound
 defaultproperties
 {
     GameStateDurationSeconds_PreGame=15.0
+    GameStateDurationSeconds_Loadout=10.0
     GameStateDurationSeconds_PreRound=5.0
     GameStateDurationSeconds_LiveRound=15.0
     GameStateDurationSeconds_PostRound=5.0

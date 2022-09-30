@@ -54,7 +54,9 @@ replication
 	reliable if(Role == ROLE_Authority && RemoteRole == ROLE_AutonomousProxy)
         LoadoutReplicationInfo,
 		ClientReceiveUpdatedGamePassword,
-		ClientPreTeleport;
+		ClientPreTeleport,
+        ClientOpenLoadoutMenu,
+        ClientCloseLoadoutMenu;
 
 	reliable if(Role < ROLE_Authority)
 		ServerResetLevel,
@@ -1634,8 +1636,7 @@ state GameEnded
 	ignores Throw;
 }
 
-// Loadouts
-exec function Loadout()
+function OpenLoadoutMenu()
 {
     local R_GameReplicationInfo RGI;
     local R_GameOptions RGO;
@@ -1683,15 +1684,14 @@ exec function Loadout()
     WC.bQuickKeyEnable = true;
     WC.LaunchUWindow();
 
-    // If Loadout menu is already open, then close it
+    // If loadout menu is already open, return
     Window = WC.Root.FindChildWindow(Class'RMod.R_LoadoutWindow');
     if(Window != None)
     {
-        Window.Close();
+        return;
     }
     else
     {
-        // SETUP
         Window = WC.Root.CreateWindow(Class'RMod.R_LoadoutWindow', 128, 256, 400, 128);
         if(WC.bShowConsole)
         {
@@ -1701,6 +1701,40 @@ exec function Loadout()
         Window.bLeaveOnScreen = true;
         Window.ShowWindow();
     }
+}
+
+function CloseLoadoutMenu()
+{
+    local WindowConsole WC;
+    local UWindowWindow Window;
+
+    WC = WindowConsole(Player.Console);
+    if(WC == None)
+    {
+        UtilitiesClass.Static.RModLog("Failed to close loadout menu -- Invalid console");
+        return;
+    }
+
+    Window = WC.Root.FindChildWindow(Class'RMod.R_LoadoutWindow');
+    if(Window != None)
+    {
+        Window.Close();
+    }
+}
+
+function ClientOpenLoadoutMenu()
+{
+    OpenLoadoutMenu();
+}
+
+function ClientCloseLoadoutMenu()
+{
+    CloseLoadoutMenu();
+}
+
+exec function Loadout()
+{
+    OpenLoadoutMenu();
 }
 
 defaultproperties
