@@ -825,22 +825,20 @@ function bool SetEndCams(string Reason)
 
 defaultproperties
 {
-     RunePlayerClass=Class'RMod.R_RunePlayer'
-     SpectatorMarkerClass=Class'RMod.R_ASpectatorMarker'
-     PlayerReplicationInfoClass=Class'RMod.R_PlayerReplicationInfo'
-     GamePresetsClass=Class'RMod.R_GamePresets'
-     UtilitiesClass=Class'RMod.R_AUtilities'
-     ActorSubstitutionClass=Class'RMod.R_AActorSubstitution'
-     GameOptionsClass=Class'RMod.R_GameOptions'
-     LoadoutOptionReplicationInfoClass=Class'RMod.R_LoadoutOptionReplicationInfo'
-     bMarkSpawnedActorsAsNativeToLevel=True
-     bRModEnabled=True
-     ScoreBoardType=Class'RMod.R_Scoreboard'
-     HUDType=Class'RMod.R_RunePlayerHUD'
-	 HUDTypeSpectator=Class'RMod.R_RunePlayerHUDSpectator'
-     GameReplicationInfoClass=Class'RMod.R_GameReplicationInfo'
-	 bAllowSpectatorBroadcastMessage=false
-     AutoAim=0.0
-     //DefaultWeapon=Class'RMod.R_Weapon_HandAxe'
-     DefaultShield=Class'RuneI.DwarfWoodShield'
+    RunePlayerClass=Class'RMod.R_RunePlayer'
+    SpectatorMarkerClass=Class'RMod.R_ASpectatorMarker'
+    PlayerReplicationInfoClass=Class'RMod.R_PlayerReplicationInfo'
+    GamePresetsClass=Class'RMod.R_GamePresets'
+    UtilitiesClass=Class'RMod.R_AUtilities'
+    ActorSubstitutionClass=Class'RMod.R_AActorSubstitution'
+    GameOptionsClass=Class'RMod.R_GameOptions'
+    LoadoutOptionReplicationInfoClass=Class'RMod.R_LoadoutOptionReplicationInfo'
+    bMarkSpawnedActorsAsNativeToLevel=True
+    bRModEnabled=True
+    ScoreBoardType=Class'RMod.R_Scoreboard'
+    HUDType=Class'RMod.R_RunePlayerHUD'
+    HUDTypeSpectator=Class'RMod.R_RunePlayerHUDSpectator'
+    GameReplicationInfoClass=Class'RMod.R_GameReplicationInfo'
+    bAllowSpectatorBroadcastMessage=false
+    AutoAim=0.0
 }
