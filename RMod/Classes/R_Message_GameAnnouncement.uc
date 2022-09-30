@@ -14,7 +14,7 @@ defaultproperties
 {
     bIsConsoleMessage=True
     bFadeMessage=True
-    LifeTime=10
+    LifeTime=5
     DrawColor=(R=25,G=180,B=25)
     bCenter=True
 }
