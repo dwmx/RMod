@@ -13,6 +13,16 @@ var config float GameStateDurationSeconds_PreRound;
 var config float GameStateDurationSeconds_LiveRound;
 var config float GameStateDurationSeconds_PostRound;
 
+var int RoundNumber;
+var int IntegerTimeSeconds;
+
+event BeginPlay()
+{
+    Super.BeginPlay();
+
+    RoundNumber = 0;
+}
+
 function SetGameStateTimerSeconds(float NewDurationSeconds)
 {
     local R_GameReplicationInfo RGRI;
@@ -123,11 +133,30 @@ state PreRound
 
         // Reset without stat reset
         ResetLevelSoft();
+
+        InitializeCountdownVariables();
+    }
+
+    function InitializeCountdownVariables()
+    {
+        IntegerTimeSeconds = -1;
     }
 
     event Tick(float DeltaSeconds)
     {
-        if(GetGameStateTimeRemainingSeconds() <= 0.0)
+        local float GameStateTimeRemainingSeconds;
+        local int NewIntegerTimeSeconds;
+
+        // Broadcast countdown message
+        GameStateTimeRemainingSeconds = GetGameStateTimeRemainingSeconds();
+        NewIntegerTimeSeconds = GameStateTimeRemainingSeconds;
+        if(NewIntegerTimeSeconds != IntegerTimeSeconds && NewIntegerTimeSeconds <= 5 && NewIntegerTimeSeconds > 0)
+        {
+            IntegerTimeSeconds = NewIntegerTimeSeconds;
+            BroadcastMessage(String(IntegerTimeSeconds), true, 'GameAnnouncement');
+        }
+
+        if(GameStateTimeRemainingSeconds <= 0.0)
         {
             GotoState('LiveRound');
         }
@@ -145,6 +174,9 @@ state LiveRound
         ReplicateCurrentGameState();
         SetGameStateTimerSeconds(GameStateDurationSeconds_LiveRound);
         UtilitiesClass.Static.RModLog(Self @ "transitioned to state" @ GetStateName());
+
+        ++RoundNumber;
+        BroadcastMessage("Round" @ RoundNumber, true, 'GameAnnouncement');
     }
 
     event Tick(float DeltaSeconds)
@@ -194,4 +226,6 @@ defaultproperties
     GameStateDurationSeconds_PreRound=5.0
     GameStateDurationSeconds_LiveRound=30.0
     GameStateDurationSeconds_PostRound=5.0
+    RoundNumber=0
+    IntegerTimeSeconds=0
 }

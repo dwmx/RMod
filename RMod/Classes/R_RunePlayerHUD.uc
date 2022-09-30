@@ -507,6 +507,8 @@ simulated function Class<LocalMessage> DetermineClass(name MsgType)
 		case 'LCI':
 			MessageClass=class'RMod.R_LCI_Message';
 			break;
+        case 'GameAnnouncement':
+            MessageClass=Class'RMod.R_Message_GameAnnouncement';
 		case 'CriticalEvent':
 		case 'DeathMessage':
 		case 'Event':
