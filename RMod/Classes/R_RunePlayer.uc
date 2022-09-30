@@ -1637,10 +1637,30 @@ state GameEnded
 // Loadouts
 exec function Loadout()
 {
+    local R_GameReplicationInfo RGI;
+    local R_GameOptions RGO;
     local WindowConsole WC;
     local UWindowWindow Window;
+    local bool bLoadoutEnabled;
 
-    Log("Loadout Input");
+    bLoadoutEnabled = false;
+
+    // Verify that loadout is enabled for the current game
+    RGI = R_GameReplicationInfo(GameReplicationInfo);
+    if(RGI != None)
+    {
+        RGO = RGI.GameOptions;
+        if(RGO != None && RGO.bOptionLoadoutEnabled)
+        {
+            bLoadoutEnabled = true;
+        }
+    }
+
+    if(!bLoadoutEnabled)
+    {
+        ClientMessage("Loadouts are not enabled for the current game mode");
+        return;
+    }
 
     WC = WindowConsole(Player.Console);
     if(WC == None)
