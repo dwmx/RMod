@@ -5,6 +5,7 @@ var R_LoadoutListBox LoadoutListBoxPrimary;
 var R_LoadoutListBox LoadoutListBoxSecondary;
 var R_LoadoutListBox LoadoutListBoxTertiary;
 var UWindowCheckbox DoNotShowCheckbox;
+var RuneMenuLabelControl DoNotShowLabel;
 
 function R_LoadoutReplicationInfo GetLoadoutReplicationInfo()
 {
@@ -44,7 +45,7 @@ event Created()
     CreatePrimaryInventoryListBox();
     CreateSecondaryInventoryListBox();
     CreateTertiaryInventoryListBox();
-    CreateDoNotShowCheckbox(32, 72);
+    CreateDoNotShowCheckbox(8, 72);
 }
 
 function CreatePrimaryInventoryListBox()
@@ -163,6 +164,16 @@ function R_LoadoutListBox CreateLoadoutListBoxFromInventoryArray(
 function CreateDoNotShowCheckbox(int LocationX, int LocationY)
 {
     DoNotShowCheckbox = UWindowCheckbox(CreateControl(Class'UWindow.UWindowCheckbox', LocationX, LocationY, 32, 32));
+    DoNotShowLabel = RuneMenuLabelControl(CreateWindow(Class'RuneMenuLabelControl', LocationX + 32, LocationY, 256, 1));
+    DoNotShowLabel.SetText("Do not show this window again");
+    DoNotShowLabel.SetFont(F_Normal);
+    DoNotShowLabel.TextColor.R = 0;
+    DoNotShowLabel.TextColor.G = 0;
+    DoNotShowLabel.TextColor.B = 0;
+    DoNotShowLabel.Align = TA_Left;
+    //DoNotShowLabel.bDropShadow = true;
+    //DoNotShowLabel.DropAmountX = 1;
+    //DoNotShowLabel.DropAmountY = 1;
 }
 
 event Tick(float DeltaSeconds)
