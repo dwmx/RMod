@@ -1,5 +1,7 @@
 class R_GameInfo_ArenaFreezeTag extends R_GameInfo_Arena;
 
+var Class<R_AFreezeTagStatics> FreezeTagStaticsClass;
+
 function NotifyFrozen(R_RunePlayer Victim, R_RunePlayer Instigator)
 {
     // Ignore unless game is in progress
@@ -21,9 +23,9 @@ function NotifyFrozen(R_RunePlayer Victim, R_RunePlayer Instigator)
 		}
 	}
 
-	if(Instigator != None && R_PlayerReplicationInfo_ArenaFreezeTag(Instigator.PlayerReplicationInfo) != None)
+	if(Instigator != None && R_PlayerReplicationInfo_FreezeTag(Instigator.PlayerReplicationInfo) != None)
 	{
-		R_PlayerReplicationInfo_ArenaFreezeTag(Instigator.PlayerReplicationInfo).PlayerFreezes += 1.0;
+		R_PlayerReplicationInfo_FreezeTag(Instigator.PlayerReplicationInfo).PlayerFreezes += 1.0;
 	}
 
     if(ClearList(DetermineLoser()))
@@ -47,10 +49,20 @@ function NotifyThawed(R_RunePlayer Victim, R_RunePlayer Instigator)
 		}
 	}
 
-	if(Instigator != None && R_PlayerReplicationInfo_ArenaFreezeTag(Instigator.PlayerReplicationInfo) != None)
+	if(Instigator != None && R_PlayerReplicationInfo_FreezeTag(Instigator.PlayerReplicationInfo) != None)
 	{
-		R_PlayerReplicationInfo_ArenaFreezeTag(Instigator.PlayerReplicationInfo).PlayerThaws += 1.0;
+		R_PlayerReplicationInfo_FreezeTag(Instigator.PlayerReplicationInfo).PlayerThaws += 1.0;
 	}
+}
+
+function byte GetCurrentDiedBehaviorAsByte(R_RunePlayer Caller)
+{
+    if(IsPlaying(Caller, LTYPE_Champion) || IsPlaying(Caller, LTYPE_Challenger))
+    {
+        return FreezeTagStaticsClass.Static.GetDeathBehaviorAsByte_FreezeOnDeath();
+    }
+
+    return FreezeTagStaticsClass.Static.GetDeathBehaviorAsByte_DieOnDeath();
 }
 
 //==============================================================
@@ -170,8 +182,9 @@ function bool CheckWinState(byte aType)
 
 defaultproperties
 {
+    FreezeTagStaticsClass=Class'RMod_FreezeTag.R_AFreezeTagStatics'
     RunePlayerClass=Class'RMod_FreezeTag.R_RunePlayer_FreezeTag'
-	PlayerReplicationInfoClass=Class'RMod_FreezeTag.R_PlayerReplicationInfo_ArenaFreezeTag'
+	PlayerReplicationInfoClass=Class'RMod_FreezeTag.R_PlayerReplicationInfo_FreezeTag'
     GameReplicationInfoClass=Class'Arena.ArenaGameReplicationInfo'
     HUDType=Class'RMod_Arena.R_RunePlayerHUD_Arena'
 	ScoreBoardType=Class'RMod_FreezeTag.R_Scoreboard_ArenaFreezeTag'
