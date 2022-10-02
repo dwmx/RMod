@@ -534,22 +534,22 @@ simulated function DrawGameAnnouncementMessages(Canvas C)
     DrawY = C.ClipY * 0.25 - LenY * 0.5 - 2;
 
     C.SetPos(DrawX, DrawY);
-    C.DrawTile(BackgroundTexture, 64, LenY + 4, 0, 0, BackgroundTexture.USize, BackgroundTexture.VSize);
-    C.SetPos(DrawX - 64, DrawY);
-    C.DrawTile(BackgroundTexture, 64, LenY + 4, 0, 0, -BackgroundTexture.USize, BackgroundTexture.VSize);
+    C.DrawTile(BackgroundTexture, 96, LenY + 4, 0, 0, BackgroundTexture.USize, BackgroundTexture.VSize);
+    C.SetPos(DrawX - 96, DrawY);
+    C.DrawTile(BackgroundTexture, 96, LenY + 4, 0, 0, -BackgroundTexture.USize, BackgroundTexture.VSize);
 
     C.DrawColor = AnnouncementMessage.DrawColor;
 
     C.SetPos(DrawX, DrawY - 1);
-    C.DrawTile(BackgroundTexture, 64, 1, 0, 0, BackgroundTexture.USize, BackgroundTexture.VSize);
-    C.SetPos(DrawX - 64, DrawY - 1);
-    C.DrawTile(BackgroundTexture, 64, 1, 0, 0, -BackgroundTexture.USize, BackgroundTexture.VSize);
+    C.DrawTile(BackgroundTexture, 96, 1, 0, 0, BackgroundTexture.USize, BackgroundTexture.VSize);
+    C.SetPos(DrawX - 96, DrawY - 1);
+    C.DrawTile(BackgroundTexture, 96, 1, 0, 0, -BackgroundTexture.USize, BackgroundTexture.VSize);
 
     DrawY = C.ClipY * 0.25 + LenY * 0.5 + 2;
     C.SetPos(DrawX, DrawY - 1);
-    C.DrawTile(BackgroundTexture, 64, 1, 0, 0, BackgroundTexture.USize, BackgroundTexture.VSize);
-    C.SetPos(DrawX - 64, DrawY - 1);
-    C.DrawTile(BackgroundTexture, 64, 1, 0, 0, -BackgroundTexture.USize, BackgroundTexture.VSize);
+    C.DrawTile(BackgroundTexture, 96, 1, 0, 0, BackgroundTexture.USize, BackgroundTexture.VSize);
+    C.SetPos(DrawX - 96, DrawY - 1);
+    C.DrawTile(BackgroundTexture, 96, 1, 0, 0, -BackgroundTexture.USize, BackgroundTexture.VSize);
 
     C.AlphaScale = 1.0;
 
@@ -861,8 +861,8 @@ simulated function PostRender( canvas Canvas )
 	bResChanged = (Canvas.ClipX != OldClipX);
 	OldClipX = Canvas.ClipX;
 
-	// Set the relative HUD scale to 640x480
-	HudScale = Canvas.ClipX / 640;
+	// Set the relative HUD scale to 960x480
+	HudScale = Canvas.ClipX / 960;
 
 	if (!Owner.IsA('Spectator')
 		&& !(R_RunePlayer(Owner) != None

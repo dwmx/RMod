@@ -751,6 +751,26 @@ function AddDefaultInventory_LoadoutEnabled(Pawn PlayerPawn)
     }
 }
 
+/**
+*   CheckIsGameDamageEnabled
+*   Called by R_RunePlayer.JointDamaged to allow game modes to enable and
+*   disable global invulnerability as desired.
+*/
+function bool CheckIsGameDamageEnabled()
+{
+    return true;
+}
+
+/**
+*   CheckIsScoringEnabled
+*   Called by R_GameInfo.ScoreKill to allow game modes to enable and
+*   disable score tracking as desired.
+*/
+function bool CheckIsScoringEnabled()
+{
+    return true;
+}
+
 function bool ChangeTeam(Pawn Other, int N)
 {
 	if(Other.PlayerReplicationInfo == None
@@ -770,6 +790,11 @@ function bool ChangeTeam(Pawn Other, int N)
 
 function ScoreKill(Pawn Killer, Pawn Other)
 {
+    if(!CheckIsScoringEnabled())
+    {
+        return;
+    }
+
     if (Other==None)
     {
         log("Warning: ScoreKill (OTHER==NONE): Killer="$Killer@"Other="$Other);

@@ -872,10 +872,21 @@ function ServerMove(
 */
 function bool JointDamaged(int Damage, Pawn EventInstigator, vector HitLoc, vector Momentum, name DamageType, int joint)
 {
+    local R_GameInfo RGI;
 	local int PreviousHealth;
 	local int DamageDealt;
 	local R_PlayerReplicationInfo RPRI;
 	local bool bResult;
+
+    // Check if current game mode has global invulnerability enabled - return if so
+    if(Role == ROLE_Authority)
+    {
+        RGI = R_GameInfo(Level.Game);
+        if(RGI != None && !RGI.CheckIsGameDamageEnabled())
+        {
+            return false;
+        }
+    }
 
 	PreviousHealth = Health;
 	bResult = Super.JointDamaged(Damage, EventInstigator, HitLoc, Momentum, DamageType, joint);

@@ -376,26 +376,30 @@ function Killed(pawn killer, pawn Other, name damageType)
 		return;
 	}
 
-	if( (killer == Other) || (killer == None) )
-	{
-		Teams[Other.PlayerReplicationInfo.Team].Score -= 1.0;
-	}
-	else
-	{
-		if(Killer != None && Killer.PlayerReplicationInfo.Team == Other.PlayerReplicationInfo.Team)
-		{
-			Teams[Other.PlayerReplicationInfo.Team].Score -= 1.0;
-		}
-		else
-		{
-			Teams[killer.PlayerReplicationInfo.Team].Score += 1.0;
+    // Team scoring, if score tracking enabled
+    if(CheckIsScoringEnabled())
+    {
+        if( (killer == Other) || (killer == None) )
+        {
+            Teams[Other.PlayerReplicationInfo.Team].Score -= 1.0;
+        }
+        else
+        {
+            if(Killer != None && Killer.PlayerReplicationInfo.Team == Other.PlayerReplicationInfo.Team)
+            {
+                Teams[Other.PlayerReplicationInfo.Team].Score -= 1.0;
+            }
+            else
+            {
+                Teams[killer.PlayerReplicationInfo.Team].Score += 1.0;
 
-			if ( (GoalTeamScore > 0) && (Teams[killer.PlayerReplicationInfo.Team].Score >= GoalTeamScore) )
-			{
-				EndGame("teamscorelimit");
-			}
-		}
-	}
+                if ( (GoalTeamScore > 0) && (Teams[killer.PlayerReplicationInfo.Team].Score >= GoalTeamScore) )
+                {
+                    EndGame("teamscorelimit");
+                }
+            }
+        }
+    }
 }
 
 function bool ChangeTeam(Pawn Other, int NewTeam)
