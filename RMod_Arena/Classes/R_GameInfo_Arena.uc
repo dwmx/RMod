@@ -1459,8 +1459,8 @@ function bool RestartPlayer(pawn aPlayer)
 
 	result = Super.RestartPlayer(aPlayer);
 	aPlayer.DesiredColorAdjust = aPlayer.Default.DesiredColorAdjust;
-	aPlayer.MaxHealth = 200;
-	aPlayer.Health = 200;
+	//aPlayer.MaxHealth = 200;
+	//aPlayer.Health = 200;
 	aPlayerPawn = PlayerPawn(aPlayer);
 	if(aPlayerPawn != None)
 	{
@@ -2568,4 +2568,6 @@ defaultproperties
      GameName="Arena Match"
      GameReplicationInfoClass=Class'Arena.ArenaGameReplicationInfo'
      bAllowLimbSever=False
+     DefaultPlayerMaxHealth=200
+     DefaultPlayerHealth=200
 }

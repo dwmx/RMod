@@ -31,6 +31,12 @@ var bool bMarkSpawnedActorsAsNativeToLevel;
 // Gameplay modifications
 var bool bRModEnabled;
 
+// PlayerRestart variables
+var int DefaultPlayerHealth;
+var int DefaultPlayerMaxHealth;
+var int DefaultPlayerRunePower;
+var int DefaultPlayerMaxRunePower;
+
 event Tick(float DeltaSeconds)
 {
 	local String CurrentGamePassword;
@@ -476,15 +482,30 @@ function ResetLevelSoft(optional int DelaySeconds)
 	}
 }
 
-function bool RestartPlayer( pawn aPlayer )	
+function bool RestartPlayer( pawn aPlayer )
 {
+    local bool bResult;
 	if(R_RunePlayer(aPlayer) != None)
 	{
 		R_RunePlayer(aPlayer).DiscardInventory();
 	}
 	DiscardInventory(aPlayer);
 	aPlayer.GotoState('PlayerWalking');
-	return Super.RestartPlayer(aPlayer);
+
+	bResult = Super.RestartPlayer(aPlayer);
+
+    if(!bResult)
+    {
+        return false;
+    }
+
+    // Override with game stats
+    aPlayer.MaxHealth = DefaultPlayerMaxHealth;
+    aPlayer.Health = DefaultPlayerHealth;
+    aPlayer.MaxPower = DefaultPlayerMaxRunePower;
+    aPlayer.RunePower = DefaultPlayerRunePower;
+
+    return true;
 }
 
 function PlayerPawn GetPlayerPawnByID(int PlayerID)
@@ -893,4 +914,8 @@ defaultproperties
     GameReplicationInfoClass=Class'RMod.R_GameReplicationInfo'
     bAllowSpectatorBroadcastMessage=false
     AutoAim=0.0
+    DefaultPlayerHealth=100
+    DefaultPlayerMaxHealth=100
+    DefaultPlayerRunePower=0
+    DefaultPlayerMaxRunePower=100
 }

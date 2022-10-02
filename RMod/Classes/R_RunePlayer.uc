@@ -116,6 +116,11 @@ event PostBeginPlay()
 	RGI = R_GameInfo(Level.Game);
 	if(RGI != None)
 	{
+        MaxHealth = RGI.DefaultPlayerMaxHealth;
+        Health = RGI.DefaultPlayerHealth;
+        MaxPower = RGI.DefaultPlayerMaxRunePower;
+        RunePower = RGI.DefaultPlayerRunePower;
+
 		HUDTypeSpectator = RGI.HUDTypeSpectator;
 
         RGO = RGI.GameOptions;

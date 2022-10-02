@@ -548,4 +548,6 @@ defaultproperties
     GameStateDurationSeconds_PostRound=5.0
     RoundNumber=0
     IntegerTimeSeconds=0
+    DefaultPlayerMaxHealth=200
+    DefaultPlayerHealth=200
 }
