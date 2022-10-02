@@ -27,6 +27,52 @@ function byte GetCurrentDiedBehaviorAsByte(R_RunePlayer Caller)
     return FreezeTagStaticsClass.Static.GetDeathBehaviorAsByte_DieOnDeath();
 }
 
+/**
+*   State LiveRound
+*   Round is in progress
+*/
+state LiveRound
+{
+    event EndState()
+    {
+        Super.EndState();
+        DestroyAllFrozenPlayers();
+    }
+
+    function byte GetCurrentDiedBehaviorAsByte(R_RunePlayer Caller)
+    {
+        return FreezeTagStaticsClass.Static.GetDeathBehaviorAsByte_FreezeOnDeath();
+    }
+
+    /**
+    *   CheckIsPlayerConsideredAlive (override)
+    *   Overridden to treat frozen state as dead instead of health <= 0
+    */
+    function bool CheckIsPlayerConsideredAlive(R_RunePlayer RRP)
+    {
+        if(RRP.GetStateName() == 'Frozen')
+        {
+            return false;
+        }
+        return true;
+    }
+
+    function DestroyAllFrozenPlayers()
+    {
+        local Pawn P;
+        local R_RunePlayer_FreezeTag RRPFT;
+
+        for(P = Level.PawnList; P != None; P = P.NextPawn)
+        {
+            RRPFT = R_RunePlayer_FreezeTag(P);
+            if(RRPFT != None)
+            {
+                RRPFT.NotifyEjectedFromArena();
+            }
+        }
+    }
+}
+
 defaultproperties
 {
     FreezeTagStaticsClass=Class'RMod_FreezeTag.R_AFreezeTagStatics'

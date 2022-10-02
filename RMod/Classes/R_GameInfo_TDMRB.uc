@@ -448,9 +448,12 @@ state LiveRound extends BaseRoundState
                 if(R_PlayerReplicationInfo(RRP.PlayerReplicationInfo) != None)
                 {
                     TeamIndex = R_PlayerReplicationInfo(RRP.PlayerReplicationInfo).Team;
-                    if(TeamIndex >= 0 && TeamIndex <= 32 && RRP.Health > 0)
+                    if(TeamIndex >= 0 && TeamIndex <= 32)
                     {
-                        TeamAliveCountArray[TeamIndex]++;
+                        if(CheckIsPlayerConsideredAlive(RRP))
+                        {
+                            TeamAliveCountArray[TeamIndex]++;
+                        }
                     }
                 }
             }
@@ -503,6 +506,19 @@ state LiveRound extends BaseRoundState
                 OutWinningTeamIndex = CandidateTeamIndex;
             }
         }
+    }
+
+    /**
+    *   CheckIsPlayerConsideredAlive
+    *   Round end condition uses this function to check which players are alive or dead.
+    */
+    function bool CheckIsPlayerConsideredAlive(R_RunePlayer RRP)
+    {
+        if(RRP.Health > 0)
+        {
+            return true;
+        }
+        return false;
     }
 }
 
