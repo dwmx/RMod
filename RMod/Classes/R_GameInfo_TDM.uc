@@ -376,26 +376,30 @@ function Killed(pawn killer, pawn Other, name damageType)
 		return;
 	}
 
-	if( (killer == Other) || (killer == None) )
-	{
-		Teams[Other.PlayerReplicationInfo.Team].Score -= 1.0;
-	}
-	else
-	{
-		if(Killer != None && Killer.PlayerReplicationInfo.Team == Other.PlayerReplicationInfo.Team)
-		{
-			Teams[Other.PlayerReplicationInfo.Team].Score -= 1.0;
-		}
-		else
-		{
-			Teams[killer.PlayerReplicationInfo.Team].Score += 1.0;
+    // Team scoring, if score tracking enabled
+    if(CheckIsScoringEnabled())
+    {
+        if( (killer == Other) || (killer == None) )
+        {
+            Teams[Other.PlayerReplicationInfo.Team].Score -= 1.0;
+        }
+        else
+        {
+            if(Killer != None && Killer.PlayerReplicationInfo.Team == Other.PlayerReplicationInfo.Team)
+            {
+                Teams[Other.PlayerReplicationInfo.Team].Score -= 1.0;
+            }
+            else
+            {
+                Teams[killer.PlayerReplicationInfo.Team].Score += 1.0;
 
-			if ( (GoalTeamScore > 0) && (Teams[killer.PlayerReplicationInfo.Team].Score >= GoalTeamScore) )
-			{
-				EndGame("teamscorelimit");
-			}
-		}
-	}
+                if ( (GoalTeamScore > 0) && (Teams[killer.PlayerReplicationInfo.Team].Score >= GoalTeamScore) )
+                {
+                    EndGame("teamscorelimit");
+                }
+            }
+        }
+    }
 }
 
 function bool ChangeTeam(Pawn Other, int NewTeam)
@@ -529,25 +533,25 @@ function bool CanSpectate( pawn Viewer, actor ViewTarget )
 
 defaultproperties
 {
-     ColorsClass=Class'RMod.R_AColors'
-     MaxTeams=4
-     MaxTeamSize=16
-     NewTeamMessage=" is now on "
-     TEAM_Blue=1
-     TEAM_Green=2
-     TEAM_Gold=3
-     TeamColor(0)="Red"
-     TeamColor(1)="Blue"
-     TeamColor(2)="Green"
-     TeamColor(3)="Gold"
-     VColorRed=(X=255.000000)
-     VColorBlue=(Z=255.000000)
-     VColorGreen=(Y=255.000000)
-     VColorGold=(X=255.000000,Y=255.000000)
-     VColorWhite=(X=255.000000,Y=255.000000,Z=255.000000)
-     bCanChangeSkin=False
-     bTeamGame=True
-     ScoreBoardType=Class'RMod.R_Scoreboard_TDM'
-     BeaconName="Team"
-     GameName="Team Game"
+    ColorsClass=Class'RMod.R_AColors'
+    MaxTeams=4
+    MaxTeamSize=16
+    NewTeamMessage=" is now on "
+    TEAM_Blue=1
+    TEAM_Green=2
+    TEAM_Gold=3
+    TeamColor(0)="Red"
+    TeamColor(1)="Blue"
+    TeamColor(2)="Green"
+    TeamColor(3)="Gold"
+    VColorRed=(X=255.000000)
+    VColorBlue=(Z=255.000000)
+    VColorGreen=(Y=255.000000)
+    VColorGold=(X=255.000000,Y=255.000000)
+    VColorWhite=(X=255.000000,Y=255.000000,Z=255.000000)
+    bCanChangeSkin=False
+    bTeamGame=True
+    ScoreBoardType=Class'RMod.R_Scoreboard_TDM'
+    BeaconName="Team"
+    GameName="Team Game"
 }

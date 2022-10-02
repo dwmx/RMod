@@ -213,6 +213,80 @@ static function float FInfinityNegative()
 	return -999999.0;
 }
 
+static function String GetMenuNameForInventoryClass(Class<Inventory> InventoryClass)
+{
+    switch(InventoryClass)
+    {
+    // Axes
+    case Class'RuneI.Handaxe':
+    case Class'RMod.R_Weapon_Handaxe':              return "Hand Axe";
+
+    case Class'RuneI.GoblinAxe':    
+    case Class'RMod.R_Weapon_GoblinAxe':            return "Goblin Axe";
+
+    case Class'RuneI.VikingAxe':    
+    case Class'RMod.R_Weapon_VikingAxe':            return "Viking Axe";
+
+    case Class'RuneI.SigurdAxe':    
+    case Class'RMod.R_Weapon_SigurdAxe':            return "Sigurd Axe";
+
+    case Class'RuneI.DwarfBattleAxe':   
+    case Class'RMod.R_Weapon_DwarfBattleAxe':       return "Battle Axe";
+
+    // Swords   
+    case Class'RuneI.VikingShortSword': 
+    case Class'RMod.R_Weapon_VikingShortSword':     return "Short Sword";
+
+    case Class'RuneI.RomanSword':   
+    case Class'RMod.R_Weapon_RomanSword':           return "Roman Sword";
+
+    case Class'RuneI.VikingBroadSword': 
+    case Class'RMod.R_Weapon_VikingBroadSword':     return "Broad Sword";
+
+    case Class'RuneI.DwarfWorkSword':   
+    case Class'RMod.R_Weapon_DwarfWorkSword':       return "Work Sword";
+
+    case Class'RuneI.DwarfBattleSword': 
+    case Class'RMod.R_Weapon_DwarfBattleSword':     return "Battle Sword";
+
+    // Hammers  
+    case Class'RuneI.RustyMace':    
+    case Class'RMod.R_Weapon_RustyMace':            return "Rusty Mace";
+
+    case Class'RuneI.BoneClub': 
+    case Class'RMod.R_Weapon_BoneClub':             return "Bone Club";
+
+    case Class'RuneI.TrialPitMace': 
+    case Class'RMod.R_Weapon_TrialPitMace':         return "Pit Mace";
+
+    case Class'RuneI.DwarfWorkHammer':  
+    case Class'RMod.R_Weapon_DwarfWorkHammer':      return "Work Hammer";
+
+    case Class'RuneI.DwarfBattleHammer':
+    case Class'RMod.R_Weapon_DwarfBattleHammer':    return "Battle Hammer";
+
+    // Shields
+    case Class'RuneI.GoblinShield':
+    case Class'RMod.R_Shield_GoblinShield':         return "Goblin Shield";
+
+    case Class'RuneI.VikingShield':
+    case Class'RuneI.VikingShield2':
+    case Class'RuneI.VikingShieldCross':
+    case Class'RMod.R_Shield_VikingShield':         return "Viking Shield";
+
+    case Class'RuneI.DarkShield':
+    case Class'RMod.R_Shield_DarkShield':           return "Dark Shield";
+
+    case Class'RuneI.DwarfWoodShield':
+    case Class'RMod.R_Shield_DwarfWoodShield':      return "Wood Shield";
+
+    case Class'RuneI.DwarfBattleShield':
+    case Class'RMod.R_Shield_DwarfBattleShield':    return "Battle Shield";
+    }
+
+    return String(InventoryClass);
+}
+
 defaultproperties
 {
 }

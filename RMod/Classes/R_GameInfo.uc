@@ -16,6 +16,10 @@ var Class<R_AActorSubstitution> ActorSubstitutionClass;
 var Class<R_GameOptions> GameOptionsClass;
 var R_GameOptions GameOptions;
 
+// Loadout options, spawned when loadout option is enabled
+var Class<R_LoadoutOptionReplicationInfo> LoadoutOptionReplicationInfoClass;
+var R_LoadoutOptionReplicationInfo LoadoutOptionReplicationInfo;
+
 var private String OldGamePassword;
 
 var Class<HUD> HUDTypeSpectator;
@@ -142,8 +146,7 @@ function PlayerSetTimeLimit(PlayerPawn P, int DurationMinutes)
 event PostBeginPlay()
 {
 	local String CurrentGamePassword;
-    local R_GameReplicationInfo RGRI;
-
+    
 	Super.PostBeginPlay();
 	
 	// Actors spawned after this point are not a part of the level's original
@@ -152,6 +155,13 @@ event PostBeginPlay()
 
 	CurrentGamePassword = ConsoleCommand("Get Engine.GameInfo GamePassword");
 	OldGamePassword = CurrentGamePassword;
+
+    SpawnGameOptions();
+}
+
+function SpawnGameOptions()
+{
+    local R_GameReplicationInfo RGRI;
 
     // Spawn Game Options
     if(GameOptionsClass != None)
@@ -164,7 +174,40 @@ event PostBeginPlay()
             {
                 RGRI.GameOptions = GameOptions;
             }
+
+            if(GameOptions.bOptionLoadoutEnabled)
+            {
+                SpawnLoadoutOptionReplicationInfo();
+            }
         }
+    }
+}
+
+function SpawnLoadoutOptionReplicationInfo()
+{
+    if(LoadoutOptionReplicationInfoClass != None)
+    {
+        LoadoutOptionReplicationInfo = Spawn(LoadoutOptionReplicationInfoClass);
+    }
+    else
+    {
+        UtilitiesClass.Static.Warn("Failed to spawn LoadoutOptionReplicationInfo, no class specified");
+    }
+}
+
+/**
+*   ReplicateCurrentGameState
+*   Replicate the name of the current game state via game rep info.
+*   This is useful info for clients.
+*/
+function ReplicateCurrentGameState()
+{
+    local R_GameReplicationInfo RGRI;
+
+    RGRI = R_GameReplicationInfo(GameReplicationInfo);
+    if(RGRI != None)
+    {
+        RGRI.GameStateName = GetStateName();
     }
 }
 
@@ -590,6 +633,13 @@ function AddDefaultInventory(Pawn PlayerPawn)
         return;
     }
 
+    // If loadouts are enabled, then grant inventory based on loadout
+    if(GameOptions != None && GameOptions.bOptionLoadoutEnabled)
+    {
+        AddDefaultInventory_LoadoutEnabled(PlayerPawn);
+        return;
+    }
+
     // Spawn default weapon.
     if (PlayerPawn.Weapon == None)
     {
@@ -647,6 +697,80 @@ function AddDefaultInventory(Pawn PlayerPawn)
     BaseMutator.ModifyPlayer(PlayerPawn);
 }
 
+function AddDefaultInventory_LoadoutEnabled(Pawn PlayerPawn)
+{
+    local R_RunePlayer RP;
+    local R_LoadoutReplicationInfo LRI;
+    local Class<Inventory> LoadoutInventoryClasses[16];
+    local int i;
+    local Class<Inventory> LoadoutInventoryClassCurrent;
+    local Inventory InventoryCurrent;
+
+    RP = R_RunePlayer(PlayerPawn);
+    if(RP != None)
+    {
+        LRI = RP.LoadoutReplicationInfo;
+        if(LRI != None)
+        {
+            LoadoutInventoryClasses[0] = LRI.TertiaryInventoryClass;
+            LoadoutInventoryClasses[1] = LRI.SecondaryInventoryClass;
+            LoadoutInventoryClasses[2] = LRI.PrimaryInventoryClass;
+        }
+    }
+
+    for(i = 0; i < 16; ++i)
+    {
+        LoadoutInventoryClassCurrent = LoadoutInventoryClasses[i];
+        if(LoadoutInventoryClassCurrent != None && PlayerPawn.FindInventoryType(LoadoutInventoryClassCurrent) == None)
+        {
+            if(ActorSubstitutionClass != None)
+            {
+                LoadoutInventoryClassCurrent = Class<Inventory>(ActorSubstitutionClass.Static.GetActorSubstitutionClass(LoadoutInventoryClassCurrent));
+            }
+
+            InventoryCurrent = Spawn(LoadoutInventoryClassCurrent,,, PlayerPawn.Location);
+            InventoryCurrent.Instigator = PlayerPawn;
+            InventoryCurrent.BecomeItem();
+            PlayerPawn.AddInventory(InventoryCurrent);
+            PlayerPawn.AcquireInventory(InventoryCurrent);
+            if(Weapon(InventoryCurrent) != None)
+            {
+                PlayerPawn.Weapon = Weapon(InventoryCurrent);
+            }
+            else if(Shield(InventoryCurrent) != None)
+            {
+                // If equipping a shield, may need to stow whatever is in hands
+                if(RP != None && RP.Weapon != None && RP.Weapon.A_Defend == 'None')
+                {
+                    RP.InstantStow();
+                }
+                PlayerPawn.Shield = Shield(InventoryCurrent);
+            }
+            InventoryCurrent.GotoState('Active');
+        }
+    }
+}
+
+/**
+*   CheckIsGameDamageEnabled
+*   Called by R_RunePlayer.JointDamaged to allow game modes to enable and
+*   disable global invulnerability as desired.
+*/
+function bool CheckIsGameDamageEnabled()
+{
+    return true;
+}
+
+/**
+*   CheckIsScoringEnabled
+*   Called by R_GameInfo.ScoreKill to allow game modes to enable and
+*   disable score tracking as desired.
+*/
+function bool CheckIsScoringEnabled()
+{
+    return true;
+}
+
 function bool ChangeTeam(Pawn Other, int N)
 {
 	if(Other.PlayerReplicationInfo == None
@@ -666,6 +790,11 @@ function bool ChangeTeam(Pawn Other, int N)
 
 function ScoreKill(Pawn Killer, Pawn Other)
 {
+    if(!CheckIsScoringEnabled())
+    {
+        return;
+    }
+
     if (Other==None)
     {
         log("Warning: ScoreKill (OTHER==NONE): Killer="$Killer@"Other="$Other);
@@ -735,23 +864,33 @@ function bool SetEndCams(string Reason)
 	return true;
 }
 
+/**
+*   CheckAllowRestart
+*   Allows game modes to allow or deny player restarts.
+*   Note that this works independently from RunePlayer.bCanRestart.
+*   So, both this function AND bCanRestart must be true
+*/
+function bool CheckAllowRestart(PlayerPawn P)
+{
+    return true;
+}
+
 defaultproperties
 {
-     RunePlayerClass=Class'RMod.R_RunePlayer'
-     SpectatorMarkerClass=Class'RMod.R_ASpectatorMarker'
-     PlayerReplicationInfoClass=Class'RMod.R_PlayerReplicationInfo'
-     GamePresetsClass=Class'RMod.R_GamePresets'
-     UtilitiesClass=Class'RMod.R_AUtilities'
-     ActorSubstitutionClass=Class'RMod.R_AActorSubstitution'
-     GameOptionsClass=Class'RMod.R_GameOptions'
-     bMarkSpawnedActorsAsNativeToLevel=True
-     bRModEnabled=True
-     ScoreBoardType=Class'RMod.R_Scoreboard'
-     HUDType=Class'RMod.R_RunePlayerHUD'
-	 HUDTypeSpectator=Class'RMod.R_RunePlayerHUDSpectator'
-     GameReplicationInfoClass=Class'RMod.R_GameReplicationInfo'
-	 bAllowSpectatorBroadcastMessage=false
-     AutoAim=0.0
-     //DefaultWeapon=Class'RMod.R_Weapon_HandAxe'
-     DefaultShield=Class'RuneI.DwarfWoodShield'
+    RunePlayerClass=Class'RMod.R_RunePlayer'
+    SpectatorMarkerClass=Class'RMod.R_ASpectatorMarker'
+    PlayerReplicationInfoClass=Class'RMod.R_PlayerReplicationInfo'
+    GamePresetsClass=Class'RMod.R_GamePresets'
+    UtilitiesClass=Class'RMod.R_AUtilities'
+    ActorSubstitutionClass=Class'RMod.R_AActorSubstitution'
+    GameOptionsClass=Class'RMod.R_GameOptions'
+    LoadoutOptionReplicationInfoClass=Class'RMod.R_LoadoutOptionReplicationInfo'
+    bMarkSpawnedActorsAsNativeToLevel=True
+    bRModEnabled=True
+    ScoreBoardType=Class'RMod.R_Scoreboard'
+    HUDType=Class'RMod.R_RunePlayerHUD'
+    HUDTypeSpectator=Class'RMod.R_RunePlayerHUDSpectator'
+    GameReplicationInfoClass=Class'RMod.R_GameReplicationInfo'
+    bAllowSpectatorBroadcastMessage=false
+    AutoAim=0.0
 }

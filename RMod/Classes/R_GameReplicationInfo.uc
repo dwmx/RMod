@@ -2,33 +2,44 @@ class R_GameReplicationInfo extends RuneGameReplicationInfo;
 
 var R_GameOptions GameOptions;
 
-var bool bRemainingTimePendingUpdate;
-var bool bRemainingTimePendingUpdateToggle;
 var int NewRemainingTime;
+var int RemainingTimePendingUpdateSwitch;
+var int RemainingTimePendingUpdateSwitchLocal;
+var Name GameStateName;
 
 replication
 {
-	reliable if(Role == ROLE_Authority)
+    reliable if(Role == ROLE_Authority)
         GameOptions,
-		bRemainingTimePendingUpdate,
-		NewRemainingTime;
+        NewRemainingTime,
+        RemainingTimePendingUpdateSwitch,
+        GameStateName;
 }
 
-simulated event Tick(float DeltaSeconds)
+event BeginPlay()
 {
-	if(bRemainingTimePendingUpdateToggle == !bRemainingTimePendingUpdate)
-	{
-		RemainingTime = NewRemainingTime;
-		bRemainingTimePendingUpdateToggle = bRemainingTimePendingUpdate;
-	}
+    RemainingTimePendingUpdateSwitch = 0;
+    RemainingTimePendingUpdateSwitchLocal = RemainingTimePendingUpdateSwitch;
 }
 
 function UpdateTimeLimit(int NewTimeLimit)
 {
-	NewRemainingTime = NewTimeLimit;
-	bRemainingTimePendingUpdate = !bRemainingTimePendingUpdateToggle;
+    NewRemainingTime = NewTimeLimit;
+    ++RemainingTimePendingUpdateSwitch;
+}
+
+simulated event Tick(float DeltaSeconds)
+{
+    if(RemainingTimePendingUpdateSwitchLocal != RemainingTimePendingUpdateSwitch)
+    {
+        RemainingTimePendingUpdateSwitchLocal = RemainingTimePendingUpdateSwitch;
+        RemainingTime = NewRemainingTime;
+    }
 }
 
 defaultproperties
 {
+    NewRemainingTime=0
+    RemainingTimePendingUpdateSwitch=0
+    RemainingTimePendingUpdateSwitchLocal=0
 }

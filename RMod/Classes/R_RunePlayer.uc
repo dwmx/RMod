@@ -19,6 +19,9 @@ var Class<HUD> HUDTypeSpectator;
 var Class<R_ACamera> SpectatorCameraClass;
 var R_ACamera Camera;
 
+var R_LoadoutReplicationInfo LoadoutReplicationInfo;
+var bool bLoadoutMenuDoNotShow;
+
 // Replicated POV view rotation
 var private float ViewRotPovPitch;
 var private float ViewRotPovYaw;
@@ -50,8 +53,11 @@ replication
 		Camera;
 
 	reliable if(Role == ROLE_Authority && RemoteRole == ROLE_AutonomousProxy)
+        LoadoutReplicationInfo,
 		ClientReceiveUpdatedGamePassword,
-		ClientPreTeleport;
+		ClientPreTeleport,
+        ClientOpenLoadoutMenu,
+        ClientCloseLoadoutMenu;
 
 	reliable if(Role < ROLE_Authority)
 		ServerResetLevel,
@@ -103,6 +109,7 @@ event PreBeginPlay()
 event PostBeginPlay()
 {
 	local R_GameInfo RGI;
+    local R_GameOptions RGO;
 
 	Super.PostBeginPlay();
 
@@ -110,7 +117,34 @@ event PostBeginPlay()
 	if(RGI != None)
 	{
 		HUDTypeSpectator = RGI.HUDTypeSpectator;
+
+        RGO = RGI.GameOptions;
+        if(RGO != None)
+        {
+            if(RGO.bOptionLoadoutEnabled)
+            {
+                SpawnLoadoutReplicationInfo();
+            }
+        }
 	}
+}
+
+function SpawnLoadoutReplicationInfo()
+{
+    if(Role == ROLE_Authority)
+    {
+        LoadoutReplicationInfo = Spawn(Class'RMod.R_LoadoutReplicationInfo', Self);
+    }
+}
+
+event Destroyed()
+{
+    Super.Destroyed();
+
+    if(LoadoutReplicationInfo != None)
+    {
+        LoadoutReplicationInfo.Destroy();
+    }
 }
 
 /**
@@ -838,10 +872,21 @@ function ServerMove(
 */
 function bool JointDamaged(int Damage, Pawn EventInstigator, vector HitLoc, vector Momentum, name DamageType, int joint)
 {
+    local R_GameInfo RGI;
 	local int PreviousHealth;
 	local int DamageDealt;
 	local R_PlayerReplicationInfo RPRI;
 	local bool bResult;
+
+    // Check if current game mode has global invulnerability enabled - return if so
+    if(Role == ROLE_Authority)
+    {
+        RGI = R_GameInfo(Level.Game);
+        if(RGI != None && !RGI.CheckIsGameDamageEnabled())
+        {
+            return false;
+        }
+    }
 
 	PreviousHealth = Health;
 	bResult = Super.JointDamaged(Damage, EventInstigator, HitLoc, Momentum, DamageType, joint);
@@ -1327,6 +1372,31 @@ exec function Suicide()
 }
 
 /**
+*   CheckCanRestart
+*   Returns whether or not this player is allowed to manually restart.
+*   This function includes the original bCanRestart check, but adds an
+*   additional check to R_GameInfo.CheckAllowRestart, to allow game modes
+*   to add their own conditional logic for blocking player restarts.
+*/
+function bool CheckCanRestart()
+{
+    local R_GameInfo RGI;
+
+    if(!bCanRestart)
+    {
+        return false;
+    }
+
+    RGI = R_GameInfo(Level.Game);
+    if(RGI != None && !RGI.CheckAllowRestart(Self))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+/**
 *   CheckShouldSpectateAfterDying
 *   Dying state calls this function to see whether the player should enter
 *   into spectator state after dying. This is useful for game types like Arena,
@@ -1335,7 +1405,7 @@ exec function Suicide()
 function bool CheckShouldSpectateAfterDying()
 {
 	// If unable to restart, then go into spectator mode
-	return !bCanRestart;
+	return !CheckCanRestart();
 }
 
 /**
@@ -1536,6 +1606,45 @@ state Dying
 			GotoState('PlayerSpectating');
 		}
 	}
+
+    /**
+    *   ServerReStartPlayer (override)
+    *   Overridden to add R_GameInfo player restart logic
+    */
+    function ServerReStartPlayer()
+    {
+        local R_GameInfo RGI;
+
+        if(!CheckCanRestart())
+        {
+            return;
+        }
+
+        // Begin PlayerPawn.ServerReStartPlayer
+        if ( Level.NetMode == NM_Client )
+        {
+            return;
+        }
+        if (Level.Game.bGameEnded)
+        {
+            return;
+        }
+        if( Level.Game.RestartPlayer(self) )
+        {
+            ServerTimeStamp = 0;
+            TimeMargin = 0;
+            Enemy = None;
+            Level.Game.StartPlayer(self);
+            ClientReStart();
+        }
+        else
+        {
+            Log("Restartplayer failed");
+        }
+        // End PlayerPawn.ServerReStartPlayer
+
+        PlayerRestart();
+    }
 }
 
 state PlayerWalking
@@ -1603,6 +1712,116 @@ state GameEnded
 	ignores Throw;
 }
 
+function OpenLoadoutMenu()
+{
+    local R_GameReplicationInfo RGI;
+    local R_GameOptions RGO;
+    local WindowConsole WC;
+    local UWindowWindow Window;
+    local bool bLoadoutEnabled;
+
+    // Checks whether or not the DoNotShow option was selected
+    // This can be reverted by called the 'loadout' command
+    if(bLoadoutMenuDoNotShow)
+    {
+        return;
+    }
+
+    bLoadoutEnabled = false;
+
+    // Verify that loadout is enabled for the current game
+    RGI = R_GameReplicationInfo(GameReplicationInfo);
+    if(RGI != None)
+    {
+        RGO = RGI.GameOptions;
+        if(RGO != None && RGO.bOptionLoadoutEnabled)
+        {
+            bLoadoutEnabled = true;
+        }
+    }
+
+    if(!bLoadoutEnabled)
+    {
+        ClientMessage("Loadouts are not enabled for the current game mode");
+        return;
+    }
+
+    WC = WindowConsole(Player.Console);
+    if(WC == None)
+    {
+        UtilitiesClass.Static.RModLog("Failed to open loadout menu -- Invalid console");
+        return;
+    }
+
+    if(WC.IsInState('UWINDOW') && !WC.bShowConsole)
+    {
+        // Player is in main menu
+        return;
+    }
+
+    if(!WC.bCreatedRoot || WC.Root == None)
+    {
+        WC.CreateRootWindow(None);
+    }
+
+    WC.bQuickKeyEnable = true;
+    WC.LaunchUWindow();
+
+    // If loadout menu is already open, return
+    Window = WC.Root.FindChildWindow(Class'RMod.R_LoadoutWindow');
+    if(Window != None)
+    {
+        return;
+    }
+    else
+    {
+        Window = WC.Root.CreateWindow(Class'RMod.R_LoadoutWindow', 128, 256, 400, 128);
+        if(WC.bShowConsole)
+        {
+            WC.HideConsole();
+        }
+
+        Window.bLeaveOnScreen = true;
+        Window.ShowWindow();
+    }
+}
+
+function CloseLoadoutMenu()
+{
+    local WindowConsole WC;
+    local UWindowWindow Window;
+
+    WC = WindowConsole(Player.Console);
+    if(WC == None)
+    {
+        UtilitiesClass.Static.RModLog("Failed to close loadout menu -- Invalid console");
+        return;
+    }
+
+    Window = WC.Root.FindChildWindow(Class'RMod.R_LoadoutWindow');
+    if(Window != None)
+    {
+        Window.Close();
+    }
+}
+
+function ClientOpenLoadoutMenu()
+{
+    OpenLoadoutMenu();
+}
+
+function ClientCloseLoadoutMenu()
+{
+    CloseLoadoutMenu();
+}
+
+exec function Loadout()
+{
+    // Always revert the DoNotShow option when user explicitly calls this function
+    bLoadoutMenuDoNotShow = false;
+    OpenLoadoutMenu();
+}
+
 defaultproperties
 {
     UtilitiesClass=Class'RMod.R_AUtilities'
@@ -1612,4 +1831,5 @@ defaultproperties
     SuicideCooldown=5.0
     bAlwaysRelevant=True
     bRotateTorso=False
+    bLoadoutMenuDoNotShow=False
 }

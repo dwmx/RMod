@@ -18,6 +18,15 @@ static function Color ColorWhite()
     return C;
 }
 
+static function Color ColorBlack()
+{
+    local Color C;
+    C.R = 0;
+    C.G = 0;
+    C.B = 0;
+    return C;
+}
+
 static function Color ColorRed()
 {
     local Color C;

@@ -23,6 +23,7 @@ struct FHUDLocalizedMessageExtended
 	var String PlayerName;
 };
 var FHUDLocalizedMessageExtended MessageQueueExtended[4];
+var FHUDLocalizedMessageExtended AnnouncementMessage;
 
 // For drawing players through walls
 struct FSavedActorDrawData
@@ -238,6 +239,22 @@ simulated function LocalizedMessage( class<LocalMessage> Message, optional int S
         CriticalString = Message.Static.GetString(Switch, RelatedPRI_1, RelatedPRI_2, OptionalObject);
 
     Message.Static.MangleString(CriticalString, RelatedPRI_1, RelatedPRI_2, OptionalObject);
+
+    // Announcement messages go to the AnnouncementMessage struct, not the queue
+    if(Class<R_Message_GameAnnouncement>(Message) != None)
+    {
+        AnnouncementMessage.Message = Message;
+        AnnouncementMessage.Switch = Switch;
+        AnnouncementMessage.RelatedPRI = RelatedPRI_1;
+        AnnouncementMessage.OptionalObject = OptionalObject;
+        AnnouncementMessage.LifeTime = Message.Static.GetLifeTime(CriticalString);
+        AnnouncementMessage.EndOfLife = AnnouncementMessage.LifeTime + Level.TimeSeconds;
+        AnnouncementMessage.StringMessage = CriticalString;
+        AnnouncementMessage.DrawColor = Message.Static.GetColor(Switch, RelatedPRI_1, RelatedPRI_2);
+        AnnouncementMessage.XL = 0;
+
+        return;
+    }
 
     if ( Message.Default.bIsUnique )
     {   // If unique, stomp any identical existing message
@@ -481,6 +498,64 @@ simulated function DrawMessages(canvas Canvas)
 	}
 }
 
+simulated function DrawGameAnnouncementMessages(Canvas C)
+{
+    local Texture BackgroundTexture;
+    local String DrawString;
+    local float FadeValue;
+    local float LenX, LenY;
+    local float DrawX, DrawY;
+    local float FadeAlpha;
+
+    FadeAlpha = ((AnnouncementMessage.EndOfLife - Level.TimeSeconds) / AnnouncementMessage.LifeTime);
+    FadeAlpha = FClamp(FadeAlpha, 0.0, 1.0);
+
+    DrawString = AnnouncementMessage.StringMessage;
+    C.Font = C.BigFont;
+    C.StrLen(DrawString, LenX, LenY);
+    DrawX = C.ClipX * 0.5 - LenX * 0.5;
+    DrawY = C.ClipY * 0.25 - LenY * 0.5;
+
+    FadeValue = Max(0.0, AnnouncementMessage.EndOfLife - Level.TimeSeconds);
+
+    // Draw message
+	//C.DrawColor = (AnnouncementMessage.DrawColor * (FadeValue/AnnouncementMessage.LifeTime));
+    C.DrawColor = AnnouncementMessage.DrawColor * FadeAlpha;
+    C.SetPos(DrawX, DrawY);
+    C.Style = ERenderStyle.STY_Translucent;
+    C.DrawText(DrawString, false);
+
+    // Draw background
+    BackgroundTexture = Texture'RuneI.sb_horizramp';
+    C.Style = ERenderStyle.STY_AlphaBlend;
+    C.AlphaScale = 0.5 * FadeAlpha * FadeAlpha;
+    C.DrawColor = ColorsClass.Static.ColorBlack();
+    DrawX = C.ClipX * 0.5;
+    DrawY = C.ClipY * 0.25 - LenY * 0.5 - 2;
+
+    C.SetPos(DrawX, DrawY);
+    C.DrawTile(BackgroundTexture, 96, LenY + 4, 0, 0, BackgroundTexture.USize, BackgroundTexture.VSize);
+    C.SetPos(DrawX - 96, DrawY);
+    C.DrawTile(BackgroundTexture, 96, LenY + 4, 0, 0, -BackgroundTexture.USize, BackgroundTexture.VSize);
+
+    C.DrawColor = AnnouncementMessage.DrawColor;
+
+    C.SetPos(DrawX, DrawY - 1);
+    C.DrawTile(BackgroundTexture, 96, 1, 0, 0, BackgroundTexture.USize, BackgroundTexture.VSize);
+    C.SetPos(DrawX - 96, DrawY - 1);
+    C.DrawTile(BackgroundTexture, 96, 1, 0, 0, -BackgroundTexture.USize, BackgroundTexture.VSize);
+
+    DrawY = C.ClipY * 0.25 + LenY * 0.5 + 2;
+    C.SetPos(DrawX, DrawY - 1);
+    C.DrawTile(BackgroundTexture, 96, 1, 0, 0, BackgroundTexture.USize, BackgroundTexture.VSize);
+    C.SetPos(DrawX - 96, DrawY - 1);
+    C.DrawTile(BackgroundTexture, 96, 1, 0, 0, -BackgroundTexture.USize, BackgroundTexture.VSize);
+
+    C.AlphaScale = 1.0;
+
+    
+}
+
 simulated function Class<LocalMessage> DetermineClass(name MsgType)
 {
 	local Class<LocalMessage> MessageClass;
@@ -507,6 +582,9 @@ simulated function Class<LocalMessage> DetermineClass(name MsgType)
 		case 'LCI':
 			MessageClass=class'RMod.R_LCI_Message';
 			break;
+        case 'GameAnnouncement':
+            MessageClass=Class'RMod.R_Message_GameAnnouncement';
+            break;
 		case 'CriticalEvent':
 		case 'DeathMessage':
 		case 'Event':
@@ -763,6 +841,7 @@ simulated function PostRender( canvas Canvas )
 	{	// Hud is off
 		DrawMessages(Canvas);
 		DrawRuneMessages(Canvas);
+        DrawGameAnnouncementMessages(Canvas);
 
 		// Draw Progress Bar
 		Canvas.SetColor(255,255,255);
@@ -782,8 +861,8 @@ simulated function PostRender( canvas Canvas )
 	bResChanged = (Canvas.ClipX != OldClipX);
 	OldClipX = Canvas.ClipX;
 
-	// Set the relative HUD scale to 640x480
-	HudScale = Canvas.ClipX / 640;
+	// Set the relative HUD scale to 960x480
+	HudScale = Canvas.ClipX / 960;
 
 	if (!Owner.IsA('Spectator')
 		&& !(R_RunePlayer(Owner) != None
@@ -862,6 +941,7 @@ simulated function PostRender( canvas Canvas )
 
 	DrawMessages(Canvas);
 	DrawRuneMessages(Canvas);
+    DrawGameAnnouncementMessages(Canvas);
 
 	// Reset the translucency of the HUD back to normal
 	Canvas.Style = ERenderStyle.STY_Normal;		
