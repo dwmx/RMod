@@ -611,7 +611,8 @@ simulated function DrawTypingPlayers(canvas Canvas)
 	{
 		if(P.PlayerReplicationInfo == None
 		|| P.PlayerReplicationInfo.bIsSpectator
-		|| !P.bIsTyping)
+		|| !P.bIsTyping
+        || P.bHidden)
 		{
 			continue;
 		}
