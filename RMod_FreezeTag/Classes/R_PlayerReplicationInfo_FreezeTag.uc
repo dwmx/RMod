@@ -1,5 +1,6 @@
 class R_PlayerReplicationInfo_FreezeTag extends R_PlayerReplicationInfo;
 
+var bool bIsFrozen;
 var float PlayerThaws;
 var float PlayerFreezes;
 var FStatTracker PlayerThawsTracker;
@@ -8,6 +9,7 @@ var FStatTracker PlayerFreezesTracker;
 replication
 {
     reliable if(Role == ROLE_Authority)
+        bIsFrozen,
         PlayerThaws,
         PlayerFreezes;
 }
@@ -33,6 +35,7 @@ function ResetPlayerReplicationInfo()
 
 defaultproperties
 {
+    bIsFrozen=False
     PlayerThaws=0.0
     PlayerFreezes=0.0
 }

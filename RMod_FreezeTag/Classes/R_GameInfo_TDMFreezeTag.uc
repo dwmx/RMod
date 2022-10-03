@@ -78,4 +78,5 @@ defaultproperties
     FreezeTagStaticsClass=Class'RMod_FreezeTag.R_AFreezeTagStatics'
     RunePlayerClass=Class'RMod_FreezeTag.R_RunePlayer_FreezeTag'
     PlayerReplicationInfoClass=Class'RMod_FreezeTag.R_PlayerReplicationInfo_FreezeTag'
+    HUDType=Class'RMod_FreezeTag.R_RunePlayerHUD_TDMFreezeTag'
 }

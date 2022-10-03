@@ -400,6 +400,8 @@ state Frozen extends PlayerWalking
 
     event BeginState()
     {
+        local R_PlayerReplicationInfo_FreezeTag RPRIFT;
+
         Super.BeginState();
 
         FrozenHealth = FrozenMaxHealth;
@@ -433,6 +435,12 @@ state Frozen extends PlayerWalking
                 NotifyGameInfoOfFrozen();
                 FrozenInstigator = None;
             }
+
+            RPRIFT = R_PlayerReplicationInfo_FreezeTag(PlayerReplicationInfo);
+            if(RPRIFT != None)
+            {
+                RPRIFT.bIsFrozen = true;
+            }
         }
     }
 
@@ -444,6 +452,8 @@ state Frozen extends PlayerWalking
 
     event EndState()
     {
+        local R_PlayerReplicationInfo_FreezeTag RPRIFT;
+
         Super.EndState();
 
         AnimRate = FrozenSavedAnimRate;
@@ -466,6 +476,12 @@ state Frozen extends PlayerWalking
             {
                 NotifyGameInfoOfThawed();
                 FrozenInstigator = None;
+            }
+
+            RPRIFT = R_PlayerReplicationInfo_FreezeTag(PlayerReplicationInfo);
+            if(RPRIFT != None)
+            {
+                RPRIFT.bIsFrozen = false;
             }
         }
     }
