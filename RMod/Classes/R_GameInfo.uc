@@ -749,7 +749,7 @@ function AddDefaultInventory_LoadoutEnabled(Pawn PlayerPawn)
     local R_LoadoutReplicationInfo LRI;
     local Class<Inventory> LoadoutInventoryClasses[16];
     local int i;
-    local Class<Inventory> LoadoutInventoryClassCurrent;
+    local Class<Inventory> LoadoutInventoryClassCurrent, LoadoutInventoryClassTemp;
     local Inventory InventoryCurrent;
 
     RP = R_RunePlayer(PlayerPawn);
@@ -764,6 +764,27 @@ function AddDefaultInventory_LoadoutEnabled(Pawn PlayerPawn)
         }
     }
 
+    // If there's a shield in the array, swap it so that it's the last item granted
+    for(i = 15; i >= 0; --i)
+    {
+        if(Class<Shield>(LoadoutInventoryClasses[i]) != None)
+        {
+            LoadoutInventoryClassTemp = LoadoutInventoryClasses[15];
+            LoadoutInventoryClasses[15] = LoadoutInventoryClasses[i];
+            LoadoutInventoryClasses[i] = LoadoutInventoryClassTemp;
+        }
+    }
+
+    // Clear out any remaining shields from the array, since players can only hold one
+    for(i = i; i >= 0; --i)
+    {
+        if(Class<Shield>(LoadoutInventoryClasses[i]) != None)
+        {
+            LoadoutInventoryClasses[i] = None;
+        }
+    }
+
+    // Grant all inventories
     for(i = 0; i < 16; ++i)
     {
         LoadoutInventoryClassCurrent = LoadoutInventoryClasses[i];

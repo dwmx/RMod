@@ -99,9 +99,11 @@ defaultproperties
     LoadoutOptionsSecondary(2)=(InventoryClass=Class'RMod.R_Weapon_TrialPitMace')
     LoadoutOptionsSecondary(3)=(InventoryClass=Class'RMod.R_Weapon_VikingAxe')
     LoadoutOptionsSecondary(4)=(InventoryClass=Class'RMod.R_Weapon_DwarfWorkHammer')
+    LoadoutOptionsSecondary(5)=(InventoryClass=Class'RMod.R_Shield_DarkShield')
     LoadoutOptionsTertiary(0)=(InventoryClass=Class'RMod.R_Weapon_VikingShortSword')
     LoadoutOptionsTertiary(1)=(InventoryClass=Class'RMod.R_Weapon_BoneClub')
     LoadoutOptionsTertiary(2)=(InventoryClass=Class'RMod.R_Weapon_GoblinAxe')
     LoadoutOptionsTertiary(3)=(InventoryClass=Class'RMod.R_Weapon_HandAxe')
     LoadoutOptionsTertiary(4)=(InventoryClass=Class'RMod.R_Weapon_RomanSword')
+    LoadoutOptionsTertiary(5)=(InventoryClass=Class'RMod.R_Weapon_RustyMace')
 }
