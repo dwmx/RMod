@@ -6,6 +6,7 @@ var int NewRemainingTime;
 var int RemainingTimePendingUpdateSwitch;
 var int RemainingTimePendingUpdateSwitchLocal;
 var Name GameStateName;
+var bool bLoadoutsEnabled;
 
 replication
 {
@@ -13,7 +14,8 @@ replication
         GameOptions,
         NewRemainingTime,
         RemainingTimePendingUpdateSwitch,
-        GameStateName;
+        GameStateName,
+        bLoadoutsEnabled;
 }
 
 event BeginPlay()

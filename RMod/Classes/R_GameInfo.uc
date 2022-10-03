@@ -25,11 +25,12 @@ var private String OldGamePassword;
 var Class<HUD> HUDTypeSpectator;
 var bool bAllowSpectatorBroadcastMessage;
 
-
 var bool bRemoveNativeWeapons;
 var bool bRemoveNativeShields;
 var bool bRemoveNativeRunes;
 var bool bRemoveNativeFoods;
+
+var bool bLoadoutsEnabled;
 
 // Used at level start to mark actors which stay during level reset
 var bool bMarkSpawnedActorsAsNativeToLevel;
@@ -158,6 +159,7 @@ function PlayerSetTimeLimit(PlayerPawn P, int DurationMinutes)
 event PostBeginPlay()
 {
 	local String CurrentGamePassword;
+    local R_GameReplicationInfo RGRI;
     
 	Super.PostBeginPlay();
 	
@@ -168,7 +170,31 @@ event PostBeginPlay()
 	CurrentGamePassword = ConsoleCommand("Get Engine.GameInfo GamePassword");
 	OldGamePassword = CurrentGamePassword;
 
+    if(bLoadoutsEnabled)
+    {
+        SpawnLoadoutOptionReplicationInfo();
+    }
+
     SpawnGameOptions();
+
+    RGRI = R_GameReplicationInfo(GameReplicationInfo);
+    if(RGRI != None)
+    {
+        RGRI.bLoadoutsEnabled = bLoadoutsEnabled;
+    }
+}
+
+function SpawnLoadoutOptionReplicationInfo()
+{
+    if(LoadoutOptionReplicationInfoClass != None)
+    {
+        LoadoutOptionReplicationInfo = Spawn(LoadoutOptionReplicationInfoClass);
+        UtilitiesClass.Static.Log("Spawned LoadoutOptionReplicationInfo from class" @ LoadoutOptionReplicationInfoClass);
+    }
+    else
+    {
+        UtilitiesClass.Static.Warn("Failed to spawn LoadoutOptionReplicationInfo, no class specified");
+    }
 }
 
 function SpawnGameOptions()
@@ -186,24 +212,7 @@ function SpawnGameOptions()
             {
                 RGRI.GameOptions = GameOptions;
             }
-
-            if(GameOptions.bOptionLoadoutEnabled)
-            {
-                SpawnLoadoutOptionReplicationInfo();
-            }
         }
-    }
-}
-
-function SpawnLoadoutOptionReplicationInfo()
-{
-    if(LoadoutOptionReplicationInfoClass != None)
-    {
-        LoadoutOptionReplicationInfo = Spawn(LoadoutOptionReplicationInfoClass);
-    }
-    else
-    {
-        UtilitiesClass.Static.Warn("Failed to spawn LoadoutOptionReplicationInfo, no class specified");
     }
 }
 
@@ -671,7 +680,7 @@ function AddDefaultInventory(Pawn PlayerPawn)
     }
 
     // If loadouts are enabled, then grant inventory based on loadout
-    if(GameOptions != None && GameOptions.bOptionLoadoutEnabled)
+    if(bLoadoutsEnabled)
     {
         AddDefaultInventory_LoadoutEnabled(PlayerPawn);
         return;
@@ -934,6 +943,7 @@ defaultproperties
     DefaultPlayerMaxHealth=100
     DefaultPlayerRunePower=0
     DefaultPlayerMaxRunePower=100
+    bLoadoutsEnabled=False
     bRemoveNativeWeapons=False
     bRemoveNativeShields=False
     bRemoveNativeRunes=False

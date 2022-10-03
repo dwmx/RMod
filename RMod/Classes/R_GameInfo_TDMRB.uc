@@ -568,4 +568,5 @@ defaultproperties
     DefaultPlayerHealth=200
     bRemoveNativeWeapons=True
     bRemoveNativeShields=True
+    bLoadoutsEnabled=True
 }
