@@ -397,10 +397,12 @@ state LiveRound extends BaseRoundState
         else if(WinningTeamIndex >= 0 && WinningTeamIndex <= MAX_TEAMS)
         {
             RGRI = R_GameReplicationInfo(GameReplicationInfo);
-            if(RGRI != None)
-            {
-                WinningTeamString = RGRI.Teams[WinningTeamIndex].TeamName @ "wins the round";
-            }
+            BroadcastLocalizedMessage(
+                Class'RMod.R_Message_TeamAnnouncement',
+                Class'RMod.R_Message_TeamAnnouncement'.Static.GetSwitch_TeamWinsTheRoundMessage(),
+                None,
+                None,
+                RGRI.Teams[WinningTeamIndex]);
         }
         
         BroadcastString = WinningTeamString;
@@ -409,8 +411,6 @@ state LiveRound extends BaseRoundState
         {
             BroadcastString = "Round time expired -" @ BroadcastString;
         }
-
-        BroadcastMessage(BroadcastString, true, 'GameAnnouncement');
     }
 
     /**
