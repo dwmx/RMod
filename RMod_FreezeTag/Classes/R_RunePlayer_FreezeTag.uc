@@ -1,5 +1,7 @@
 class R_RunePlayer_FreezeTag extends R_RunePlayer;
 
+var Class<R_AFreezeTagStatics> FreezeTagStaticsClass;
+
 var R_IceStatueProxy IceStatueProxy;
 var bool bInFrozenState;
 
@@ -7,6 +9,14 @@ var float FrozenMaxHealth;
 var float FrozenHealth;
 var float FrozenSavedAnimRate;
 var float FrozenSavedAnimProxyAnimRate;
+
+/**
+*   EFTDiedBehavior (byte)
+*   Enumerator values for determing what this player does on death.
+*   These are bytes so that GameInfo can return these values.
+*/
+const FTDB_DieOnDeath = 0;
+const FTDB_FreezeOnDeath = 1;
 
 // See the note above DamageBodyPart
 var R_RunePlayer FrozenInstigator;
@@ -295,26 +305,58 @@ function KilledBy(Pawn EventInstigator)
     Died(EventInstigator, 'suicided', Location );
 }
 
-function Died(pawn Killer, name DamageType, vector HitLocation)
+/**
+*   GetCurrentDiedBehaviorAsByte
+*   Get the death behavior value from the current freeze tag game info.
+*   This allows the game to change when players should become frozen or when
+*   they should just die.
+*/
+function byte GetCurrentDiedBehaviorAsByte()
 {
+    local byte DiedBehaviorByte;
+    local R_GameInfo_ArenaFreezeTag RGIArena;
+    local R_GameInfo_TDMFreezeTag RGITDM;
+
+    DiedBehaviorByte = FreezeTagStaticsClass.Static.GetDeathBehaviorAsByte_DieOnDeath();
+
+    RGIArena = R_GameInfo_ArenaFreezeTag(Level.Game);
+    RGITDM = R_GameInfo_TDMFreezeTag(Level.Game);
+
+    if(RGIArena != None)
+    {
+        DiedBehaviorByte = RGIArena.GetCurrentDiedBehaviorAsByte(Self);
+    }
+    else if(RGITDM != None)
+    {
+        DiedBehaviorByte = RGITDM.GetCurrentDiedBehaviorAsByte(Self);
+    }
+
+    return DiedBehaviorByte;
+}
+
+/**
+*   Died (override)
+*   Overridden to allow the current game mode to tell this player to freeze
+*   instead of dying.
+*/
+function Died(Pawn Killer, Name DamageType, Vector HitLocation)
+{
+    local byte DiedBehaviorByte;
     local R_GameInfo_ArenaFreezeTag GI;
 
     if(Role == ROLE_Authority)
     {
-        GI = R_GameInfo_ArenaFreezeTag(Level.Game);
-        if(GI != None)
+        DiedBehaviorByte = GetCurrentDiedBehaviorAsByte();
+
+        if(DiedBehaviorByte == FreezeTagStaticsClass.Static.GetDeathBehaviorAsByte_DieOnDeath())
         {
-            // Only become frozen if this player is in the arena
-            if(GI.IsPlaying(Self, GI.LTYPE_Champion) || GI.IsPlaying(Self, GI.LTYPE_Challenger))
-            {
-                Health = 1;
-                Instigator = Killer;
-                GotoState('Frozen');
-            }
-            else
-            {
-                Super.Died(Killer, DamageType, HitLocation);
-            }
+            Super.Died(Killer, DamageType, HitLocation);
+        }
+        else if(DiedBehaviorByte == FreezeTagStaticsClass.Static.GetDeathBehaviorAsByte_FreezeOnDeath())
+        {
+            Health = 1;
+            Instigator = Killer;
+            GotoState('Frozen');
         }
     }
 }
@@ -388,7 +430,7 @@ state Frozen extends PlayerWalking
             SpawnIceStatueProxy();
             if(R_GameInfo_ArenaFreezeTag(Level.Game) != None)
             {
-                R_GameInfo_ArenaFreezeTag(Level.Game).NotifyFrozen(Self, FrozenInstigator);
+                NotifyGameInfoOfFrozen();
                 FrozenInstigator = None;
             }
         }
@@ -422,9 +464,61 @@ state Frozen extends PlayerWalking
         {
             if(R_GameInfo_ArenaFreezeTag(Level.Game) != None)
             {
-                R_GameInfo_ArenaFreezeTag(Level.Game).NotifyThawed(Self, FrozenInstigator);
+                NotifyGameInfoOfThawed();
                 FrozenInstigator = None;
             }
+        }
+    }
+
+    /**
+    *   NotifyGameInfoOfFrozen
+    *   Notify the owning game mode that this player was frozen.
+    *   Since there is no base freeze tag game mode, all different freeze tag
+    *   modes need their own explicit call.
+    */
+    function NotifyGameInfoOfFrozen()
+    {
+        local R_GameInfo_ArenaFreezeTag RGIArena;
+        local R_GameInfo_TDMFreezeTag RGITDM;
+
+        RGIArena = R_GameInfo_ArenaFreezeTag(Level.Game);
+        if(RGIArena != None)
+        {
+            RGIArena.NotifyFrozen(Self, FrozenInstigator);
+            return;
+        }
+
+        RGITDM = R_GameInfo_TDMFreezeTag(Level.Game);
+        if(RGITDM != None)
+        {
+            RGITDM.NotifyFrozen(Self, FrozenInstigator);
+            return;
+        }
+    }
+
+    /**
+    *   NotifyGameInfoOfThawed
+    *   Notify the owning game mode that this player was thawed.
+    *   Since there is no base freeze tag game mode, all different freeze tag
+    *   modes need their own explicit call.
+    */
+    function NotifyGameInfoOfThawed()
+    {
+        local R_GameInfo_ArenaFreezeTag RGIArena;
+        local R_GameInfo_TDMFreezeTag RGITDM;
+
+        RGIArena = R_GameInfo_ArenaFreezeTag(Level.Game);
+        if(RGIArena != None)
+        {
+            RGIArena.NotifyThawed(Self, FrozenInstigator);
+            return;
+        }
+
+        RGITDM = R_GameInfo_TDMFreezeTag(Level.Game);
+        if(RGITDM != None)
+        {
+            RGITDM.NotifyThawed(Self, FrozenInstigator);
+            return;
         }
     }
 
@@ -546,6 +640,7 @@ state Frozen extends PlayerWalking
 
 defaultproperties
 {
+    FreezeTagStaticsClass=Class'RMod_FreezeTag.R_AFreezeTagStatics'
     MaxHealth=200
     Health=200
     bInFrozenState=false

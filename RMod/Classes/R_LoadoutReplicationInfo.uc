@@ -59,5 +59,6 @@ function ServerUpdateLoadout(
 defaultproperties
 {
     UtilitiesClass=Class'RMod.R_AUtilities'
-    PrimaryInventoryClass=Class'RuneI.DwarfBattleSword'
+    PrimaryInventoryClass=Class'RuneI.Handaxe'
+    SecondaryInventoryClass=Class'RuneI.RomanSword'
 }

@@ -5,9 +5,9 @@ class R_Scoreboard_ArenaFreezeTag extends R_Scoreboard_Arena;
 
 function int GetValueForDeathsField(PlayerReplicationInfo PRI)
 {
-    if(R_PlayerReplicationInfo_ArenaFreezeTag(PRI) != None)
+    if(R_PlayerReplicationInfo_FreezeTag(PRI) != None)
     {
-        return int(R_PlayerReplicationInfo_ArenaFreezeTag(PRI).PlayerFreezes);
+        return int(R_PlayerReplicationInfo_FreezeTag(PRI).PlayerFreezes);
     }
     else
     {
@@ -17,9 +17,9 @@ function int GetValueForDeathsField(PlayerReplicationInfo PRI)
 
 function int GetValueForDamageDealtField(PlayerReplicationInfo PRI)
 {
-	if(R_PlayerReplicationInfo_ArenaFreezeTag(PRI) != None)
+	if(R_PlayerReplicationInfo_FreezeTag(PRI) != None)
     {
-        return int(R_PlayerReplicationInfo_ArenaFreezeTag(PRI).PlayerThaws);
+        return int(R_PlayerReplicationInfo_FreezeTag(PRI).PlayerThaws);
     }
     else
     {

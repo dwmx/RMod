@@ -1,4 +1,4 @@
-class R_PlayerReplicationInfo_ArenaFreezeTag extends R_PlayerReplicationInfo;
+class R_PlayerReplicationInfo_FreezeTag extends R_PlayerReplicationInfo;
 
 var float PlayerThaws;
 var float PlayerFreezes;
