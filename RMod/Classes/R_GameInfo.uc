@@ -25,6 +25,13 @@ var private String OldGamePassword;
 var Class<HUD> HUDTypeSpectator;
 var bool bAllowSpectatorBroadcastMessage;
 
+var bool bRemoveNativeWeapons;
+var bool bRemoveNativeShields;
+var bool bRemoveNativeRunes;
+var bool bRemoveNativeFoods;
+
+var bool bLoadoutsEnabled;
+
 // Used at level start to mark actors which stay during level reset
 var bool bMarkSpawnedActorsAsNativeToLevel;
 
@@ -152,6 +159,7 @@ function PlayerSetTimeLimit(PlayerPawn P, int DurationMinutes)
 event PostBeginPlay()
 {
 	local String CurrentGamePassword;
+    local R_GameReplicationInfo RGRI;
     
 	Super.PostBeginPlay();
 	
@@ -162,7 +170,31 @@ event PostBeginPlay()
 	CurrentGamePassword = ConsoleCommand("Get Engine.GameInfo GamePassword");
 	OldGamePassword = CurrentGamePassword;
 
+    if(bLoadoutsEnabled)
+    {
+        SpawnLoadoutOptionReplicationInfo();
+    }
+
     SpawnGameOptions();
+
+    RGRI = R_GameReplicationInfo(GameReplicationInfo);
+    if(RGRI != None)
+    {
+        RGRI.bLoadoutsEnabled = bLoadoutsEnabled;
+    }
+}
+
+function SpawnLoadoutOptionReplicationInfo()
+{
+    if(LoadoutOptionReplicationInfoClass != None)
+    {
+        LoadoutOptionReplicationInfo = Spawn(LoadoutOptionReplicationInfoClass);
+        UtilitiesClass.Static.Log("Spawned LoadoutOptionReplicationInfo from class" @ LoadoutOptionReplicationInfoClass);
+    }
+    else
+    {
+        UtilitiesClass.Static.Warn("Failed to spawn LoadoutOptionReplicationInfo, no class specified");
+    }
 }
 
 function SpawnGameOptions()
@@ -180,24 +212,7 @@ function SpawnGameOptions()
             {
                 RGRI.GameOptions = GameOptions;
             }
-
-            if(GameOptions.bOptionLoadoutEnabled)
-            {
-                SpawnLoadoutOptionReplicationInfo();
-            }
         }
-    }
-}
-
-function SpawnLoadoutOptionReplicationInfo()
-{
-    if(LoadoutOptionReplicationInfoClass != None)
-    {
-        LoadoutOptionReplicationInfo = Spawn(LoadoutOptionReplicationInfoClass);
-    }
-    else
-    {
-        UtilitiesClass.Static.Warn("Failed to spawn LoadoutOptionReplicationInfo, no class specified");
     }
 }
 
@@ -613,6 +628,16 @@ event bool IsRelevant(Actor A)
 	local Vector Loc;
 	local Rotator Rot;
 	
+    // This check is only true at the start of every level, so this is the best
+    // place to do startup item removal
+    if(bMarkSpawnedActorsAsNativeToLevel)
+    {
+        if(bRemoveNativeWeapons && Weapon(A) != None)   { return false; }
+        if(bRemoveNativeShields && Shield(A) != None)   { return false; }
+        if(bRemoveNativeRunes && Runes(A) != None)      { return false; }
+        if(bRemoveNativeFoods && Food(A) != None)       { return false; }
+    }
+
     if(ActorSubstitutionClass != None)
     {
         A = ActorSubstitutionClass.Static.PerformActorSubstitution(Self, A);
@@ -655,7 +680,7 @@ function AddDefaultInventory(Pawn PlayerPawn)
     }
 
     // If loadouts are enabled, then grant inventory based on loadout
-    if(GameOptions != None && GameOptions.bOptionLoadoutEnabled)
+    if(bLoadoutsEnabled)
     {
         AddDefaultInventory_LoadoutEnabled(PlayerPawn);
         return;
@@ -724,7 +749,7 @@ function AddDefaultInventory_LoadoutEnabled(Pawn PlayerPawn)
     local R_LoadoutReplicationInfo LRI;
     local Class<Inventory> LoadoutInventoryClasses[16];
     local int i;
-    local Class<Inventory> LoadoutInventoryClassCurrent;
+    local Class<Inventory> LoadoutInventoryClassCurrent, LoadoutInventoryClassTemp;
     local Inventory InventoryCurrent;
 
     RP = R_RunePlayer(PlayerPawn);
@@ -739,6 +764,27 @@ function AddDefaultInventory_LoadoutEnabled(Pawn PlayerPawn)
         }
     }
 
+    // If there's a shield in the array, swap it so that it's the last item granted
+    for(i = 15; i >= 0; --i)
+    {
+        if(Class<Shield>(LoadoutInventoryClasses[i]) != None)
+        {
+            LoadoutInventoryClassTemp = LoadoutInventoryClasses[15];
+            LoadoutInventoryClasses[15] = LoadoutInventoryClasses[i];
+            LoadoutInventoryClasses[i] = LoadoutInventoryClassTemp;
+        }
+    }
+
+    // Clear out any remaining shields from the array, since players can only hold one
+    for(i = i; i >= 0; --i)
+    {
+        if(Class<Shield>(LoadoutInventoryClasses[i]) != None)
+        {
+            LoadoutInventoryClasses[i] = None;
+        }
+    }
+
+    // Grant all inventories
     for(i = 0; i < 16; ++i)
     {
         LoadoutInventoryClassCurrent = LoadoutInventoryClasses[i];
@@ -918,4 +964,9 @@ defaultproperties
     DefaultPlayerMaxHealth=100
     DefaultPlayerRunePower=0
     DefaultPlayerMaxRunePower=100
+    bLoadoutsEnabled=False
+    bRemoveNativeWeapons=False
+    bRemoveNativeShields=False
+    bRemoveNativeRunes=False
+    bRemoveNativeFoods=False
 }

@@ -6,13 +6,11 @@ class R_GameOptions extends ReplicationInfo;
 
 var Class<R_AUtilities> UtilitiesClass;
 
-var config bool bOptionLoadoutEnabled;
 var config bool bOptionShieldHitStun;
 
 replication
 {
     reliable if(Role == ROLE_Authority)
-        bOptionLoadoutEnabled,
         bOptionShieldHitStun;
 }
 
@@ -38,7 +36,6 @@ event BeginPlay()
             Log(LogString);
         }
 
-        LogGameOption("LoadoutEnabled", String(bOptionLoadoutEnabled));
         LogGameOption("ShieldHitStun", String(bOptionShieldHitStun));
     }
 }
@@ -61,6 +58,5 @@ function LogGameOption(String GameOptionNameString, String GameOptionValueString
 defaultproperties
 {
     UtilitiesClass=Class'RMod.R_AUtilities_GameOptions'
-    bOptionLoadoutEnabled=True
     bOptionShieldHitStun=True
 }

@@ -21,6 +21,8 @@ struct FHUDLocalizedMessageExtended
 
 	// Extension
 	var String PlayerName;
+    var String ExtendedStringMessage;
+    var Color ExtendedDrawColor;
 };
 var FHUDLocalizedMessageExtended MessageQueueExtended[4];
 var FHUDLocalizedMessageExtended AnnouncementMessage;
@@ -252,6 +254,12 @@ simulated function LocalizedMessage( class<LocalMessage> Message, optional int S
         AnnouncementMessage.StringMessage = CriticalString;
         AnnouncementMessage.DrawColor = Message.Static.GetColor(Switch, RelatedPRI_1, RelatedPRI_2);
         AnnouncementMessage.XL = 0;
+
+        if(Class<R_Message_TeamAnnouncement>(Message) != None)
+        {
+            AnnouncementMessage.ExtendedStringMessage = Class'R_Message_TeamAnnouncement'.Static.GetTeamNameString(Switch, RelatedPRI_1, RelatedPRI_2, OptionalObject);
+            AnnouncementMessage.ExtendedDrawColor = Class'R_Message_TeamAnnouncement'.Static.GetTeamMessageColor(Switch, RelatedPRI_1, RelatedPRI_2, OptionalObject);
+        }
 
         return;
     }
@@ -500,6 +508,18 @@ simulated function DrawMessages(canvas Canvas)
 
 simulated function DrawGameAnnouncementMessages(Canvas C)
 {
+    if(Class<R_Message_TeamAnnouncement>(AnnouncementMessage.Message) != None)
+    {
+        DrawGameAnnouncementMessages_TeamAnnouncement(C);
+    }
+    else
+    {
+        DrawGameAnnouncementMessages_GameAnnouncement(C);
+    }
+}
+
+simulated function DrawGameAnnouncementMessages_GameAnnouncement(Canvas C)
+{
     local Texture BackgroundTexture;
     local String DrawString;
     local float FadeValue;
@@ -552,8 +572,69 @@ simulated function DrawGameAnnouncementMessages(Canvas C)
     C.DrawTile(BackgroundTexture, 96, 1, 0, 0, -BackgroundTexture.USize, BackgroundTexture.VSize);
 
     C.AlphaScale = 1.0;
+}
 
+simulated function DrawGameAnnouncementMessages_TeamAnnouncement(Canvas C)
+{
+    local Texture BackgroundTexture;
+    local String TeamNameString, MessageString, TotalMessageString;
+    local float FadeValue;
+    local float LenX, LenY;
+    local float DrawX, DrawY;
+    local float FadeAlpha;
+
+    MessageString = " " $ AnnouncementMessage.StringMessage;
+    TeamNameString = AnnouncementMessage.ExtendedStringMessage;
+    TotalMessageString = TeamNameString $ MessageString;
+
+    FadeAlpha = ((AnnouncementMessage.EndOfLife - Level.TimeSeconds) / AnnouncementMessage.LifeTime);
+    FadeAlpha = FClamp(FadeAlpha, 0.0, 1.0);
+
+    C.Font = C.BigFont;
+    C.StrLen(TotalMessageString, LenX, LenY);
+    DrawX = C.ClipX * 0.5 - LenX * 0.5;
+    DrawY = C.ClipY * 0.25 - LenY * 0.5;
+
+    FadeValue = Max(0.0, AnnouncementMessage.EndOfLife - Level.TimeSeconds);
+    C.Style = ERenderStyle.STY_Translucent;
+
+    // Draw team name string
+    C.SetPos(DrawX, DrawY);
+    C.DrawColor = AnnouncementMessage.ExtendedDrawColor * FadeAlpha;
+    C.DrawText(TeamNameString, false);
     
+    // Draw message string
+    C.SetPos(C.CurX, DrawY);
+    C.DrawColor = AnnouncementMessage.DrawColor * FadeAlpha;
+    C.DrawText(MessageString, false);
+
+    // Draw background
+    BackgroundTexture = Texture'RuneI.sb_horizramp';
+    C.Style = ERenderStyle.STY_AlphaBlend;
+    C.AlphaScale = 0.5 * FadeAlpha * FadeAlpha;
+    C.DrawColor = ColorsClass.Static.ColorBlack();
+    DrawX = C.ClipX * 0.5;
+    DrawY = C.ClipY * 0.25 - LenY * 0.5 - 2;
+
+    C.SetPos(DrawX, DrawY);
+    C.DrawTile(BackgroundTexture, 96, LenY + 4, 0, 0, BackgroundTexture.USize, BackgroundTexture.VSize);
+    C.SetPos(DrawX - 96, DrawY);
+    C.DrawTile(BackgroundTexture, 96, LenY + 4, 0, 0, -BackgroundTexture.USize, BackgroundTexture.VSize);
+
+    C.DrawColor = AnnouncementMessage.DrawColor;
+
+    C.SetPos(DrawX, DrawY - 1);
+    C.DrawTile(BackgroundTexture, 96, 1, 0, 0, BackgroundTexture.USize, BackgroundTexture.VSize);
+    C.SetPos(DrawX - 96, DrawY - 1);
+    C.DrawTile(BackgroundTexture, 96, 1, 0, 0, -BackgroundTexture.USize, BackgroundTexture.VSize);
+
+    DrawY = C.ClipY * 0.25 + LenY * 0.5 + 2;
+    C.SetPos(DrawX, DrawY - 1);
+    C.DrawTile(BackgroundTexture, 96, 1, 0, 0, BackgroundTexture.USize, BackgroundTexture.VSize);
+    C.SetPos(DrawX - 96, DrawY - 1);
+    C.DrawTile(BackgroundTexture, 96, 1, 0, 0, -BackgroundTexture.USize, BackgroundTexture.VSize);
+
+    C.AlphaScale = 1.0;
 }
 
 simulated function Class<LocalMessage> DetermineClass(name MsgType)

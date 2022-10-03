@@ -109,7 +109,6 @@ event PreBeginPlay()
 event PostBeginPlay()
 {
 	local R_GameInfo RGI;
-    local R_GameOptions RGO;
 
 	Super.PostBeginPlay();
 
@@ -123,13 +122,9 @@ event PostBeginPlay()
 
 		HUDTypeSpectator = RGI.HUDTypeSpectator;
 
-        RGO = RGI.GameOptions;
-        if(RGO != None)
+        if(RGI.bLoadoutsEnabled)
         {
-            if(RGO.bOptionLoadoutEnabled)
-            {
-                SpawnLoadoutReplicationInfo();
-            }
+            SpawnLoadoutReplicationInfo();
         }
 	}
 }
@@ -1719,11 +1714,10 @@ state GameEnded
 
 function OpenLoadoutMenu()
 {
-    local R_GameReplicationInfo RGI;
-    local R_GameOptions RGO;
+    local R_GameReplicationInfo RGRI;
     local WindowConsole WC;
     local UWindowWindow Window;
-    local bool bLoadoutEnabled;
+    local bool bLoadoutsEnabled;
 
     // Checks whether or not the DoNotShow option was selected
     // This can be reverted by called the 'loadout' command
@@ -1732,20 +1726,16 @@ function OpenLoadoutMenu()
         return;
     }
 
-    bLoadoutEnabled = false;
+    bLoadoutsEnabled = false;
 
     // Verify that loadout is enabled for the current game
-    RGI = R_GameReplicationInfo(GameReplicationInfo);
-    if(RGI != None)
+    RGRI = R_GameReplicationInfo(GameReplicationInfo);
+    if(RGRI != None)
     {
-        RGO = RGI.GameOptions;
-        if(RGO != None && RGO.bOptionLoadoutEnabled)
-        {
-            bLoadoutEnabled = true;
-        }
+        bLoadoutsEnabled = RGRI.bLoadoutsEnabled;
     }
 
-    if(!bLoadoutEnabled)
+    if(!bLoadoutsEnabled)
     {
         ClientMessage("Loadouts are not enabled for the current game mode");
         return;
