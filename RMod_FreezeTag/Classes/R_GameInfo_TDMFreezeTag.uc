@@ -50,7 +50,7 @@ state LiveRound
     */
     function bool CheckIsPlayerConsideredAlive(R_RunePlayer RRP)
     {
-        if(RRP.GetStateName() == 'Frozen')
+        if(RRP.GetStateName() == 'Frozen' || RRP.Health <= 0)
         {
             return false;
         }
@@ -65,7 +65,7 @@ state LiveRound
         for(P = Level.PawnList; P != None; P = P.NextPawn)
         {
             RRPFT = R_RunePlayer_FreezeTag(P);
-            if(RRPFT != None)
+            if(RRPFT != None && RRPFT.GetStateName() == 'Frozen')
             {
                 RRPFT.NotifyEjectedFromArena();
             }
