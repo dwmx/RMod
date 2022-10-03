@@ -10,14 +10,6 @@ var float FrozenHealth;
 var float FrozenSavedAnimRate;
 var float FrozenSavedAnimProxyAnimRate;
 
-/**
-*   EFTDiedBehavior (byte)
-*   Enumerator values for determing what this player does on death.
-*   These are bytes so that GameInfo can return these values.
-*/
-const FTDB_DieOnDeath = 0;
-const FTDB_FreezeOnDeath = 1;
-
 // See the note above DamageBodyPart
 var R_RunePlayer FrozenInstigator;
 

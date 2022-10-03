@@ -566,4 +566,6 @@ defaultproperties
     IntegerTimeSeconds=0
     DefaultPlayerMaxHealth=200
     DefaultPlayerHealth=200
+    bRemoveNativeWeapons=True
+    bRemoveNativeShields=True
 }

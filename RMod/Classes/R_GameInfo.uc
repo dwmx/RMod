@@ -25,6 +25,12 @@ var private String OldGamePassword;
 var Class<HUD> HUDTypeSpectator;
 var bool bAllowSpectatorBroadcastMessage;
 
+
+var bool bRemoveNativeWeapons;
+var bool bRemoveNativeShields;
+var bool bRemoveNativeRunes;
+var bool bRemoveNativeFoods;
+
 // Used at level start to mark actors which stay during level reset
 var bool bMarkSpawnedActorsAsNativeToLevel;
 
@@ -613,6 +619,16 @@ event bool IsRelevant(Actor A)
 	local Vector Loc;
 	local Rotator Rot;
 	
+    // This check is only true at the start of every level, so this is the best
+    // place to do startup item removal
+    if(bMarkSpawnedActorsAsNativeToLevel)
+    {
+        if(bRemoveNativeWeapons && Weapon(A) != None)   { return false; }
+        if(bRemoveNativeShields && Shield(A) != None)   { return false; }
+        if(bRemoveNativeRunes && Runes(A) != None)      { return false; }
+        if(bRemoveNativeFoods && Food(A) != None)       { return false; }
+    }
+
     if(ActorSubstitutionClass != None)
     {
         A = ActorSubstitutionClass.Static.PerformActorSubstitution(Self, A);
@@ -918,4 +934,8 @@ defaultproperties
     DefaultPlayerMaxHealth=100
     DefaultPlayerRunePower=0
     DefaultPlayerMaxRunePower=100
+    bRemoveNativeWeapons=False
+    bRemoveNativeShields=False
+    bRemoveNativeRunes=False
+    bRemoveNativeFoods=False
 }
