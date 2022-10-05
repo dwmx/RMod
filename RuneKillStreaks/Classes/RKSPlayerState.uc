@@ -2,7 +2,11 @@ class RKSPlayerState extends Actor;
 
 var RKSMutator MutatorOwner;
 
-var int CurrentKillStreakCount;
+// Variables for kill streak messages (rampage, godlike, etc)
+var int RunningKillStreakCount;
+
+// Variables for consecutive kill messages (double kill, triple kill, etc)
+var int ConsecutiveKillStreakCount;
 var float MostRecentKillTimeStampSeconds;
 var float KillStreakDurationThresholdSeconds;
 
@@ -20,21 +24,22 @@ function NotifyScoredKill(Pawn Killer, Pawn Other)
         bCurrentKillBloodLustState = PlayerPawn(Killer).bBloodlust;
     }
     
+    // First, check for consecutive kill streak messages (double kill, triple kill, etc)
     if(Level.TimeSeconds - MostRecentKillTimeStampSeconds <= KillStreakDurationThresholdSeconds)
     {
-        ++CurrentKillStreakCount;
-        HandleSuccessfulKillStreak(CurrentKillStreakCount, Killer, Other);
+        ++ConsecutiveKillStreakCount;
+        MessageForConsecutiveKillStreak(ConsecutiveKillStreakCount, Killer, Other);
 
         // Broadcast holy shit message if player gets bloodlust and a
         // triple kill or better at the same time
-        if(CurrentKillStreakCount >= 3 && bCurrentKillBloodLustState && !bPreviousKillBloodLustState)
+        if(ConsecutiveKillStreakCount >= 3 && bCurrentKillBloodLustState && !bPreviousKillBloodLustState)
         {
             BroadcastHolyShit(Killer, Other);
         }
     }
     else
     {
-        CurrentKillStreakCount = 1;
+        ConsecutiveKillStreakCount = 1;
     }
 
     MostRecentKillTimeStampSeconds = Level.TimeSeconds;
@@ -43,9 +48,13 @@ function NotifyScoredKill(Pawn Killer, Pawn Other)
     {
         bPreviousKillBloodLustState = bCurrentKillBloodLustState;
     }
+
+    // Second, check for running kill streak messages (rampage, godlike, etc)
+    ++RunningKillStreakCount;
+    MessageForRunningKillStreak(RunningKillStreakCount, Killer, Other);
 }
 
-function HandleSuccessfulKillStreak(int KillStreak, Pawn Killer, Pawn Other)
+function MessageForConsecutiveKillStreak(int KillStreak, Pawn Killer, Pawn Other)
 {
     local int MessageSwitch;
     local PlayerReplicationInfo PRI1;
@@ -77,7 +86,8 @@ function HandleSuccessfulKillStreak(int KillStreak, Pawn Killer, Pawn Other)
         if(MutatorOwner != None)
         {
             // TODO: Pass teaminfo as optional argument
-            MutatorOwner.BroadcastLocalizedRKSMessage(class'RKSMessage_Announcement', MessageSwitch, PRI1, PRI2);
+            //MutatorOwner.BroadcastLocalizedRKSMessage(class'RKSMessage_Announcement', MessageSwitch, PRI1, PRI2);
+            MutatorOwner.SendClientLocalizedRKSMessage(Self, class'RKSMessage_Announcement', MessageSwitch, PRI1, PRI2);
         }
     }
 }
@@ -95,7 +105,49 @@ function BroadcastHolyShit(Pawn Killer, Pawn Other)
     if(MutatorOwner != None)
     {
         // TODO: Pass teaminfo as optional argument
-        MutatorOwner.BroadcastLocalizedRKSMessage(class'RKSMessage_Announcement', MessageSwitch, PRI1, PRI2);
+        //MutatorOwner.BroadcastLocalizedRKSMessage(class'RKSMessage_Announcement', MessageSwitch, PRI1, PRI2);
+        MutatorOwner.SendClientLocalizedRKSMessage(Self, class'RKSMessage_Announcement', MessageSwitch, PRI1, PRI2);
+    }
+}
+
+function MessageForRunningKillStreak(int KillStreak, Pawn Killer, Pawn Other)
+{
+    local int MessageSwitch;
+    local PlayerReplicationInfo PRI1;
+    local PlayerReplicationInfo PRI2;
+
+    MessageSwitch = class'RKSMessage_Announcement'.Static.GetSwitch_None();
+
+    if(KillStreak == 3)
+    {
+        MessageSwitch = class'RKSMessage_Announcement'.Static.GetSwitch_KillingSpree();
+    }
+    else if(KillStreak == 6)
+    {
+        MessageSwitch = class'RKSMessage_Announcement'.Static.GetSwitch_Rampage();
+    }
+    else if(KillStreak == 9)
+    {
+        MessageSwitch = class'RKSMessage_Announcement'.Static.GetSwitch_Dominating();
+    }
+    else if(KillStreak == 12)
+    {
+        MessageSwitch = class'RKSMessage_Announcement'.Static.GetSwitch_Unstoppable();
+    }
+    else if(KillStreak >= 15 && KillStreak % 5 == 0) // Godlike every 5 kills after 15
+    {
+        MessageSwitch = class'RKSMessage_Announcement'.Static.GetSwitch_Godlike();
+    }
+
+    if(MessageSwitch != class'RKSMessage_Announcement'.Static.GetSwitch_None())
+    {
+        if(MutatorOwner != None)
+        {
+            if(Killer != None)  { PRI1 = Killer.PlayerReplicationInfo; }
+            if(Other != None)   { PRI2 = Other.PlayerReplicationInfo; }
+
+            MutatorOwner.BroadcastLocalizedRKSMessage(class'RKSMessage_Announcement', MessageSwitch, PRI1, PRI2);
+        }
     }
 }
 
@@ -104,13 +156,15 @@ function BroadcastHolyShit(Pawn Killer, Pawn Other)
 //  Other = Owner
 function NotifyScoredDeath(Pawn Killer, Pawn Other)
 {
-    CurrentKillStreakCount = 0;
+    RunningKillStreakCount = 0;
+    ConsecutiveKillStreakCount = 0;
 }
 
 defaultproperties
 {
     RemoteRole=ROLE_None
-    CurrentKillStreakCount=0
+    RunningKillStreakCount=0
+    ConsecutiveKillStreakCount=0
     MostRecentKillTimeStampSeconds=0.0
     KillStreakDurationThresholdSeconds=5.0
     bPreviousKillBloodLustState=False

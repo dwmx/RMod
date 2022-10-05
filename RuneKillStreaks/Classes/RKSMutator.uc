@@ -26,7 +26,10 @@ function RKSList FindOrAppendPawn(Pawn P)
     ListNode = ListRoot.Find(P);
     if(ListNode != None)
     {
-        ListNode.AssociatedPlayerState.MutatorOwner = Self;
+        if(ListNode.AssociatedPlayerState != None)
+        {
+            ListNode.AssociatedPlayerState.MutatorOwner = Self;
+        }
         return ListNode;
     }
 
@@ -60,6 +63,9 @@ function ScoreKill(Pawn Killer, Pawn Other)
     }
 }
 
+//  BroadcastLocalizedRKSMessage
+//  Send an RKSMessage to all clients
+//  (play this sound on all clients)
 function BroadcastLocalizedRKSMessage(
     class<RKSMessage> MessageClass,
     int Switch,
@@ -77,5 +83,37 @@ function BroadcastLocalizedRKSMessage(
         {
             ClientChannel.ClientReceiveLocalizedMessage(MessageClass, Switch, PRI1, PRI2, OptionalObject);
         }
+    }
+}
+
+//  SendClientLocalizedRKSMessage
+//  Send an RKSMessage to only the client associated with the player state
+//  (play this sound on only the owner client)
+function SendClientLocalizedRKSMessage(
+    RKSPlayerState CallingPlayerState,
+    class<RKSMessage> MessageClass,
+    int Switch,
+    optional PlayerReplicationInfo PRI1,
+    optional PlayerReplicationInfo PRI2,
+    optional Object OptionalObject)
+{
+    local RKSList ListNode;
+    local RKSClientChannel ClientChannel;
+
+    ListNode = ListRoot;
+    while(ListNode != None && ListNode.AssociatedPlayerState != CallingPlayerState)
+    {
+        ListNode = ListNode.Next;
+    }
+
+    if(ListNode.AssociatedPlayerState != CallingPlayerState)
+    {
+        return;
+    }
+
+    ClientChannel = ListNode.AssociatedClientChannel;
+    if(ClientChannel != None)
+    {
+        ClientChannel.ClientReceiveLocalizedMessage(MessageClass, Switch, PRI1, PRI2, OptionalObject);
     }
 }

@@ -36,3 +36,17 @@ static function Sound GetMessageSound(
 {
     return None;
 }
+
+static function float GetLifeTimeSecondsMaximum(
+    int Switch,
+    string CriticalString)
+{
+    return 5.0;
+}
+
+static function float GetLifeTimeSecondsMinimum(
+    int Switch,
+    string CriticalString)
+{
+    return 0.5;
+}
