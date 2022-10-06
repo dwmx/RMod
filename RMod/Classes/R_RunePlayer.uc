@@ -820,11 +820,12 @@ function ServerMove(
 	//	ClientErr = 10000;
 	//else if ( Level.TimeSeconds - LastUpdateTime > 0.045 )
 	//if ( Level.TimeSeconds - LastUpdateTime > 0.045 )
-	if(Level.TimeSeconds - LastUpdateTime > 0.25)
-	{
-		bForceClientAdjustPosition = true;
-	}
-	else if(Level.TimeSeconds - LastUpdateTime > 0.045)
+	//if(Level.TimeSeconds - LastUpdateTime > 0.25)
+	//{
+	//	bForceClientAdjustPosition = true;
+	//}
+	//else if(Level.TimeSeconds - LastUpdateTime > 0.045)
+    if(Level.TimeSeconds - LastUpdateTime > 0.045)
 	{
 		LocDiff = Location - ClientLoc;
 		ClientErr = LocDiff Dot LocDiff;
