@@ -1,5 +1,18 @@
 class RKSMessage extends LocalMessage;
 
+static function string GetPlayerNameString(
+    int Switch,
+    PlayerReplicationInfo PRI1,
+    PlayerReplicationInfo PRI2,
+    Object OptionalObject)
+{
+    if(PRI1 != None)
+    {
+        return PRI1.PlayerName;
+    }
+    return "";
+}
+
 static function Color GetDrawColor1(
     int Switch,
     PlayerReplicationInfo PRI1,

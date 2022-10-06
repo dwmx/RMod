@@ -34,7 +34,7 @@ function NotifyScoredKill(Pawn Killer, Pawn Other)
         // triple kill or better at the same time
         if(ConsecutiveKillStreakCount >= 3 && bCurrentKillBloodLustState && !bPreviousKillBloodLustState)
         {
-            BroadcastHolyShit(Killer, Other);
+            //BroadcastHolyShit(Killer, Other);
         }
     }
     else
@@ -85,28 +85,8 @@ function MessageForConsecutiveKillStreak(int KillStreak, Pawn Killer, Pawn Other
 
         if(MutatorOwner != None)
         {
-            // TODO: Pass teaminfo as optional argument
-            //MutatorOwner.BroadcastLocalizedRKSMessage(class'RKSMessage_Announcement', MessageSwitch, PRI1, PRI2);
-            MutatorOwner.SendClientLocalizedRKSMessage(Self, class'RKSMessage_Announcement', MessageSwitch, PRI1, PRI2);
+            MutatorOwner.SendClientLocalizedRKSMessage(Self, class'RKSMessage_Announcement', MessageSwitch, PRI1, PRI2, Killer);
         }
-    }
-}
-
-function BroadcastHolyShit(Pawn Killer, Pawn Other)
-{
-    local int MessageSwitch;
-    local PlayerReplicationInfo PRI1;
-    local PlayerReplicationInfo PRI2;
-
-    MessageSwitch = class'RKSMessage_Announcement'.Static.GetSwitch_HolyShit();
-    if(Killer != None)  { PRI1 = Killer.PlayerReplicationInfo; }
-    if(Other != None)   { PRI2 = Other.PlayerReplicationInfo; }
-
-    if(MutatorOwner != None)
-    {
-        // TODO: Pass teaminfo as optional argument
-        //MutatorOwner.BroadcastLocalizedRKSMessage(class'RKSMessage_Announcement', MessageSwitch, PRI1, PRI2);
-        MutatorOwner.SendClientLocalizedRKSMessage(Self, class'RKSMessage_Announcement', MessageSwitch, PRI1, PRI2);
     }
 }
 
@@ -116,25 +96,30 @@ function MessageForRunningKillStreak(int KillStreak, Pawn Killer, Pawn Other)
     local PlayerReplicationInfo PRI1;
     local PlayerReplicationInfo PRI2;
 
+    if(MutatorOwner == None)
+    {
+        return;
+    }
+
     MessageSwitch = class'RKSMessage_Announcement'.Static.GetSwitch_None();
 
-    if(KillStreak == 3)
+    if(KillStreak == MutatorOwner.KillStreakCountKillingSpree)
     {
         MessageSwitch = class'RKSMessage_Announcement'.Static.GetSwitch_KillingSpree();
     }
-    else if(KillStreak == 6)
+    else if(KillStreak == MutatorOwner.KillStreakCountRampage)
     {
         MessageSwitch = class'RKSMessage_Announcement'.Static.GetSwitch_Rampage();
     }
-    else if(KillStreak == 9)
+    else if(KillStreak == MutatorOwner.KillStreakCountDominating)
     {
         MessageSwitch = class'RKSMessage_Announcement'.Static.GetSwitch_Dominating();
     }
-    else if(KillStreak == 12)
+    else if(KillStreak == MutatorOwner.KillStreakCountUnstoppable)
     {
         MessageSwitch = class'RKSMessage_Announcement'.Static.GetSwitch_Unstoppable();
     }
-    else if(KillStreak >= 15 && KillStreak % 5 == 0) // Godlike every 5 kills after 15
+    else if(KillStreak == MutatorOwner.KillStreakCountGodlike)
     {
         MessageSwitch = class'RKSMessage_Announcement'.Static.GetSwitch_Godlike();
     }
@@ -146,7 +131,7 @@ function MessageForRunningKillStreak(int KillStreak, Pawn Killer, Pawn Other)
             if(Killer != None)  { PRI1 = Killer.PlayerReplicationInfo; }
             if(Other != None)   { PRI2 = Other.PlayerReplicationInfo; }
 
-            MutatorOwner.BroadcastLocalizedRKSMessage(class'RKSMessage_Announcement', MessageSwitch, PRI1, PRI2);
+            MutatorOwner.BroadcastLocalizedRKSMessage(class'RKSMessage_Announcement', MessageSwitch, PRI1, PRI2, Killer);
         }
     }
 }

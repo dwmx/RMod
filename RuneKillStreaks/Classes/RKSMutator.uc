@@ -2,6 +2,12 @@ class RKSMutator extends Mutator;
 
 var RKSList ListRoot;
 
+var config int KillStreakCountKillingSpree;
+var config int KillStreakCountRampage;
+var config int KillStreakCountDominating;
+var config int KillStreakCountUnstoppable;
+var config int KillStreakCountGodlike;
+
 event BeginPlay()
 {
     Super.BeginPlay();
@@ -116,4 +122,13 @@ function SendClientLocalizedRKSMessage(
     {
         ClientChannel.ClientReceiveLocalizedMessage(MessageClass, Switch, PRI1, PRI2, OptionalObject);
     }
+}
+
+defaultproperties
+{
+    KillStreakCountKillingSpree=5
+    KillStreakCountRampage=10
+    KillStreakCountDominating=15
+    KillStreakCountUnstoppable=20
+    KillStreakCountGodlike=25
 }

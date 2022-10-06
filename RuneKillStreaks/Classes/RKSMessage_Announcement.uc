@@ -42,145 +42,57 @@ static function string GetString(
 
 static function string GetString_DoubleKill(PlayerReplicationInfo PRI1, PlayerReplicationInfo PRI2, Object OptionalObject)
 {
-    local string PlayerNameString;
-
-    PlayerNameString = "";
-    if(PRI1 != None)
-    {
-        PlayerNameString = PRI1.PlayerName;
-    }
-
-    return PlayerNameString @ "double kill!";
+    return "double kill!";
 }
 
 static function string GetString_TripleKill(PlayerReplicationInfo PRI1, PlayerReplicationInfo PRI2, Object OptionalObject)
 {
-    local string PlayerNameString;
-
-    PlayerNameString = "";
-    if(PRI1 != None)
-    {
-        PlayerNameString = PRI1.PlayerName;
-    }
-
-    return PlayerNameString @ "triple kill!";
+    return "triple kill!";
 }
 
 static function string GetString_MultiKill(PlayerReplicationInfo PRI1, PlayerReplicationInfo PRI2, Object OptionalObject)
 {
-    local string PlayerNameString;
-
-    PlayerNameString = "";
-    if(PRI1 != None)
-    {
-        PlayerNameString = PRI1.PlayerName;
-    }
-
-    return PlayerNameString @ "multi kill!";
+    return "multi kill!";
 }
 
 static function string GetString_MegaKill(PlayerReplicationInfo PRI1, PlayerReplicationInfo PRI2, Object OptionalObject)
 {
-    local string PlayerNameString;
-
-    PlayerNameString = "";
-    if(PRI1 != None)
-    {
-        PlayerNameString = PRI1.PlayerName;
-    }
-
-    return PlayerNameString @ "mega kill!";
+    return "mega kill!";
 }
 
 static function string GetString_UltraKill(PlayerReplicationInfo PRI1, PlayerReplicationInfo PRI2, Object OptionalObject)
 {
-    local string PlayerNameString;
-
-    PlayerNameString = "";
-    if(PRI1 != None)
-    {
-        PlayerNameString = PRI1.PlayerName;
-    }
-
-    return PlayerNameString @ "ultra kill!";
+    return "ultra kill!";
 }
 
 static function string GetString_MonsterKill(PlayerReplicationInfo PRI1, PlayerReplicationInfo PRI2, Object OptionalObject)
 {
-    local string PlayerNameString;
-
-    PlayerNameString = "";
-    if(PRI1 != None)
-    {
-        PlayerNameString = PRI1.PlayerName;
-    }
-
-    return PlayerNameString @ "monster kill!";
+    return "monster kill!";
 }
 
 static function string GetString_KillingSpree(PlayerReplicationInfo PRI1, PlayerReplicationInfo PRI2, Object OptionalObject)
 {
-    local string PlayerNameString;
-
-    PlayerNameString = "";
-    if(PRI1 != None)
-    {
-        PlayerNameString = PRI1.PlayerName;
-    }
-
-    return PlayerNameString @ "is on a killing spree";
+    return "is on a killing spree";
 }
 
 static function string GetString_Rampage(PlayerReplicationInfo PRI1, PlayerReplicationInfo PRI2, Object OptionalObject)
 {
-    local string PlayerNameString;
-
-    PlayerNameString = "";
-    if(PRI1 != None)
-    {
-        PlayerNameString = PRI1.PlayerName;
-    }
-
-    return PlayerNameString @ "is on a rampage";
+    return "is on a rampage";
 }
 
 static function string GetString_Dominating(PlayerReplicationInfo PRI1, PlayerReplicationInfo PRI2, Object OptionalObject)
 {
-    local string PlayerNameString;
-
-    PlayerNameString = "";
-    if(PRI1 != None)
-    {
-        PlayerNameString = PRI1.PlayerName;
-    }
-
-    return PlayerNameString @ "is DOMINATING";
+    return "is DOMINATING";
 }
 
 static function string GetString_Unstoppable(PlayerReplicationInfo PRI1, PlayerReplicationInfo PRI2, Object OptionalObject)
 {
-    local string PlayerNameString;
-
-    PlayerNameString = "";
-    if(PRI1 != None)
-    {
-        PlayerNameString = PRI1.PlayerName;
-    }
-
-    return PlayerNameString @ "is UNSTOPPABLE";
+    return "is UNSTOPPABLE";
 }
 
 static function string GetString_Godlike(PlayerReplicationInfo PRI1, PlayerReplicationInfo PRI2, Object OptionalObject)
 {
-    local string PlayerNameString;
-
-    PlayerNameString = "";
-    if(PRI1 != None)
-    {
-        PlayerNameString = PRI1.PlayerName;
-    }
-
-    return PlayerNameString @ "is GODLIKE";
+    return "is GODLIKE";
 }
 
 //==============================================================================
@@ -207,4 +119,46 @@ static function Sound GetMessageSound(
     }
 
     return None;
+}
+
+//==============================================================================
+//  Colors
+static function Color GetDrawColor1(
+    int Switch,
+    PlayerReplicationInfo PRI1,
+    PlayerReplicationInfo PRI2,
+    Object OptionalObject)
+{
+    local Color Result;
+
+    Result.R = 255;
+    Result.G = 255;
+    Result.B = 255;
+    return Result;
+}
+
+static function Color GetDrawColor2(
+    int Switch,
+    PlayerReplicationInfo PRI1,
+    PlayerReplicationInfo PRI2,
+    Object OptionalObject)
+{
+    local Color Result;
+    local Pawn P;
+
+    P = Pawn(OptionalObject);
+    if(P != None)
+    {
+        Result.R = byte(P.DesiredColorAdjust.X);
+        Result.G = byte(P.DesiredColorAdjust.Y);
+        Result.B = byte(P.DesiredColorAdjust.Z);
+    }
+    else
+    {
+        Result.R = 255;
+        Result.G = 255;
+        Result.B = 255;
+    }
+
+    return Result;
 }

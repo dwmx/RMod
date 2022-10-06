@@ -22,6 +22,7 @@ struct FRKSHUDLocalizedMessage
     var float LifeTimeSecondsMinimum;
     var float TimeStampSeconds;
     var String StringMessage;
+    var String PlayerNameString;
     var Color DrawColor1;
     var Color DrawColor2;
     var Sound MessageSound;
@@ -105,6 +106,7 @@ simulated function Message_Copy(
     OutDestination.LifeTimeSecondsMinimum = OutSource.LifeTimeSecondsMinimum;
     OutDestination.TimeStampSeconds = OutSource.TimeStampSeconds;
     OutDestination.StringMessage = OutSource.StringMessage;
+    OutDestination.PlayerNameString = OutSource.PlayerNameString;
     OutDestination.DrawColor1 = OutSource.DrawColor1;
     OutDestination.DrawColor2 = OutSource.DrawColor2;
     OutDestination.MessageSound = OutSource.MessageSound;
@@ -138,6 +140,7 @@ simulated function Message_Populate(
         OutMessage.DrawColor1 = RKSMessageClass.Static.GetDrawColor1(Switch, PRI1, PRI2, OptionalObject);
         OutMessage.DrawColor2 = RKSMessageClass.Static.GetDrawColor2(Switch, PRI1, PRI2, OptionalObject);
         OutMessage.MessageSound = RKSMessageClass.Static.GetMessageSound(Switch, PRI1, PRI2, OptionalObject);
+        OutMessage.PlayerNameString = RKSMessageClass.Static.GetPlayerNameString(Switch, PRI1, PRI2, OptionalObject);
     }
     else
     {
@@ -447,6 +450,9 @@ simulated function DrawBackdrop(
 simulated function DrawMessageText(
     Canvas C,
     string DrawString,
+    string PlayerNameString,
+    Color DrawColor1,
+    Color DrawColor2,
     float CenterDrawX,
     float CenterDrawY,
     float Alpha)
@@ -454,19 +460,28 @@ simulated function DrawMessageText(
     local FSavedCanvasState SavedC;
     local float MessageWidth, MessageHeight;
     local float DrawX, DrawY;
+    local string FullString;
 
     SavedCanvasState_Save(C, SavedC);
 
-    C.DrawColor.R = 255;
-    C.DrawColor.G = 255;
-    C.DrawColor.B = 255;
-    C.DrawColor = C.DrawColor * Alpha;
+    FullString = PlayerNameString @ DrawString;
+
     C.Style = ERenderStyle.STY_Translucent;
-    C.StrLen(DrawString, MessageWidth, MessageHeight);
+    C.StrLen(FullString, MessageWidth, MessageHeight);
+
+    // Draw player name
     DrawX = CenterDrawX - (MessageWidth * 0.5);
     DrawY = CenterDrawY - (MessageHeight * 0.5);
+    C.DrawColor = DrawColor2 * Alpha;
     C.SetPos(DrawX, DrawY);
-    C.DrawText(DrawString, false);
+    C.DrawText(PlayerNameString, false);
+
+    // Draw string message
+    DrawX = C.CurX;
+    DrawY = CenterDrawY - (MessageHeight * 0.5);
+    C.DrawColor = DrawColor1 * Alpha;
+    C.SetPos(DrawX, DrawY);
+    C.DrawText(" " $ DrawString, false);
 
     SavedCanvasState_Restore(C, SavedC);
 }
@@ -476,7 +491,6 @@ simulated event DrawMessages(Canvas C)
     local FSavedCanvasState SavedC;
     local FRKSHUDLocalizedMessage CurrentMessage;
     local float MessageWidth, MessageHeight;
-    local string DrawString;
     local float DrawWidth, DrawHeight;
     local float DrawCenterX, DrawCenterY;
     local float Alpha;
@@ -503,8 +517,10 @@ simulated event DrawMessages(Canvas C)
 
     // Setup canvas
     C.Font = C.BigFont;
-    DrawString = CurrentMessage.StringMessage;
-    C.StrLen(DrawString, MessageWidth, MessageHeight);
+    C.StrLen(
+        CurrentMessage.PlayerNameString @ CurrentMessage.StringMessage,
+        MessageWidth,
+        MessageHeight);
 
     DrawCenterX = C.ClipX * 0.5;
     DrawCenterY = C.ClipY * 0.25;
@@ -512,7 +528,15 @@ simulated event DrawMessages(Canvas C)
     DrawWidth = FClamp(MessageWidth + 128.0, 128.0, 1024.0);
     DrawHeight = MessageHeight + 16.0;
 
-    DrawMessageText(C, DrawString, DrawCenterX, DrawCenterY, Alpha);
+    DrawMessageText(
+        C,
+        CurrentMessage.StringMessage,
+        CurrentMessage.PlayerNameString,
+        CurrentMessage.DrawColor1,
+        CurrentMessage.DrawColor2,
+        DrawCenterX,
+        DrawCenterY,
+        Alpha);
     DrawBackdrop(C, DrawCenterX, DrawCenterY, DrawWidth, DrawHeight, Alpha);
     
     SavedCanvasState_Restore(C, SavedC);
