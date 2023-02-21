@@ -141,7 +141,7 @@ event Destroyed()
 {
     Super.Destroyed();
 
-    if(LoadoutReplicationInfo != None)
+    if(Role == ROLE_Authority && LoadoutReplicationInfo != None)
     {
         LoadoutReplicationInfo.Destroy();
     }
