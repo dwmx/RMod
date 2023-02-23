@@ -30,6 +30,10 @@ var private float ViewRotPovYaw;
 // adjust on the owning player
 var bool bForceClientAdjustPosition;
 
+// When spectating, Fire() will attempt to respawn when this flag is true
+// If not true, Fire() will cycle through spectator targets
+var bool bRespawnWhenSpectating;
+
 // PainSkin arrays
 const MAX_SKEL_GROUP_SKINS = 16;
 struct FSkelGroupSkinArray
@@ -444,6 +448,12 @@ function ApplySubClass(Class<RunePlayer> SubClass)
 
 	// Extract the menu name so this looks correct in server browser
 	ApplySubClass_ExtractMenuName(SubClass);
+	
+	// If player explicitly joined as a spectator, disable respawning from spec mode
+	if(SubClass == Class'RMod.R_ASpectatorMarker')
+	{
+		bRespawnWhenSpectating = false;
+	}
 }
 
 /**
@@ -1223,6 +1233,8 @@ function ServerSpectate()
 	GI = R_GameInfo(Level.Game);
 	if(GI != None)
 	{
+		// Disable respawning as spectator since player explicitly went into spec mode
+		bRespawnWhenSpectating = false;
 		GI.RequestSpectate(Self);
 	}
 }
@@ -1310,7 +1322,7 @@ exec function TeamSay( string Msg )
 /**
 *   DoTryPlayTorsoAnim (override)
 *   This function's name is confusing, but what it actually means is:
-*   "Try to play the AnimProxy's current on animation on the RunePlayer",
+*   "Try to play the AnimProxy's current animation on the RunePlayer",
 *   which effectively means:
 *   "Whatever animation is playing on the torso, try to play that
 *   animation on the legs as well".
@@ -1540,9 +1552,16 @@ state PlayerSpectating
 	// Fire cycles view targets
 	exec function Fire(optional float F)
 	{
-		if(Self.Camera != None)
+		if(bRespawnWhenSpectating && CheckCanRestart())
 		{
-			Self.Camera.Input_Fire();
+			ServerReStartPlayer();
+		}
+		else
+		{
+			if(Self.Camera != None)
+			{
+				Self.Camera.Input_Fire();
+			}
 		}
 	}
 	
@@ -1561,6 +1580,45 @@ state PlayerSpectating
 			Self.Camera.Input_CameraOut();
 		}
 	}
+	
+	/**
+    *   ServerReStartPlayer (override)
+    *   Overridden to add R_GameInfo player restart logic
+    */
+    function ServerReStartPlayer()
+    {
+        local R_GameInfo RGI;
+
+        if(!CheckCanRestart())
+        {
+            return;
+        }
+
+        // Begin PlayerPawn.ServerReStartPlayer
+        if ( Level.NetMode == NM_Client )
+        {
+            return;
+        }
+        if (Level.Game.bGameEnded)
+        {
+            return;
+        }
+        if( Level.Game.RestartPlayer(self) )
+        {
+            ServerTimeStamp = 0;
+            TimeMargin = 0;
+            Enemy = None;
+            Level.Game.StartPlayer(self);
+            ClientReStart();
+        }
+        else
+        {
+            Log("Restartplayer failed");
+        }
+        // End PlayerPawn.ServerReStartPlayer
+
+        PlayerRestart();
+    }
 }
 
 //==============================================================================
@@ -1828,4 +1886,5 @@ defaultproperties
     bAlwaysRelevant=True
     bRotateTorso=False
     bLoadoutMenuDoNotShow=False
+	bRespawnWhenSpectating=True
 }
