@@ -2,7 +2,7 @@
 //  R_GameOptions
 //  Implements RMod-specific configurable game options.
 //==============================================================================
-class R_GameOptions extends ReplicationInfo;
+class R_GameOptions extends ReplicationInfo config(RMod);
 
 var Class<R_AUtilities> UtilitiesClass;
 
@@ -58,5 +58,5 @@ function LogGameOption(String GameOptionNameString, String GameOptionValueString
 defaultproperties
 {
     UtilitiesClass=Class'RMod.R_AUtilities_GameOptions'
-    bOptionShieldHitStun=True
+    bOptionShieldHitStun=False
 }
