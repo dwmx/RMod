@@ -118,6 +118,57 @@ function bool JointDamaged(int Damage, Pawn EventInstigator, vector HitLoc, vect
 	return(false);
 }
 
+/**
+*	StartAttack
+*	Called from R_RunePlayer ShieldActivate function during shield attacks
+*/
+function StartAttack()
+{}
+
+/**
+*	FinishAttack
+*	Called from R_RunePlayer ShieldDeactivate function during shield attacks
+*/
+function FinishAttack()
+{}
+
+/**
+*	PlaySwipeSound
+*	Called from R_RunePlayerProxy ShieldActivate function during shield attacks
+*/
+function PlaySwipeSound()
+{}
+
+/**
+*	ShieldFire
+*	Called from R_RunePlayerProxy ShieldActivate function during shield attacks
+*	Weapon class appears to use this function only for rune power behavior, so
+*	for the moment it does nothing here
+*/
+function ShieldFire()
+{}
+
+/**
+*	State Idle (override)
+*	Shield is currently equipped by the owner
+*/
+state Idle
+{
+	
+}
+
+/**
+*	State Active (override)
+*	Shield is currently equipped by the owner AND it is in the defend state
+*/
+state Active
+{
+	event Tick(float DeltaSeconds)
+	{
+		Super.Tick(DeltaSeconds);
+	}
+}
+
 defaultproperties
 {
 }

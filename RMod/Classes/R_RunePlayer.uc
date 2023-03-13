@@ -67,11 +67,34 @@ replication
 		ServerResetLevel,
 		ServerSwitchGame,
 		ServerSpectate,
-		ServerTimeLimit;
+		ServerTimeLimit,
+		ServerTestCombo;
 		
 	unreliable if(Role == ROLE_Authority && RemoteRole != ROLE_AutonomousProxy)
 		ViewRotPovPitch,
 		ViewRotPovYaw;
+}
+
+exec function TestCombo()
+{
+	if(Role < ROLE_Authority)
+	{
+		DoTestCombo();
+	}
+	else
+	{
+		ServerTestCombo();
+	}
+}
+
+function ServerTestCombo()
+{
+	DoTestCombo();
+}
+
+function DoTestCombo()
+{
+	AnimProxy.GotoState('ComboAttack');
 }
 
 /**
@@ -1363,6 +1386,56 @@ simulated function DoTryPlayTorsoAnim(Name TorsoAnim, float speed, float tween)
 	}
 
 	Super.DoTryPlayTorsoAnim(TorsoAnim, speed, tween);
+}
+
+/**
+*	WeaponActivate (override)
+*	Called from AnimProxy Attack functions
+*/
+function WeaponActivate()
+{
+	if(Weapon != None)
+	{
+		Weapon.StartAttack();
+	}
+}
+
+/**
+*	WeaponDeactivate (override)
+*	Called from AnimProxy Attack functions
+*/
+function WeaponDeactivate()
+{
+    if(Weapon != None)
+    {
+        Weapon.FinishAttack();
+    }
+}
+
+/**
+*	ShieldActivate
+*	Called from R_RunePlayerProxy Attack functions
+*	New function that enables collision for shield bash attack
+*/
+function ShieldActivate()
+{
+	if(R_AShield(Shield) != None)
+	{
+		R_AShield(Shield).StartAttack();
+	}
+}
+
+/**
+*	ShieldDeactivate
+*	Called from R_RunePlayerProxy Attack functions
+*	New function that disables collision for shield bash attack
+*/
+function ShieldDeactivate()
+{
+	if(R_AShield(Shield) != None)
+	{
+		R_AShield(Shield).FinishAttack();
+	}
 }
 
 /**
