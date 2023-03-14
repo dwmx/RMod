@@ -7,6 +7,7 @@
 class R_RunePlayer extends RunePlayer config(RMod);
 
 var Class<R_AUtilities> UtilitiesClass;
+var Class<R_AColors> ColorsClass;
 
 var Class<RunePlayer> RunePlayerSubClass;
 var Class<RunePlayerProxy> RunePlayerProxyClass;
@@ -19,16 +20,14 @@ var Class<HUD> HUDTypeSpectator;
 var Class<R_ACamera> SpectatorCameraClass;
 var R_ACamera Camera;
 
+var Name PreviousStateName;
+
 var R_LoadoutReplicationInfo LoadoutReplicationInfo;
 var bool bLoadoutMenuDoNotShow;
 
 // Replicated POV view rotation
 var private float ViewRotPovPitch;
 var private float ViewRotPovYaw;
-
-// When bForceClientAdjustPosition is true, ServerMove will force a client
-// adjust on the owning player
-var bool bForceClientAdjustPosition;
 
 // When spectating, Fire() will attempt to respawn when this flag is true
 // If not true, Fire() will cycle through spectator targets
@@ -46,6 +45,12 @@ var FSkelGroupSkinArray GoreCapArrays[16];
 
 var float SuicideTimeStamp;
 var float SuicideCooldown;
+
+// Client adjustment variables
+var float ClientAdjustErrorThreshold;
+var float ClientAdjustCooldownSeconds;
+var bool bShowRmodDebug;
+var R_ClientDebugActor ClientDebugActor;
 
 replication
 {	
@@ -673,7 +678,6 @@ function ApplySubClass_ExtractMenuName(Class<RunePlayer> SubClass)
 *	Overridden for the following reasons:
 *   -   Clients who have a high net speed variable will have a ClientAdjust
 *       called every single tick. Override implements a fix.
-*   -   bForceClientAdjustPosition, when true, forces a call to ClientAdjust.
 *   -   Client view pitch and view yaw are replicated so that spectators can
 *       view in point-of-view mode.
 */
@@ -695,6 +699,7 @@ function ServerMove(
 	optional int OldAccel)
 {
 	local float DeltaTime, clientErr, OldTimeStamp;
+	local bool bPerformClientAdjust;
 	local rotator DeltaRot, Rot;
 	local vector Accel, LocDiff;
 	local int maxPitch, ViewPitch, ViewYaw;
@@ -848,32 +853,27 @@ function ServerMove(
 	if ( (Level.Pauser == "") && (DeltaTime > 0) )
 		MoveAutonomous(DeltaTime, NewbRun, NewbDuck, NewbPressedJump, DodgeMove, Accel, DeltaRot);
 
-	// Accumulate movement error.
-	//if ( Level.TimeSeconds - LastUpdateTime > 0.125)
-	//	ClientErr = 10000;
-	//else if ( Level.TimeSeconds - LastUpdateTime > 0.045 )
-	//if ( Level.TimeSeconds - LastUpdateTime > 0.045 )
-	//if(Level.TimeSeconds - LastUpdateTime > 0.25)
-	//{
-	//	bForceClientAdjustPosition = true;
-	//}
-	//else if(Level.TimeSeconds - LastUpdateTime > 0.045)
-    if(Level.TimeSeconds - LastUpdateTime > 0.045)
+	// Check for client error with time threshold
+    if(Level.TimeSeconds - LastUpdateTime > ClientAdjustCooldownSeconds)
 	{
 		LocDiff = Location - ClientLoc;
 		ClientErr = LocDiff Dot LocDiff;
-	}
-	else
-	{
-		ClientErr = 0.0;
-	}
-	//Log(ClientErr);
-
-	// If client has accumulated a noticeable positional error, correct him.
-	if ( bForceClientAdjustPosition || ClientErr > 3 )
-	{
-		bForceClientAdjustPosition = false;
 		
+		if(ClientErr >= ClientAdjustErrorThreshold)
+		{
+			bPerformClientAdjust = true;
+		}
+	}
+	
+	// Always perform client adjust when state changes
+	if(GetStateName() != PreviousStateName)
+	{
+		PreviousStateName = GetStateName();
+		bPerformClientAdjust = true;
+	}
+	
+	if(bPerformClientAdjust)
+	{
 		if ( Mover(Base) != None )
 			ClientLoc = Location - Base.Location;
 		else
@@ -882,7 +882,7 @@ function ServerMove(
 		LastUpdateTime = Level.TimeSeconds;
 		ClientAdjustPosition
 		(
-			TimeStamp, 
+			TimeStamp,
 			GetStateName(), 
 			Physics, 
 			ClientLoc.X, 
@@ -898,6 +898,44 @@ function ServerMove(
 		
 	ViewRotPovPitch = ViewRotation.Pitch;
 	ViewRotPovYaw = ViewRotation.Yaw;
+}
+
+/**
+*	ClientAdjustPosition (override)
+*	Overridden to draw debug information
+*/
+function ClientAdjustPosition
+(
+    float TimeStamp, 
+    name newState, 
+    EPhysics newPhysics,
+    float NewLocX, 
+    float NewLocY, 
+    float NewLocZ, 
+    float NewVelX, 
+    float NewVelY, 
+    float NewVelZ,
+    Actor NewBase
+)
+{
+	local Vector DebugLineBegin, DebugLineEnd;
+	
+	if(bShowRmodDebug && ClientDebugActor != None)
+	{
+		DebugLineBegin = Location;
+		DebugLineEnd = DebugLineBegin;
+		DebugLineEnd.Z += 96.0;
+		ClientDebugActor.DrawLineSegmentForDuration(DebugLineBegin, DebugLineEnd, ColorsClass.Static.ColorRed(), 5.0);
+		
+		DebugLineBegin.X = NewLocX;
+		DebugLineBegin.Y = NewLocY;
+		DebugLineBegin.Z = NewLocZ;
+		DebugLineEnd = DebugLineBegin;
+		DebugLineEnd.Z += 96.0;
+		ClientDebugActor.DrawLineSegmentForDuration(DebugLineBegin, DebugLineEnd, ColorsClass.Static.ColorGreen(), 5.0);
+	}
+	
+	Super.ClientAdjustPosition(TimeStamp, NewState, NewPhysics, NewLocX, NewLocY, NewLocZ, NewVelX, NewVelY, NewVelZ, NewBase);
 }
 
 /**
@@ -1701,35 +1739,8 @@ state PlayerSpectating
 //  appears to fix nearly all of the issues.
 //==============================================================================
 
-state Pain
-{
-	event BeginState()
-	{
-		Super.BeginState();
-		bForceClientAdjustPosition = true;
-	}
-	
-	event EndState()
-	{
-		Super.EndState();
-		bForceClientAdjustPosition = true;
-	}
-}
-
 state Dying
 {
-	event BeginState()
-	{
-		Super.BeginState();
-		bForceClientAdjustPosition = true;
-	}
-	
-	event EndState()
-	{
-		Super.EndState();
-		bForceClientAdjustPosition = true;
-	}
-
 	function AnimEnd()
 	{
 		Super.AnimEnd();
@@ -1779,70 +1790,12 @@ state Dying
     }
 }
 
-state PlayerWalking
-{
-	event BeginState()
-	{
-		Super.BeginState();
-		bForceClientAdjustPosition = true;
-	}
-	
-	event EndState()
-	{
-		Super.EndState();
-		bForceClientAdjustPosition = true;
-	}
-}
-
-state PlayerWaiting
-{
-	event BeginState()
-	{
-		Super.BeginState();
-		bForceClientAdjustPosition = true;
-	}
-	
-	event EndState()
-	{
-		Super.EndState();
-		bForceClientAdjustPosition = true;
-	}
-}
-
-state Uninterrupted
-{
-	event BeginState()
-	{
-		Super.BeginState();
-		bForceClientAdjustPosition = true;
-	}
-	
-	event EndState()
-	{
-		Super.EndState();
-		bForceClientAdjustPosition = true;
-	}
-}
-
-state Unresponsive
-{
-	event BeginState()
-	{
-		Super.BeginState();
-		bForceClientAdjustPosition = true;
-	}
-	
-	event EndState()
-	{
-		Super.EndState();
-		bForceClientAdjustPosition = true;
-	}
-}
-
 state GameEnded
 {
 	ignores Throw;
 }
+
+
 
 function OpenLoadoutMenu()
 {
@@ -1942,6 +1895,29 @@ function ClientCloseLoadoutMenu()
     CloseLoadoutMenu();
 }
 
+event PostRender(Canvas C)
+{
+	Super.PostRender(C);
+	
+	if(bShowRmodDebug && ClientDebugActor != None)
+	{
+		ClientDebugActor.PostRender(C);
+	}
+}
+
+exec function ToggleRmodDebug()
+{
+	bShowRmodDebug = !bShowRmodDebug;
+	if(bShowRmodDebug && ClientDebugActor == None)
+	{
+		ClientDebugActor = Spawn(Class'RMod.R_ClientDebugActor', Self);
+	}
+	else if(!bShowRmodDebug && ClientDebugActor != None)
+	{
+		ClientDebugActor.Destroy();
+	}
+}
+
 exec function Loadout()
 {
     // Always revert the DoNotShow option when user explicitly calls this function
@@ -1952,12 +1928,16 @@ exec function Loadout()
 defaultproperties
 {
     UtilitiesClass=Class'RMod.R_AUtilities'
+	ColorsClass=Class'RMod.R_AColors'
     RunePlayerProxyClass=Class'RMod.R_RunePlayerProxy'
     SpectatorCameraClass=Class'RMod.R_Camera_Spectator'
     bMessageBeep=True
     SuicideCooldown=5.0
+	ClientAdjustErrorThreshold=64.0
+	ClientAdjustCooldownSeconds=0.5
     bAlwaysRelevant=True
     bRotateTorso=False
     bLoadoutMenuDoNotShow=False
 	bRespawnWhenSpectating=True
+	bShowRmodDebug=False
 }

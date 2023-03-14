@@ -166,7 +166,7 @@ function bool JointDamaged(int Damage, Pawn EventInstigator, vector HitLoc, vect
 	// [RMod]
 	// Cause the owner to enter into HitStun
 	// Copy from Pawn.DamageBodyPart, to avoid modifying Pawn
-	if(Owner != None && Pawn(Owner) != None && CheckIsShieldHitStunEnabled())
+	if(Owner != None && Pawn(Owner) != None && CheckIsShieldHitStunEnabled() && GetStateName() != 'Active')
 	{
 		POwner = Pawn(Owner);
 		if (POwner.GetStateName() != 'Pain' && POwner.GetStateName() != 'pain')
@@ -372,9 +372,25 @@ state Swinging
 		P = Pawn(A);
 		if(P != None && P.GetStateName() != 'Pain' && P.GetStateName() != 'pain')
 		{
+			P.Velocity = P.Velocity * 0.2;
 			P.NextStateAfterPain = P.GetStateName();
 			P.PlayTakeHit(0.1, 50, HitLoc, 'blunt', SweepMomentum, 0);
 			P.GotoState('Pain');
+		}
+		else if(Weapon(A) != None)
+		{
+			HandleSweepCollision_Weapon(Weapon(A), LowMask, HighMask, HitLoc, HitNorm);
+		}
+	}
+	
+	function HandleSweepCollision_Weapon(Weapon W, int LowMask, int HighMask, Vector HitLoc, Vector HitNorm)
+	{
+		// Try to deflect the weapon - Maybe make this auto-target the thrower?
+		if(W.Owner == None)
+		{
+			W.Velocity = -W.Velocity;
+			W.Instigator = Pawn(Owner);
+			W.GotoState('Throw');
 		}
 	}
 }
