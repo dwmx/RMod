@@ -21,6 +21,28 @@ function SetCurrentAttackType(EAttackType AttackType)
 }
 
 /**
+*	FrameNotify (override)
+*	Overridden to pass frame notifies to shield as well as weapon
+*/
+simulated event FrameNotify(int framepassed)
+{
+	local R_RunePlayer RPOwner;
+	
+	RPOwner = R_RunePlayer(Owner);
+	if(RPOwner != None)
+	{
+		if(RPOwner.Weapon != None)
+		{
+			RPOwner.Weapon.FrameNotify(framepassed);
+		}
+		if(R_AShield(RPOwner.Shield) != None)
+		{
+			R_AShield(RPOwner.Shield).FrameNotify(framepassed);
+		}
+	}
+}
+
+/**
 *	ShieldActivate
 *	Called from attack state when the shield is used to perform an attack
 */
@@ -89,7 +111,6 @@ state Defending
 	*/
 	function bool Attack()
 	{
-		
 		SetCurrentAttackType(AT_ShieldAttack);
 		TorsoAnim = 'H3_DefendAttack';
 		GotoState('Attacking');
@@ -225,7 +246,7 @@ DoWeaponAttack:
 	TorsoAnim = 'None';
 	FinishAnim();
 	WeaponDeactivate();
-DoComboWeaponAttack:
+DoWeaponComboAttack:
 	if(TorsoAnim != 'None')
 	{
 		PlayAttack(0.0);
@@ -233,9 +254,27 @@ DoComboWeaponAttack:
 		TorsoAnim = 'None';
 		FinishAnim();
 		WeaponDeactivate();
-		goto('DoComboWeaponAttack');
+		goto('DoWeaponComboAttack');
 	}
-DoWeaponRecovery:
+	goto('DoAttackRecovery');
+
+/**
+*	New shield attack async code
+*/
+DoShieldAttack:
+	PlayAttack(0.1);
+	Sleep(0.1);
+	ShieldActivate();
+	PendingRecoveryAnimation = SelectRecoveryAnimationForAttackAnimation(TorsoAnim);
+	TorsoAnim = 'None';
+	FinishAnim();
+	ShieldDeactivate();
+	goto('DoAttackRecovery');
+
+/**
+*	Attempt to play recovery animation for the most recent attack
+*/
+DoAttackRecovery:
 	if(PendingRecoveryAnimation != 'None')
 	{
 		TorsoAnim = PendingRecoveryAnimation;
@@ -243,12 +282,6 @@ DoWeaponRecovery:
 		TorsoAnim = 'None';
 		FinishAnim();
 	}
-	goto('Done');
-
-/**
-*	New shield attack async code
-*/
-DoShieldAttack:
 	goto('Done');
 
 Done:
