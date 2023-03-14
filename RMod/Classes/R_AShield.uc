@@ -370,6 +370,10 @@ function Class<Actor> GetHitEffectClassForMatterType(EMatterType MatterType)
 	return Result;
 }
 
+/**
+*	GetHitSoundForMatterType
+*	Helper function that returns the hit sound that corresponds to the matter type struck
+*/
 function Sound GetHitSoundForMatterType(EMatterType MatterType)
 {
 	local Sound Result;
