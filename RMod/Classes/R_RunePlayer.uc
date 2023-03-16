@@ -171,12 +171,12 @@ function SpawnLoadoutReplicationInfo()
 
 event Destroyed()
 {
-    Super.Destroyed();
-
-    if(Role == ROLE_Authority && LoadoutReplicationInfo != None)
+	if(Role == ROLE_Authority && LoadoutReplicationInfo != None)
     {
         LoadoutReplicationInfo.Destroy();
     }
+	
+    Super.Destroyed();
 }
 
 /**
@@ -320,7 +320,7 @@ exec function AdminLogout()
 
     UtilitiesClass.Static.RModLog
     (
-        "AdminLogout attempt from player" @ PlayerName @ "(" $ Self $ "):" @ Password
+        "AdminLogout attempt from player" @ PlayerName @ "(" $ Self $ ")"
     );
 
     Level.Game.AdminLogout( Self );
@@ -1210,6 +1210,81 @@ exec function Throw()
             PlayAnim('ATK_ALL_throw1_AA0S', 1.0, 0.1);
         }
     }
+}
+
+/**
+*	Powerup (override)
+*	Overridden to allow players to manually activate bloodlust by holding the defend
+*	key and pressing the rune power button
+*/
+exec function Powerup()
+{
+	if( bShowMenu || (Level.Pauser!="") || (Role < ROLE_Authority) || Health <= 0)
+	{
+		return;
+	}
+	
+	if(bAltFire == 1)
+	{
+		if(bBloodLust)
+		{
+			return;
+		}
+		
+		if(Strength >= 25)
+		{
+			EnableBloodlust();
+		}
+		else
+		{
+			PlaySound(PowerupFail, SLOT_Interface);
+			ClientMessage("Not enough STRENGTH", 'NoRunePower');
+			return;
+		}
+	}
+	else
+	{
+		Super.Powerup();
+	}
+}
+
+/**
+*	BoostStrength (override)
+*	Overridden to call EnableBloodlust
+*/
+function BoostStrength(int amount)
+{
+    if(bBloodLust)
+        return;
+
+	Strength = Clamp(Strength + Amount, 0, MaxStrength);
+    
+	if (Strength >= MaxStrength)
+    {
+        EnableBloodlust();
+    }
+}
+
+/**
+*	EnableBloodlust
+*	Enable bloodlust and play effects
+*/
+function bool EnableBloodlust()
+{
+	bBloodlust = true;
+
+	PlaySound(BerserkSoundStart, SLOT_None, 1.0);
+	AmbientSound = BerserkSoundLoop;
+
+	DesiredPolyColorAdjust.X = 255;
+	DesiredPolyColorAdjust.Y = 128;
+	DesiredPolyColorAdjust.Z = 128;
+	Spawn(Class'BloodlustStart', self,, Location, Rotation);
+
+	if(BloodLustEyes != None)
+		BloodLustEyes.bHidden = false;
+
+	ShakeView(1, 100, 0.25);
 }
 
 /**
