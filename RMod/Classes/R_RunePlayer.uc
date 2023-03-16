@@ -46,6 +46,9 @@ var FSkelGroupSkinArray GoreCapArrays[16];
 var float SuicideTimeStamp;
 var float SuicideCooldown;
 
+// Weapon swipes
+var Texture WeaponSwipeTexture;
+
 // Client adjustment variables
 var float ClientAdjustErrorThreshold;
 var float ClientAdjustCooldownSeconds;
@@ -59,7 +62,8 @@ replication
 	
 	reliable if(Role == ROLE_Authority)
 		HUDTypeSpectator,
-		Camera;
+		Camera,
+		WeaponSwipeTexture;
 
 	reliable if(Role == ROLE_Authority && RemoteRole == ROLE_AutonomousProxy)
         LoadoutReplicationInfo,
@@ -671,6 +675,19 @@ function ApplySubClass_ExtractMenuName(Class<RunePlayer> SubClass)
 	}
 
 	MenuName = "RMod Rune Player";
+}
+
+/**
+*	GetWeaponSwipeTexture
+*	Return the texture this player wishes to use as their weapon swipe texture
+*/
+simulated function Texture GetWeaponSwipeTexture()
+{
+	return WeaponSwipeTexture;
+}
+simulated function float GetWeaponSwipeSpeed()
+{
+	return 7.0;
 }
 
 /**
@@ -2008,6 +2025,7 @@ defaultproperties
     SpectatorCameraClass=Class'RMod.R_Camera_Spectator'
     bMessageBeep=True
     SuicideCooldown=5.0
+	WeaponSwipeTexture=Texture'RuneFX.FIRESWIPE'
 	ClientAdjustErrorThreshold=64.0
 	ClientAdjustCooldownSeconds=0.5
     bAlwaysRelevant=True
