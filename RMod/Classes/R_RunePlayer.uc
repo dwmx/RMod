@@ -6,32 +6,21 @@
 //==============================================================================
 class R_RunePlayer extends RunePlayer config(RMod);
 
+//==============================================================================
+//	Statics
 var Class<R_AUtilities> UtilitiesClass;
 var Class<R_AColors> ColorsClass;
+//==============================================================================
 
+//==============================================================================
+//	Sub-class variables
+//	During the Login event, R_GameInfo calls R_RunePlayer.ApplySubClass,
+//	which extracts runeplayer skin data into these variables.
 var Class<RunePlayer> RunePlayerSubClass;
 var Class<RunePlayerProxy> RunePlayerProxyClass;
 var Class<Actor> RunePlayerSeveredHeadClass;
 var Class<Actor> RunePlayerSeveredLimbClass;
 var byte PolyGroupBodyParts[16];
-
-var Class<HUD> HUDTypeSpectator;
-
-var Class<R_ACamera> SpectatorCameraClass;
-var R_ACamera Camera;
-
-var Name PreviousStateName;
-
-var R_LoadoutReplicationInfo LoadoutReplicationInfo;
-var bool bLoadoutMenuDoNotShow;
-
-// Replicated POV view rotation
-var private float ViewRotPovPitch;
-var private float ViewRotPovYaw;
-
-// When spectating, Fire() will attempt to respawn when this flag is true
-// If not true, Fire() will cycle through spectator targets
-var bool bRespawnWhenSpectating;
 
 // PainSkin arrays
 const MAX_SKEL_GROUP_SKINS = 16;
@@ -42,9 +31,7 @@ struct FSkelGroupSkinArray
 // Indexed by BODYPART consts
 var FSkelGroupSkinArray PainSkinArrays[16];
 var FSkelGroupSkinArray GoreCapArrays[16];
-
-var float SuicideTimeStamp;
-var float SuicideCooldown;
+//==============================================================================
 
 //==============================================================================
 //	Weapon Swipes
@@ -57,11 +44,43 @@ var Texture WeaponSwipeBloodlustTexture;
 var bool bBloodlustReplicated; // Necessary for clients to see bloodlust swipe
 //==============================================================================
 
-// Client adjustment variables
+//==============================================================================
+//	Loadout Menu
+var R_LoadoutReplicationInfo LoadoutReplicationInfo;
+var bool bLoadoutMenuDoNotShow;
+//==============================================================================
+
+//==============================================================================
+//	Spectator related variables
+var Class<HUD> HUDTypeSpectator;
+var Class<R_ACamera> SpectatorCameraClass;
+
+var R_ACamera Camera;
+var Name PreviousStateName;
+
+// Replicated for spectator POV mode
+var private float ViewRotPovPitch;	
+var private float ViewRotPovYaw;
+
+// When spectating, Fire() will attempt to respawn when this flag is true
+// If not true, Fire() will cycle through spectator targets
+var bool bRespawnWhenSpectating;
+//==============================================================================
+
+var float SuicideTimeStamp;
+var float SuicideCooldown;
+
+//==============================================================================
+// 	Client Adjustment variables
+//	These variables control the frequency and client error threshold for the
+//	server to send ClientAdjustPosition updates during ServerMove.
+//	This is the client jitter fix
+//	Use exec function ToggleRmodDebug to display markers for client adjusts.
 var float ClientAdjustErrorThreshold;
 var float ClientAdjustCooldownSeconds;
 var bool bShowRmodDebug;
 var R_ClientDebugActor ClientDebugActor;
+//==============================================================================
 
 replication
 {	
