@@ -46,8 +46,16 @@ var FSkelGroupSkinArray GoreCapArrays[16];
 var float SuicideTimeStamp;
 var float SuicideCooldown;
 
-// Weapon swipes
+//==============================================================================
+//	Weapon Swipes
+//	R_WeaponSwipe grabs these textures and updates itself every
+//	time a weapon swing or throw occurs. If no texture is set for the
+//	corresponding state, then the weapon swipe won't enable itself.
+//	E.g. WeaponSwipeTexture=None will disable normal weapon swipes.
 var Texture WeaponSwipeTexture;
+var Texture WeaponSwipeBloodlustTexture;
+var bool bBloodlustReplicated; // Necessary for clients to see bloodlust swipe
+//==============================================================================
 
 // Client adjustment variables
 var float ClientAdjustErrorThreshold;
@@ -63,7 +71,9 @@ replication
 	reliable if(Role == ROLE_Authority)
 		HUDTypeSpectator,
 		Camera,
-		WeaponSwipeTexture;
+		WeaponSwipeTexture,
+		WeaponSwipeBloodlustTexture,
+		bBloodlustReplicated;
 
 	reliable if(Role == ROLE_Authority && RemoteRole == ROLE_AutonomousProxy)
         LoadoutReplicationInfo,
@@ -135,7 +145,7 @@ event PreBeginPlay()
 	CurrentRotation = Rotation;
 
 	// Adjust CrouchHeight to new DrawScale
-	CrouchHeight = CrouchHeight * DrawScale;		
+	CrouchHeight = CrouchHeight * DrawScale;
 }
 
 /**
@@ -162,6 +172,20 @@ event PostBeginPlay()
         {
             SpawnLoadoutReplicationInfo();
         }
+	}
+}
+
+/**
+*	Tick (override)
+*	Overridden to perform server-side update of bBloodlustReplicated
+*/
+event Tick(float DeltaSeconds)
+{
+	Super.Tick(DeltaSeconds);
+	
+	if(Role == ROLE_Authority)
+	{
+		bBloodlustReplicated = bBloodlust;
 	}
 }
 
@@ -683,7 +707,14 @@ function ApplySubClass_ExtractMenuName(Class<RunePlayer> SubClass)
 */
 simulated function Texture GetWeaponSwipeTexture()
 {
-	return WeaponSwipeTexture;
+	if(bBloodlustReplicated)
+	{
+		return WeaponSwipeBloodlustTexture;
+	}
+	else
+	{
+		return WeaponSwipeTexture;
+	}
 }
 simulated function float GetWeaponSwipeSpeed()
 {
@@ -2025,7 +2056,8 @@ defaultproperties
     SpectatorCameraClass=Class'RMod.R_Camera_Spectator'
     bMessageBeep=True
     SuicideCooldown=5.0
-	WeaponSwipeTexture=Texture'RuneFX.FIRESWIPE'
+	WeaponSwipeTexture=None
+	WeaponSwipeBloodlustTexture=Texture'RuneFX.swipe_red'
 	ClientAdjustErrorThreshold=64.0
 	ClientAdjustCooldownSeconds=0.5
     bAlwaysRelevant=True

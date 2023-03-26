@@ -1,3 +1,10 @@
+//==============================================================================
+//  R_WeaponSwipe
+//  Multiplayer compatible version of the weapon swipe particle systems
+//	originally included with rune.
+//	This actor mostly behaves like a component, listening for changes on the
+//	weapon it's attached to. The weapon doesn't send any calls to this actor.
+//==============================================================================
 class R_WeaponSwipe extends Actor;
 
 const STATE_IDLE        = 0;
@@ -47,33 +54,52 @@ simulated function ClientUpdateState()
 //  ClientSwipeEffects
 simulated function ClientEnableSwipeEffect()
 {
+	local Texture SwipeTexture;
+	local float SwipeSpeed;
     local class<WeaponSwipe> SwipeClass;
     local Weapon W;
+	
     W = Self.SafeGetOwnerAsWeapon();
     if(W == None)
-        return;
+	{
+		return;
+	}
 
     if(R_RunePlayer(Self.WeaponSwipeAffector) != None)
+	{
         SwipeClass = class'RuneI.WeaponSwipeBlue';
+		SwipeTexture = R_RunePlayer(Self.WeaponSwipeAffector).GetWeaponSwipeTexture();
+		SwipeSpeed = R_RunePlayer(Self.WeaponSwipeAffector).GetWeaponSwipeSpeed();
+	}
     else
+	{
         SwipeClass = W.SwipeClass;
+		SwipeTexture = SwipeClass.Default.ParticleTexture[0];
+		SwipeSpeed = SwipeClass.Default.SwipeSpeed;
+	}
 
-    if(SwipeClass == None)
-        return;
+    if(SwipeClass == None || SwipeTexture == None)
+	{
+		return;
+	}
+	
     if(W.Swipe != None)
-        Self.ClientDisableSwipeEffect();
+	{
+		Self.ClientDisableSwipeEffect();
+	}
 
     W.Swipe = Self.Spawn(SwipeClass, W,, W.Location);
     if(W.Swipe == None)
-        return;
+	{
+		return;
+	}
 
     if(R_RunePlayer(Self.WeaponSwipeAffector) != None)
     {
-        W.Swipe.ParticleTexture[0] =
-            R_RunePlayer(Self.WeaponSwipeAffector).GetWeaponSwipeTexture();
-        W.Swipe.SwipeSpeed =
-            R_RunePlayer(Self.WeaponSwipeAffector).GetWeaponSwipeSpeed();
+        W.Swipe.ParticleTexture[0] = SwipeTexture;
+        W.Swipe.SwipeSpeed = SwipeSpeed;
     }
+	
     W.Swipe.BaseJointIndex = W.SweepJoint1;
     W.Swipe.OffsetJointIndex = W.SweepJoint2;
     W.Swipe.SystemLifeSpan = -1.0;
