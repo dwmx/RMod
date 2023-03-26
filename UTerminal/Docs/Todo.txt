@@ -1,0 +1,2 @@
+- How are multi-line strings sent to the terminal or the in-game console?
+- Client authorization
