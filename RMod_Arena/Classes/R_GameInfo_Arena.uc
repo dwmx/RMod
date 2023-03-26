@@ -2537,7 +2537,7 @@ function updateArenaTeamSize(int newTeamSize){
 
 defaultproperties
 {
-	RunePlayerClass=Class'RMod_Arena.R_RunePlayer_Arena'
+    RunePlayerClass=Class'RMod_Arena.R_RunePlayer_Arena'
     TimeBetweenMatch=5
     MaxTeamSupport=1
     bAutoArenaTeamSizeEnabled=True
@@ -2547,6 +2547,9 @@ defaultproperties
     maxArenaTeam=1
     MaxArenaPlayers=8
     TeamCurrentColor(1)=1
+    CountDownSound(0)=sound'AddOn.Arena.countdown01'
+    CountDownSound(1)=sound'AddOn.Arena.countdown02'
+    CountDownSound(2)=sound'AddOn.Arena.countdown03'
     GetReadyMessage="Its Your Turn to fight! Get Ready!"
     FightMessage="THE BATTLE BEGINS!!"
     SuicideDeathMessage=" suicided!!"
