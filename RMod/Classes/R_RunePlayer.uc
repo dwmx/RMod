@@ -6,29 +6,21 @@
 //==============================================================================
 class R_RunePlayer extends RunePlayer config(RMod);
 
+//==============================================================================
+//	Statics
 var Class<R_AUtilities> UtilitiesClass;
+var Class<R_AColors> ColorsClass;
+//==============================================================================
 
+//==============================================================================
+//	Sub-class variables
+//	During the Login event, R_GameInfo calls R_RunePlayer.ApplySubClass,
+//	which extracts runeplayer skin data into these variables.
 var Class<RunePlayer> RunePlayerSubClass;
 var Class<RunePlayerProxy> RunePlayerProxyClass;
 var Class<Actor> RunePlayerSeveredHeadClass;
 var Class<Actor> RunePlayerSeveredLimbClass;
 var byte PolyGroupBodyParts[16];
-
-var Class<HUD> HUDTypeSpectator;
-
-var Class<R_ACamera> SpectatorCameraClass;
-var R_ACamera Camera;
-
-var R_LoadoutReplicationInfo LoadoutReplicationInfo;
-var bool bLoadoutMenuDoNotShow;
-
-// Replicated POV view rotation
-var private float ViewRotPovPitch;
-var private float ViewRotPovYaw;
-
-// When bForceClientAdjustPosition is true, ServerMove will force a client
-// adjust on the owning player
-var bool bForceClientAdjustPosition;
 
 // PainSkin arrays
 const MAX_SKEL_GROUP_SKINS = 16;
@@ -39,9 +31,56 @@ struct FSkelGroupSkinArray
 // Indexed by BODYPART consts
 var FSkelGroupSkinArray PainSkinArrays[16];
 var FSkelGroupSkinArray GoreCapArrays[16];
+//==============================================================================
+
+//==============================================================================
+//	Weapon Swipes
+//	R_WeaponSwipe grabs these textures and updates itself every
+//	time a weapon swing or throw occurs. If no texture is set for the
+//	corresponding state, then the weapon swipe won't enable itself.
+//	E.g. WeaponSwipeTexture=None will disable normal weapon swipes.
+var Texture WeaponSwipeTexture;
+var Texture WeaponSwipeBloodlustTexture;
+var bool bBloodlustReplicated; // Necessary for clients to see bloodlust swipe
+//==============================================================================
+
+//==============================================================================
+//	Loadout Menu
+var R_LoadoutReplicationInfo LoadoutReplicationInfo;
+var bool bLoadoutMenuDoNotShow;
+//==============================================================================
+
+//==============================================================================
+//	Spectator related variables
+var Class<HUD> HUDTypeSpectator;
+var Class<R_ACamera> SpectatorCameraClass;
+
+var R_ACamera Camera;
+var Name PreviousStateName;
+
+// Replicated for spectator POV mode
+var private float ViewRotPovPitch;	
+var private float ViewRotPovYaw;
+
+// When spectating, Fire() will attempt to respawn when this flag is true
+// If not true, Fire() will cycle through spectator targets
+var bool bRespawnWhenSpectating;
+//==============================================================================
 
 var float SuicideTimeStamp;
 var float SuicideCooldown;
+
+//==============================================================================
+// 	Client Adjustment variables
+//	These variables control the frequency and client error threshold for the
+//	server to send ClientAdjustPosition updates during ServerMove.
+//	This is the client jitter fix
+//	Use exec function ToggleRmodDebug to display markers for client adjusts.
+var float ClientAdjustErrorThreshold;
+var float ClientAdjustCooldownSeconds;
+var bool bShowRmodDebug;
+var R_ClientDebugActor ClientDebugActor;
+//==============================================================================
 
 replication
 {	
@@ -50,7 +89,10 @@ replication
 	
 	reliable if(Role == ROLE_Authority)
 		HUDTypeSpectator,
-		Camera;
+		Camera,
+		WeaponSwipeTexture,
+		WeaponSwipeBloodlustTexture,
+		bBloodlustReplicated;
 
 	reliable if(Role == ROLE_Authority && RemoteRole == ROLE_AutonomousProxy)
         LoadoutReplicationInfo,
@@ -99,7 +141,7 @@ event PreBeginPlay()
 	CurrentRotation = Rotation;
 
 	// Adjust CrouchHeight to new DrawScale
-	CrouchHeight = CrouchHeight * DrawScale;		
+	CrouchHeight = CrouchHeight * DrawScale;
 }
 
 /**
@@ -129,6 +171,20 @@ event PostBeginPlay()
 	}
 }
 
+/**
+*	Tick (override)
+*	Overridden to perform server-side update of bBloodlustReplicated
+*/
+event Tick(float DeltaSeconds)
+{
+	Super.Tick(DeltaSeconds);
+	
+	if(Role == ROLE_Authority)
+	{
+		bBloodlustReplicated = bBloodlust;
+	}
+}
+
 function SpawnLoadoutReplicationInfo()
 {
     if(Role == ROLE_Authority)
@@ -139,12 +195,12 @@ function SpawnLoadoutReplicationInfo()
 
 event Destroyed()
 {
-    Super.Destroyed();
-
-    if(LoadoutReplicationInfo != None)
+	if(Role == ROLE_Authority && LoadoutReplicationInfo != None)
     {
         LoadoutReplicationInfo.Destroy();
     }
+	
+    Super.Destroyed();
 }
 
 /**
@@ -288,7 +344,7 @@ exec function AdminLogout()
 
     UtilitiesClass.Static.RModLog
     (
-        "AdminLogout attempt from player" @ PlayerName @ "(" $ Self $ "):" @ Password
+        "AdminLogout attempt from player" @ PlayerName @ "(" $ Self $ ")"
     );
 
     Level.Game.AdminLogout( Self );
@@ -444,6 +500,12 @@ function ApplySubClass(Class<RunePlayer> SubClass)
 
 	// Extract the menu name so this looks correct in server browser
 	ApplySubClass_ExtractMenuName(SubClass);
+	
+	// If player explicitly joined as a spectator, disable respawning from spec mode
+	if(SubClass == Class'RMod.R_ASpectatorMarker')
+	{
+		bRespawnWhenSpectating = false;
+	}
 }
 
 /**
@@ -636,11 +698,30 @@ function ApplySubClass_ExtractMenuName(Class<RunePlayer> SubClass)
 }
 
 /**
+*	GetWeaponSwipeTexture
+*	Return the texture this player wishes to use as their weapon swipe texture
+*/
+simulated function Texture GetWeaponSwipeTexture()
+{
+	if(bBloodlustReplicated)
+	{
+		return WeaponSwipeBloodlustTexture;
+	}
+	else
+	{
+		return WeaponSwipeTexture;
+	}
+}
+simulated function float GetWeaponSwipeSpeed()
+{
+	return 7.0;
+}
+
+/**
 *   ServerMove (override)
 *	Overridden for the following reasons:
 *   -   Clients who have a high net speed variable will have a ClientAdjust
 *       called every single tick. Override implements a fix.
-*   -   bForceClientAdjustPosition, when true, forces a call to ClientAdjust.
 *   -   Client view pitch and view yaw are replicated so that spectators can
 *       view in point-of-view mode.
 */
@@ -662,6 +743,7 @@ function ServerMove(
 	optional int OldAccel)
 {
 	local float DeltaTime, clientErr, OldTimeStamp;
+	local bool bPerformClientAdjust;
 	local rotator DeltaRot, Rot;
 	local vector Accel, LocDiff;
 	local int maxPitch, ViewPitch, ViewYaw;
@@ -815,31 +897,27 @@ function ServerMove(
 	if ( (Level.Pauser == "") && (DeltaTime > 0) )
 		MoveAutonomous(DeltaTime, NewbRun, NewbDuck, NewbPressedJump, DodgeMove, Accel, DeltaRot);
 
-	// Accumulate movement error.
-	//if ( Level.TimeSeconds - LastUpdateTime > 0.125)
-	//	ClientErr = 10000;
-	//else if ( Level.TimeSeconds - LastUpdateTime > 0.045 )
-	//if ( Level.TimeSeconds - LastUpdateTime > 0.045 )
-	if(Level.TimeSeconds - LastUpdateTime > 0.25)
-	{
-		bForceClientAdjustPosition = true;
-	}
-	else if(Level.TimeSeconds - LastUpdateTime > 0.045)
+	// Check for client error with time threshold
+    if(Level.TimeSeconds - LastUpdateTime > ClientAdjustCooldownSeconds)
 	{
 		LocDiff = Location - ClientLoc;
 		ClientErr = LocDiff Dot LocDiff;
-	}
-	else
-	{
-		ClientErr = 0.0;
-	}
-	//Log(ClientErr);
-
-	// If client has accumulated a noticeable positional error, correct him.
-	if ( bForceClientAdjustPosition || ClientErr > 3 )
-	{
-		bForceClientAdjustPosition = false;
 		
+		if(ClientErr >= ClientAdjustErrorThreshold)
+		{
+			bPerformClientAdjust = true;
+		}
+	}
+	
+	// Always perform client adjust when state changes
+	if(GetStateName() != PreviousStateName)
+	{
+		PreviousStateName = GetStateName();
+		bPerformClientAdjust = true;
+	}
+	
+	if(bPerformClientAdjust)
+	{
 		if ( Mover(Base) != None )
 			ClientLoc = Location - Base.Location;
 		else
@@ -848,7 +926,7 @@ function ServerMove(
 		LastUpdateTime = Level.TimeSeconds;
 		ClientAdjustPosition
 		(
-			TimeStamp, 
+			TimeStamp,
 			GetStateName(), 
 			Physics, 
 			ClientLoc.X, 
@@ -864,6 +942,44 @@ function ServerMove(
 		
 	ViewRotPovPitch = ViewRotation.Pitch;
 	ViewRotPovYaw = ViewRotation.Yaw;
+}
+
+/**
+*	ClientAdjustPosition (override)
+*	Overridden to draw debug information
+*/
+function ClientAdjustPosition
+(
+    float TimeStamp, 
+    name newState, 
+    EPhysics newPhysics,
+    float NewLocX, 
+    float NewLocY, 
+    float NewLocZ, 
+    float NewVelX, 
+    float NewVelY, 
+    float NewVelZ,
+    Actor NewBase
+)
+{
+	local Vector DebugLineBegin, DebugLineEnd;
+	
+	if(bShowRmodDebug && ClientDebugActor != None)
+	{
+		DebugLineBegin = Location;
+		DebugLineEnd = DebugLineBegin;
+		DebugLineEnd.Z += 96.0;
+		ClientDebugActor.DrawLineSegmentForDuration(DebugLineBegin, DebugLineEnd, ColorsClass.Static.ColorRed(), 5.0);
+		
+		DebugLineBegin.X = NewLocX;
+		DebugLineBegin.Y = NewLocY;
+		DebugLineBegin.Z = NewLocZ;
+		DebugLineEnd = DebugLineBegin;
+		DebugLineEnd.Z += 96.0;
+		ClientDebugActor.DrawLineSegmentForDuration(DebugLineBegin, DebugLineEnd, ColorsClass.Static.ColorGreen(), 5.0);
+	}
+	
+	Super.ClientAdjustPosition(TimeStamp, NewState, NewPhysics, NewLocX, NewLocY, NewLocZ, NewVelX, NewVelY, NewVelZ, NewBase);
 }
 
 /**
@@ -1141,6 +1257,81 @@ exec function Throw()
 }
 
 /**
+*	Powerup (override)
+*	Overridden to allow players to manually activate bloodlust by holding the defend
+*	key and pressing the rune power button
+*/
+exec function Powerup()
+{
+	if( bShowMenu || (Level.Pauser!="") || (Role < ROLE_Authority) || Health <= 0)
+	{
+		return;
+	}
+	
+	if(bAltFire == 1)
+	{
+		if(bBloodLust)
+		{
+			return;
+		}
+		
+		if(Strength >= 25)
+		{
+			EnableBloodlust();
+		}
+		else
+		{
+			PlaySound(PowerupFail, SLOT_Interface);
+			ClientMessage("Not enough STRENGTH", 'NoRunePower');
+			return;
+		}
+	}
+	else
+	{
+		Super.Powerup();
+	}
+}
+
+/**
+*	BoostStrength (override)
+*	Overridden to call EnableBloodlust
+*/
+function BoostStrength(int amount)
+{
+    if(bBloodLust)
+        return;
+
+	Strength = Clamp(Strength + Amount, 0, MaxStrength);
+    
+	if (Strength >= MaxStrength)
+    {
+        EnableBloodlust();
+    }
+}
+
+/**
+*	EnableBloodlust
+*	Enable bloodlust and play effects
+*/
+function bool EnableBloodlust()
+{
+	bBloodlust = true;
+
+	PlaySound(BerserkSoundStart, SLOT_None, 1.0);
+	AmbientSound = BerserkSoundLoop;
+
+	DesiredPolyColorAdjust.X = 255;
+	DesiredPolyColorAdjust.Y = 128;
+	DesiredPolyColorAdjust.Z = 128;
+	Spawn(Class'BloodlustStart', self,, Location, Rotation);
+
+	if(BloodLustEyes != None)
+		BloodLustEyes.bHidden = false;
+
+	ShakeView(1, 100, 0.25);
+}
+
+/**
 *   ResetLevel
 *   Performs a soft level reset. Resets the map state without reloading the map.
 *   Useful for restarting maps only after all players have loaded in.
@@ -1222,6 +1413,8 @@ function ServerSpectate()
 	GI = R_GameInfo(Level.Game);
 	if(GI != None)
 	{
+		// Disable respawning as spectator since player explicitly went into spec mode
+		bRespawnWhenSpectating = false;
 		GI.RequestSpectate(Self);
 	}
 }
@@ -1309,7 +1502,7 @@ exec function TeamSay( string Msg )
 /**
 *   DoTryPlayTorsoAnim (override)
 *   This function's name is confusing, but what it actually means is:
-*   "Try to play the AnimProxy's current on animation on the RunePlayer",
+*   "Try to play the AnimProxy's current animation on the RunePlayer",
 *   which effectively means:
 *   "Whatever animation is playing on the torso, try to play that
 *   animation on the legs as well".
@@ -1350,6 +1543,56 @@ simulated function DoTryPlayTorsoAnim(Name TorsoAnim, float speed, float tween)
 	}
 
 	Super.DoTryPlayTorsoAnim(TorsoAnim, speed, tween);
+}
+
+/**
+*	WeaponActivate (override)
+*	Called from AnimProxy Attack functions
+*/
+function WeaponActivate()
+{
+	if(Weapon != None)
+	{
+		Weapon.StartAttack();
+	}
+}
+
+/**
+*	WeaponDeactivate (override)
+*	Called from AnimProxy Attack functions
+*/
+function WeaponDeactivate()
+{
+    if(Weapon != None)
+    {
+        Weapon.FinishAttack();
+    }
+}
+
+/**
+*	ShieldActivate
+*	Called from R_RunePlayerProxy Attack functions
+*	New function that enables collision for shield bash attack
+*/
+function ShieldActivate()
+{
+	if(R_AShield(Shield) != None)
+	{
+		R_AShield(Shield).StartAttack();
+	}
+}
+
+/**
+*	ShieldDeactivate
+*	Called from R_RunePlayerProxy Attack functions
+*	New function that disables collision for shield bash attack
+*/
+function ShieldDeactivate()
+{
+	if(R_AShield(Shield) != None)
+	{
+		R_AShield(Shield).FinishAttack();
+	}
 }
 
 /**
@@ -1539,9 +1782,16 @@ state PlayerSpectating
 	// Fire cycles view targets
 	exec function Fire(optional float F)
 	{
-		if(Self.Camera != None)
+		if(bRespawnWhenSpectating && CheckCanRestart())
 		{
-			Self.Camera.Input_Fire();
+			ServerReStartPlayer();
+		}
+		else
+		{
+			if(Self.Camera != None)
+			{
+				Self.Camera.Input_Fire();
+			}
 		}
 	}
 	
@@ -1560,6 +1810,45 @@ state PlayerSpectating
 			Self.Camera.Input_CameraOut();
 		}
 	}
+	
+	/**
+    *   ServerReStartPlayer (override)
+    *   Overridden to add R_GameInfo player restart logic
+    */
+    function ServerReStartPlayer()
+    {
+        local R_GameInfo RGI;
+
+        if(!CheckCanRestart())
+        {
+            return;
+        }
+
+        // Begin PlayerPawn.ServerReStartPlayer
+        if ( Level.NetMode == NM_Client )
+        {
+            return;
+        }
+        if (Level.Game.bGameEnded)
+        {
+            return;
+        }
+        if( Level.Game.RestartPlayer(self) )
+        {
+            ServerTimeStamp = 0;
+            TimeMargin = 0;
+            Enemy = None;
+            Level.Game.StartPlayer(self);
+            ClientReStart();
+        }
+        else
+        {
+            Log("Restartplayer failed");
+        }
+        // End PlayerPawn.ServerReStartPlayer
+
+        PlayerRestart();
+    }
 }
 
 //==============================================================================
@@ -1569,35 +1858,8 @@ state PlayerSpectating
 //  appears to fix nearly all of the issues.
 //==============================================================================
 
-state Pain
-{
-	event BeginState()
-	{
-		Super.BeginState();
-		bForceClientAdjustPosition = true;
-	}
-	
-	event EndState()
-	{
-		Super.EndState();
-		bForceClientAdjustPosition = true;
-	}
-}
-
 state Dying
 {
-	event BeginState()
-	{
-		Super.BeginState();
-		bForceClientAdjustPosition = true;
-	}
-	
-	event EndState()
-	{
-		Super.EndState();
-		bForceClientAdjustPosition = true;
-	}
-
 	function AnimEnd()
 	{
 		Super.AnimEnd();
@@ -1647,70 +1909,12 @@ state Dying
     }
 }
 
-state PlayerWalking
-{
-	event BeginState()
-	{
-		Super.BeginState();
-		bForceClientAdjustPosition = true;
-	}
-	
-	event EndState()
-	{
-		Super.EndState();
-		bForceClientAdjustPosition = true;
-	}
-}
-
-state PlayerWaiting
-{
-	event BeginState()
-	{
-		Super.BeginState();
-		bForceClientAdjustPosition = true;
-	}
-	
-	event EndState()
-	{
-		Super.EndState();
-		bForceClientAdjustPosition = true;
-	}
-}
-
-state Uninterrupted
-{
-	event BeginState()
-	{
-		Super.BeginState();
-		bForceClientAdjustPosition = true;
-	}
-	
-	event EndState()
-	{
-		Super.EndState();
-		bForceClientAdjustPosition = true;
-	}
-}
-
-state Unresponsive
-{
-	event BeginState()
-	{
-		Super.BeginState();
-		bForceClientAdjustPosition = true;
-	}
-	
-	event EndState()
-	{
-		Super.EndState();
-		bForceClientAdjustPosition = true;
-	}
-}
-
 state GameEnded
 {
 	ignores Throw;
 }
+
+
 
 function OpenLoadoutMenu()
 {
@@ -1810,6 +2014,29 @@ function ClientCloseLoadoutMenu()
     CloseLoadoutMenu();
 }
 
+event PostRender(Canvas C)
+{
+	Super.PostRender(C);
+	
+	if(bShowRmodDebug && ClientDebugActor != None)
+	{
+		ClientDebugActor.PostRender(C);
+	}
+}
+
+exec function ToggleRmodDebug()
+{
+	bShowRmodDebug = !bShowRmodDebug;
+	if(bShowRmodDebug && ClientDebugActor == None)
+	{
+		ClientDebugActor = Spawn(Class'RMod.R_ClientDebugActor', Self);
+	}
+	else if(!bShowRmodDebug && ClientDebugActor != None)
+	{
+		ClientDebugActor.Destroy();
+	}
+}
+
 exec function Loadout()
 {
     // Always revert the DoNotShow option when user explicitly calls this function
@@ -1820,11 +2047,18 @@ exec function Loadout()
 defaultproperties
 {
     UtilitiesClass=Class'RMod.R_AUtilities'
+	ColorsClass=Class'RMod.R_AColors'
     RunePlayerProxyClass=Class'RMod.R_RunePlayerProxy'
     SpectatorCameraClass=Class'RMod.R_Camera_Spectator'
     bMessageBeep=True
     SuicideCooldown=5.0
+	WeaponSwipeTexture=None
+	WeaponSwipeBloodlustTexture=Texture'RuneFX.swipe_red'
+	ClientAdjustErrorThreshold=64.0
+	ClientAdjustCooldownSeconds=0.5
     bAlwaysRelevant=True
     bRotateTorso=False
     bLoadoutMenuDoNotShow=False
+	bRespawnWhenSpectating=True
+	bShowRmodDebug=False
 }

@@ -4,6 +4,8 @@
 //==============================================================================
 class R_AWeapon extends Weapon abstract;
 
+var Class<R_AUtilities> UtilitiesClass;
+
 /** Corresponds with other matter sounds in Engine.Weapon */
 var int NumIceSounds;
 var(Sounds) Sound HitIce[3];
@@ -26,6 +28,16 @@ event PostBeginPlay()
             ++NumIceSounds;
         }
     }
+	
+	SpawnWeaponSwipe();
+}
+
+function SpawnWeaponSwipe()
+{
+	if(Role == ROLE_Authority)
+	{
+		Spawn(Class'RMod.R_WeaponSwipe', Self);
+	}
 }
 
 /**
@@ -68,4 +80,87 @@ function NotifySubstitutedForInstance(Actor InActor)
     SetLocation(InActor.Location);
     
     bCollideWorld = InActor.bCollideWorld;
+}
+
+state Throw
+{
+	//=========================================================================
+    //
+    // Touch
+    // 
+    // Touched an actor, does a simple check to see which joints the weapon struck
+    //=========================================================================
+    function Touch(Actor Other)
+    {
+        local int hitjoint;
+        local vector HitLoc;
+        local int DamageAmount;
+        local int LowMask, HighMask;
+        local actor HitActor;
+        local PlayerPawn P;
+        local vector VectOther;
+        local float dp;
+
+        if (Other == Owner)
+            return;
+        if (Owner == None)
+            return; // Already hit wall, no more damage after that
+        if (Other.IsA('Inventory') && Other.GetStateName() == 'Pickup' && !Other.IsA('Lizard'))
+            return;
+
+        AmbientSound = None;
+
+        HitActor = Other;
+		DamageAmount = CalculateDamage(HitActor);
+
+        if(Other.IsA('PlayerPawn') && Other.AnimProxy != None) 
+        {
+            P = PlayerPawn(Other);
+            // Determine the direction the player is attempting to move
+            VectOther = Normal((self.Location - Other.Location) * vect(1, 1, 0));
+            dp = vector(P.Rotation) dot VectOther;
+
+            if(dp > 0)
+            {
+				// Weapon deflection during shield bash
+				if(P.Shield != None && R_AShield(P.Shield) != None && P.AnimProxy.GetStateName() == 'Attacking' && P.Shield.GetStateName() == 'Swinging')
+				{
+					R_AShield(P.Shield).PlayHitEffect(Self, HitLoc, Normal(Location - P.Shield.Location), 0, 0);
+					P.Shield.JointDamaged(DamageAmount, Pawn(Owner), HitLoc, Velocity*Mass, ThrownDamageType, 0);
+					Velocity = -Velocity;
+					Instigator = P;
+					SetOwner(P); // Necessary in order to hit the original thrower
+					return;
+				}
+				
+                if(P.Shield != None && P.AnimProxy.GetStateName() == 'Defending')
+                {
+                    HitActor = P.Shield;
+                }
+                else if(P.Weapon != None && P.AnimProxy.GetStateName() == 'Attacking')
+                {
+                    HitActor = P.Weapon;
+                }
+            }
+        }
+
+        if(SwipeArrayCheck(HitActor, 0, 0))
+        {
+            if(HitActor.JointDamaged(DamageAmount, Pawn(Owner), HitLoc, Velocity*Mass, ThrownDamageType, 0))
+            {   // Hit something solid, bounce
+            }
+
+            SpawnHitEffect(HitLoc, Normal(Location - HitActor.Location), 0, 0, HitActor);
+
+			SetPhysics(PHYS_Falling);
+			RotationRate.Yaw = VSize(Velocity) * 2000 / Mass;
+			RotationRate.Pitch = VSize(Velocity) * 2000 / Mass;
+			Velocity = -0.1 * Velocity;
+        }
+    }
+}
+
+defaultproperties
+{
+	UtilitiesClass=Class'RMod.R_AUtilities'
 }

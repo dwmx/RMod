@@ -6,12 +6,18 @@ class R_GameInfo_TDMFreezeTag extends R_GameInfo_TDMRB;
 
 var Class<R_AFreezeTagStatics> FreezeTagStaticsClass;
 
+function ScoreKill(Pawn Killer, Pawn Other)
+{
+    Super.ScoreKill(Killer, Other);
+    if(Killer != None && R_PlayerReplicationInfo_FreezeTag(Killer.PlayerReplicationInfo) != None)
+    {
+        R_PlayerReplicationInfo_FreezeTag(Killer.PlayerReplicationInfo).PlayerFreezes += 1.0;
+    }
+}
+
 function NotifyFrozen(R_RunePlayer Victim, R_RunePlayer Instigator)
 {
-	if(Instigator != None && R_PlayerReplicationInfo_FreezeTag(Instigator.PlayerReplicationInfo) != None)
-	{
-		R_PlayerReplicationInfo_FreezeTag(Instigator.PlayerReplicationInfo).PlayerFreezes += 1.0;
-	}
+    ScoreKill(Instigator, Victim);
 }
 
 function NotifyThawed(R_RunePlayer Victim, R_RunePlayer Instigator)

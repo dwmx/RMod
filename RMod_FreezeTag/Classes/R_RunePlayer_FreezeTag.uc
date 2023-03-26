@@ -415,7 +415,6 @@ state Frozen extends PlayerWalking
 
         //ApplyStatueFeatures();
         bSweepable = false;
-        bForceClientAdjustPosition = true;
 
         PlaySound(Sound'WeaponsSnd.Powerups.atfreezeice01', SLOT_Interface, 0.75);
 
@@ -457,7 +456,6 @@ state Frozen extends PlayerWalking
         bSweepable = true;
         DestroyIceStatueProxy();
         RemoveStatueFeatures();
-        bForceClientAdjustPosition = true;
 
         PlaySound(Sound'WeaponsSnd.impcrashes.crashglass02', SLOT_Pain, 0.35);
         SpawnDebris();
