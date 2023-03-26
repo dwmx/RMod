@@ -1,1 +1,1 @@
-..\Rune\System\UCC.exe server AR-Champions?Game=RMod_FreezeTag.R_GameInfo_ArenaFreezeTag?timelimit=15?mutator=WarVote.WarVoteMutator
+..\Rune\System\UCC.exe server AR-8on8-ChampionsER?game=RMod_Arena.R_GameInfo_Arena
