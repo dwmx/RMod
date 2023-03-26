@@ -86,34 +86,11 @@ replication
 		ServerResetLevel,
 		ServerSwitchGame,
 		ServerSpectate,
-		ServerTimeLimit,
-		ServerTestCombo;
+		ServerTimeLimit;
 		
 	unreliable if(Role == ROLE_Authority && RemoteRole != ROLE_AutonomousProxy)
 		ViewRotPovPitch,
 		ViewRotPovYaw;
-}
-
-exec function TestCombo()
-{
-	if(Role < ROLE_Authority)
-	{
-		DoTestCombo();
-	}
-	else
-	{
-		ServerTestCombo();
-	}
-}
-
-function ServerTestCombo()
-{
-	DoTestCombo();
-}
-
-function DoTestCombo()
-{
-	AnimProxy.GotoState('ComboAttack');
 }
 
 /**
