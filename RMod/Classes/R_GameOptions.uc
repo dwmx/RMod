@@ -58,5 +58,5 @@ function LogGameOption(String GameOptionNameString, String GameOptionValueString
 defaultproperties
 {
     UtilitiesClass=Class'RMod.R_AUtilities_GameOptions'
-    bOptionShieldHitStun=False
+    bOptionShieldHitStun=True
 }
