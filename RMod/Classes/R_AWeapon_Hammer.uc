@@ -52,14 +52,14 @@ defaultproperties
     RespawnTime=30.000000
     RespawnSound=Sound'OtherSnd.Respawns.respawn01'
     PickupMessageClass=Class'RuneI.PickupMessage'
-    HitFleshEffectClass=Class'RuneI.BloodMist'
-    HitWoodEffectClass=None
-    HitStoneEffectClass=Class'RuneI.HitStone'
+    HitFleshEffectClass=Class'RMod.R_Effect_HitFlesh'
+    HitWoodEffectClass='RMod.R_Effect_HitWood'
+    HitStoneEffectClass=Class'RMod.R_Effect_HitStone'
     HitMetalEffectClass=None
     HitDirtEffectClass=Class'RuneI.GroundDust'
     HitShieldEffectClass=None
     HitWeaponEffectClass=None
     HitBreakableWoodEffectClass=None
     HitBreakableStoneEffectClass=None
-    HitIceEffectClass=Class'RMod.R_FX_SwordHitIce
+    HitIceEffectClass=Class'RMod.R_Effect_HitIce'
 }

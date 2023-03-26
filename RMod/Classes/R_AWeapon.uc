@@ -163,12 +163,11 @@ function PlayHitMatterSound(EMatterType Matter)
             i = Rand(NumIceSounds);
             PlaySound(HitIce[i], SLOT_Misc,,,, 1.0 + (FRand()-0.5)*2.0*PitchDeviation);
             break;
+        case MATTER_SNOW: // Tread snow like dirt for now
+        i = Rand(NumIceSounds);
+            PlaySound(HitDirt[i], SLOT_Misc,,,, 1.0 + (FRand()-0.5)*2.0*PitchDeviation);
+            break;
         default:
-            if(Matter == MATTER_SNOW)
-            {
-                // For now, treat snow like earth
-                Matter = MATTER_EARTH;
-            }
             Super.PlayHitMatterSound(Matter);
             break;
     }
@@ -193,7 +192,7 @@ function SpawnHitEffect(Vector HitLoc, Vector HitNorm, int LowMask, int HighMask
     HitEffectClass = GetHitEffectClassForMatterType(MatterType);
     if(HitEffectClass != None)
     {
-        Spawn(HitEffectClass,,, HitLoc, Rotator(HitNorm));
+        Spawn(HitEffectClass, Self,, HitLoc, Rotator(HitNorm));
     }
     
     // Apply blood texture to weapon
