@@ -1,1 +1,5 @@
+# Unreal package files
 *.u
+
+# Common symlink directories
+Rune
