@@ -15,27 +15,7 @@ function SpawnHitEffect(vector HitLoc, vector HitNorm, int LowMask, int HighMask
     local int i,j;
     local EMatterType matter;
 
-    // Determine what kind of matter was hit
-    if ((HitActor.Skeletal != None) && (LowMask!=0 || HighMask!=0))
-    {
-        for (j=0; j<HitActor.NumJoints(); j++)
-        {
-            if (((j <  32) && ((LowMask  & (1 <<  j      )) != 0)) ||
-                ((j >= 32) && (j < 64) && ((HighMask & (1 << (j - 32))) != 0)) )
-            {   // Joint j was hit
-                matter = HitActor.MatterForJoint(j);
-                break;
-            }
-        }
-    }
-    else if(HitActor.IsA('LevelInfo'))
-    {   
-        matter = HitActor.MatterTrace(HitLoc, Owner.Location, WeaponSweepExtent);
-    }
-    else
-    {
-        matter = HitActor.MatterForJoint(0);
-    }
+	matter = GetMatterTypeForHitActor(HitActor, HitLoc, LowMask, HighMask);
 
     PlayHitMatterSound(matter);
 

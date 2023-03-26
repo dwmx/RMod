@@ -20,30 +20,7 @@ function SpawnHitEffect(vector HitLoc, vector HitNorm, int LowMask, int HighMask
     local float traceDist;
     local rotator rot;
 
-    // Determine what kind of matter was hit
-    if ((HitActor.Skeletal != None) && (LowMask!=0 || HighMask!=0))
-    {
-        for (j=0; j<HitActor.NumJoints(); j++)
-        {
-            if (((j <  32) && ((LowMask  & (1 <<  j      )) != 0)) ||
-                ((j >= 32) && (j < 64) && ((HighMask & (1 << (j - 32))) != 0)) )
-            {   // Joint j was hit
-                matter = HitActor.MatterForJoint(j);
-                break;
-            }
-        }
-    }
-    else if(HitActor.IsA('LevelInfo'))
-    {
-        matter = HitActor.MatterTrace(HitLoc, Owner.Location, WeaponSweepExtent);   
-        //Only draw decals on walls...
-        if(HitNorm.Z > -0.1 && HitNorm.Z < 0.1)
-            Spawn(class'DecalSlash',,,, rotator(HitNorm));
-    }
-    else
-    {
-        matter = HitActor.MatterForJoint(0);
-    }
+	matter = GetMatterTypeForHitActor(HitActor, HitLoc, LowMask, HighMask);
 
     PlayHitMatterSound(matter);
 

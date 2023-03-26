@@ -6,9 +6,25 @@ class R_AWeapon extends Weapon abstract;
 
 var Class<R_AUtilities> UtilitiesClass;
 
-/** Corresponds with other matter sounds in Engine.Weapon */
+//==============================================================================
+//	Additional sound variables that correspond with Weapon
 var int NumIceSounds;
 var(Sounds) Sound HitIce[3];
+//==============================================================================
+
+//==============================================================================
+//	Hit effect classes for different matter types
+//	Access via GetHitEffectClassForMatterType
+var Class<Actor> HitFleshEffectClass;
+var Class<Actor> HitWoodEffectClass;
+var Class<Actor> HitStoneEffectClass;
+var Class<Actor> HitMetalEffectClass;
+var Class<Actor> HitDirtEffectClass;
+var Class<Actor> HitShieldEffectClass;
+var Class<Actor> HitWeaponEffectClass;
+var Class<Actor> HitBreakableWoodEffectClass;
+var Class<Actor> HitBreakableStoneEffectClass;
+//==============================================================================
 
 /**
 *   PostBeginPlay (override)
@@ -32,12 +48,87 @@ event PostBeginPlay()
 	SpawnWeaponSwipe();
 }
 
+/**
+*	SpawnWeaponSwipe
+*	Spawns the multiplayer-compatible weapon swipe actor. See R_WeaponSwipe for more details
+*/
 function SpawnWeaponSwipe()
 {
 	if(Role == ROLE_Authority)
 	{
 		Spawn(Class'RMod.R_WeaponSwipe', Self);
 	}
+}
+
+/**
+*	GetMatterTypeForHitActor
+*	Returns the matter type for the specified Actor, used during collisions
+*/
+function EMatterType GetMatterTypeForHitActor(Actor HitActor, Vector HitLoc, int LowMask, int HighMask)
+{
+	local int i;
+	
+	if(HitActor == None)
+	{
+		return MATTER_NONE;
+	}
+	
+	if((HitActor.Skeletal) != None && (LowMask != 0 || HighMask != 0))
+	{
+		for(i = 0; i < HitActor.NumJoints(); ++i)
+		{
+			// Copied from Weapon code
+			if (((i <  32) && ((LowMask & (1 << i)) != 0)) || ((i >= 32) && (i < 64) && ((HighMask & (1 << (i - 32))) != 0)))
+			{   // Joint i was hit
+				return HitActor.MatterForJoint(i);
+			}
+		}	
+	}
+	else if(HitActor.IsA('LevelInfo'))
+	{
+		return HitActor.MatterTrace(HitLoc, Owner.Location, WeaponSweepExtent);
+	}
+	else
+	{
+		return HitActor.MatterForJoint(0);
+	}
+}
+
+/**
+*	GetHitEffectClassForMatterType
+*	Helper function that returns the hit effect class that corresponds to the matter type struck
+*/
+function Class<Actor> GetHitEffectClassForMatterType(EMatterType MatterType)
+{
+	local Class<Actor> Result;
+	
+	// Base selection
+	switch(MatterType)
+	{
+	case MATTER_FLESH:			Result = HitFleshEffectClass;         	break;
+	case MATTER_WOOD:			Result = HitWoodEffectClass;          	break;
+	case MATTER_STONE:			Result = HitStoneEffectClass;         	break;
+	case MATTER_METAL:			Result = HitMetalEffectClass;         	break;
+	case MATTER_EARTH:			Result = HitDirtEffectClass;          	break;
+	case MATTER_SHIELD:			Result = HitShieldEffectClass;        	break;
+	case MATTER_WEAPON:			Result = HitWeaponEffectClass;        	break;
+	case MATTER_BREAKABLEWOOD:	Result = HitBreakableWoodEffectClass; 	break;
+	case MATTER_BREAKABLESTONE:	Result = HitBreakableStoneEffectClass;	break;
+	}
+	
+	// Conditional fall-backs
+	if(Result == None)
+	{
+		if(MatterType == MATTER_BREAKABLEWOOD)			Result = HitWoodEffectClass;
+		else if(MatterType == MATTER_WOOD)				Result = HitBreakableWoodEffectClass;
+		else if(MatterType == MATTER_BREAKABLESTONE)	Result = HitStoneEffectClass;
+		else if(MatterType == MATTER_STONE)				Result = HitBreakableStoneEffectClass;
+		
+		// Default
+		else											Result = HitDirtEffectClass;
+	}
+	
+	return Result;
 }
 
 /**
