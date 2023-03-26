@@ -6,12 +6,19 @@ class R_GameOptions extends ReplicationInfo;
 
 var Class<R_AUtilities> UtilitiesClass;
 
+//==============================================================================
+//  Game Options
+//  For ease of use throughout the code, whenever a new option is added here,
+//  add a corresponding accessor function in R_AGameOptionsChecker.
+//==============================================================================
 var config bool bOptionShieldHitStun;
+var config bool bOptionManualBloodlust;
 
 replication
 {
     reliable if(Role == ROLE_Authority)
-        bOptionShieldHitStun;
+        bOptionShieldHitStun,
+        bOptionManualBloodlust;
 }
 
 /**
@@ -36,8 +43,18 @@ event BeginPlay()
             Log(LogString);
         }
 
-        LogGameOption("ShieldHitStun", String(bOptionShieldHitStun));
+        LogAllGameOptions();
     }
+}
+
+/**
+*   LogAllGameOptions
+*   Perform all desired logging of game options here
+*/
+function LogAllGameOptions()
+{
+    LogGameOption("ShieldHitStun", String(bOptionShieldHitStun));
+    LogGameOption("ManualBloodlust", String(bOptionManualBloodlust));
 }
 
 function LogGameOption(String GameOptionNameString, String GameOptionValueString)
@@ -59,4 +76,5 @@ defaultproperties
 {
     UtilitiesClass=Class'RMod.R_AUtilities_GameOptions'
     bOptionShieldHitStun=True
+    bOptionManualBloodlust=True
 }
