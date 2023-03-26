@@ -7,16 +7,16 @@
 class R_RunePlayer extends RunePlayer config(RMod);
 
 //==============================================================================
-//	Statics
+//  Statics
 var Class<R_AUtilities> UtilitiesClass;
 var Class<R_AColors> ColorsClass;
 var Class<R_AGameOptionsChecker> GameOptionsCheckerClass;
 //==============================================================================
 
 //==============================================================================
-//	Sub-class variables
-//	During the Login event, R_GameInfo calls R_RunePlayer.ApplySubClass,
-//	which extracts runeplayer skin data into these variables.
+//  Sub-class variables
+//  During the Login event, R_GameInfo calls R_RunePlayer.ApplySubClass,
+//  which extracts runeplayer skin data into these variables.
 var Class<RunePlayer> RunePlayerSubClass;
 var Class<RunePlayerProxy> RunePlayerProxyClass;
 var Class<Actor> RunePlayerSeveredHeadClass;
@@ -27,7 +27,7 @@ var byte PolyGroupBodyParts[16];
 const MAX_SKEL_GROUP_SKINS = 16;
 struct FSkelGroupSkinArray
 {
-	var Texture Textures[16];
+    var Texture Textures[16];
 };
 // Indexed by BODYPART consts
 var FSkelGroupSkinArray PainSkinArrays[16];
@@ -35,25 +35,25 @@ var FSkelGroupSkinArray GoreCapArrays[16];
 //==============================================================================
 
 //==============================================================================
-//	Weapon Swipes
-//	R_WeaponSwipe grabs these textures and updates itself every
-//	time a weapon swing or throw occurs. If no texture is set for the
-//	corresponding state, then the weapon swipe won't enable itself.
-//	E.g. WeaponSwipeTexture=None will disable normal weapon swipes.
+//  Weapon Swipes
+//  R_WeaponSwipe grabs these textures and updates itself every
+//  time a weapon swing or throw occurs. If no texture is set for the
+//  corresponding state, then the weapon swipe won't enable itself.
+//  E.g. WeaponSwipeTexture=None will disable normal weapon swipes.
 var Texture WeaponSwipeTexture;
 var Texture WeaponSwipeBloodlustTexture;
 var bool bBloodlustReplicated; // Necessary for clients to see bloodlust swipe
 //==============================================================================
 
 //==============================================================================
-//	Loadout Menu
+//  Loadout Menu
 var Class<R_LoadoutReplicationInfo> LoadoutReplicationInfoClass;
 var R_LoadoutReplicationInfo LoadoutReplicationInfo;
 var bool bLoadoutMenuDoNotShow;
 //==============================================================================
 
 //==============================================================================
-//	Spectator related variables
+//  Spectator related variables
 var Class<HUD> HUDTypeSpectator;
 var Class<R_ACamera> SpectatorCameraClass;
 
@@ -61,7 +61,7 @@ var R_ACamera Camera;
 var Name PreviousStateName;
 
 // Replicated for spectator POV mode
-var private float ViewRotPovPitch;	
+var private float ViewRotPovPitch;  
 var private float ViewRotPovYaw;
 
 // When spectating, Fire() will attempt to respawn when this flag is true
@@ -73,11 +73,11 @@ var float SuicideTimeStamp;
 var float SuicideCooldown;
 
 //==============================================================================
-// 	Client Adjustment variables
-//	These variables control the frequency and client error threshold for the
-//	server to send ClientAdjustPosition updates during ServerMove.
-//	This is the client jitter fix
-//	Use exec function ToggleRmodDebug to display markers for client adjusts.
+//  Client Adjustment variables
+//  These variables control the frequency and client error threshold for the
+//  server to send ClientAdjustPosition updates during ServerMove.
+//  This is the client jitter fix
+//  Use exec function ToggleRmodDebug to display markers for client adjusts.
 var float ClientAdjustErrorThreshold;
 var float ClientAdjustCooldownSeconds;
 var bool bShowRmodDebug;
@@ -88,38 +88,38 @@ replication
 {
     // (Variables) Server --> All Clients
     // Initial replication only
-	reliable if(Role == ROLE_Authority && bNetInitial)
-		RunePlayerSubClass;
-	
+    reliable if(Role == ROLE_Authority && bNetInitial)
+        RunePlayerSubClass;
+    
     // (Variables) Server --> All Clients
-	reliable if(Role == ROLE_Authority)
-		HUDTypeSpectator,
-		Camera,
-		WeaponSwipeTexture,
-		WeaponSwipeBloodlustTexture,
-		bBloodlustReplicated;
+    reliable if(Role == ROLE_Authority)
+        HUDTypeSpectator,
+        Camera,
+        WeaponSwipeTexture,
+        WeaponSwipeBloodlustTexture,
+        bBloodlustReplicated;
 
     // (Variables) Server --> Owning Client
     reliable if(Role == ROLE_Authority && RemoteRole == ROLE_AutonomousProxy)
         LoadoutReplicationInfo;
 
     // (Variables) Server --> All Clients (except Owning Client)
-	unreliable if(Role == ROLE_Authority && RemoteRole != ROLE_AutonomousProxy)
-		ViewRotPovPitch,
-		ViewRotPovYaw;
+    unreliable if(Role == ROLE_Authority && RemoteRole != ROLE_AutonomousProxy)
+        ViewRotPovPitch,
+        ViewRotPovYaw;
 
     // (RPCs) Server --> Owning Client
-	reliable if(Role == ROLE_Authority && RemoteRole == ROLE_AutonomousProxy)
-		ClientReceiveUpdatedGamePassword,
-		ClientPreTeleport,
+    reliable if(Role == ROLE_Authority && RemoteRole == ROLE_AutonomousProxy)
+        ClientReceiveUpdatedGamePassword,
+        ClientPreTeleport,
         ClientOpenLoadoutMenu,
         ClientCloseLoadoutMenu;
 
     // (RPCs) Owning Client --> Server
-	reliable if(Role == ROLE_AutonomousProxy && bNetOwner)
-		ServerResetLevel,
-		ServerSpectate,
-		ServerTimeLimit;
+    reliable if(Role == ROLE_AutonomousProxy && bNetOwner)
+        ServerResetLevel,
+        ServerSpectate,
+        ServerTimeLimit;
 }
 
 /**
@@ -128,16 +128,16 @@ replication
 */
 function bool VerifyAdminWithErrorMessage()
 {
-	if(bAdmin)
-	{
-		return true;
-	}
-	else
-	{
-		ClientMessage("You need administrator rights");
-		return false;
-	}
-	return false;
+    if(bAdmin)
+    {
+        return true;
+    }
+    else
+    {
+        ClientMessage("You need administrator rights");
+        return false;
+    }
+    return false;
 }
 
 //==============================================================================
@@ -238,26 +238,26 @@ exec function Throw()
 }
 
 /**
-*	Powerup (override)
-*	Overridden to allow players to manually activate bloodlust by holding the defend
-*	key and pressing the rune power button
+*   Powerup (override)
+*   Overridden to allow players to manually activate bloodlust by holding the defend
+*   key and pressing the rune power button
 */
 exec function Powerup()
 {
     local bool bManualBloodlustActivationAllowed;
     
-	if( bShowMenu || (Level.Pauser!="") || (Role < ROLE_Authority) || Health <= 0)
-	{
-		return;
-	}
-	
+    if( bShowMenu || (Level.Pauser!="") || (Role < ROLE_Authority) || Health <= 0)
+    {
+        return;
+    }
+    
     // Manual bloodlust attempt when alt fire is held
-	if(bAltFire == 1)
-	{
-		if(bBloodLust)
-		{
-			return;
-		}
+    if(bAltFire == 1)
+    {
+        if(bBloodLust)
+        {
+            return;
+        }
         
         // Get manual bloodlust game option
         bManualBloodlustActivationAllowed = false;
@@ -265,23 +265,23 @@ exec function Powerup()
         {
             bManualBloodlustActivationAllowed = GameOptionsCheckerClass.Static.GetGameOption_ManualBloodlust(Self);
         }
-		
+        
         // Try to enable bloodlust manually
-		if(bManualBloodlustActivationAllowed && Strength >= 25)
-		{
-			EnableBloodlust();
-		}
-		else
-		{
-			PlaySound(PowerupFail, SLOT_Interface);
-			ClientMessage("Not enough STRENGTH", 'NoRunePower');
-			return;
-		}
-	}
-	else
-	{
-		Super.Powerup();
-	}
+        if(bManualBloodlustActivationAllowed && Strength >= 25)
+        {
+            EnableBloodlust();
+        }
+        else
+        {
+            PlaySound(PowerupFail, SLOT_Interface);
+            ClientMessage("Not enough STRENGTH", 'NoRunePower');
+            return;
+        }
+    }
+    else
+    {
+        Super.Powerup();
+    }
 }
 
 /**
@@ -292,29 +292,29 @@ exec function Powerup()
 exec function Say( string Msg )
 {
     local Pawn P;
-	local R_GameInfo RGI;
+    local R_GameInfo RGI;
 
     if ( Level.Game.AllowsBroadcast(self, Len(Msg)) )
-	{
-		RGI = R_GameInfo(Level.Game);
+    {
+        RGI = R_GameInfo(Level.Game);
         for( P=Level.PawnList; P!=None; P=P.nextPawn )
-		{
-			// Filter spectator messages as necessary
-			if(RGI != None
-			&& !RGI.bAllowSpectatorBroadcastMessage
-			&& P.PlayerReplicationInfo != None
-			&& PlayerReplicationInfo.bIsSpectator
-			&& !P.PlayerReplicationInfo.bIsSpectator)
-			{
-				continue;
-			}
+        {
+            // Filter spectator messages as necessary
+            if(RGI != None
+            && !RGI.bAllowSpectatorBroadcastMessage
+            && P.PlayerReplicationInfo != None
+            && PlayerReplicationInfo.bIsSpectator
+            && !P.PlayerReplicationInfo.bIsSpectator)
+            {
+                continue;
+            }
 
             if( P.bIsPlayer || P.IsA('MessagingSpectator') )
-			{
+            {
                 P.TeamMessage( PlayerReplicationInfo, Msg, 'Say', true );
-			}
-		}
-	}
+            }
+        }
+    }
     return;
 }
 
@@ -326,7 +326,7 @@ exec function Say( string Msg )
 exec function TeamSay( string Msg )
 {
     local Pawn P;
-	local R_GameInfo RGI;
+    local R_GameInfo RGI;
 
     if ( !Level.Game.bTeamGame )
     {
@@ -341,29 +341,29 @@ exec function TeamSay( string Msg )
     }
             
     if ( Level.Game.AllowsBroadcast(self, Len(Msg)) )
-	{
-		RGI = R_GameInfo(Level.Game);
+    {
+        RGI = R_GameInfo(Level.Game);
         for( P=Level.PawnList; P!=None; P=P.nextPawn )
-		{
-			// Filter spectator messages as necessary
-			if(RGI != None
-			&& !RGI.bAllowSpectatorBroadcastMessage
-			&& P.PlayerReplicationInfo != None
-			&& PlayerReplicationInfo.bIsSpectator
-			&& !P.PlayerReplicationInfo.bIsSpectator)
-			{
-				continue;
-			}
+        {
+            // Filter spectator messages as necessary
+            if(RGI != None
+            && !RGI.bAllowSpectatorBroadcastMessage
+            && P.PlayerReplicationInfo != None
+            && PlayerReplicationInfo.bIsSpectator
+            && !P.PlayerReplicationInfo.bIsSpectator)
+            {
+                continue;
+            }
 
             if( P.bIsPlayer && (P.PlayerReplicationInfo.Team == PlayerReplicationInfo.Team) )
             {
                 if ( P.IsA('PlayerPawn') )
-				{
+                {
                     P.TeamMessage( PlayerReplicationInfo, Msg, 'TeamSay', true );
-				}
+                }
             }
-		}
-	}
+        }
+    }
 }
 
 /**
@@ -375,13 +375,13 @@ exec function TeamSay( string Msg )
 */
 exec function Suicide()
 {
-	// Anti spam
-	if(Level.TimeSeconds - SuicideTimeStamp <= SuicideCooldown)
-	{
-		return;
-	}
+    // Anti spam
+    if(Level.TimeSeconds - SuicideTimeStamp <= SuicideCooldown)
+    {
+        return;
+    }
 
-	SuicideTimeStamp = Level.TimeSeconds;
+    SuicideTimeStamp = Level.TimeSeconds;
     KilledBy( None );
 }
 //==============================================================================
@@ -398,15 +398,15 @@ exec function Suicide()
 */
 exec function LogPlayerIDs()
 {
-	local PlayerReplicationInfo PRI;
-	
-	UtilitiesClass.Static.RModLog("LogPlayerIDs output:");
-	foreach AllActors(Class'Engine.PlayerReplicationInfo', PRI)
-	{
-		UtilitiesClass.Static.RModLog(
-			"ID: " $ PRI.PlayerID $ ", " $
-			"Name: " $ PRI.PlayerName);
-	}
+    local PlayerReplicationInfo PRI;
+    
+    UtilitiesClass.Static.RModLog("LogPlayerIDs output:");
+    foreach AllActors(Class'Engine.PlayerReplicationInfo', PRI)
+    {
+        UtilitiesClass.Static.RModLog(
+            "ID: " $ PRI.PlayerID $ ", " $
+            "Name: " $ PRI.PlayerName);
+    }
 }
 
 /**
@@ -416,25 +416,25 @@ exec function LogPlayerIDs()
 */
 exec function ResetLevel(optional int DurationSeconds)
 {
-	ServerResetLevel(DurationSeconds);
+    ServerResetLevel(DurationSeconds);
 }
 
 function ServerResetLevel(optional int DurationSeconds)
 {
-	local R_GameInfo GI;
-	
-	if(!VerifyAdminWithErrorMessage())
-	{
-		return;
-	}
-	
-	GI = R_GameInfo(Level.Game);
-	if(GI == None)
-	{
-		return;
-	}
-	
-	GI.ResetLevel(DurationSeconds);
+    local R_GameInfo GI;
+    
+    if(!VerifyAdminWithErrorMessage())
+    {
+        return;
+    }
+    
+    GI = R_GameInfo(Level.Game);
+    if(GI == None)
+    {
+        return;
+    }
+    
+    GI.ResetLevel(DurationSeconds);
 }
 
 /**
@@ -443,25 +443,25 @@ function ServerResetLevel(optional int DurationSeconds)
 */
 exec function TimeLimit(int DurationMinutes)
 {
-	ServerTimeLimit(DurationMinutes);
+    ServerTimeLimit(DurationMinutes);
 }
 
 function ServerTimeLimit(int DurationMinutes)
 {
-	local R_GameInfo GI;
-	
-	if(!VerifyAdminWithErrorMessage())
-	{
-		return;
-	}
-	
-	GI = R_GameInfo(Level.Game);
-	if(GI == None)
-	{
-		return;
-	}
-	
-	GI.PlayerSetTimeLimit(self, DurationMinutes);
+    local R_GameInfo GI;
+    
+    if(!VerifyAdminWithErrorMessage())
+    {
+        return;
+    }
+    
+    GI = R_GameInfo(Level.Game);
+    if(GI == None)
+    {
+        return;
+    }
+    
+    GI.PlayerSetTimeLimit(self, DurationMinutes);
 }
 
 /**
@@ -482,19 +482,19 @@ exec function Loadout()
 */
 exec function Spectate()
 {
-	ServerSpectate();
+    ServerSpectate();
 }
 
 function ServerSpectate()
 {
-	local R_GameInfo GI;
-	GI = R_GameInfo(Level.Game);
-	if(GI != None)
-	{
-		// Disable respawning as spectator since player explicitly went into spec mode
-		bRespawnWhenSpectating = false;
-		GI.RequestSpectate(Self);
-	}
+    local R_GameInfo GI;
+    GI = R_GameInfo(Level.Game);
+    if(GI != None)
+    {
+        // Disable respawning as spectator since player explicitly went into spec mode
+        bRespawnWhenSpectating = false;
+        GI.RequestSpectate(Self);
+    }
 }
 
 /**
@@ -504,15 +504,15 @@ function ServerSpectate()
 */
 exec function ToggleRmodDebug()
 {
-	bShowRmodDebug = !bShowRmodDebug;
-	if(bShowRmodDebug && ClientDebugActor == None)
-	{
-		ClientDebugActor = Spawn(Class'RMod.R_ClientDebugActor', Self);
-	}
-	else if(!bShowRmodDebug && ClientDebugActor != None)
-	{
-		ClientDebugActor.Destroy();
-	}
+    bShowRmodDebug = !bShowRmodDebug;
+    if(bShowRmodDebug && ClientDebugActor == None)
+    {
+        ClientDebugActor = Spawn(Class'RMod.R_ClientDebugActor', Self);
+    }
+    else if(!bShowRmodDebug && ClientDebugActor != None)
+    {
+        ClientDebugActor.Destroy();
+    }
 }
 //==============================================================================
 //  End RMod Client Interface
@@ -526,29 +526,29 @@ exec function ToggleRmodDebug()
 */
 event PreBeginPlay()
 {
-	Enable('Tick');
+    Enable('Tick');
 
-	if(R_GameInfo(Level.Game) != None)
-	{
-		PlayerReplicationInfoClass = R_GameInfo(Level.Game).PlayerReplicationInfoClass;
-	}
+    if(R_GameInfo(Level.Game) != None)
+    {
+        PlayerReplicationInfoClass = R_GameInfo(Level.Game).PlayerReplicationInfoClass;
+    }
 
     // Bypass RunePlayer's PreBeginPlay, because it will respawn anim proxy
-	Super(PlayerPawn).PreBeginPlay();
+    Super(PlayerPawn).PreBeginPlay();
 
-	// Spawn Torso Animation proxy
-	AnimProxy = Spawn(Self.RunePlayerProxyClass, Self);
+    // Spawn Torso Animation proxy
+    AnimProxy = Spawn(Self.RunePlayerProxyClass, Self);
 
-	OldCameraStart = Location;
-	OldCameraStart.Z += CameraHeight;
+    OldCameraStart = Location;
+    OldCameraStart.Z += CameraHeight;
 
-	CurrentDist = CameraDist;
-	LastTime = 0;
-	CurrentTime = 0;
-	CurrentRotation = Rotation;
+    CurrentDist = CameraDist;
+    LastTime = 0;
+    CurrentTime = 0;
+    CurrentRotation = Rotation;
 
-	// Adjust CrouchHeight to new DrawScale
-	CrouchHeight = CrouchHeight * DrawScale;
+    // Adjust CrouchHeight to new DrawScale
+    CrouchHeight = CrouchHeight * DrawScale;
 }
 
 /**
@@ -557,25 +557,25 @@ event PreBeginPlay()
 */
 event PostBeginPlay()
 {
-	local R_GameInfo RGI;
+    local R_GameInfo RGI;
 
-	Super.PostBeginPlay();
+    Super.PostBeginPlay();
 
-	RGI = R_GameInfo(Level.Game);
-	if(RGI != None)
-	{
+    RGI = R_GameInfo(Level.Game);
+    if(RGI != None)
+    {
         MaxHealth = RGI.DefaultPlayerMaxHealth;
         Health = RGI.DefaultPlayerHealth;
         MaxPower = RGI.DefaultPlayerMaxRunePower;
         RunePower = RGI.DefaultPlayerRunePower;
 
-		HUDTypeSpectator = RGI.HUDTypeSpectator;
+        HUDTypeSpectator = RGI.HUDTypeSpectator;
 
         if(RGI.bLoadoutsEnabled)
         {
             SpawnLoadoutReplicationInfo();
         }
-	}
+    }
 }
 
 /**
@@ -584,12 +584,12 @@ event PostBeginPlay()
 */
 event PostRender(Canvas C)
 {
-	Super.PostRender(C);
-	
-	if(bShowRmodDebug && ClientDebugActor != None)
-	{
-		ClientDebugActor.PostRender(C);
-	}
+    Super.PostRender(C);
+    
+    if(bShowRmodDebug && ClientDebugActor != None)
+    {
+        ClientDebugActor.PostRender(C);
+    }
 }
 
 /**
@@ -599,66 +599,66 @@ event PostRender(Canvas C)
 */
 event PreRender( canvas Canvas )
 {
-	if (bDebug==1)
-	{
-		if (myDebugHUD   != None)
-			myDebugHUD.PreRender(Canvas);
-		else if ( Viewport(Player) != None )
-			myDebugHUD = spawn(Class'Engine.DebugHUD', self);
-	}
+    if (bDebug==1)
+    {
+        if (myDebugHUD   != None)
+            myDebugHUD.PreRender(Canvas);
+        else if ( Viewport(Player) != None )
+            myDebugHUD = spawn(Class'Engine.DebugHUD', self);
+    }
 
-	// Ensure normal hud is in use
-	if(myHUD != None && R_RunePlayerHUDSpectator(myHUD) != None)
-	{
-		myHUD.Destroy();
-	}
+    // Ensure normal hud is in use
+    if(myHUD != None && R_RunePlayerHUDSpectator(myHUD) != None)
+    {
+        myHUD.Destroy();
+    }
 
-	if(myHUD == None || (myHUD != None && HUDType != None && myHUD.Class != HUDType))
-	{
-		if(myHUD == None)
-		{
-			myHUD.Destroy();
-		}
-		myHUD = Spawn(HUDType, Self);
-	}
+    if(myHUD == None || (myHUD != None && HUDType != None && myHUD.Class != HUDType))
+    {
+        if(myHUD == None)
+        {
+            myHUD.Destroy();
+        }
+        myHUD = Spawn(HUDType, Self);
+    }
 
-	if(myHUD != None)
-	{
-		myHUD.PreRender(Canvas);
-	}
+    if(myHUD != None)
+    {
+        myHUD.PreRender(Canvas);
+    }
 
-	if (bClientSideAlpha)
-	{
-		OldStyle = Style;
-		OldScale = AlphaScale;
-		Style = STY_AlphaBlend;
-		AlphaScale = ClientSideAlphaScale;
-	}
+    if (bClientSideAlpha)
+    {
+        OldStyle = Style;
+        OldScale = AlphaScale;
+        Style = STY_AlphaBlend;
+        AlphaScale = ClientSideAlphaScale;
+    }
 }
 
 /**
-*	Tick (override)
-*	Overridden to perform server-side update of bBloodlustReplicated
+*   Tick (override)
+*   Overridden to perform server-side update of bBloodlustReplicated
 */
 event Tick(float DeltaSeconds)
 {
-	Super.Tick(DeltaSeconds);
-	
-	if(Role == ROLE_Authority)
-	{
-		bBloodlustReplicated = bBloodlust;
-	}
+    Super.Tick(DeltaSeconds);
+    
+    if(Role == ROLE_Authority)
+    {
+        bBloodlustReplicated = bBloodlust;
+    }
 }
 
 
 
 event Destroyed()
 {
-	if(Role == ROLE_Authority && LoadoutReplicationInfo != None)
+    if(Role == ROLE_Authority && LoadoutReplicationInfo != None)
     {
         LoadoutReplicationInfo.Destroy();
     }
-	
+    
     Super.Destroyed();
 }
 
@@ -669,22 +669,22 @@ event Destroyed()
 */
 event bool PreTeleport(Teleporter InTeleporter)
 {
-	if(!Super.PreTeleport(InTeleporter))
-	{
-		return false;
-	}
+    if(!Super.PreTeleport(InTeleporter))
+    {
+        return false;
+    }
 
-	if(Role == ROLE_Authority)
-	{
-		ClientPreTeleport(InTeleporter);
-	}
-	DoPreTeleport(InTeleporter);
-	return true;
+    if(Role == ROLE_Authority)
+    {
+        ClientPreTeleport(InTeleporter);
+    }
+    DoPreTeleport(InTeleporter);
+    return true;
 }
 
 function ClientPreTeleport(Teleporter InTeleporter)
 {
-	DoPreTeleport(InTeleporter);
+    DoPreTeleport(InTeleporter);
 }
 
 /**
@@ -694,31 +694,31 @@ function ClientPreTeleport(Teleporter InTeleporter)
 */
 function DoPreTeleport(Teleporter InTeleporter)
 {
-	local Rotator NewRotation;
-	local Vector NewLocation;
-	local Rotator NewViewRotation;
+    local Rotator NewRotation;
+    local Vector NewLocation;
+    local Rotator NewViewRotation;
 
-	// Client-side prediction
-	if(Role < ROLE_Authority)
-	{
-		NewRotation = InTeleporter.Rotation;
-		NewRotation.Pitch = 0;
-		NewRotation.Roll = 0;
+    // Client-side prediction
+    if(Role < ROLE_Authority)
+    {
+        NewRotation = InTeleporter.Rotation;
+        NewRotation.Pitch = 0;
+        NewRotation.Roll = 0;
 
-		NewLocation = InTeleporter.Location;
+        NewLocation = InTeleporter.Location;
 
-		OldCameraStart = (OldCameraStart - Location) + NewLocation;
-		SavedCameraLoc = (SavedCameraLoc - Location) + NewLocation;
-		
-		NewViewRotation = NewRotation;
-		NewViewRotation.Pitch = ViewRotation.Pitch;
+        OldCameraStart = (OldCameraStart - Location) + NewLocation;
+        SavedCameraLoc = (SavedCameraLoc - Location) + NewLocation;
+        
+        NewViewRotation = NewRotation;
+        NewViewRotation.Pitch = ViewRotation.Pitch;
 
-		ViewLocation = SavedCameraLoc;
-		ViewRotation = NewViewRotation;
+        ViewLocation = SavedCameraLoc;
+        ViewRotation = NewViewRotation;
 
-		SetLocation(NewLocation);
-		SetRotation(NewRotation);
-	}
+        SetLocation(NewLocation);
+        SetRotation(NewRotation);
+    }
 }
 
 
@@ -731,8 +731,8 @@ function DoPreTeleport(Teleporter InTeleporter)
 */
 function ClientReceiveUpdatedGamePassword(String NewGamePassword)
 {
-	UpdateURL("Password", NewGamePassword, false);
-	ClientMessage("Local password has been updated:" @ NewGamePassword);
+    UpdateURL("Password", NewGamePassword, false);
+    ClientMessage("Local password has been updated:" @ NewGamePassword);
 }
 
 /**
@@ -742,23 +742,23 @@ function ClientReceiveUpdatedGamePassword(String NewGamePassword)
 */
 function DiscardInventory()
 {
-	local Inventory Curr;
-	local Inventory Next;
-	
-	for(Curr = Self.Inventory; Curr != None; Curr = Next)
-	{
-		Next = Curr.Inventory;
-		DeleteInventory(Curr);
-		Curr.Destroy();
-	}
-	
-	Self.Weapon = None;
-	Self.SelectedItem = None;
-	Self.Shield = None;
-	
-	Self.StowSpot[0] = None;
-	Self.StowSpot[1] = None;
-	Self.StowSpot[2] = None;
+    local Inventory Curr;
+    local Inventory Next;
+    
+    for(Curr = Self.Inventory; Curr != None; Curr = Next)
+    {
+        Next = Curr.Inventory;
+        DeleteInventory(Curr);
+        Curr.Destroy();
+    }
+    
+    Self.Weapon = None;
+    Self.SelectedItem = None;
+    Self.Shield = None;
+    
+    Self.StowSpot[0] = None;
+    Self.StowSpot[1] = None;
+    Self.StowSpot[2] = None;
 }
 
 /**
@@ -769,7 +769,7 @@ function DiscardInventory()
 function ChangeName(coerce String S)
 {
     // Last arg = true causes GameInfo to broadcast a message
-	Level.Game.ChangeName(Self, S, true);
+    Level.Game.ChangeName(Self, S, true);
 }
 
 //==============================================================================
@@ -783,50 +783,50 @@ function ChangeName(coerce String S)
 */
 function ApplySubClass(Class<RunePlayer> SubClass)
 {
-	local RunePlayer Dummy;
+    local RunePlayer Dummy;
     local int i, j;
-	
-	Self.RunePlayerSubClass = SubClass;
-	ApplySubClass_ExtractDefaults(SubClass);
-	
-	// Spawn a Dummy instance to get info from functions
-	if(Role == ROLE_Authority
-	&& R_GameInfo(Level.Game) != None
-	&& SubClass != R_GameInfo(Level.Game).SpectatorMarkerClass)
-	{
-		// Disable collision so Dummy pawn doesn't explode
-		Self.SetCollision(false, false, false);
-		Dummy = Spawn(SubClass, self);
-		if(Dummy != None)
-		{
-			Dummy.SetCollision(false, false, false);
-			Dummy.bHidden = true;
-			Dummy.RemoteRole = ROLE_None;
+    
+    Self.RunePlayerSubClass = SubClass;
+    ApplySubClass_ExtractDefaults(SubClass);
+    
+    // Spawn a Dummy instance to get info from functions
+    if(Role == ROLE_Authority
+    && R_GameInfo(Level.Game) != None
+    && SubClass != R_GameInfo(Level.Game).SpectatorMarkerClass)
+    {
+        // Disable collision so Dummy pawn doesn't explode
+        Self.SetCollision(false, false, false);
+        Dummy = Spawn(SubClass, self);
+        if(Dummy != None)
+        {
+            Dummy.SetCollision(false, false, false);
+            Dummy.bHidden = true;
+            Dummy.RemoteRole = ROLE_None;
 
-			ApplySubClass_ExtractBodyPartData(SubClass, Dummy);
-			ApplySubClass_ExtractPainSkinData(SubClass, Dummy);
-			ApplySubClass_ExtractGoreCapData(SubClass, Dummy);
-			
-			// Destroy Dummy and turn collision back on
-			//		When you spawn a PlayerPawn, GameInfo.Login does not get called,
-			//		but GameInfo.Logout DOES get called when the pawn is destroyed.
-			//		This is the cause of the negative player count bug.
-			//		R_GameInfo looks for the dummy tag and ignores the destroyed
-			//		pawn at GameInfo.Logout to bypass the issue
-			ApplyDummyTag(Dummy);
-			Dummy.Destroy();
-		}
-		Self.SetCollision(true, true, true);
-	}
+            ApplySubClass_ExtractBodyPartData(SubClass, Dummy);
+            ApplySubClass_ExtractPainSkinData(SubClass, Dummy);
+            ApplySubClass_ExtractGoreCapData(SubClass, Dummy);
+            
+            // Destroy Dummy and turn collision back on
+            //      When you spawn a PlayerPawn, GameInfo.Login does not get called,
+            //      but GameInfo.Logout DOES get called when the pawn is destroyed.
+            //      This is the cause of the negative player count bug.
+            //      R_GameInfo looks for the dummy tag and ignores the destroyed
+            //      pawn at GameInfo.Logout to bypass the issue
+            ApplyDummyTag(Dummy);
+            Dummy.Destroy();
+        }
+        Self.SetCollision(true, true, true);
+    }
 
-	// Extract the menu name so this looks correct in server browser
-	ApplySubClass_ExtractMenuName(SubClass);
-	
-	// If player explicitly joined as a spectator, disable respawning from spec mode
-	if(SubClass == Class'RMod.R_ASpectatorMarker')
-	{
-		bRespawnWhenSpectating = false;
-	}
+    // Extract the menu name so this looks correct in server browser
+    ApplySubClass_ExtractMenuName(SubClass);
+    
+    // If player explicitly joined as a spectator, disable respawning from spec mode
+    if(SubClass == Class'RMod.R_ASpectatorMarker')
+    {
+        bRespawnWhenSpectating = false;
+    }
 }
 
 /**
@@ -835,7 +835,7 @@ function ApplySubClass(Class<RunePlayer> SubClass)
 */
 static function ApplyDummyTag(Actor A)
 {
-	A.Tag = 'RMODDUMMY';
+    A.Tag = 'RMODDUMMY';
 }
 
 /**
@@ -844,11 +844,11 @@ static function ApplyDummyTag(Actor A)
 */
 static function bool CheckForDummyTag(Actor A)
 {
-	if(A.Tag == 'RMODDUMMY')
-	{
-		return true;
-	}
-	return false;
+    if(A.Tag == 'RMODDUMMY')
+    {
+        return true;
+    }
+    return false;
 }
 
 /**
@@ -857,9 +857,9 @@ static function bool CheckForDummyTag(Actor A)
 */
 function ApplySubClass_ExtractDefaults(Class<RunePlayer> SubClass)
 {
-	local int i;
+    local int i;
 
-	Self.WeaponPickupSound          = SubClass.Default.WeaponPickupSound;
+    Self.WeaponPickupSound          = SubClass.Default.WeaponPickupSound;
     Self.WeaponThrowSound           = SubClass.Default.WeaponThrowSound;
     Self.WeaponDropSound            = SubClass.Default.WeaponDropSound;
     for(i = 0; i < 3; ++i)
@@ -902,7 +902,7 @@ function ApplySubClass_ExtractDefaults(Class<RunePlayer> SubClass)
         Self.JointFlags[i]          = SubClass.Default.JointFlags[i];
     for(i = 0; i < 50; ++i)
         Self.JointChild[i]          = SubClass.Default.JointChild[i];
-	Self.SubstituteMesh				= SubClass.Default.SubstituteMesh;
+    Self.SubstituteMesh             = SubClass.Default.SubstituteMesh;
 }
 
 /**
@@ -913,15 +913,15 @@ function ApplySubClass_ExtractDefaults(Class<RunePlayer> SubClass)
 */
 function ApplySubClass_ExtractBodyPartData(Class<RunePlayer> SubClass, RunePlayer SubClassInstance)
 {
-	local int i;
+    local int i;
 
-	for(i = 0; i < 16; ++i)
-	{
-		PolyGroupBodyParts[i] = SubClassInstance.BodyPartForPolyGroup(i);
-	}
+    for(i = 0; i < 16; ++i)
+    {
+        PolyGroupBodyParts[i] = SubClassInstance.BodyPartForPolyGroup(i);
+    }
 
-	RunePlayerSeveredHeadClass = SubClassInstance.SeveredLimbClass(BODYPART_HEAD);
-	RunePlayerSeveredLimbClass = SubClassInstance.SeveredLimbClass(BODYPART_LARM1);
+    RunePlayerSeveredHeadClass = SubClassInstance.SeveredLimbClass(BODYPART_HEAD);
+    RunePlayerSeveredLimbClass = SubClassInstance.SeveredLimbClass(BODYPART_LARM1);
 }
 
 /**
@@ -930,32 +930,32 @@ function ApplySubClass_ExtractBodyPartData(Class<RunePlayer> SubClass, RunePlaye
 */
 function ApplySubClass_ExtractPainSkinData(Class<RunePlayer> SubClass, RunePlayer SubClassInstance)
 {
-	local int i, j;
+    local int i, j;
 
-	// Initialize pain skins
-	for(i = 0; i < NUM_BODYPARTS; ++i)
-	{
-		for(j = 0; j < MAX_SKEL_GROUP_SKINS; ++j)
-		{
-			PainSkinArrays[i].Textures[j] = None;
-		}
-	}
+    // Initialize pain skins
+    for(i = 0; i < NUM_BODYPARTS; ++i)
+    {
+        for(j = 0; j < MAX_SKEL_GROUP_SKINS; ++j)
+        {
+            PainSkinArrays[i].Textures[j] = None;
+        }
+    }
 
-	// Extract from subclass
-	for(i = 0; i < NUM_BODYPARTS; ++i)
-	{
-		for(j = 0; j < MAX_SKEL_GROUP_SKINS; ++j)
-		{
-			SubClassInstance.SkelGroupSkins[i] = None;
-		}
+    // Extract from subclass
+    for(i = 0; i < NUM_BODYPARTS; ++i)
+    {
+        for(j = 0; j < MAX_SKEL_GROUP_SKINS; ++j)
+        {
+            SubClassInstance.SkelGroupSkins[i] = None;
+        }
 
-		SubClassInstance.PainSkin(i);
+        SubClassInstance.PainSkin(i);
 
-		for(j = 0; j < MAX_SKEL_GROUP_SKINS; ++j)
-		{
-			PainSkinArrays[i].Textures[j] = SubClassInstance.SkelGroupSkins[j];
-		}
-	}
+        for(j = 0; j < MAX_SKEL_GROUP_SKINS; ++j)
+        {
+            PainSkinArrays[i].Textures[j] = SubClassInstance.SkelGroupSkins[j];
+        }
+    }
 }
 
 /**
@@ -964,32 +964,32 @@ function ApplySubClass_ExtractPainSkinData(Class<RunePlayer> SubClass, RunePlaye
 */
 function ApplySubClass_ExtractGoreCapData(Class<RunePlayer> SubClass, RunePlayer SubClassInstance)
 {
-	local int i, j;
+    local int i, j;
 
-	// Initialize gore cap skins
-	for(i = 0; i < NUM_BODYPARTS; ++i)
-	{
-		for(j = 0; j < MAX_SKEL_GROUP_SKINS; ++j)
-		{
-			GoreCapArrays[i].Textures[j] = None;
-		}
-	}
+    // Initialize gore cap skins
+    for(i = 0; i < NUM_BODYPARTS; ++i)
+    {
+        for(j = 0; j < MAX_SKEL_GROUP_SKINS; ++j)
+        {
+            GoreCapArrays[i].Textures[j] = None;
+        }
+    }
 
-	// Extract from subclass
-	for(i = 0; i < NUM_BODYPARTS; ++i)
-	{
-		for(j = 0; j < MAX_SKEL_GROUP_SKINS; ++j)
-		{
-			SubClassInstance.SkelGroupSkins[i] = None;
-		}
+    // Extract from subclass
+    for(i = 0; i < NUM_BODYPARTS; ++i)
+    {
+        for(j = 0; j < MAX_SKEL_GROUP_SKINS; ++j)
+        {
+            SubClassInstance.SkelGroupSkins[i] = None;
+        }
 
-		SubClassInstance.ApplyGoreCap(i);
+        SubClassInstance.ApplyGoreCap(i);
 
-		for(j = 0; j < MAX_SKEL_GROUP_SKINS; ++j)
-		{
-			GoreCapArrays[i].Textures[j] = SubClassInstance.SkelGroupSkins[j];
-		}
-	}
+        for(j = 0; j < MAX_SKEL_GROUP_SKINS; ++j)
+        {
+            GoreCapArrays[i].Textures[j] = SubClassInstance.SkelGroupSkins[j];
+        }
+    }
 }
 
 /**
@@ -1000,277 +1000,277 @@ function ApplySubClass_ExtractGoreCapData(Class<RunePlayer> SubClass, RunePlayer
 */
 function ApplySubClass_ExtractMenuName(Class<RunePlayer> SubClass)
 {
-	local String ClassString;
-	local String EntryString, DescriptionString;
-	local int i;
+    local String ClassString;
+    local String EntryString, DescriptionString;
+    local int i;
 
-	ClassString = Level.GetNextInt("RuneI.RunePlayer", 0);
-	for(i = 0; ClassString != ""; ClassString = Level.GetNextInt("RuneI.RunePlayer", ++i))
-	{
-		if(ClassString == String(SubClass))
-		{
-			Level.GetNextIntDesc("RuneI.RunePlayer", i, EntryString, DescriptionString);
-			MenuName = DescriptionString;
-			return;
-		}
-	}
+    ClassString = Level.GetNextInt("RuneI.RunePlayer", 0);
+    for(i = 0; ClassString != ""; ClassString = Level.GetNextInt("RuneI.RunePlayer", ++i))
+    {
+        if(ClassString == String(SubClass))
+        {
+            Level.GetNextIntDesc("RuneI.RunePlayer", i, EntryString, DescriptionString);
+            MenuName = DescriptionString;
+            return;
+        }
+    }
 
-	MenuName = "RMod Rune Player";
+    MenuName = "RMod Rune Player";
 }
 //==============================================================================
 //  End Sub-Class Functions
 //==============================================================================
 
 /**
-*	GetWeaponSwipeTexture
-*	Return the texture this player wishes to use as their weapon swipe texture
+*   GetWeaponSwipeTexture
+*   Return the texture this player wishes to use as their weapon swipe texture
 */
 simulated function Texture GetWeaponSwipeTexture()
 {
-	if(bBloodlustReplicated)
-	{
-		return WeaponSwipeBloodlustTexture;
-	}
-	else
-	{
-		return WeaponSwipeTexture;
-	}
+    if(bBloodlustReplicated)
+    {
+        return WeaponSwipeBloodlustTexture;
+    }
+    else
+    {
+        return WeaponSwipeTexture;
+    }
 }
 simulated function float GetWeaponSwipeSpeed()
 {
-	return 7.0;
+    return 7.0;
 }
 
 /**
 *   ServerMove (override)
-*	Overridden for the following reasons:
+*   Overridden for the following reasons:
 *   -   Clients who have a high net speed variable will have a ClientAdjust
 *       called every single tick. Override implements a fix.
 *   -   Client view pitch and view yaw are replicated so that spectators can
 *       view in point-of-view mode.
 */
 function ServerMove(
-	float TimeStamp, 
-	vector InAccel, 
-	vector ClientLoc,
-	bool NewbRun,
-	bool NewbDuck,
-	bool NewbJumpStatus, 
-	bool bFired,
-	bool bAltFired,
-	bool bForceFire,
-	bool bForceAltFire,
-	eDodgeDir DodgeMove, 
-	byte ClientRoll, 
-	int View,
-	optional byte OldTimeDelta,
-	optional int OldAccel)
+    float TimeStamp, 
+    vector InAccel, 
+    vector ClientLoc,
+    bool NewbRun,
+    bool NewbDuck,
+    bool NewbJumpStatus, 
+    bool bFired,
+    bool bAltFired,
+    bool bForceFire,
+    bool bForceAltFire,
+    eDodgeDir DodgeMove, 
+    byte ClientRoll, 
+    int View,
+    optional byte OldTimeDelta,
+    optional int OldAccel)
 {
-	local float DeltaTime, clientErr, OldTimeStamp;
-	local bool bPerformClientAdjust;
-	local rotator DeltaRot, Rot;
-	local vector Accel, LocDiff;
-	local int maxPitch, ViewPitch, ViewYaw;
-	local actor OldBase;
+    local float DeltaTime, clientErr, OldTimeStamp;
+    local bool bPerformClientAdjust;
+    local rotator DeltaRot, Rot;
+    local vector Accel, LocDiff;
+    local int maxPitch, ViewPitch, ViewYaw;
+    local actor OldBase;
 
-	local bool NewbPressedJump, OldbRun, OldbDuck;
-	local eDodgeDir OldDodgeMove;
+    local bool NewbPressedJump, OldbRun, OldbDuck;
+    local eDodgeDir OldDodgeMove;
 
-	// If this move is outdated, discard it.
-	if ( CurrentTimeStamp >= TimeStamp )
-	{
-		return;
-	}
+    // If this move is outdated, discard it.
+    if ( CurrentTimeStamp >= TimeStamp )
+    {
+        return;
+    }
 
-	// Update bReadyToPlay for clients
-	if ( PlayerReplicationInfo != None )
-		PlayerReplicationInfo.bReadyToPlay = bReadyToPlay;
+    // Update bReadyToPlay for clients
+    if ( PlayerReplicationInfo != None )
+        PlayerReplicationInfo.bReadyToPlay = bReadyToPlay;
 
-	// if OldTimeDelta corresponds to a lost packet, process it first
-	if (  OldTimeDelta != 0 )
-	{
-		OldTimeStamp = TimeStamp - float(OldTimeDelta)/500 - 0.001;
-		if ( CurrentTimeStamp < OldTimeStamp - 0.001 )
-		{
-			// split out components of lost move (approx)
-			Accel.X = OldAccel >>> 23;
-			if ( Accel.X > 127 )
-				Accel.X = -1 * (Accel.X - 128);
-			Accel.Y = (OldAccel >>> 15) & 255;
-			if ( Accel.Y > 127 )
-				Accel.Y = -1 * (Accel.Y - 128);
-			Accel.Z = (OldAccel >>> 7) & 255;
-			if ( Accel.Z > 127 )
-				Accel.Z = -1 * (Accel.Z - 128);
-			Accel *= 20;
-			
-			OldbRun = ( (OldAccel & 64) != 0 );
-			OldbDuck = ( (OldAccel & 32) != 0 );
-			NewbPressedJump = ( (OldAccel & 16) != 0 );
-			if ( NewbPressedJump )
-				bJumpStatus = NewbJumpStatus;
+    // if OldTimeDelta corresponds to a lost packet, process it first
+    if (  OldTimeDelta != 0 )
+    {
+        OldTimeStamp = TimeStamp - float(OldTimeDelta)/500 - 0.001;
+        if ( CurrentTimeStamp < OldTimeStamp - 0.001 )
+        {
+            // split out components of lost move (approx)
+            Accel.X = OldAccel >>> 23;
+            if ( Accel.X > 127 )
+                Accel.X = -1 * (Accel.X - 128);
+            Accel.Y = (OldAccel >>> 15) & 255;
+            if ( Accel.Y > 127 )
+                Accel.Y = -1 * (Accel.Y - 128);
+            Accel.Z = (OldAccel >>> 7) & 255;
+            if ( Accel.Z > 127 )
+                Accel.Z = -1 * (Accel.Z - 128);
+            Accel *= 20;
+            
+            OldbRun = ( (OldAccel & 64) != 0 );
+            OldbDuck = ( (OldAccel & 32) != 0 );
+            NewbPressedJump = ( (OldAccel & 16) != 0 );
+            if ( NewbPressedJump )
+                bJumpStatus = NewbJumpStatus;
 
-			switch (OldAccel & 7)
-			{
-				case 0:
-					OldDodgeMove = DODGE_None;
-					break;
-				case 1:
-					OldDodgeMove = DODGE_Left;
-					break;
-				case 2:
-					OldDodgeMove = DODGE_Right;
-					break;
-				case 3:
-					OldDodgeMove = DODGE_Forward;
-					break;
-				case 4:
-					OldDodgeMove = DODGE_Back;
-					break;
-			}
-			//log("Recovered move from "$OldTimeStamp$" acceleration "$Accel$" from "$OldAccel);
-			MoveAutonomous(OldTimeStamp - CurrentTimeStamp, OldbRun, OldbDuck, NewbPressedJump, OldDodgeMove, Accel, rot(0,0,0));
-			CurrentTimeStamp = OldTimeStamp;
-		}
-	}		
+            switch (OldAccel & 7)
+            {
+                case 0:
+                    OldDodgeMove = DODGE_None;
+                    break;
+                case 1:
+                    OldDodgeMove = DODGE_Left;
+                    break;
+                case 2:
+                    OldDodgeMove = DODGE_Right;
+                    break;
+                case 3:
+                    OldDodgeMove = DODGE_Forward;
+                    break;
+                case 4:
+                    OldDodgeMove = DODGE_Back;
+                    break;
+            }
+            //log("Recovered move from "$OldTimeStamp$" acceleration "$Accel$" from "$OldAccel);
+            MoveAutonomous(OldTimeStamp - CurrentTimeStamp, OldbRun, OldbDuck, NewbPressedJump, OldDodgeMove, Accel, rot(0,0,0));
+            CurrentTimeStamp = OldTimeStamp;
+        }
+    }       
 
-	// View components
-	ViewPitch = View/32768;
-	ViewYaw = 2 * (View - 32768 * ViewPitch);
-	ViewPitch *= 2;
-	// Make acceleration.
-	Accel = InAccel/10;
+    // View components
+    ViewPitch = View/32768;
+    ViewYaw = 2 * (View - 32768 * ViewPitch);
+    ViewPitch *= 2;
+    // Make acceleration.
+    Accel = InAccel/10;
 
-	NewbPressedJump = (bJumpStatus != NewbJumpStatus);
-	bJumpStatus = NewbJumpStatus;
+    NewbPressedJump = (bJumpStatus != NewbJumpStatus);
+    bJumpStatus = NewbJumpStatus;
 
-	// handle firing and alt-firing
-	if(bFired)
-	{
-		if(bForceFire && (Weapon != None) )
-		{
-//RUNE			Weapon.ForceFire();
-			Fire(0);
-		}
-		else if(bFire == 0)
-		{
-			Fire(0);
-		}
-		bFire = 1;
-	}
-	else
-		bFire = 0;
+    // handle firing and alt-firing
+    if(bFired)
+    {
+        if(bForceFire && (Weapon != None) )
+        {
+//RUNE          Weapon.ForceFire();
+            Fire(0);
+        }
+        else if(bFire == 0)
+        {
+            Fire(0);
+        }
+        bFire = 1;
+    }
+    else
+        bFire = 0;
 
 
-	if(bAltFired)
-	{
-		if(bForceAltFire && (Shield != None))
-			AltFire(0);
-//RUNE			Weapon.ForceAltFire();
-		else if(bAltFire == 0)
-			AltFire(0);
-		bAltFire = 1;
-	}
-	else
-		bAltFire = 0;
+    if(bAltFired)
+    {
+        if(bForceAltFire && (Shield != None))
+            AltFire(0);
+//RUNE          Weapon.ForceAltFire();
+        else if(bAltFire == 0)
+            AltFire(0);
+        bAltFire = 1;
+    }
+    else
+        bAltFire = 0;
 
-	// Save move parameters.
-	DeltaTime = TimeStamp - CurrentTimeStamp;
-	if ( ServerTimeStamp > 0 )
-	{
-		// allow 1% error
-		TimeMargin += DeltaTime - 1.01 * (Level.TimeSeconds - ServerTimeStamp);
-		if ( TimeMargin > MaxTimeMargin )
-		{
-			// player is too far ahead
-			TimeMargin -= DeltaTime;
-			if ( TimeMargin < 0.5 )
-				MaxTimeMargin = Default.MaxTimeMargin;
-			else
-				MaxTimeMargin = 0.5;
-			DeltaTime = 0;
-		}
-	}
+    // Save move parameters.
+    DeltaTime = TimeStamp - CurrentTimeStamp;
+    if ( ServerTimeStamp > 0 )
+    {
+        // allow 1% error
+        TimeMargin += DeltaTime - 1.01 * (Level.TimeSeconds - ServerTimeStamp);
+        if ( TimeMargin > MaxTimeMargin )
+        {
+            // player is too far ahead
+            TimeMargin -= DeltaTime;
+            if ( TimeMargin < 0.5 )
+                MaxTimeMargin = Default.MaxTimeMargin;
+            else
+                MaxTimeMargin = 0.5;
+            DeltaTime = 0;
+        }
+    }
 
-	CurrentTimeStamp = TimeStamp;
-	ServerTimeStamp = Level.TimeSeconds;
-	Rot.Roll = 256 * ClientRoll;
-	Rot.Yaw = ViewYaw;
-	if ( (Physics == PHYS_Swimming) || (Physics == PHYS_Flying) )
-		maxPitch = 2;
-	else
-		maxPitch = 1;
-	If ( (ViewPitch > maxPitch * RotationRate.Pitch) && (ViewPitch < 65536 - maxPitch * RotationRate.Pitch) )
-	{
-		If (ViewPitch < 32768) 
-			Rot.Pitch = maxPitch * RotationRate.Pitch;
-		else
-			Rot.Pitch = 65536 - maxPitch * RotationRate.Pitch;
-	}
-	else
-		Rot.Pitch = ViewPitch;
-	DeltaRot = (Rotation - Rot);
-	ViewRotation.Pitch = ViewPitch;
-	ViewRotation.Yaw = ViewYaw;
-	ViewRotation.Roll = 0;
-	SetRotation(Rot);
+    CurrentTimeStamp = TimeStamp;
+    ServerTimeStamp = Level.TimeSeconds;
+    Rot.Roll = 256 * ClientRoll;
+    Rot.Yaw = ViewYaw;
+    if ( (Physics == PHYS_Swimming) || (Physics == PHYS_Flying) )
+        maxPitch = 2;
+    else
+        maxPitch = 1;
+    If ( (ViewPitch > maxPitch * RotationRate.Pitch) && (ViewPitch < 65536 - maxPitch * RotationRate.Pitch) )
+    {
+        If (ViewPitch < 32768) 
+            Rot.Pitch = maxPitch * RotationRate.Pitch;
+        else
+            Rot.Pitch = 65536 - maxPitch * RotationRate.Pitch;
+    }
+    else
+        Rot.Pitch = ViewPitch;
+    DeltaRot = (Rotation - Rot);
+    ViewRotation.Pitch = ViewPitch;
+    ViewRotation.Yaw = ViewYaw;
+    ViewRotation.Roll = 0;
+    SetRotation(Rot);
 
-	OldBase = Base;
+    OldBase = Base;
 
-	// Perform actual movement.
-	if ( (Level.Pauser == "") && (DeltaTime > 0) )
-		MoveAutonomous(DeltaTime, NewbRun, NewbDuck, NewbPressedJump, DodgeMove, Accel, DeltaRot);
+    // Perform actual movement.
+    if ( (Level.Pauser == "") && (DeltaTime > 0) )
+        MoveAutonomous(DeltaTime, NewbRun, NewbDuck, NewbPressedJump, DodgeMove, Accel, DeltaRot);
 
-	// Check for client error with time threshold
+    // Check for client error with time threshold
     if(Level.TimeSeconds - LastUpdateTime > ClientAdjustCooldownSeconds)
-	{
-		LocDiff = Location - ClientLoc;
-		ClientErr = LocDiff Dot LocDiff;
-		
-		if(ClientErr >= ClientAdjustErrorThreshold)
-		{
-			bPerformClientAdjust = true;
-		}
-	}
-	
-	// Always perform client adjust when state changes
-	if(GetStateName() != PreviousStateName)
-	{
-		PreviousStateName = GetStateName();
-		bPerformClientAdjust = true;
-	}
-	
-	if(bPerformClientAdjust)
-	{
-		if ( Mover(Base) != None )
-			ClientLoc = Location - Base.Location;
-		else
-			ClientLoc = Location;
-		//log("Client Error at "$TimeStamp$" is "$ClientErr$" with acceleration "$Accel$" LocDiff "$LocDiff$" Physics "$Physics);
-		LastUpdateTime = Level.TimeSeconds;
-		ClientAdjustPosition
-		(
-			TimeStamp,
-			GetStateName(), 
-			Physics, 
-			ClientLoc.X, 
-			ClientLoc.Y, 
-			ClientLoc.Z, 
-			Velocity.X, 
-			Velocity.Y, 
-			Velocity.Z,
-			Base
-		);
-	}
-	//log("Server "$Role$" moved "$self$" stamp "$TimeStamp$" location "$Location$" Acceleration "$Acceleration$" Velocity "$Velocity);
-		
-	ViewRotPovPitch = ViewRotation.Pitch;
-	ViewRotPovYaw = ViewRotation.Yaw;
+    {
+        LocDiff = Location - ClientLoc;
+        ClientErr = LocDiff Dot LocDiff;
+        
+        if(ClientErr >= ClientAdjustErrorThreshold)
+        {
+            bPerformClientAdjust = true;
+        }
+    }
+    
+    // Always perform client adjust when state changes
+    if(GetStateName() != PreviousStateName)
+    {
+        PreviousStateName = GetStateName();
+        bPerformClientAdjust = true;
+    }
+    
+    if(bPerformClientAdjust)
+    {
+        if ( Mover(Base) != None )
+            ClientLoc = Location - Base.Location;
+        else
+            ClientLoc = Location;
+        //log("Client Error at "$TimeStamp$" is "$ClientErr$" with acceleration "$Accel$" LocDiff "$LocDiff$" Physics "$Physics);
+        LastUpdateTime = Level.TimeSeconds;
+        ClientAdjustPosition
+        (
+            TimeStamp,
+            GetStateName(), 
+            Physics, 
+            ClientLoc.X, 
+            ClientLoc.Y, 
+            ClientLoc.Z, 
+            Velocity.X, 
+            Velocity.Y, 
+            Velocity.Z,
+            Base
+        );
+    }
+    //log("Server "$Role$" moved "$self$" stamp "$TimeStamp$" location "$Location$" Acceleration "$Acceleration$" Velocity "$Velocity);
+        
+    ViewRotPovPitch = ViewRotation.Pitch;
+    ViewRotPovYaw = ViewRotation.Yaw;
 }
 
 /**
-*	ClientAdjustPosition (override)
-*	Overridden to draw debug information
+*   ClientAdjustPosition (override)
+*   Overridden to draw debug information
 */
 function ClientAdjustPosition
 (
@@ -1286,24 +1286,24 @@ function ClientAdjustPosition
     Actor NewBase
 )
 {
-	local Vector DebugLineBegin, DebugLineEnd;
-	
-	if(bShowRmodDebug && ClientDebugActor != None)
-	{
-		DebugLineBegin = Location;
-		DebugLineEnd = DebugLineBegin;
-		DebugLineEnd.Z += 96.0;
-		ClientDebugActor.DrawLineSegmentForDuration(DebugLineBegin, DebugLineEnd, ColorsClass.Static.ColorRed(), 5.0);
-		
-		DebugLineBegin.X = NewLocX;
-		DebugLineBegin.Y = NewLocY;
-		DebugLineBegin.Z = NewLocZ;
-		DebugLineEnd = DebugLineBegin;
-		DebugLineEnd.Z += 96.0;
-		ClientDebugActor.DrawLineSegmentForDuration(DebugLineBegin, DebugLineEnd, ColorsClass.Static.ColorGreen(), 5.0);
-	}
-	
-	Super.ClientAdjustPosition(TimeStamp, NewState, NewPhysics, NewLocX, NewLocY, NewLocZ, NewVelX, NewVelY, NewVelZ, NewBase);
+    local Vector DebugLineBegin, DebugLineEnd;
+    
+    if(bShowRmodDebug && ClientDebugActor != None)
+    {
+        DebugLineBegin = Location;
+        DebugLineEnd = DebugLineBegin;
+        DebugLineEnd.Z += 96.0;
+        ClientDebugActor.DrawLineSegmentForDuration(DebugLineBegin, DebugLineEnd, ColorsClass.Static.ColorRed(), 5.0);
+        
+        DebugLineBegin.X = NewLocX;
+        DebugLineBegin.Y = NewLocY;
+        DebugLineBegin.Z = NewLocZ;
+        DebugLineEnd = DebugLineBegin;
+        DebugLineEnd.Z += 96.0;
+        ClientDebugActor.DrawLineSegmentForDuration(DebugLineBegin, DebugLineEnd, ColorsClass.Static.ColorGreen(), 5.0);
+    }
+    
+    Super.ClientAdjustPosition(TimeStamp, NewState, NewPhysics, NewLocX, NewLocY, NewLocZ, NewVelX, NewVelY, NewVelZ, NewBase);
 }
 
 /**
@@ -1313,10 +1313,10 @@ function ClientAdjustPosition
 function bool JointDamaged(int Damage, Pawn EventInstigator, vector HitLoc, vector Momentum, name DamageType, int joint)
 {
     local R_GameInfo RGI;
-	local int PreviousHealth;
-	local int DamageDealt;
-	local R_PlayerReplicationInfo RPRI;
-	local bool bResult;
+    local int PreviousHealth;
+    local int DamageDealt;
+    local R_PlayerReplicationInfo RPRI;
+    local bool bResult;
 
     // Check if current game mode has global invulnerability enabled - return if so
     if(Role == ROLE_Authority)
@@ -1328,26 +1328,26 @@ function bool JointDamaged(int Damage, Pawn EventInstigator, vector HitLoc, vect
         }
     }
 
-	PreviousHealth = Health;
-	bResult = Super.JointDamaged(Damage, EventInstigator, HitLoc, Momentum, DamageType, joint);
+    PreviousHealth = Health;
+    bResult = Super.JointDamaged(Damage, EventInstigator, HitLoc, Momentum, DamageType, joint);
 
-	if(Health < 0)
-	{
-		DamageDealt = PreviousHealth;
-	}
-	else
-	{
-		DamageDealt = PreviousHealth - Health;
-	}
+    if(Health < 0)
+    {
+        DamageDealt = PreviousHealth;
+    }
+    else
+    {
+        DamageDealt = PreviousHealth - Health;
+    }
 
-	if(EventInstigator != None && EventInstigator.PlayerReplicationInfo != None)
-	{
-		RPRI = R_PlayerReplicationInfo(EventInstigator.PlayerReplicationInfo);
-		if(RPRI != None)
-		{
-			RPRI.DamageDealt += DamageDealt;
-		}
-	}
+    if(EventInstigator != None && EventInstigator.PlayerReplicationInfo != None)
+    {
+        RPRI = R_PlayerReplicationInfo(EventInstigator.PlayerReplicationInfo);
+        if(RPRI != None)
+        {
+            RPRI.DamageDealt += DamageDealt;
+        }
+    }
 }
 
 /**
@@ -1394,27 +1394,27 @@ function PlayTakeHit(float TweenTime, int Damage, Vector HitLoc, Name DamageType
 */
 static function SetSkinActor(Actor SkinActor, int NewSkin)
 {
-	local R_RunePlayer RP;
-	local Class<RunePlayer> RPSubClass;
-	local int i;
-	
-	RP = R_RunePlayer(SkinActor);
-	if(RP == None)
-	{
-		Class'RuneI.RunePlayer'.Static.SetSkinActor(SkinActor, NewSkin);
-		return;
-	}
-	
-	RPSubClass = RP.RunePlayerSubClass;
-	if(RPSubClass == None)
-	{
-		RPSubClass = Class'RMod.R_RunePlayer';
-	}
-	
-	for(i = 0; i < 16; ++i)
-	{
-		RP.SkelGroupSkins[i] = RPSubClass.Default.SkelGroupSkins[i];
-	}
+    local R_RunePlayer RP;
+    local Class<RunePlayer> RPSubClass;
+    local int i;
+    
+    RP = R_RunePlayer(SkinActor);
+    if(RP == None)
+    {
+        Class'RuneI.RunePlayer'.Static.SetSkinActor(SkinActor, NewSkin);
+        return;
+    }
+    
+    RPSubClass = RP.RunePlayerSubClass;
+    if(RPSubClass == None)
+    {
+        RPSubClass = Class'RMod.R_RunePlayer';
+    }
+    
+    for(i = 0; i < 16; ++i)
+    {
+        RP.SkelGroupSkins[i] = RPSubClass.Default.SkelGroupSkins[i];
+    }
 }
 
 /**
@@ -1423,24 +1423,24 @@ static function SetSkinActor(Actor SkinActor, int NewSkin)
 */
 function Texture PainSkin(int BodyPart)
 {
-	local Texture PainTexture;
-	local int i;
+    local Texture PainTexture;
+    local int i;
 
-	if(BodyPart < 0 || BodyPart >= NUM_BODYPARTS)
-	{
-		return None;
-	}
+    if(BodyPart < 0 || BodyPart >= NUM_BODYPARTS)
+    {
+        return None;
+    }
 
-	for(i = 0; i < MAX_SKEL_GROUP_SKINS; ++i)
-	{
-		PainTexture = PainSkinArrays[BodyPart].Textures[i];
-		if(PainTexture != None)
-		{
-			SkelGroupSkins[i] = PainTexture;
-		}
-	}
-	
-	return None;
+    for(i = 0; i < MAX_SKEL_GROUP_SKINS; ++i)
+    {
+        PainTexture = PainSkinArrays[BodyPart].Textures[i];
+        if(PainTexture != None)
+        {
+            SkelGroupSkins[i] = PainTexture;
+        }
+    }
+    
+    return None;
 }
 
 /**
@@ -1449,23 +1449,23 @@ function Texture PainSkin(int BodyPart)
 */
 function ApplyGoreCap(int BodyPart)
 {
-	local Texture GoreTexture;
-	local int i;
+    local Texture GoreTexture;
+    local int i;
 
-	if(BodyPart < 0 || BodyPart >= NUM_BODYPARTS)
-	{
-		return;
-	}
+    if(BodyPart < 0 || BodyPart >= NUM_BODYPARTS)
+    {
+        return;
+    }
 
-	for(i = 0; i < MAX_SKEL_GROUP_SKINS; ++i)
-	{
-		GoreTexture = GoreCapArrays[BodyPart].Textures[i];
-		if(GoreTexture != None)
-		{
-			SkelGroupSkins[i] = GoreTexture;
-			SkelGroupFlags[i] = SkelGroupFlags[i] & ~POLYFLAG_INVISIBLE;
-		}
-	}
+    for(i = 0; i < MAX_SKEL_GROUP_SKINS; ++i)
+    {
+        GoreTexture = GoreCapArrays[BodyPart].Textures[i];
+        if(GoreTexture != None)
+        {
+            SkelGroupSkins[i] = GoreTexture;
+            SkelGroupFlags[i] = SkelGroupFlags[i] & ~POLYFLAG_INVISIBLE;
+        }
+    }
 }
 
 /**
@@ -1474,12 +1474,12 @@ function ApplyGoreCap(int BodyPart)
 */
 function int BodyPartForPolyGroup(int PolyGroup)
 {
-	if(PolyGroup < 0 || PolyGroup >= 16)
-	{
-		return BODYPART_BODY;
-	}
+    if(PolyGroup < 0 || PolyGroup >= 16)
+    {
+        return BODYPART_BODY;
+    }
 
-	return PolyGroupBodyParts[PolyGroup];
+    return PolyGroupBodyParts[PolyGroup];
 }
 
 /**
@@ -1489,16 +1489,16 @@ function int BodyPartForPolyGroup(int PolyGroup)
 */
 function Class<Actor> SeveredLimbClass(int BodyPart)
 {
-	switch(BodyPart)
-	{
-		case BODYPART_LARM1:
-		case BODYPART_RARM1:
-			return Self.RunePlayerSeveredLimbClass;
-		case BODYPART_HEAD:
-			return Self.RunePlayerSeveredHeadClass;
-	}
+    switch(BodyPart)
+    {
+        case BODYPART_LARM1:
+        case BODYPART_RARM1:
+            return Self.RunePlayerSeveredLimbClass;
+        case BODYPART_HEAD:
+            return Self.RunePlayerSeveredHeadClass;
+    }
 
-	return None;
+    return None;
 }
 
 /**
@@ -1510,12 +1510,12 @@ function Class<Actor> SeveredLimbClass(int BodyPart)
 */
 simulated function Rotator GetViewRotPov()
 {
-	local Rotator ViewRotPov;
-	
-	ViewRotPov.Pitch = ViewRotPovPitch;
-	ViewRotPov.Yaw = ViewRotPovYaw;
-	ViewRotPov.Roll = 0;
-	return ViewRotPov;
+    local Rotator ViewRotPov;
+    
+    ViewRotPov.Pitch = ViewRotPovPitch;
+    ViewRotPov.Yaw = ViewRotPovYaw;
+    ViewRotPov.Roll = 0;
+    return ViewRotPov;
 }
 
 
@@ -1527,42 +1527,42 @@ simulated function Rotator GetViewRotPov()
 
 
 /**
-*	BoostStrength (override)
-*	Overridden to call EnableBloodlust
+*   BoostStrength (override)
+*   Overridden to call EnableBloodlust
 */
 function BoostStrength(int amount)
 {
     if(bBloodLust)
         return;
 
-	Strength = Clamp(Strength + Amount, 0, MaxStrength);
+    Strength = Clamp(Strength + Amount, 0, MaxStrength);
     
-	if (Strength >= MaxStrength)
+    if (Strength >= MaxStrength)
     {
         EnableBloodlust();
     }
 }
 
 /**
-*	EnableBloodlust
-*	Enable bloodlust and play effects
+*   EnableBloodlust
+*   Enable bloodlust and play effects
 */
 function bool EnableBloodlust()
 {
-	bBloodlust = true;
+    bBloodlust = true;
 
-	PlaySound(BerserkSoundStart, SLOT_None, 1.0);
-	AmbientSound = BerserkSoundLoop;
+    PlaySound(BerserkSoundStart, SLOT_None, 1.0);
+    AmbientSound = BerserkSoundLoop;
 
-	DesiredPolyColorAdjust.X = 255;
-	DesiredPolyColorAdjust.Y = 128;
-	DesiredPolyColorAdjust.Z = 128;
-	Spawn(Class'BloodlustStart', self,, Location, Rotation);
+    DesiredPolyColorAdjust.X = 255;
+    DesiredPolyColorAdjust.Y = 128;
+    DesiredPolyColorAdjust.Z = 128;
+    Spawn(Class'BloodlustStart', self,, Location, Rotation);
 
-	if(BloodLustEyes != None)
-		BloodLustEyes.bHidden = false;
+    if(BloodLustEyes != None)
+        BloodLustEyes.bHidden = false;
 
-	ShakeView(1, 100, 0.25);
+    ShakeView(1, 100, 0.25);
 }
 
 /**
@@ -1578,54 +1578,54 @@ function bool EnableBloodlust()
 */
 simulated function DoTryPlayTorsoAnim(Name TorsoAnim, float speed, float tween)
 {
-	if(Role == ROLE_AutonomousProxy || Level.NetMode == NM_Standalone)
-	{
-		if(TorsoAnim == 'neutral_kick'
-		|| TorsoAnim == 'PumpTrigger'
-		|| TorsoAnim == 'LevelTrigger'
-		|| TorsoAnim == 'S3_Taunt')
-		{
-			PlayAnim(TorsoAnim, speed, tween);
-			return;
-		}
+    if(Role == ROLE_AutonomousProxy || Level.NetMode == NM_Standalone)
+    {
+        if(TorsoAnim == 'neutral_kick'
+        || TorsoAnim == 'PumpTrigger'
+        || TorsoAnim == 'LevelTrigger'
+        || TorsoAnim == 'S3_Taunt')
+        {
+            PlayAnim(TorsoAnim, speed, tween);
+            return;
+        }
 
-		if(Weapon != None)
-		{
-			if(TorsoAnim == Weapon.A_JumpAttack
-			|| TorsoAnim == Weapon.A_Taunt
-			|| TorsoAnim == Weapon.A_PumpTrigger
-			|| TorsoAnim == Weapon.A_LeverTrigger)
-			{
-				PlayAnim(TorsoAnim, speed, tween);
-				return;
-			}
+        if(Weapon != None)
+        {
+            if(TorsoAnim == Weapon.A_JumpAttack
+            || TorsoAnim == Weapon.A_Taunt
+            || TorsoAnim == Weapon.A_PumpTrigger
+            || TorsoAnim == Weapon.A_LeverTrigger)
+            {
+                PlayAnim(TorsoAnim, speed, tween);
+                return;
+            }
 
-			if(Physics == PHYS_Walking && VSize2D(Acceleration) < 1000.0f)
-			{
-				PlayAnim(TorsoAnim, speed, tween);
-				return;
-			}
-		}
-	}
+            if(Physics == PHYS_Walking && VSize2D(Acceleration) < 1000.0f)
+            {
+                PlayAnim(TorsoAnim, speed, tween);
+                return;
+            }
+        }
+    }
 
-	Super.DoTryPlayTorsoAnim(TorsoAnim, speed, tween);
+    Super.DoTryPlayTorsoAnim(TorsoAnim, speed, tween);
 }
 
 /**
-*	WeaponActivate (override)
-*	Called from AnimProxy Attack functions
+*   WeaponActivate (override)
+*   Called from AnimProxy Attack functions
 */
 function WeaponActivate()
 {
-	if(Weapon != None)
-	{
-		Weapon.StartAttack();
-	}
+    if(Weapon != None)
+    {
+        Weapon.StartAttack();
+    }
 }
 
 /**
-*	WeaponDeactivate (override)
-*	Called from AnimProxy Attack functions
+*   WeaponDeactivate (override)
+*   Called from AnimProxy Attack functions
 */
 function WeaponDeactivate()
 {
@@ -1636,29 +1636,29 @@ function WeaponDeactivate()
 }
 
 /**
-*	ShieldActivate
-*	Called from R_RunePlayerProxy Attack functions
-*	New function that enables collision for shield bash attack
+*   ShieldActivate
+*   Called from R_RunePlayerProxy Attack functions
+*   New function that enables collision for shield bash attack
 */
 function ShieldActivate()
 {
-	if(R_AShield(Shield) != None)
-	{
-		R_AShield(Shield).StartAttack();
-	}
+    if(R_AShield(Shield) != None)
+    {
+        R_AShield(Shield).StartAttack();
+    }
 }
 
 /**
-*	ShieldDeactivate
-*	Called from R_RunePlayerProxy Attack functions
-*	New function that disables collision for shield bash attack
+*   ShieldDeactivate
+*   Called from R_RunePlayerProxy Attack functions
+*   New function that disables collision for shield bash attack
 */
 function ShieldDeactivate()
 {
-	if(R_AShield(Shield) != None)
-	{
-		R_AShield(Shield).FinishAttack();
-	}
+    if(R_AShield(Shield) != None)
+    {
+        R_AShield(Shield).FinishAttack();
+    }
 }
 
 /**
@@ -1694,8 +1694,8 @@ function bool CheckCanRestart()
 */
 function bool CheckShouldSpectateAfterDying()
 {
-	// If unable to restart, then go into spectator mode
-	return !CheckCanRestart();
+    // If unable to restart, then go into spectator mode
+    return !CheckCanRestart();
 }
 
 //==============================================================================
@@ -1711,26 +1711,26 @@ function bool CheckShouldSpectateAfterDying()
 //==============================================================================
 state PlayerSpectating
 {
-	event BeginState()
+    event BeginState()
     {
         Self.SetCollision(false, false, false);
         Self.bCollideWorld = false;
         Self.DrawType = DT_None;
-		//Self.bHidden = true;
+        //Self.bHidden = true;
         Self.bAlwaysRelevant = false;
         Self.SetPhysics(PHYS_None);
-		//Self.PlayerReplicationInfo.bIsSpectator = true;
-		
-		if(Role == ROLE_Authority)
-		{
-			Level.Game.DiscardInventory(Self);
-			
-			if(Camera != None)
-			{
-				Camera.Destroy();
-			}
-			Camera = Spawn(Self.SpectatorCameraClass, Self);
-		}
+        //Self.PlayerReplicationInfo.bIsSpectator = true;
+        
+        if(Role == ROLE_Authority)
+        {
+            Level.Game.DiscardInventory(Self);
+            
+            if(Camera != None)
+            {
+                Camera.Destroy();
+            }
+            Camera = Spawn(Self.SpectatorCameraClass, Self);
+        }
     }
 
     event EndState()
@@ -1738,130 +1738,130 @@ state PlayerSpectating
         Self.SetCollision(true, true, true);
         Self.bCollideWorld = Self.Default.bCollideWorld;
         Self.DrawType = Self.Default.DrawType;
-		//Self.bHidden = Self.Default.bHidden;
+        //Self.bHidden = Self.Default.bHidden;
         Self.bAlwaysRelevant = Self.Default.bAlwaysRelevant;
-		//Self.PlayerReplicationInfo.bIsSpectator = false;
+        //Self.PlayerReplicationInfo.bIsSpectator = false;
 
-		if(Role == ROLE_Authority)
-		{
-			if(Camera != None)
-			{
-				Camera.Destroy();
-			}
-		}
+        if(Role == ROLE_Authority)
+        {
+            if(Camera != None)
+            {
+                Camera.Destroy();
+            }
+        }
     }
-	
-	event PlayerCalcView(
+    
+    event PlayerCalcView(
         out Actor ViewActor,
         out vector CameraLocation,
         out rotator CameraRotation)
     {
-		if(Self.Camera != None)
-		{
-			Self.Camera.PlayerCalcView(
-				ViewActor,
-				CameraLocation,
-				CameraRotation);
-			Self.SavedCameraRot = CameraRotation;
-			Self.SavedCameraLoc = CameraLocation;
-			Self.ViewLocation = CameraLocation;
-		}
+        if(Self.Camera != None)
+        {
+            Self.Camera.PlayerCalcView(
+                ViewActor,
+                CameraLocation,
+                CameraRotation);
+            Self.SavedCameraRot = CameraRotation;
+            Self.SavedCameraLoc = CameraLocation;
+            Self.ViewLocation = CameraLocation;
+        }
     }
-	
-	event PreRender( canvas Canvas )
-	{
-		if (bDebug==1)
-		{
-			if (myDebugHUD   != None)
-				myDebugHUD.PreRender(Canvas);
-			else if ( Viewport(Player) != None )
-				myDebugHUD = spawn(Class'Engine.DebugHUD', self);
-		}
-	
-		// Ensure spectator hud is in use
-		if(myHUD == None || (myHUD != None && HUDTypeSpectator != None && myHUD.Class != HUDTypeSpectator))
-		{
-			if(myHUD == None)
-			{
-				myHUD.Destroy();
-			}
-			myHUD = Spawn(HUDTypeSpectator, Self);
-		}
+    
+    event PreRender( canvas Canvas )
+    {
+        if (bDebug==1)
+        {
+            if (myDebugHUD   != None)
+                myDebugHUD.PreRender(Canvas);
+            else if ( Viewport(Player) != None )
+                myDebugHUD = spawn(Class'Engine.DebugHUD', self);
+        }
+    
+        // Ensure spectator hud is in use
+        if(myHUD == None || (myHUD != None && HUDTypeSpectator != None && myHUD.Class != HUDTypeSpectator))
+        {
+            if(myHUD == None)
+            {
+                myHUD.Destroy();
+            }
+            myHUD = Spawn(HUDTypeSpectator, Self);
+        }
 
-		if(myHUD != None)
-		{
-			myHUD.PreRender(Canvas);
-		}
-	
-		if (bClientSideAlpha)
-		{
-			OldStyle = Style;
-			OldScale = AlphaScale;
-			Style = STY_AlphaBlend;
-			AlphaScale = ClientSideAlphaScale;
-		}
-	}
+        if(myHUD != None)
+        {
+            myHUD.PreRender(Canvas);
+        }
+    
+        if (bClientSideAlpha)
+        {
+            OldStyle = Style;
+            OldScale = AlphaScale;
+            Style = STY_AlphaBlend;
+            AlphaScale = ClientSideAlphaScale;
+        }
+    }
 
-	event PostRender(Canvas C)
-	{
-		Global.PostRender(C);
-		if(Self.Camera != None)
-		{
-			Self.Camera.PostRender(C);
-		}
-	}
-	
-	event PlayerInput(float DeltaSeconds)
+    event PostRender(Canvas C)
+    {
+        Global.PostRender(C);
+        if(Self.Camera != None)
+        {
+            Self.Camera.PostRender(C);
+        }
+    }
+    
+    event PlayerInput(float DeltaSeconds)
     {
         Super.PlayerInput(DeltaSeconds);
-		if(Self.Camera != None)
-		{
-			Self.Camera.Input_MouseAxis(aMouseX, aMouseY);
-		}
+        if(Self.Camera != None)
+        {
+            Self.Camera.Input_MouseAxis(aMouseX, aMouseY);
+        }
     }
-	
-	// Use cycles camera modes
-	exec function Use()
-	{
-		if(Self.Camera != None)
-		{
-			Self.Camera.Input_Use();
-		}
-	}
-	
-	// Fire cycles view targets
-	exec function Fire(optional float F)
-	{
-		if(bRespawnWhenSpectating && CheckCanRestart())
-		{
-			ServerReStartPlayer();
-		}
-		else
-		{
-			if(Self.Camera != None)
-			{
-				Self.Camera.Input_Fire();
-			}
-		}
-	}
-	
-	exec function CameraIn()
-	{
-		if(Self.Camera != None)
-		{
-			Self.Camera.Input_CameraIn();
-		}
-	}
-	
-	exec function CameraOut()
-	{
-		if(Self.Camera != None)
-		{
-			Self.Camera.Input_CameraOut();
-		}
-	}
-	
-	/**
+    
+    // Use cycles camera modes
+    exec function Use()
+    {
+        if(Self.Camera != None)
+        {
+            Self.Camera.Input_Use();
+        }
+    }
+    
+    // Fire cycles view targets
+    exec function Fire(optional float F)
+    {
+        if(bRespawnWhenSpectating && CheckCanRestart())
+        {
+            ServerReStartPlayer();
+        }
+        else
+        {
+            if(Self.Camera != None)
+            {
+                Self.Camera.Input_Fire();
+            }
+        }
+    }
+    
+    exec function CameraIn()
+    {
+        if(Self.Camera != None)
+        {
+            Self.Camera.Input_CameraIn();
+        }
+    }
+    
+    exec function CameraOut()
+    {
+        if(Self.Camera != None)
+        {
+            Self.Camera.Input_CameraOut();
+        }
+    }
+    
+    /**
     *   ServerReStartPlayer (override)
     *   Overridden to add R_GameInfo player restart logic
     */
@@ -1911,14 +1911,14 @@ state PlayerSpectating
 //==============================================================================
 state Dying
 {
-	function AnimEnd()
-	{
-		Super.AnimEnd();
-		if(CheckShouldSpectateAfterDying())
-		{
-			GotoState('PlayerSpectating');
-		}
-	}
+    function AnimEnd()
+    {
+        Super.AnimEnd();
+        if(CheckShouldSpectateAfterDying())
+        {
+            GotoState('PlayerSpectating');
+        }
+    }
 
     /**
     *   ServerReStartPlayer (override)
@@ -1966,7 +1966,7 @@ state Dying
 //==============================================================================
 state GameEnded
 {
-	ignores Throw;
+    ignores Throw;
 }
 
 
@@ -2110,20 +2110,20 @@ function ClientCloseLoadoutMenu()
 defaultproperties
 {
     UtilitiesClass=Class'RMod.R_AUtilities'
-	ColorsClass=Class'RMod.R_AColors'
+    ColorsClass=Class'RMod.R_AColors'
     GameOptionsCheckerClass=Class'RMod.R_AGameOptionsChecker'
     RunePlayerProxyClass=Class'RMod.R_RunePlayerProxy'
     SpectatorCameraClass=Class'RMod.R_Camera_Spectator'
     LoadoutReplicationInfoClass='RMod.R_LoadoutReplicationInfo'
     bMessageBeep=True
     SuicideCooldown=5.0
-	WeaponSwipeTexture=None
-	WeaponSwipeBloodlustTexture=Texture'RuneFX.swipe_red'
-	ClientAdjustErrorThreshold=64.0
-	ClientAdjustCooldownSeconds=0.5
+    WeaponSwipeTexture=None
+    WeaponSwipeBloodlustTexture=Texture'RuneFX.swipe_red'
+    ClientAdjustErrorThreshold=64.0
+    ClientAdjustCooldownSeconds=0.5
     bAlwaysRelevant=True
     bRotateTorso=False
     bLoadoutMenuDoNotShow=False
-	bRespawnWhenSpectating=True
-	bShowRmodDebug=False
+    bRespawnWhenSpectating=True
+    bShowRmodDebug=False
 }
