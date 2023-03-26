@@ -74,69 +74,6 @@ function bool CheckMapExists(String MapString)
 	return true;
 }
 
-function SwitchGame(PlayerPawn Sender, String S)
-{
-	//TODO:
-	// native(539) final function string GetMapName( string NameEnding, string MapName, int Dir );
-	// native(547) final function string GetURLMap();
-	local R_GamePresets GP;
-	local String GameTag;
-	local String MapString;
-	local String ErrorToken;
-	local String URL;
-	local int i;
-	
-	// Verify valid input string
-	GameTag = GetToken(S);
-	MapString = GetToken(S);
-	ErrorToken = GetToken(S);
-	
-	if(ErrorToken != "")
-	{
-		SwitchGameErrorMessage(Sender);
-		return;
-	}
-	
-	// Find options string
-	GP = Spawn(GamePresetsClass);
-	URL = GP.FindOptions(GameTag);
-	GP.Destroy();
-	
-	if(URL == "")
-	{
-		SwitchGameErrorMessage(
-			Sender, "Game tag " $ GameTag $ " is not configured");
-		return;
-	}
-	
-	// Verify map is installed
-	if(MapString == "")
-	{
-		SwitchGameErrorMessage(
-			Sender, "Map name not specified");
-		return;
-	}
-	else if(!CheckMapExists(MapString))
-	{
-		SwitchGameErrorMessage(
-			Sender, "Map: " $ MapString $ " is not installed on this server");
-		return;
-	}
-	
-	// Switch level
-	URL = MapString $ "?" $ URL;
-	Level.ServerTravel(URL, false);
-}
-
-function SwitchGameErrorMessage(PlayerPawn Sender, optional String ErrorMessage)
-{
-	if(ErrorMessage != "")
-	{
-		Sender.ClientMessage(ErrorMessage);
-	}
-	Sender.ClientMessage("Usage: SwitchGame <game tag> <map name>");
-}
-
 function PlayerSetTimeLimit(PlayerPawn P, int DurationMinutes)
 {
 	local R_RunePlayer RP;

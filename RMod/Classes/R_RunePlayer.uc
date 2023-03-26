@@ -10,6 +10,7 @@ class R_RunePlayer extends RunePlayer config(RMod);
 //	Statics
 var Class<R_AUtilities> UtilitiesClass;
 var Class<R_AColors> ColorsClass;
+var Class<R_AGameOptionsChecker> GameOptionsCheckerClass;
 //==============================================================================
 
 //==============================================================================
@@ -46,6 +47,7 @@ var bool bBloodlustReplicated; // Necessary for clients to see bloodlust swipe
 
 //==============================================================================
 //	Loadout Menu
+var Class<R_LoadoutReplicationInfo> LoadoutReplicationInfoClass;
 var R_LoadoutReplicationInfo LoadoutReplicationInfo;
 var bool bLoadoutMenuDoNotShow;
 //==============================================================================
@@ -83,10 +85,13 @@ var R_ClientDebugActor ClientDebugActor;
 //==============================================================================
 
 replication
-{	
+{
+    // (Variables) Server --> All Clients
+    // Initial replication only
 	reliable if(Role == ROLE_Authority && bNetInitial)
 		RunePlayerSubClass;
 	
+    // (Variables) Server --> All Clients
 	reliable if(Role == ROLE_Authority)
 		HUDTypeSpectator,
 		Camera,
@@ -94,23 +99,425 @@ replication
 		WeaponSwipeBloodlustTexture,
 		bBloodlustReplicated;
 
+    // (Variables) Server --> Owning Client
+    reliable if(Role == ROLE_Authority && RemoteRole == ROLE_AutonomousProxy)
+        LoadoutReplicationInfo;
+
+    // (Variables) Server --> All Clients (except Owning Client)
+	unreliable if(Role == ROLE_Authority && RemoteRole != ROLE_AutonomousProxy)
+		ViewRotPovPitch,
+		ViewRotPovYaw;
+
+    // (RPCs) Server --> Owning Client
 	reliable if(Role == ROLE_Authority && RemoteRole == ROLE_AutonomousProxy)
-        LoadoutReplicationInfo,
 		ClientReceiveUpdatedGamePassword,
 		ClientPreTeleport,
         ClientOpenLoadoutMenu,
         ClientCloseLoadoutMenu;
 
-	reliable if(Role < ROLE_Authority)
+    // (RPCs) Owning Client --> Server
+	reliable if(Role == ROLE_AutonomousProxy && bNetOwner)
 		ServerResetLevel,
-		ServerSwitchGame,
 		ServerSpectate,
 		ServerTimeLimit;
-		
-	unreliable if(Role == ROLE_Authority && RemoteRole != ROLE_AutonomousProxy)
-		ViewRotPovPitch,
-		ViewRotPovYaw;
 }
+
+/**
+*   VerifyAdminWithErrorMessage
+*   Check if this player has admin rights and send a client message if not.
+*/
+function bool VerifyAdminWithErrorMessage()
+{
+	if(bAdmin)
+	{
+		return true;
+	}
+	else
+	{
+		ClientMessage("You need administrator rights");
+		return false;
+	}
+	return false;
+}
+
+//==============================================================================
+//  Begin Exec Function Overrides
+//==============================================================================
+/**
+*   AdminLogin (override)
+*   Overridden to log AdminLogin attempts.
+*/
+exec function AdminLogin(String Password)
+{
+    local String PlayerName;
+
+    PlayerName = "";
+    if(PlayerReplicationInfo != None)
+    {
+        PlayerName = PlayerReplicationInfo.PlayerName;
+    }
+
+    UtilitiesClass.Static.RModLog
+    (
+        "AdminLogin attempt from player" @ PlayerName @ "(" $ Self $ "):" @ Password
+    );
+
+    Level.Game.AdminLogin(Self, Password);
+}
+
+/**
+*   AdminLogout (override)
+*   Overridden to log AdminLogout attempts.
+*/
+exec function AdminLogout()
+{
+    local String PlayerName;
+
+    PlayerName = "";
+    if(PlayerReplicationInfo != None)
+    {
+        PlayerName = PlayerReplicationInfo.PlayerName;
+    }
+
+    UtilitiesClass.Static.RModLog
+    (
+        "AdminLogout attempt from player" @ PlayerName @ "(" $ Self $ ")"
+    );
+
+    Level.Game.AdminLogout( Self );
+}
+
+/**
+*   Admin (override)
+*   Overridden to route all admin commands through verification function.
+*/
+exec function Admin(String CommandLine)
+{
+    local String Result;
+
+    if(!VerifyAdminWithErrorMessage())
+    {
+        return;
+    }
+
+    Result = ConsoleCommand(CommandLine);
+    if(Result != "")
+    {
+        ClientMessage(Result);
+    }
+}
+
+/**
+*   Throw (override)
+*   Overridden to allow player to drop shield with Throw input when they
+*   have to currently equipped weapon.
+*/
+exec function Throw()
+{
+    if(Weapon == None)
+    {
+        if(Shield != None)
+        {
+            DropShield();
+        }
+
+        return;
+    }
+    else
+    {
+        if( bShowMenu || (Level.Pauser!=""))
+        {
+            return;
+        }
+        
+        if(AnimProxy != None && AnimProxy.Throw())
+        {
+            PlayAnim('ATK_ALL_throw1_AA0S', 1.0, 0.1);
+        }
+    }
+}
+
+/**
+*	Powerup (override)
+*	Overridden to allow players to manually activate bloodlust by holding the defend
+*	key and pressing the rune power button
+*/
+exec function Powerup()
+{
+    local bool bManualBloodlustActivationAllowed;
+    
+	if( bShowMenu || (Level.Pauser!="") || (Role < ROLE_Authority) || Health <= 0)
+	{
+		return;
+	}
+	
+    // Manual bloodlust attempt when alt fire is held
+	if(bAltFire == 1)
+	{
+		if(bBloodLust)
+		{
+			return;
+		}
+        
+        // Get manual bloodlust game option
+        bManualBloodlustActivationAllowed = false;
+        if(GameOptionsCheckerClass != None)
+        {
+            bManualBloodlustActivationAllowed = GameOptionsCheckerClass.Static.GetGameOption_ManualBloodlust(Self);
+        }
+		
+        // Try to enable bloodlust manually
+		if(bManualBloodlustActivationAllowed && Strength >= 25)
+		{
+			EnableBloodlust();
+		}
+		else
+		{
+			PlaySound(PowerupFail, SLOT_Interface);
+			ClientMessage("Not enough STRENGTH", 'NoRunePower');
+			return;
+		}
+	}
+	else
+	{
+		Super.Powerup();
+	}
+}
+
+/**
+*   Say (override)
+*   Overridden to filter out spectator messages for non-spectator players.
+*/
+// TODO: This should maybe be moved to a filter function on the HUD
+exec function Say( string Msg )
+{
+    local Pawn P;
+	local R_GameInfo RGI;
+
+    if ( Level.Game.AllowsBroadcast(self, Len(Msg)) )
+	{
+		RGI = R_GameInfo(Level.Game);
+        for( P=Level.PawnList; P!=None; P=P.nextPawn )
+		{
+			// Filter spectator messages as necessary
+			if(RGI != None
+			&& !RGI.bAllowSpectatorBroadcastMessage
+			&& P.PlayerReplicationInfo != None
+			&& PlayerReplicationInfo.bIsSpectator
+			&& !P.PlayerReplicationInfo.bIsSpectator)
+			{
+				continue;
+			}
+
+            if( P.bIsPlayer || P.IsA('MessagingSpectator') )
+			{
+                P.TeamMessage( PlayerReplicationInfo, Msg, 'Say', true );
+			}
+		}
+	}
+    return;
+}
+
+/**
+*   TeamSay (override)
+*   Overridden to filter out spectator messages for non-spectator players.
+*/
+// TODO: This should maybe be moved to a filter function on the HUD
+exec function TeamSay( string Msg )
+{
+    local Pawn P;
+	local R_GameInfo RGI;
+
+    if ( !Level.Game.bTeamGame )
+    {
+        Say(Msg);
+        return;
+    }
+
+    if ( Msg ~= "Help" )
+    {
+        CallForHelp();
+        return;
+    }
+            
+    if ( Level.Game.AllowsBroadcast(self, Len(Msg)) )
+	{
+		RGI = R_GameInfo(Level.Game);
+        for( P=Level.PawnList; P!=None; P=P.nextPawn )
+		{
+			// Filter spectator messages as necessary
+			if(RGI != None
+			&& !RGI.bAllowSpectatorBroadcastMessage
+			&& P.PlayerReplicationInfo != None
+			&& PlayerReplicationInfo.bIsSpectator
+			&& !P.PlayerReplicationInfo.bIsSpectator)
+			{
+				continue;
+			}
+
+            if( P.bIsPlayer && (P.PlayerReplicationInfo.Team == PlayerReplicationInfo.Team) )
+            {
+                if ( P.IsA('PlayerPawn') )
+				{
+                    P.TeamMessage( PlayerReplicationInfo, Msg, 'TeamSay', true );
+				}
+            }
+		}
+	}
+}
+
+/**
+*   Suicide (override)
+*   Overridden to prevent suicide-spam server attacks.
+*   TODO:
+*   It would be a good idea to implement auto-disconnect functionality here
+*   when the server detects players spamming suicide.
+*/
+exec function Suicide()
+{
+	// Anti spam
+	if(Level.TimeSeconds - SuicideTimeStamp <= SuicideCooldown)
+	{
+		return;
+	}
+
+	SuicideTimeStamp = Level.TimeSeconds;
+    KilledBy( None );
+}
+//==============================================================================
+//  End Exec Function Overrides
+//==============================================================================
+
+
+//==============================================================================
+//  Begin RMod Client Interface
+//==============================================================================
+/**
+*   LogPlayerIDs
+*   Print all player IDs to the client's log.
+*/
+exec function LogPlayerIDs()
+{
+	local PlayerReplicationInfo PRI;
+	
+	UtilitiesClass.Static.RModLog("LogPlayerIDs output:");
+	foreach AllActors(Class'Engine.PlayerReplicationInfo', PRI)
+	{
+		UtilitiesClass.Static.RModLog(
+			"ID: " $ PRI.PlayerID $ ", " $
+			"Name: " $ PRI.PlayerName);
+	}
+}
+
+/**
+*   ResetLevel
+*   Performs a soft level reset. Resets the map state without reloading the map.
+*   Useful for restarting maps only after all players have loaded in.
+*/
+exec function ResetLevel(optional int DurationSeconds)
+{
+	ServerResetLevel(DurationSeconds);
+}
+
+function ServerResetLevel(optional int DurationSeconds)
+{
+	local R_GameInfo GI;
+	
+	if(!VerifyAdminWithErrorMessage())
+	{
+		return;
+	}
+	
+	GI = R_GameInfo(Level.Game);
+	if(GI == None)
+	{
+		return;
+	}
+	
+	GI.ResetLevel(DurationSeconds);
+}
+
+/**
+*   TimeLimit
+*   Update the game's time limit on the fly.
+*/
+exec function TimeLimit(int DurationMinutes)
+{
+	ServerTimeLimit(DurationMinutes);
+}
+
+function ServerTimeLimit(int DurationMinutes)
+{
+	local R_GameInfo GI;
+	
+	if(!VerifyAdminWithErrorMessage())
+	{
+		return;
+	}
+	
+	GI = R_GameInfo(Level.Game);
+	if(GI == None)
+	{
+		return;
+	}
+	
+	GI.PlayerSetTimeLimit(self, DurationMinutes);
+}
+
+/**
+*   Loadout
+*   Opens the loadout menu when the game mode allows for it
+*   R_GameInfo.bLoadoutsEnabled must be true
+*/
+exec function Loadout()
+{
+    // Always revert the DoNotShow option when user explicitly calls this function
+    bLoadoutMenuDoNotShow = false;
+    OpenLoadoutMenu();
+}
+
+/**
+*   Spectate
+*   Allows clients to switch to spectator mode while in-game.
+*/
+exec function Spectate()
+{
+	ServerSpectate();
+}
+
+function ServerSpectate()
+{
+	local R_GameInfo GI;
+	GI = R_GameInfo(Level.Game);
+	if(GI != None)
+	{
+		// Disable respawning as spectator since player explicitly went into spec mode
+		bRespawnWhenSpectating = false;
+		GI.RequestSpectate(Self);
+	}
+}
+
+/**
+*   ToggleRmodDebug
+*   Spawns an actor for debug visualization
+*   See R_ClientDebugActor for more info
+*/
+exec function ToggleRmodDebug()
+{
+	bShowRmodDebug = !bShowRmodDebug;
+	if(bShowRmodDebug && ClientDebugActor == None)
+	{
+		ClientDebugActor = Spawn(Class'RMod.R_ClientDebugActor', Self);
+	}
+	else if(!bShowRmodDebug && ClientDebugActor != None)
+	{
+		ClientDebugActor.Destroy();
+	}
+}
+//==============================================================================
+//  End RMod Client Interface
+//==============================================================================
+
 
 /**
 *   PreBeginPlay (override)
@@ -172,6 +579,64 @@ event PostBeginPlay()
 }
 
 /**
+*   PostRender (override)
+*   Overridden to render the RMod client debug actor when enabled
+*/
+event PostRender(Canvas C)
+{
+	Super.PostRender(C);
+	
+	if(bShowRmodDebug && ClientDebugActor != None)
+	{
+		ClientDebugActor.PostRender(C);
+	}
+}
+
+/**
+*   PreRender (override)
+*   Overridden to ensure that when the player is not in spectator state,
+*   they will use the normal HUD. Spectator state applies a different HUD.
+*/
+event PreRender( canvas Canvas )
+{
+	if (bDebug==1)
+	{
+		if (myDebugHUD   != None)
+			myDebugHUD.PreRender(Canvas);
+		else if ( Viewport(Player) != None )
+			myDebugHUD = spawn(Class'Engine.DebugHUD', self);
+	}
+
+	// Ensure normal hud is in use
+	if(myHUD != None && R_RunePlayerHUDSpectator(myHUD) != None)
+	{
+		myHUD.Destroy();
+	}
+
+	if(myHUD == None || (myHUD != None && HUDType != None && myHUD.Class != HUDType))
+	{
+		if(myHUD == None)
+		{
+			myHUD.Destroy();
+		}
+		myHUD = Spawn(HUDType, Self);
+	}
+
+	if(myHUD != None)
+	{
+		myHUD.PreRender(Canvas);
+	}
+
+	if (bClientSideAlpha)
+	{
+		OldStyle = Style;
+		OldScale = AlphaScale;
+		Style = STY_AlphaBlend;
+		AlphaScale = ClientSideAlphaScale;
+	}
+}
+
+/**
 *	Tick (override)
 *	Overridden to perform server-side update of bBloodlustReplicated
 */
@@ -185,13 +650,7 @@ event Tick(float DeltaSeconds)
 	}
 }
 
-function SpawnLoadoutReplicationInfo()
-{
-    if(Role == ROLE_Authority)
-    {
-        LoadoutReplicationInfo = Spawn(Class'RMod.R_LoadoutReplicationInfo', Self);
-    }
-}
+
 
 event Destroyed()
 {
@@ -262,131 +721,7 @@ function DoPreTeleport(Teleporter InTeleporter)
 	}
 }
 
-/**
-*   PreRender (override)
-*   Overridden to ensure that when the player is not in spectator state,
-*   they will use the normal HUD. Spectator state applies a different HUD.
-*/
-event PreRender( canvas Canvas )
-{
-	if (bDebug==1)
-	{
-		if (myDebugHUD   != None)
-			myDebugHUD.PreRender(Canvas);
-		else if ( Viewport(Player) != None )
-			myDebugHUD = spawn(Class'Engine.DebugHUD', self);
-	}
 
-	// Ensure normal hud is in use
-	if(myHUD != None && R_RunePlayerHUDSpectator(myHUD) != None)
-	{
-		myHUD.Destroy();
-	}
-
-	if(myHUD == None || (myHUD != None && HUDType != None && myHUD.Class != HUDType))
-	{
-		if(myHUD == None)
-		{
-			myHUD.Destroy();
-		}
-		myHUD = Spawn(HUDType, Self);
-	}
-
-	if(myHUD != None)
-	{
-		myHUD.PreRender(Canvas);
-	}
-
-	if (bClientSideAlpha)
-	{
-		OldStyle = Style;
-		OldScale = AlphaScale;
-		Style = STY_AlphaBlend;
-		AlphaScale = ClientSideAlphaScale;
-	}
-}
-
-/**
-*   AdminLogin (override)
-*   Overridden to log AdminLogin attempts.
-*/
-exec function AdminLogin(String Password)
-{
-    local String PlayerName;
-
-    PlayerName = "";
-    if(PlayerReplicationInfo != None)
-    {
-        PlayerName = PlayerReplicationInfo.PlayerName;
-    }
-
-    UtilitiesClass.Static.RModLog
-    (
-        "AdminLogin attempt from player" @ PlayerName @ "(" $ Self $ "):" @ Password
-    );
-
-    Level.Game.AdminLogin(Self, Password);
-}
-
-/**
-*   AdminLogout (override)
-*   Overridden to log AdminLogout attempts.
-*/
-exec function AdminLogout()
-{
-    local String PlayerName;
-
-    PlayerName = "";
-    if(PlayerReplicationInfo != None)
-    {
-        PlayerName = PlayerReplicationInfo.PlayerName;
-    }
-
-    UtilitiesClass.Static.RModLog
-    (
-        "AdminLogout attempt from player" @ PlayerName @ "(" $ Self $ ")"
-    );
-
-    Level.Game.AdminLogout( Self );
-}
-
-/**
-*   VerifyAdminWithErrorMessage
-*   Check if this player has admin rights and send a client message if not.
-*/
-function bool VerifyAdminWithErrorMessage()
-{
-	if(bAdmin)
-	{
-		return true;
-	}
-	else
-	{
-		ClientMessage("You need administrator rights");
-		return false;
-	}
-	return false;
-}
-
-/**
-*   Admin (override)
-*   Overridden to route all admin commands through verification function.
-*/
-exec function Admin(String CommandLine)
-{
-    local String Result;
-
-    if(!VerifyAdminWithErrorMessage())
-    {
-        return;
-    }
-
-    Result = ConsoleCommand(CommandLine);
-    if(Result != "")
-    {
-        ClientMessage(Result);
-    }
-}
 
 /**
 *   ClientReceiveUpdatedGamePassword
@@ -398,23 +733,6 @@ function ClientReceiveUpdatedGamePassword(String NewGamePassword)
 {
 	UpdateURL("Password", NewGamePassword, false);
 	ClientMessage("Local password has been updated:" @ NewGamePassword);
-}
-
-/**
-*   LogPlayerIDs
-*   Print all player IDs to the client's log.
-*/
-exec function LogPlayerIDs()
-{
-	local PlayerReplicationInfo PRI;
-	
-	UtilitiesClass.Static.RModLog("LogPlayerIDs output:");
-	foreach AllActors(Class'Engine.PlayerReplicationInfo', PRI)
-	{
-		UtilitiesClass.Static.RModLog(
-			"ID: " $ PRI.PlayerID $ ", " $
-			"Name: " $ PRI.PlayerName);
-	}
 }
 
 /**
@@ -454,6 +772,9 @@ function ChangeName(coerce String S)
 	Level.Game.ChangeName(Self, S, true);
 }
 
+//==============================================================================
+//  Begin Sub-Class Functions
+//==============================================================================
 /**
 *   ApplySubClass
 *   The following functions are responsible for extracting all custom skin-based
@@ -696,6 +1017,9 @@ function ApplySubClass_ExtractMenuName(Class<RunePlayer> SubClass)
 
 	MenuName = "RMod Rune Player";
 }
+//==============================================================================
+//  End Sub-Class Functions
+//==============================================================================
 
 /**
 *	GetWeaponSwipeTexture
@@ -1194,103 +1518,13 @@ simulated function Rotator GetViewRotPov()
 	return ViewRotPov;
 }
 
-/**
-*   SwitchGame
-*   Custom command for server travel using specific game presets specified
-*   in R_GameInfo.
-*/
-exec function SwitchGame(String S)
-{
-	ServerSwitchGame(S);
-}
 
-/**
-*   ServerSwitchGame
-*   SwitchGame command repliated to server.
-*/
-function ServerSwitchGame(String S)
-{
-	local R_GameInfo GI;
-	
-	if(!VerifyAdminWithErrorMessage())
-	{
-		return;
-	}
-	
-	GI = R_GameInfo(Level.Game);
-	if(GI == None)
-	{
-		return;
-	}
-	
-	GI.SwitchGame(Self, S);
-}
 
-/**
-*   Throw (override)
-*   Overridden to allow player to drop shield with Throw input when they
-*   have to currently equipped weapon.
-*/
-exec function Throw()
-{
-    if(Weapon == None)
-    {
-        if(Shield != None)
-        {
-            DropShield();
-        }
 
-        return;
-    }
-    else
-    {
-        if( bShowMenu || (Level.Pauser!=""))
-        {
-            return;
-        }
-        
-        if(AnimProxy != None && AnimProxy.Throw())
-        {
-            PlayAnim('ATK_ALL_throw1_AA0S', 1.0, 0.1);
-        }
-    }
-}
 
-/**
-*	Powerup (override)
-*	Overridden to allow players to manually activate bloodlust by holding the defend
-*	key and pressing the rune power button
-*/
-exec function Powerup()
-{
-	if( bShowMenu || (Level.Pauser!="") || (Role < ROLE_Authority) || Health <= 0)
-	{
-		return;
-	}
-	
-	if(bAltFire == 1)
-	{
-		if(bBloodLust)
-		{
-			return;
-		}
-		
-		if(Strength >= 25)
-		{
-			EnableBloodlust();
-		}
-		else
-		{
-			PlaySound(PowerupFail, SLOT_Interface);
-			ClientMessage("Not enough STRENGTH", 'NoRunePower');
-			return;
-		}
-	}
-	else
-	{
-		Super.Powerup();
-	}
-}
+
+
+
 
 /**
 *	BoostStrength (override)
@@ -1329,174 +1563,6 @@ function bool EnableBloodlust()
 		BloodLustEyes.bHidden = false;
 
 	ShakeView(1, 100, 0.25);
-}
-
-/**
-*   ResetLevel
-*   Performs a soft level reset. Resets the map state without reloading the map.
-*   Useful for restarting maps only after all players have loaded in.
-*/
-exec function ResetLevel(optional int DurationSeconds)
-{
-	ServerResetLevel(DurationSeconds);
-}
-
-/**
-*   ServerResetLevel
-*   ResetLevel command replicated to server.
-*/
-function ServerResetLevel(optional int DurationSeconds)
-{
-	local R_GameInfo GI;
-	
-	if(!VerifyAdminWithErrorMessage())
-	{
-		return;
-	}
-	
-	GI = R_GameInfo(Level.Game);
-	if(GI == None)
-	{
-		return;
-	}
-	
-	GI.ResetLevel(DurationSeconds);
-}
-
-/**
-*   TimeLimit
-*   Update the game's time limit on the fly.
-*/
-exec function TimeLimit(int DurationMinutes)
-{
-	ServerTimeLimit(DurationMinutes);
-}
-
-/**
-*   ServerTimeLimit
-*   TimeLimit command replicated to server
-*/
-function ServerTimeLimit(int DurationMinutes)
-{
-	local R_GameInfo GI;
-	
-	if(!VerifyAdminWithErrorMessage())
-	{
-		return;
-	}
-	
-	GI = R_GameInfo(Level.Game);
-	if(GI == None)
-	{
-		return;
-	}
-	
-	GI.PlayerSetTimeLimit(self, DurationMinutes);
-}
-
-/**
-*   Spectate
-*   Allows clients to switch to spectator mode while in-game.
-*/
-exec function Spectate()
-{
-	ServerSpectate();
-}
-
-/**
-*   ServerSpectate
-*   Spectate command replicated to server.
-*/
-function ServerSpectate()
-{
-	local R_GameInfo GI;
-	GI = R_GameInfo(Level.Game);
-	if(GI != None)
-	{
-		// Disable respawning as spectator since player explicitly went into spec mode
-		bRespawnWhenSpectating = false;
-		GI.RequestSpectate(Self);
-	}
-}
-
-/**
-*   Say (override)
-*   Overridden to filter out spectator messages for non-spectator players.
-*/
-exec function Say( string Msg )
-{
-    local Pawn P;
-	local R_GameInfo RGI;
-
-    if ( Level.Game.AllowsBroadcast(self, Len(Msg)) )
-	{
-		RGI = R_GameInfo(Level.Game);
-        for( P=Level.PawnList; P!=None; P=P.nextPawn )
-		{
-			// Filter spectator messages as necessary
-			if(RGI != None
-			&& !RGI.bAllowSpectatorBroadcastMessage
-			&& P.PlayerReplicationInfo != None
-			&& PlayerReplicationInfo.bIsSpectator
-			&& !P.PlayerReplicationInfo.bIsSpectator)
-			{
-				continue;
-			}
-
-            if( P.bIsPlayer || P.IsA('MessagingSpectator') )
-			{
-                P.TeamMessage( PlayerReplicationInfo, Msg, 'Say', true );
-			}
-		}
-	}
-    return;
-}
-
-/**
-*   TeamSay (override)
-*   Overridden to filter out spectator messages for non-spectator players.
-*/
-exec function TeamSay( string Msg )
-{
-    local Pawn P;
-	local R_GameInfo RGI;
-
-    if ( !Level.Game.bTeamGame )
-    {
-        Say(Msg);
-        return;
-    }
-
-    if ( Msg ~= "Help" )
-    {
-        CallForHelp();
-        return;
-    }
-            
-    if ( Level.Game.AllowsBroadcast(self, Len(Msg)) )
-	{
-		RGI = R_GameInfo(Level.Game);
-        for( P=Level.PawnList; P!=None; P=P.nextPawn )
-		{
-			// Filter spectator messages as necessary
-			if(RGI != None
-			&& !RGI.bAllowSpectatorBroadcastMessage
-			&& P.PlayerReplicationInfo != None
-			&& PlayerReplicationInfo.bIsSpectator
-			&& !P.PlayerReplicationInfo.bIsSpectator)
-			{
-				continue;
-			}
-
-            if( P.bIsPlayer && (P.PlayerReplicationInfo.Team == PlayerReplicationInfo.Team) )
-            {
-                if ( P.IsA('PlayerPawn') )
-				{
-                    P.TeamMessage( PlayerReplicationInfo, Msg, 'TeamSay', true );
-				}
-            }
-		}
-	}
 }
 
 /**
@@ -1596,25 +1662,6 @@ function ShieldDeactivate()
 }
 
 /**
-*   Suicide (override)
-*   Overridden to prevent suicide-spam server attacks.
-*   TODO:
-*   It would be a good idea to implement auto-disconnect functionality here
-*   when the server detects players spamming suicide.
-*/
-exec function Suicide()
-{
-	// Anti spam
-	if(Level.TimeSeconds - SuicideTimeStamp <= SuicideCooldown)
-	{
-		return;
-	}
-
-	SuicideTimeStamp = Level.TimeSeconds;
-    KilledBy( None );
-}
-
-/**
 *   CheckCanRestart
 *   Returns whether or not this player is allowed to manually restart.
 *   This function includes the original bCanRestart check, but adds an
@@ -1651,14 +1698,17 @@ function bool CheckShouldSpectateAfterDying()
 	return !CheckCanRestart();
 }
 
-/**
-*   PlayerSpectating State
-*   Allows players to view in spectator mode without reconnecting as spectators.
-*   Spawns a spectator camera actor and routes most view-related functions to
-*   the camera.
-*   For custom spectator functionality, extend R_ACamera and set the
-*   SpectatorCameraClass variable in this class.
-*/
+//==============================================================================
+//  State PlayerSpectating (override)
+//
+//  Originally, this state is unused, and spectator functionality is implemented
+//  in the Spectator pawn class. RMod does not use a Spectator pawn, but
+//  instead uses this state for all spectator functionality.
+//
+//  This state spawns a new R_ACamera actor and routes most view-related
+//  functionality through it. For custom view functionality, extend the
+//  R_ACamera class and set the R_RunePlayer.SpectatorCameraClass variable.
+//==============================================================================
 state PlayerSpectating
 {
 	event BeginState()
@@ -1852,12 +1902,13 @@ state PlayerSpectating
 }
 
 //==============================================================================
-//  The following states are only overridden to force a client adjust when
-//  transitioning from one state to another. The client-side jitter fix in
-//  ServerMove has some strange behavior in certain cases, but this solution
-//  appears to fix nearly all of the issues.
+//  State Dying (override)
+//  This state is overridden to allow players to enter into temporary spectator
+//  mode when they die in game types where they can't immediately respawn,
+//  like Arena.
+//  Respawning can be blocked by either the R_GameInfo, or by the R_RunePlayer
+//  according to R_RunePlayer.CheckCanRestart.
 //==============================================================================
-
 state Dying
 {
 	function AnimEnd()
@@ -1909,13 +1960,38 @@ state Dying
     }
 }
 
+//==============================================================================
+//  State GameEnded (override)
+//  Overridden to prevent throwing at end game
+//==============================================================================
 state GameEnded
 {
 	ignores Throw;
 }
 
 
+//==============================================================================
+//  Begin Loadout Menu Functions
+//==============================================================================
+/**
+*   SpawnLoadoutReplicationInfo
+*   Called during PostBeginPlay on the Server
+*   Spawns the loadout replication info
+*/
+function SpawnLoadoutReplicationInfo()
+{
+    if(Role == ROLE_Authority && LoadoutReplicationInfoClass != None)
+    {
+        LoadoutReplicationInfo = Spawn(LoadoutReplicationInfoClass, Self);
+    }
+}
 
+/**
+*   OpenLoadoutMenu
+*   In game modes where it is allowed, this function will display the loadout
+*   menu on the player's screen.
+*   R_GameInfo.bLoadoutsEnabled must be true
+*/
 function OpenLoadoutMenu()
 {
     local R_GameReplicationInfo RGRI;
@@ -1985,6 +2061,10 @@ function OpenLoadoutMenu()
     }
 }
 
+/**
+*   CloseLoadoutMenu
+*   Closes the loadout menu if it is currently open.
+*/
 function CloseLoadoutMenu()
 {
     local WindowConsole WC;
@@ -2004,52 +2084,37 @@ function CloseLoadoutMenu()
     }
 }
 
+/**
+*   ClientOpenLoadoutMenu
+*   RPC sent from Server --> Owning Client when the game is requesting
+*   players to open their loadout menus.
+*/
 function ClientOpenLoadoutMenu()
 {
     OpenLoadoutMenu();
 }
 
+/**
+*   ClientCloseLoadoutMenu
+*   RPC sent from Server --> Owning Client when the game is requesting
+*   players to close their loadout menus.
+*/
 function ClientCloseLoadoutMenu()
 {
     CloseLoadoutMenu();
 }
-
-event PostRender(Canvas C)
-{
-	Super.PostRender(C);
-	
-	if(bShowRmodDebug && ClientDebugActor != None)
-	{
-		ClientDebugActor.PostRender(C);
-	}
-}
-
-exec function ToggleRmodDebug()
-{
-	bShowRmodDebug = !bShowRmodDebug;
-	if(bShowRmodDebug && ClientDebugActor == None)
-	{
-		ClientDebugActor = Spawn(Class'RMod.R_ClientDebugActor', Self);
-	}
-	else if(!bShowRmodDebug && ClientDebugActor != None)
-	{
-		ClientDebugActor.Destroy();
-	}
-}
-
-exec function Loadout()
-{
-    // Always revert the DoNotShow option when user explicitly calls this function
-    bLoadoutMenuDoNotShow = false;
-    OpenLoadoutMenu();
-}
+//==============================================================================
+//  End Loadout Menu Functions
+//==============================================================================
 
 defaultproperties
 {
     UtilitiesClass=Class'RMod.R_AUtilities'
 	ColorsClass=Class'RMod.R_AColors'
+    GameOptionsCheckerClass=Class'RMod.R_AGameOptionsChecker'
     RunePlayerProxyClass=Class'RMod.R_RunePlayerProxy'
     SpectatorCameraClass=Class'RMod.R_Camera_Spectator'
+    LoadoutReplicationInfoClass='RMod.R_LoadoutReplicationInfo'
     bMessageBeep=True
     SuicideCooldown=5.0
 	WeaponSwipeTexture=None

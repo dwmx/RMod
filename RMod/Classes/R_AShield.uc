@@ -4,6 +4,8 @@
 //==============================================================================
 class R_AShield extends Shield abstract;
 
+var Class<R_AGameOptionsChecker> GameOptionsCheckerClass;
+
 // Weapon-like collision detection vars
 var Vector SweepDirectionVector;
 var Vector LastSweepPos1;
@@ -166,31 +168,6 @@ function NotifySubstitutedForInstance(Actor InActor)
 }
 
 /**
-*   CheckIsShieldHitStunEnabled
-*   Server-side check of game options to see if shield hit stun is enabled.
-*/
-function bool CheckIsShieldHitStunEnabled()
-{
-    local R_GameInfo RGI;
-    local R_GameOptions RGO;
-
-    if(Role == ROLE_Authority)
-    {
-        RGI = R_GameInfo(Level.Game);
-        if(RGI != None)
-        {
-            RGO = RGI.GameOptions;
-            if(RGO != None)
-            {
-                return RGO.bOptionShieldHitStun;
-            }
-        }
-    }
-
-	return false;
-}
-
-/**
 *   JointDamaged (override)
 *   Overridden to implement shield hit stun
 */
@@ -199,13 +176,20 @@ function bool JointDamaged(int Damage, Pawn EventInstigator, vector HitLoc, vect
 	local vector AdjMomentum;
 	local Pawn P;
 	local Pawn POwner;
+    local bool bShieldHitStunEnabled;
 
 	PlayHitSound(DamageType);
 
-	// [RMod]
+    // Check if shield hit stun is enabled
+    bShieldHitStunEnabled = false;
+    if(GameOptionsCheckerClass != None)
+    {
+        bShieldHitStunEnabled = GameOptionsCheckerClass.Static.GetGameOption_ShieldHitStun(Self);
+    }
+
 	// Cause the owner to enter into HitStun
 	// Copy from Pawn.DamageBodyPart, to avoid modifying Pawn
-	if(Owner != None && Pawn(Owner) != None && CheckIsShieldHitStunEnabled() && GetStateName() != 'Active' && GetStateName() != 'Swinging')
+	if(Owner != None && Pawn(Owner) != None && bShieldHitStunEnabled && GetStateName() != 'Active' && GetStateName() != 'Swinging')
 	{
 		POwner = Pawn(Owner);
 		if (POwner.GetStateName() != 'Pain' && POwner.GetStateName() != 'pain')
@@ -575,6 +559,7 @@ simulated function Debug(Canvas Canvas, int Mode)
 
 defaultproperties
 {
+    GameOptionsCheckerClass=Class'RMod.R_AGameOptionsChecker'
 	SweepDirectionVector=(X=1.0)
 	ShieldSweepExtent=8.0
 	ShieldDamageType='blunt'
