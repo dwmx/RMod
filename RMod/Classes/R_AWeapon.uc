@@ -28,6 +28,16 @@ event PostBeginPlay()
             ++NumIceSounds;
         }
     }
+	
+	SpawnWeaponSwipe();
+}
+
+function SpawnWeaponSwipe()
+{
+	if(Role == ROLE_Authority)
+	{
+		Spawn(Class'RMod.R_WeaponSwipe', Self);
+	}
 }
 
 /**
