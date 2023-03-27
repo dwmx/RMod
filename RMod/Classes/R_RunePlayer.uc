@@ -284,9 +284,25 @@ exec function Powerup()
     }
 }
 
-//==============================================================================
-//  Begin Messaging Functions
-//==============================================================================
+/**
+*   Suicide (override)
+*   Overridden to prevent suicide-spam server attacks.
+*   TODO:
+*   It would be a good idea to implement auto-disconnect functionality here
+*   when the server detects players spamming suicide.
+*/
+exec function Suicide()
+{
+    // Anti spam
+    if(Level.TimeSeconds - SuicideTimeStamp <= SuicideCooldown)
+    {
+        return;
+    }
+
+    SuicideTimeStamp = Level.TimeSeconds;
+    KilledBy( None );
+}
+
 /**
 *   Say (override)
 *   Overridden to filter out spectator messages for non-spectator players.
@@ -368,6 +384,9 @@ exec function TeamSay( string Msg )
         }
     }
 }
+//==============================================================================
+//  End Exec Function Overrides
+//==============================================================================
 
 /**
 *   TeamMessage (override)
@@ -394,31 +413,6 @@ event TeamMessage( PlayerReplicationInfo PRI, coerce string S, name Type, option
             PlayBeepSound();
     }
 }
-//==============================================================================
-//  End Messaging Functions
-//==============================================================================
-
-/**
-*   Suicide (override)
-*   Overridden to prevent suicide-spam server attacks.
-*   TODO:
-*   It would be a good idea to implement auto-disconnect functionality here
-*   when the server detects players spamming suicide.
-*/
-exec function Suicide()
-{
-    // Anti spam
-    if(Level.TimeSeconds - SuicideTimeStamp <= SuicideCooldown)
-    {
-        return;
-    }
-
-    SuicideTimeStamp = Level.TimeSeconds;
-    KilledBy( None );
-}
-//==============================================================================
-//  End Exec Function Overrides
-//==============================================================================
 
 
 //==============================================================================
