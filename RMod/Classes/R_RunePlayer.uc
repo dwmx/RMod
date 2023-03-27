@@ -284,6 +284,9 @@ exec function Powerup()
     }
 }
 
+//==============================================================================
+//  Begin Messaging Functions
+//==============================================================================
 /**
 *   Say (override)
 *   Overridden to filter out spectator messages for non-spectator players.
@@ -365,6 +368,35 @@ exec function TeamSay( string Msg )
         }
     }
 }
+
+/**
+*   TeamMessage (override)
+*   Overridden to fix an 'accessed none' error when this function gets called
+*   on a non-player R_RunePlayer, even though bIsPlayer is true.
+*   Error occurs when attempting to access the Player variable.
+*/
+event TeamMessage( PlayerReplicationInfo PRI, coerce string S, name Type, optional bool bBeep  )
+{
+    local Class<LocalMessage> MessageClass;
+
+    if (Type == '')
+        Type = 'Event';
+    if ( myHUD != None )
+    {
+        MessageClass = myHUD.DetermineClass(Type);
+        MessageClass.Static.ClientReceiveMessage(Self, S, PRI);
+    }
+    else if(Player != None)
+    {
+        if (Player.Console != None)
+            Player.Console.Message( PRI, S, Type );
+        if (bBeep && bMessageBeep)
+            PlayBeepSound();
+    }
+}
+//==============================================================================
+//  End Messaging Functions
+//==============================================================================
 
 /**
 *   Suicide (override)
