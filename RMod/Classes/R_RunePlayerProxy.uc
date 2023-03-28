@@ -291,5 +291,4 @@ Done:
 
 defaultproperties
 {
-	//ComboSpeed=1.5
 }
