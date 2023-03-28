@@ -1109,11 +1109,11 @@ simulated function float GetWeaponSwipeSpeed()
 
 
 //==============================================================================
-//  Begin 369b movement adaptation for Rune
+//  Begin 469b movement adaptation for Rune
 //==============================================================================
 /**
 *   ClientAdjustPosition (override)
-*   369b movement adaptation for Rune
+*   469b movement adaptation for Rune
 */
 function ClientAdjustPosition
 (
@@ -1212,7 +1212,7 @@ function ClientAdjustPosition
 
 /**
 *   ReplicateMove (override)
-*   369b movement adaptation for Rune
+*   469b movement adaptation for Rune
 */
 function ReplicateMove(
     float DeltaTime,
@@ -1366,7 +1366,7 @@ function ReplicateMove(
 
 /**
 *   SendServerMove
-*   369b movement adaptation for Rune
+*   469b movement adaptation for Rune
 */
 function SendServerMove(R_SavedMove Move, optional R_SavedMove OldMove)
 {
@@ -1411,7 +1411,7 @@ function SendServerMove(R_SavedMove Move, optional R_SavedMove OldMove)
 
 /**
 *   ServerMove_v2
-*   369b movement adaptation for Rune
+*   469b movement adaptation for Rune
 */
 function ServerMove_v2(
     float TimeStamp,
@@ -1548,7 +1548,7 @@ function ServerMove_v2(
 
 /**
 *   CheckClientError
-*   369b movement adaptation for Rune
+*   469b movement adaptation for Rune
 */
 function CheckClientError(float TimeStamp, vector ClientLoc, vector ClientVel)
 {
@@ -1679,7 +1679,7 @@ function CheckClientError(float TimeStamp, vector ClientLoc, vector ClientVel)
 
 /**
 *   OldServerMove
-*   369b movement adaptation for Rune
+*   469b movement adaptation for Rune
 */
 final function OldServerMove(float TimeStamp, bool NewbJumpStatus, byte OldTimeDelta, int OldAccel)
 {
@@ -1727,7 +1727,7 @@ final function OldServerMove(float TimeStamp, bool NewbJumpStatus, byte OldTimeD
 
 /**
 *   FakeCAP
-*   369b movement adaptation for Rune
+*   469b movement adaptation for Rune
 */
 function FakeCAP(float TimeStamp)
 {
@@ -1741,7 +1741,7 @@ function FakeCAP(float TimeStamp)
 
 /**
 *   NGetFreeMove
-*   369b movement adaptation for Rune
+*   469b movement adaptation for Rune
 */
 function R_SavedMove NGetFreeMove()
 {
@@ -1761,7 +1761,7 @@ function R_SavedMove NGetFreeMove()
 
 /**
 *   DecompressAccel
-*   369b movement adaptation for Rune
+*   469b movement adaptation for Rune
 */
 final function float DecompressAccel(int C)
 {
@@ -1785,7 +1785,7 @@ function PreventUndesiredClientVarReplication()
 
 /**
 *   ClientUpdatePosition (override)
-*   369b movement adaptation for Rune
+*   469b movement adaptation for Rune
 */
 function ClientUpdatePosition()
 {
@@ -1871,7 +1871,7 @@ function ClientUpdatePosition()
 
 /**
 *   ClientReplayMove
-*   369b movement adaptation for Rune
+*   469b movement adaptation for Rune
 */
 function ClientReplayMove(R_SavedMove Move)
 {
@@ -1894,7 +1894,7 @@ function ClientReplayMove(R_SavedMove Move)
 
 /**
 *   EncroachingOn (override)
-*   369b movement adaptation for Rune
+*   469b movement adaptation for Rune
 */
 event bool EncroachingOn(actor Other)
 {
@@ -1912,7 +1912,7 @@ event bool EncroachingOn(actor Other)
 
 /**
 *   AccumulatedPlayerTurn
-*   369b movement adaptation for Rune
+*   469b movement adaptation for Rune
 */
 function int AccumulatedPlayerTurn(float CurrentTurn, out float AccumulatedTurn)
 {
@@ -1926,7 +1926,7 @@ function int AccumulatedPlayerTurn(float CurrentTurn, out float AccumulatedTurn)
 
 /**
 *   UpdateRotation (override)
-*   369b movement adaptation for Rune
+*   469b movement adaptation for Rune
 */
 function UpdateRotation(float DeltaTime, float maxPitch)
 {
@@ -1959,7 +1959,7 @@ function UpdateRotation(float DeltaTime, float maxPitch)
 
 /**
 *   PlayerTickEvents
-*   369b movement adaptation for Rune
+*   469b movement adaptation for Rune
 */
 function PlayerTickEvents()
 {
@@ -1969,14 +1969,14 @@ function PlayerTickEvents()
 
 /**
 *   PlayerTick (override)
-*   369b movement adaptation for Rune
+*   469b movement adaptation for Rune
 */
 event PlayerTick( float Time )
 {
     PlayerTickEvents();
 }
 //==============================================================================
-//  End 369b movement adaptation for Rune
+//  End 469b movement adaptation for Rune
 //==============================================================================
 
 
@@ -2380,7 +2380,7 @@ function ClientSetLocation(Vector NewLocation, Rotator NewRotation)
 //==============================================================================
 //  State PlayerWalking (override)
 //
-//  Overridden for 369b movement adaptation
+//  Overridden for 469b movement adaptation
 //==============================================================================
 state PlayerWalking
 {
@@ -2439,7 +2439,7 @@ state PlayerWalking
         }
     }
     
-    function bool GrabEdge(float grabDistance, vector grabNormal)
+    function bool GrabEdge(float GrabDistance, vector GrabNormal)
     {
         // Only grab ledge in Idle state
         // AuthoritativeAnimProxyStateName is used instead of AnimProxy.GetStateName() so that
@@ -2448,13 +2448,13 @@ state PlayerWalking
         {
             GrabLocationUp.X = Location.X;
             GrabLocationUp.Y = Location.Y;
-            GrabLocationUp.Z = Location.Z + grabDistance + 8;
+            GrabLocationUp.Z = Location.Z + GrabDistance + 8;
         
-            GrabLocationIn.X = Location.X + grabNormal.X * (CollisionRadius + 4);
-            GrabLocationIn.Y = Location.Y + grabNormal.Y * (CollisionRadius + 4);
+            GrabLocationIn.X = Location.X + GrabNormal.X * (CollisionRadius + 4);
+            GrabLocationIn.Y = Location.Y + GrabNormal.Y * (CollisionRadius + 4);
             GrabLocationIn.Z = GrabLocationUp.Z + CollisionHeight;
         
-            SetRotation(rotator(grabNormal));
+            SetRotation(rotator(GrabNormal));
             ViewRotation.Yaw = Rotation.Yaw; // Align View with Player position while grabbing edge
 
             // Save the final distance (used for choosing the correct anim)
@@ -2468,11 +2468,11 @@ state PlayerWalking
                     AnimProxy.GotoState('EdgeHanging');         
                 GotoState('EdgeHanging');
 
-                return(true);
+                return true;
             }
         }
         
-        return(false);
+        return false;
     }
 }
 
@@ -2487,7 +2487,10 @@ state EdgeHanging
     *   Overridden to prevent players from jump-mashing out of edge climb
     */
     function ProcessMove(float DeltaTime, vector NewAccel, eDodgeDir DodgeMove, rotator DeltaRot)   
-    {}
+    {
+        Acceleration = Vect(0.0, 0.0, 0.0);
+        Velocity = Vect(0.0, 0.0, 0.0);
+    }
 }
 
 //==============================================================================
