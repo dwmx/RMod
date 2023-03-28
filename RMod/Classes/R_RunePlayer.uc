@@ -61,7 +61,6 @@ var transient float LastClientTimestamp;
 //  E.g. WeaponSwipeTexture=None will disable normal weapon swipes.
 var Texture WeaponSwipeTexture;
 var Texture WeaponSwipeBloodlustTexture;
-var bool bBloodlustReplicated; // Necessary for clients to see bloodlust swipe
 //==============================================================================
 
 //==============================================================================
@@ -103,6 +102,17 @@ var bool bShowRmodDebug;
 var R_ClientDebugActor ClientDebugActor;
 //==============================================================================
 
+//==============================================================================
+//  Authoritative variables replicated to clients
+
+//  Since AnimProxy is not an AutonomousProxy, its more efficient to replicate
+//  this variable in R_RunePlayer than in R_RunePlayerProxy.
+//  This is used for improved client-side prediction, fixing things like
+//  the stuttering ledge grabs.
+var Name AuthoritativeAnimProxyStateName;
+var bool bAuthoritativeBloodlust; // Necessary for clients to see bloodlust swipe
+//==============================================================================
+
 replication
 {
     // (Variables) Server --> All Clients
@@ -116,10 +126,11 @@ replication
         Camera,
         WeaponSwipeTexture,
         WeaponSwipeBloodlustTexture,
-        bBloodlustReplicated;
+        bAuthoritativeBloodlust;
 
     // (Variables) Server --> Owning Client
     reliable if(Role == ROLE_Authority && RemoteRole == ROLE_AutonomousProxy)
+        AuthoritativeAnimProxyStateName,
         LoadoutReplicationInfo;
 
     // (Variables) Server --> All Clients (except Owning Client)
@@ -689,19 +700,23 @@ event PreRender( canvas Canvas )
 
 /**
 *   Tick (override)
-*   Overridden to perform server-side update of bBloodlustReplicated
+*   Overridden to perform server-side update of bAuthoritativeBloodlust
 */
 event Tick(float DeltaSeconds)
 {
     Super.Tick(DeltaSeconds);
     
+    // Replicate authoritative vars if they've changed
     if(Role == ROLE_Authority)
     {
-        bBloodlustReplicated = bBloodlust;
+        bAuthoritativeBloodlust = bBloodlust;
+        
+        if(AnimProxy != None)
+        {
+            AuthoritativeAnimProxyStateName = AnimProxy.GetStateName();
+        }
     }
 }
-
-
 
 event Destroyed()
 {
@@ -1078,7 +1093,7 @@ function ApplySubClass_ExtractMenuName(Class<RunePlayer> SubClass)
 */
 simulated function Texture GetWeaponSwipeTexture()
 {
-    if(bBloodlustReplicated)
+    if(bAuthoritativeBloodlust)
     {
         return WeaponSwipeBloodlustTexture;
     }
@@ -1091,6 +1106,7 @@ simulated function float GetWeaponSwipeSpeed()
 {
     return 7.0;
 }
+
 
 //==============================================================================
 //  Begin 369b movement adaptation for Rune
@@ -1964,20 +1980,6 @@ event PlayerTick( float Time )
 //==============================================================================
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /**
 *   JointDamaged (override)
 *   Overridden to keep track of Damage dealt statistics.
@@ -2190,14 +2192,6 @@ simulated function Rotator GetViewRotPov()
     return ViewRotPov;
 }
 
-
-
-
-
-
-
-
-
 /**
 *   BoostStrength (override)
 *   Overridden to call EnableBloodlust
@@ -2370,6 +2364,19 @@ function bool CheckShouldSpectateAfterDying()
     return !CheckCanRestart();
 }
 
+/**
+*   ClientSetLocation (override)
+*   Overridden to prevent this function from updating the client's ViewRotation.
+*/
+function ClientSetLocation(Vector NewLocation, Rotator NewRotation)
+{
+    // Only Yaw
+    NewRotation.Roll = 0;
+    NewRotation.Pitch = 0;
+    SetRotation(NewRotation);
+    SetLocation(NewLocation);
+}
+
 //==============================================================================
 //  State PlayerWalking (override)
 //
@@ -2430,51 +2437,57 @@ state PlayerWalking
 				ZTargetDecal.Update(None);
 			}
 		}
-	}	
-
-	function bool GrabEdge(float grabDistance, vector grabNormal)
-	{ 
-		local float colRad;
-		local vector edgeLocation;
-		local rotator edgeRotation;
-
-		// Save the final distance (used for choosing the correct anim)
-		GrabLocationDist = grabDistance + 8;
-
-		// client hits this section a bunch of times when attacking or throwing while near edge
-		// which causes bunch of glitching movement
-		// just skip all client code and let server sync back
-		// we still set GrabLocationDist so client knows which animation to use
-		if(Level.NetMode == NM_Client)			
-			return false;	
-
-		// Only grab edges if in the idle state
-		if(AnimProxy != None && AnimProxy.GetStateName() == 'Idle')
-		{ 					
-			colRad = CollisionRadius + 4;
-			edgeRotation = rotator(grabNormal);
-
-			SetRotation(edgeRotation);
-			ViewRotation.Yaw = Rotation.Yaw;
-
-			edgeLocation.X = Location.X + grabNormal.X * colRad;
-			edgeLocation.Y = Location.Y + grabNormal.Y * colRad;
-			edgeLocation.Z = Location.Z + GrabLocationDist + CollisionHeight;
-
-			// Final, absolute check if the player can fit in the new location.
-			// if the player fits, then it is a valid edge grab										
-			if(SetLocation(edgeLocation))
-			{
-				// sync up client location and rotation
-				ClientSetLocation(edgeLocation, edgeRotation);
-
-				GotoState('EdgeHanging');
-				return(true);			
-			}
-		}
-		
-		return(false);
 	}
+    
+    function bool GrabEdge(float grabDistance, vector grabNormal)
+    {
+        // Only grab ledge in Idle state
+        // AuthoritativeAnimProxyStateName is used instead of AnimProxy.GetStateName() so that
+        // clients can more accurately predict edge grabs, preventing edge grab stuttering.
+        if(AuthoritativeAnimProxyStateName == 'Idle')
+        {
+            GrabLocationUp.X = Location.X;
+            GrabLocationUp.Y = Location.Y;
+            GrabLocationUp.Z = Location.Z + grabDistance + 8;
+        
+            GrabLocationIn.X = Location.X + grabNormal.X * (CollisionRadius + 4);
+            GrabLocationIn.Y = Location.Y + grabNormal.Y * (CollisionRadius + 4);
+            GrabLocationIn.Z = GrabLocationUp.Z + CollisionHeight;
+        
+            SetRotation(rotator(grabNormal));
+            ViewRotation.Yaw = Rotation.Yaw; // Align View with Player position while grabbing edge
+
+            // Save the final distance (used for choosing the correct anim)
+            GrabLocationDist = GrabLocationUp.Z - Location.Z;
+
+            // Final, absolute check if the player can fit in the new location.
+            // if the player fits, then it is a valid edge grab
+            if(SetLocation(GrabLocationIn))
+            {
+                if(AnimProxy != None)
+                    AnimProxy.GotoState('EdgeHanging');         
+                GotoState('EdgeHanging');
+
+                return(true);
+            }
+        }
+        
+        return(false);
+    }
+}
+
+//==============================================================================
+//  State EdgeHanging (override)
+//
+//==============================================================================
+state EdgeHanging
+{
+    /**
+    *   ProcessMove (override)
+    *   Overridden to prevent players from jump-mashing out of edge climb
+    */
+    function ProcessMove(float DeltaTime, vector NewAccel, eDodgeDir DodgeMove, rotator DeltaRot)   
+    {}
 }
 
 //==============================================================================
