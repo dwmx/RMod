@@ -35,6 +35,25 @@ var FSkelGroupSkinArray GoreCapArrays[16];
 //==============================================================================
 
 //==============================================================================
+//  Networked movement vars adopted from 469b
+var R_SavedMove SavedMoves;
+var R_SavedMove FreeMoves;
+var R_SavedMove PendingMove;
+
+var transient float AccumulatedHTurn, AccumulatedVTurn; // Discarded fractional parts of horizontal (Yaw) and vertical (Pitch) turns
+var float LastMessageWindow;
+const SmoothAdjustLocationTime = 0.35f;
+const MinPosError = 10;
+const MaxPosError = 1000;
+var transient Vector PreAdjustLocation;
+var transient Vector AdjustLocationOffset;
+var transient float AdjustLocationAlpha;
+var bool OnMover, FakeUpdate, bForceUpdate;
+var float LastClientErr, IgnoreUpdateUntil, ForceUpdateUntil, LastStuffUpdate;
+var transient float LastClientTimestamp;
+//==============================================================================
+
+//==============================================================================
 //  Weapon Swipes
 //  R_WeaponSwipe grabs these textures and updates itself every
 //  time a weapon swing or throw occurs. If no texture is set for the
@@ -42,7 +61,6 @@ var FSkelGroupSkinArray GoreCapArrays[16];
 //  E.g. WeaponSwipeTexture=None will disable normal weapon swipes.
 var Texture WeaponSwipeTexture;
 var Texture WeaponSwipeBloodlustTexture;
-var bool bBloodlustReplicated; // Necessary for clients to see bloodlust swipe
 //==============================================================================
 
 //==============================================================================
@@ -78,10 +96,21 @@ var float SuicideCooldown;
 //  server to send ClientAdjustPosition updates during ServerMove.
 //  This is the client jitter fix
 //  Use exec function ToggleRmodDebug to display markers for client adjusts.
-var float ClientAdjustErrorThreshold;
-var float ClientAdjustCooldownSeconds;
+//var float ClientAdjustErrorThreshold;
+//var float ClientAdjustCooldownSeconds;
 var bool bShowRmodDebug;
 var R_ClientDebugActor ClientDebugActor;
+//==============================================================================
+
+//==============================================================================
+//  Authoritative variables replicated to clients
+
+//  Since AnimProxy is not an AutonomousProxy, its more efficient to replicate
+//  this variable in R_RunePlayer than in R_RunePlayerProxy.
+//  This is used for improved client-side prediction, fixing things like
+//  the stuttering ledge grabs.
+var Name AuthoritativeAnimProxyStateName;
+var bool bAuthoritativeBloodlust; // Necessary for clients to see bloodlust swipe
 //==============================================================================
 
 replication
@@ -97,16 +126,20 @@ replication
         Camera,
         WeaponSwipeTexture,
         WeaponSwipeBloodlustTexture,
-        bBloodlustReplicated;
+        bAuthoritativeBloodlust;
 
     // (Variables) Server --> Owning Client
     reliable if(Role == ROLE_Authority && RemoteRole == ROLE_AutonomousProxy)
+        AuthoritativeAnimProxyStateName,
         LoadoutReplicationInfo;
 
     // (Variables) Server --> All Clients (except Owning Client)
     unreliable if(Role == ROLE_Authority && RemoteRole != ROLE_AutonomousProxy)
         ViewRotPovPitch,
         ViewRotPovYaw;
+
+    unreliable if(RemoteRole == ROLE_AutonomousProxy)
+        FakeCAP;
 
     // (RPCs) Server --> Owning Client
     reliable if(Role == ROLE_Authority && RemoteRole == ROLE_AutonomousProxy)
@@ -120,6 +153,9 @@ replication
         ServerResetLevel,
         ServerSpectate,
         ServerTimeLimit;
+        
+    reliable if(Role < ROLE_Authority)
+        ServerMove_v2;
 }
 
 /**
@@ -728,19 +764,23 @@ event PreRender( canvas Canvas )
 
 /**
 *   Tick (override)
-*   Overridden to perform server-side update of bBloodlustReplicated
+*   Overridden to perform server-side update of bAuthoritativeBloodlust
 */
 event Tick(float DeltaSeconds)
 {
     Super.Tick(DeltaSeconds);
     
+    // Replicate authoritative vars if they've changed
     if(Role == ROLE_Authority)
     {
-        bBloodlustReplicated = bBloodlust;
+        bAuthoritativeBloodlust = bBloodlust;
+        
+        if(AnimProxy != None)
+        {
+            AuthoritativeAnimProxyStateName = AnimProxy.GetStateName();
+        }
     }
 }
-
-
 
 event Destroyed()
 {
@@ -1117,7 +1157,7 @@ function ApplySubClass_ExtractMenuName(Class<RunePlayer> SubClass)
 */
 simulated function Texture GetWeaponSwipeTexture()
 {
-    if(bBloodlustReplicated)
+    if(bAuthoritativeBloodlust)
     {
         return WeaponSwipeBloodlustTexture;
     }
@@ -1131,236 +1171,13 @@ simulated function float GetWeaponSwipeSpeed()
     return 7.0;
 }
 
-/**
-*   ServerMove (override)
-*   Overridden for the following reasons:
-*   -   Clients who have a high net speed variable will have a ClientAdjust
-*       called every single tick. Override implements a fix.
-*   -   Client view pitch and view yaw are replicated so that spectators can
-*       view in point-of-view mode.
-*/
-function ServerMove(
-    float TimeStamp, 
-    vector InAccel, 
-    vector ClientLoc,
-    bool NewbRun,
-    bool NewbDuck,
-    bool NewbJumpStatus, 
-    bool bFired,
-    bool bAltFired,
-    bool bForceFire,
-    bool bForceAltFire,
-    eDodgeDir DodgeMove, 
-    byte ClientRoll, 
-    int View,
-    optional byte OldTimeDelta,
-    optional int OldAccel)
-{
-    local float DeltaTime, clientErr, OldTimeStamp;
-    local bool bPerformClientAdjust;
-    local rotator DeltaRot, Rot;
-    local vector Accel, LocDiff;
-    local int maxPitch, ViewPitch, ViewYaw;
-    local actor OldBase;
 
-    local bool NewbPressedJump, OldbRun, OldbDuck;
-    local eDodgeDir OldDodgeMove;
-
-    // If this move is outdated, discard it.
-    if ( CurrentTimeStamp >= TimeStamp )
-    {
-        return;
-    }
-
-    // Update bReadyToPlay for clients
-    if ( PlayerReplicationInfo != None )
-        PlayerReplicationInfo.bReadyToPlay = bReadyToPlay;
-
-    // if OldTimeDelta corresponds to a lost packet, process it first
-    if (  OldTimeDelta != 0 )
-    {
-        OldTimeStamp = TimeStamp - float(OldTimeDelta)/500 - 0.001;
-        if ( CurrentTimeStamp < OldTimeStamp - 0.001 )
-        {
-            // split out components of lost move (approx)
-            Accel.X = OldAccel >>> 23;
-            if ( Accel.X > 127 )
-                Accel.X = -1 * (Accel.X - 128);
-            Accel.Y = (OldAccel >>> 15) & 255;
-            if ( Accel.Y > 127 )
-                Accel.Y = -1 * (Accel.Y - 128);
-            Accel.Z = (OldAccel >>> 7) & 255;
-            if ( Accel.Z > 127 )
-                Accel.Z = -1 * (Accel.Z - 128);
-            Accel *= 20;
-            
-            OldbRun = ( (OldAccel & 64) != 0 );
-            OldbDuck = ( (OldAccel & 32) != 0 );
-            NewbPressedJump = ( (OldAccel & 16) != 0 );
-            if ( NewbPressedJump )
-                bJumpStatus = NewbJumpStatus;
-
-            switch (OldAccel & 7)
-            {
-                case 0:
-                    OldDodgeMove = DODGE_None;
-                    break;
-                case 1:
-                    OldDodgeMove = DODGE_Left;
-                    break;
-                case 2:
-                    OldDodgeMove = DODGE_Right;
-                    break;
-                case 3:
-                    OldDodgeMove = DODGE_Forward;
-                    break;
-                case 4:
-                    OldDodgeMove = DODGE_Back;
-                    break;
-            }
-            //log("Recovered move from "$OldTimeStamp$" acceleration "$Accel$" from "$OldAccel);
-            MoveAutonomous(OldTimeStamp - CurrentTimeStamp, OldbRun, OldbDuck, NewbPressedJump, OldDodgeMove, Accel, rot(0,0,0));
-            CurrentTimeStamp = OldTimeStamp;
-        }
-    }       
-
-    // View components
-    ViewPitch = View/32768;
-    ViewYaw = 2 * (View - 32768 * ViewPitch);
-    ViewPitch *= 2;
-    // Make acceleration.
-    Accel = InAccel/10;
-
-    NewbPressedJump = (bJumpStatus != NewbJumpStatus);
-    bJumpStatus = NewbJumpStatus;
-
-    // handle firing and alt-firing
-    if(bFired)
-    {
-        if(bForceFire && (Weapon != None) )
-        {
-//RUNE          Weapon.ForceFire();
-            Fire(0);
-        }
-        else if(bFire == 0)
-        {
-            Fire(0);
-        }
-        bFire = 1;
-    }
-    else
-        bFire = 0;
-
-
-    if(bAltFired)
-    {
-        if(bForceAltFire && (Shield != None))
-            AltFire(0);
-//RUNE          Weapon.ForceAltFire();
-        else if(bAltFire == 0)
-            AltFire(0);
-        bAltFire = 1;
-    }
-    else
-        bAltFire = 0;
-
-    // Save move parameters.
-    DeltaTime = TimeStamp - CurrentTimeStamp;
-    if ( ServerTimeStamp > 0 )
-    {
-        // allow 1% error
-        TimeMargin += DeltaTime - 1.01 * (Level.TimeSeconds - ServerTimeStamp);
-        if ( TimeMargin > MaxTimeMargin )
-        {
-            // player is too far ahead
-            TimeMargin -= DeltaTime;
-            if ( TimeMargin < 0.5 )
-                MaxTimeMargin = Default.MaxTimeMargin;
-            else
-                MaxTimeMargin = 0.5;
-            DeltaTime = 0;
-        }
-    }
-
-    CurrentTimeStamp = TimeStamp;
-    ServerTimeStamp = Level.TimeSeconds;
-    Rot.Roll = 256 * ClientRoll;
-    Rot.Yaw = ViewYaw;
-    if ( (Physics == PHYS_Swimming) || (Physics == PHYS_Flying) )
-        maxPitch = 2;
-    else
-        maxPitch = 1;
-    If ( (ViewPitch > maxPitch * RotationRate.Pitch) && (ViewPitch < 65536 - maxPitch * RotationRate.Pitch) )
-    {
-        If (ViewPitch < 32768) 
-            Rot.Pitch = maxPitch * RotationRate.Pitch;
-        else
-            Rot.Pitch = 65536 - maxPitch * RotationRate.Pitch;
-    }
-    else
-        Rot.Pitch = ViewPitch;
-    DeltaRot = (Rotation - Rot);
-    ViewRotation.Pitch = ViewPitch;
-    ViewRotation.Yaw = ViewYaw;
-    ViewRotation.Roll = 0;
-    SetRotation(Rot);
-
-    OldBase = Base;
-
-    // Perform actual movement.
-    if ( (Level.Pauser == "") && (DeltaTime > 0) )
-        MoveAutonomous(DeltaTime, NewbRun, NewbDuck, NewbPressedJump, DodgeMove, Accel, DeltaRot);
-
-    // Check for client error with time threshold
-    if(Level.TimeSeconds - LastUpdateTime > ClientAdjustCooldownSeconds)
-    {
-        LocDiff = Location - ClientLoc;
-        ClientErr = LocDiff Dot LocDiff;
-        
-        if(ClientErr >= ClientAdjustErrorThreshold)
-        {
-            bPerformClientAdjust = true;
-        }
-    }
-    
-    // Always perform client adjust when state changes
-    if(GetStateName() != PreviousStateName)
-    {
-        PreviousStateName = GetStateName();
-        bPerformClientAdjust = true;
-    }
-    
-    if(bPerformClientAdjust)
-    {
-        if ( Mover(Base) != None )
-            ClientLoc = Location - Base.Location;
-        else
-            ClientLoc = Location;
-        //log("Client Error at "$TimeStamp$" is "$ClientErr$" with acceleration "$Accel$" LocDiff "$LocDiff$" Physics "$Physics);
-        LastUpdateTime = Level.TimeSeconds;
-        ClientAdjustPosition
-        (
-            TimeStamp,
-            GetStateName(), 
-            Physics, 
-            ClientLoc.X, 
-            ClientLoc.Y, 
-            ClientLoc.Z, 
-            Velocity.X, 
-            Velocity.Y, 
-            Velocity.Z,
-            Base
-        );
-    }
-    //log("Server "$Role$" moved "$self$" stamp "$TimeStamp$" location "$Location$" Acceleration "$Acceleration$" Velocity "$Velocity);
-        
-    ViewRotPovPitch = ViewRotation.Pitch;
-    ViewRotPovYaw = ViewRotation.Yaw;
-}
-
+//==============================================================================
+//  Begin 469b movement adaptation for Rune
+//==============================================================================
 /**
 *   ClientAdjustPosition (override)
-*   Overridden to draw debug information
+*   469b movement adaptation for Rune
 */
 function ClientAdjustPosition
 (
@@ -1376,8 +1193,71 @@ function ClientAdjustPosition
     Actor NewBase
 )
 {
+    local Vector OldLoc, NewLocation, NewVelocity;
+    local R_SavedMove CurrentMove;
     local Vector DebugLineBegin, DebugLineEnd;
+
+    if (CurrentTimeStamp > TimeStamp)
+        return;
+
+    CurrentTimeStamp = TimeStamp;
+
+    NewLocation.X = NewLocX;
+    NewLocation.Y = NewLocY;
+    NewLocation.Z = NewLocZ;
+    NewVelocity.X = NewVelX;
+    NewVelocity.Y = NewVelY;
+    NewVelocity.Z = NewVelZ;
+
+    // Higor: keep track of Position prior to adjustment
+    // and stop current smoothed adjustment (if in progress).
+    PreAdjustLocation = Location;
+    if (AdjustLocationAlpha > 0)
+    {
+        AdjustLocationAlpha = 0;
+        AdjustLocationOffset = vect(0, 0, 0);
+    }
+
+    // stijn: Remove acknowledged moves from the savedmoves list
+    CurrentMove = SavedMoves;
+    while (CurrentMove != None)
+    {
+        if (CurrentMove.TimeStamp <= CurrentTimeStamp)
+        {
+            SavedMoves = CurrentMove.NextMove;
+            CurrentMove.NextMove = FreeMoves;
+            FreeMoves = CurrentMove;
+            FreeMoves.Clear();
+            CurrentMove = SavedMoves;
+        }
+        else
+        {
+            // not yet acknowledged. break out of the loop
+            CurrentMove = None;
+        }
+    }
+
+    SetBase(NewBase);
+    if (Mover(NewBase) != None)
+        NewLocation += NewBase.Location;
+
+    //log("Client "$Role$" adjust "$self$" stamp "$TimeStamp$" location "$Location);
+    OldLoc = Location;
+    bCanTeleport = false;
+    SetLocation(NewLocation);
+    bCanTeleport = true;
+    Velocity = NewVelocity;
+
+    SetPhysics(newPhysics);
+    if (!IsInState(newState))
+    {
+        //log("CAP: GotoState("$newState$")");
+        GotoState(newState);
+    }
+
+    bUpdatePosition = true;
     
+    // Draw debug visualizers
     if(bShowRmodDebug && ClientDebugActor != None)
     {
         DebugLineBegin = Location;
@@ -1392,9 +1272,777 @@ function ClientAdjustPosition
         DebugLineEnd.Z += 96.0;
         ClientDebugActor.DrawLineSegmentForDuration(DebugLineBegin, DebugLineEnd, ColorsClass.Static.ColorGreen(), 5.0);
     }
-    
-    Super.ClientAdjustPosition(TimeStamp, NewState, NewPhysics, NewLocX, NewLocY, NewLocZ, NewVelX, NewVelY, NewVelZ, NewBase);
 }
+
+/**
+*   ReplicateMove (override)
+*   469b movement adaptation for Rune
+*/
+function ReplicateMove(
+    float DeltaTime,
+    vector NewAccel,
+    eDodgeDir DodgeMove,
+    rotator DeltaRot)
+{
+    local R_SavedMove NewMove, OldMove, LastMove;
+    local float TotalTime, NetMoveDelta;
+
+    local float AdjustAlpha;
+
+    // Higor: process smooth adjustment.
+    if (AdjustLocationAlpha > 0)
+    {
+        AdjustAlpha = fMin(AdjustLocationAlpha, DeltaTime / SmoothAdjustLocationTime);
+        MoveSmooth(AdjustLocationOffset * AdjustAlpha);
+        AdjustLocationAlpha -= AdjustAlpha;
+    }
+
+    // Prevent some RunePlayer specific variables from replicating to server
+    PreventUndesiredClientVarReplication();
+
+    NetMoveDelta = FMax(64.0 / Player.CurrentNetSpeed, 0.011);
+
+    // if am network client and am carrying flag -
+    //  make its position look good client side
+    if ((PlayerReplicationInfo != None) && (PlayerReplicationInfo.HasFlag != None))
+        PlayerReplicationInfo.HasFlag.FollowHolder(self);
+
+    // Get a SavedMove actor to store the movement in.
+    if (PendingMove != None)
+    {
+        if (PendingMove.CanMergeAccel(NewAccel))
+        {
+            //add this move to the pending move
+            PendingMove.TimeStamp = Level.TimeSeconds;
+            if (VSize(NewAccel) > 3072)
+                NewAccel = 3072 * Normal(NewAccel);
+            TotalTime = DeltaTime + PendingMove.Delta;
+            // Set this move's data.
+            if (PendingMove.DodgeMove == DODGE_None)
+                PendingMove.DodgeMove = DodgeMove;
+            PendingMove.Acceleration = (DeltaTime * NewAccel + PendingMove.Delta * PendingMove.Acceleration) / TotalTime;
+            PendingMove.SetRotation(Rotation);
+            PendingMove.SavedViewRotation = ViewRotation;
+            PendingMove.bRun = (bRun > 0);
+            PendingMove.bDuck = (bDuck > 0);
+            PendingMove.bPressedJump = bPressedJump || PendingMove.bPressedJump;
+            PendingMove.bFire = PendingMove.bFire || bJustFired || (bFire != 0);
+            PendingMove.bForceFire = PendingMove.bForceFire || bJustFired;
+            PendingMove.bAltFire = PendingMove.bAltFire || bJustAltFired || (bAltFire != 0);
+            PendingMove.bForceAltFire = PendingMove.bForceAltFire || bJustFired;
+            PendingMove.Delta = TotalTime;
+            PendingMove.MergeCount++;
+        }
+        else
+        {
+            // Burst old move and remove from Pending
+            // Log("Bursting move"@Level.TimeSeconds);
+            SendServerMove(PendingMove);
+            ClientUpdateTime = PendingMove.Delta - NetMoveDelta;
+            if (SavedMoves == None)
+                SavedMoves = PendingMove;
+            else
+            {
+                for (LastMove = SavedMoves; LastMove.NextMove != None; LastMove = LastMove.NextMove);
+                LastMove.NextMove = PendingMove;
+            }
+            PendingMove = None;
+        }
+    }
+    if (SavedMoves != None)
+    {
+        NewMove = SavedMoves;
+        while (NewMove.NextMove != None)
+        {
+            // find most recent interesting (and unacknowledged) move to send redundantly
+            if (NewMove.CanSendRedundantly(NewAccel))
+                OldMove = NewMove;
+            NewMove = NewMove.NextMove;
+        }
+        if (NewMove.CanSendRedundantly(NewAccel))
+            OldMove = NewMove;
+    }
+
+    LastMove = NewMove;
+    NewMove = NGetFreeMove();
+    NewMove.Delta = DeltaTime;
+    if (VSize(NewAccel) > 3072)
+        NewAccel = 3072 * Normal(NewAccel);
+    NewMove.Acceleration = NewAccel;
+    NewAccel = Acceleration;
+
+    // Set this move's data.
+    NewMove.DodgeMove = DodgeMove;
+    NewMove.TimeStamp = Level.TimeSeconds;
+    NewMove.bRun = (bRun > 0);
+    NewMove.bDuck = (bDuck > 0);
+    NewMove.bPressedJump = bPressedJump;
+    NewMove.bFire = (bJustFired || (bFire != 0));
+    NewMove.bForceFire = bJustFired;
+    NewMove.bAltFire = (bJustAltFired || (bAltFire != 0));
+    NewMove.bForceAltFire = bJustAltFired;
+
+    bJustFired = false;
+    bJustAltFired = false;
+
+    // Simulate the movement locally.
+    ProcessMove(NewMove.Delta, NewMove.Acceleration, NewMove.DodgeMove, DeltaRot);
+    AutonomousPhysics(NewMove.Delta);
+
+    // Decide whether to hold off on move
+    // send if dodge, jump, or fire unless really too soon, or if newmove.delta big enough
+    // on client side, save extra buffered time in LastUpdateTime
+    if (PendingMove == None)
+        PendingMove = NewMove;
+    else
+    {
+        NewMove.NextMove = FreeMoves;
+        FreeMoves = NewMove;
+        FreeMoves.Clear();
+        NewMove = PendingMove;
+    }
+
+    NewMove.SetRotation(Rotation);
+    NewMove.SavedViewRotation = ViewRotation;
+    NewMove.SavedLocation = Location;
+    NewMove.SavedVelocity = Velocity;
+
+    if (PendingMove.CanBuffer(NewAccel) && (PendingMove.Delta < NetMoveDelta - ClientUpdateTime))
+    {
+        // save as pending move
+        return;
+    }
+    else
+    {
+        ClientUpdateTime = PendingMove.Delta - NetMoveDelta;
+        if (SavedMoves == None)
+            SavedMoves = PendingMove;
+        else
+            LastMove.NextMove = PendingMove;
+        PendingMove = None;
+    }
+
+    if (NewMove.bPressedJump)
+        bJumpStatus = !bJumpStatus;
+
+    SendServerMove(NewMove, OldMove);
+}
+
+/**
+*   SendServerMove
+*   469b movement adaptation for Rune
+*/
+function SendServerMove(R_SavedMove Move, optional R_SavedMove OldMove)
+{
+    local byte ClientRoll;
+    local float OldTimeDelta;
+    local int OldAccel;
+    local byte MoveFlags;
+    local int View;
+    local EDodgeDir DodgeMove;
+    ClientRoll = (Rotation.Roll >> 8) & 255;
+    View = (32767 & (Move.SavedViewRotation.Pitch/2)) * 32768 + (32767 & (Move.SavedViewRotation.Yaw/2));
+
+    // check if need to redundantly send previous move
+    if (OldMove != None)
+    {
+        // log("Redundant send timestamp "$OldMove.TimeStamp$" accel "$OldMove.Acceleration$" at "$Level.Timeseconds$" New accel "$NewAccel);
+        // old move important to replicate redundantly
+        OldTimeDelta = FMin(255, (Level.TimeSeconds - OldMove.TimeStamp) * 500);
+        OldAccel = OldMove.CompressOld();
+    }
+
+    // There's no need to send DODGE_Active, Dodge() sets it.
+    DodgeMove = Move.DodgeMove;
+    if (DodgeMove == DODGE_Active)
+        DodgeMove = DODGE_None;
+
+    MoveFlags = Move.CompressFlags();
+    MoveFlags += int(bJumpStatus) * 128;
+    ServerMove_v2(
+        Move.TimeStamp,
+        Move.Acceleration * 10,
+        Location,
+        Velocity,
+        MoveFlags,
+        DodgeMove,
+        ClientRoll,
+        View,
+        Move.MergeCount,
+        OldTimeDelta,
+        OldAccel);
+}
+
+/**
+*   ServerMove_v2
+*   469b movement adaptation for Rune
+*/
+function ServerMove_v2(
+    float TimeStamp,
+    Vector InAccel,
+    Vector ClientLoc,
+    Vector ClientVel,
+    byte MoveFlags,
+    EDodgeDir DodgeMove,
+    byte ClientRoll,
+    int View,
+    int MergeCount,
+    optional byte OldTimeDelta,
+    optional int OldAccel)
+{
+    local float DeltaTime;
+    local rotator DeltaRot, Rot;
+    local vector Accel;
+    local int maxPitch, ViewPitch, ViewYaw;
+    local bool NewbPressedJump;
+    local bool NewbRun, NewbDuck, NewbJumpStatus, bFired, bAltFired, bForceFire, bForceAltFire;
+
+    // If this move is outdated, discard it.
+    if (CurrentTimeStamp >= TimeStamp)
+        return;
+
+    if(MergeCount > 31)
+        return;
+    
+    // Update bReadyToPlay for clients
+    if (PlayerReplicationInfo != None)
+        PlayerReplicationInfo.bReadyToPlay = bReadyToPlay;
+
+    // Decompress move flags.
+    NewbRun = (MoveFlags & 1) != 0;
+    NewbDuck = (MoveFlags & 2) != 0;
+    bFired = (MoveFlags & 4) != 0;
+    bAltFired = (MoveFlags & 8) != 0;
+    bForceFire = (MoveFlags & 16) != 0;
+    bForceAltFire = (MoveFlags & 32) != 0;
+    NewbJumpStatus = (MoveFlags & 128) != 0;
+
+    // if OldTimeDelta corresponds to a lost packet, process it first
+    if (OldTimeDelta != 0)
+        OldServerMove(TimeStamp, NewbJumpStatus, OldTimeDelta, OldAccel);
+
+    // View components
+    ViewPitch = View / 32768;
+    ViewYaw = 2 * (View - 32768 * ViewPitch);
+    ViewPitch *= 2;
+
+    // Make acceleration.
+    Accel = InAccel / 10;
+    NewbPressedJump = (bJumpStatus != NewbJumpStatus);
+    bJumpStatus = NewbJumpStatus;
+    // handle firing and alt-firing
+    if (bFired)
+    {
+        if ((bForceFire && (Weapon != None)) || bFire == 0)
+            Fire(0);
+
+        bFire = 1;
+    }
+    else
+        bFire = 0;
+
+    if (bAltFired)
+    {
+        if (bAltFire == 0 || (bForceAltFire && (Weapon != None)))
+            AltFire(0);
+
+        bAltFire = 1;
+    }
+    else
+        bAltFire = 0;
+    // Save move parameters.
+    DeltaTime = TimeStamp - CurrentTimeStamp;
+    if (ServerTimeStamp > 0)
+    {
+        // allow 1% error
+        TimeMargin = FMax(0, TimeMargin + DeltaTime - 1.01 * (Level.TimeSeconds - ServerTimeStamp));
+        if (TimeMargin > MaxTimeMargin)
+        {
+            // player is too far ahead
+            TimeMargin -= DeltaTime;
+            if (TimeMargin < 0.5)
+                MaxTimeMargin = Default.MaxTimeMargin;
+            else
+                MaxTimeMargin = 0.5;
+            DeltaTime = 0;
+        }
+    }
+    CurrentTimeStamp = TimeStamp;
+    ServerTimeStamp = Level.TimeSeconds;
+    Rot.Roll = 256 * ClientRoll;
+    Rot.Yaw = ViewYaw;
+    if ((Physics == PHYS_Swimming) || (Physics == PHYS_Flying))
+        maxPitch = 2;
+    else
+        maxPitch = 1;
+    If((ViewPitch > maxPitch * RotationRate.Pitch) && (ViewPitch < 65536 - maxPitch * RotationRate.Pitch))
+    {
+        If(ViewPitch < 32768)
+            Rot.Pitch = maxPitch * RotationRate.Pitch;
+        else Rot.Pitch = 65536 - maxPitch * RotationRate.Pitch;
+    }
+    else 
+        Rot.Pitch = ViewPitch;
+    DeltaRot = (Rotation - Rot);
+    ViewRotation.Pitch = ViewPitch;
+    ViewRotation.Yaw = ViewYaw;
+    ViewRotation.Roll = 0;
+    SetRotation(Rot);
+
+    // Perform actual movement, reproduced step by step as on client (approximate)
+    if ((Level.Pauser == "") && (DeltaTime > 0))
+    {
+        DeltaTime /= MergeCount + 1;
+        while ( MergeCount > 0 )
+        {
+            MoveAutonomous( DeltaTime, NewbRun, NewbDuck, false, DODGE_None, Accel, rot(0,0,0) );
+            MergeCount--;
+        }
+        // Important input is usually the cause for buffer breakup, so it happens last on the client.
+        MoveAutonomous(DeltaTime, NewbRun, NewbDuck, NewbPressedJump, DodgeMove, Accel, DeltaRot);
+    }
+
+    LastClientTimeStamp = TimeStamp;
+    CheckClientError(TimeStamp, ClientLoc, ClientVel);
+    
+    // Update vars for POV spectating
+    ViewRotPovPitch = ViewRotation.Pitch;
+    ViewRotPovYaw = ViewRotation.Yaw;
+}
+
+/**
+*   CheckClientError
+*   469b movement adaptation for Rune
+*/
+function CheckClientError(float TimeStamp, vector ClientLoc, vector ClientVel)
+{
+    local float ClientErr;
+    local vector ClientLocation, LocDiff;
+    local bool bTooLong, bOnMover, bMoveSmooth;
+    local Pawn P;
+
+    if (TimeStamp == 0 )
+        return;
+
+    LocDiff = Location - ClientLoc;
+    ClientErr = LocDiff Dot LocDiff;
+
+    if (Player.CurrentNetSpeed == 0)
+        bTooLong = ServerTimeStamp - LastUpdateTime > 0.025;
+    else
+        bTooLong = ServerTimeStamp - LastUpdateTime > 500.0/Player.CurrentNetSpeed;
+    
+    if (!bTooLong)
+        bTooLong = ClientErr > MinPosError;
+    
+    if (!bTooLong)
+        return;     
+
+    // PlayerReplicationInfo.Ping = int(ConsoleCommand("GETPING"));
+    bOnMover = Mover(Base) != None;
+    if (bOnMover && OnMover)
+    {
+        IgnoreUpdateUntil = ServerTimeStamp + 0.15;
+    }
+    else if (IgnoreUpdateUntil > 0)
+    {
+        if (IgnoreUpdateUntil > ServerTimeStamp && (Base == None ||  !bOnMover || bOnMover != OnMover) && Physics != PHYS_Falling)
+            IgnoreUpdateUntil = 0;
+
+        bForceUpdate = false;
+    }
+
+    LastUpdateTime = ServerTimeStamp;
+
+    if (ForceUpdateUntil > 0 || IgnoreUpdateUntil == 0 && ClientErr > MaxPosError)
+    {
+        bForceUpdate = true;
+        if (ServerTimeStamp > ForceUpdateUntil)
+            ForceUpdateUntil = 0;
+    }
+    
+    // Always perform client adjust when state changes
+    if(GetStateName() != PreviousStateName)
+    {
+        PreviousStateName = GetStateName();
+        bForceUpdate = true;
+    }
+
+    if(bForceUpdate)
+    {
+        bForceUpdate = false;       
+
+        if (bOnMover)
+            ClientLocation = Location - Base.Location;
+        else
+            ClientLocation = Location;
+
+        // Make sure Z is rounded up.
+        if (Base != None && Base != Level)
+            ClientLocation.Z += float(int(Base.Location.Z + 0.9)) - Base.Location.Z;
+
+        ClientAdjustPosition(
+            TimeStamp,
+            GetStateName(),
+            Physics,
+            ClientLocation.X,
+            ClientLocation.Y,
+            ClientLocation.Z,
+            Velocity.X,
+            Velocity.Y,
+            Velocity.Z,
+            Base);
+
+        LastClientErr = 0;      
+        FakeUpdate = false;
+        PreventUndesiredClientVarReplication();
+        return;
+    }
+
+    if (ClientErr > MinPosError)
+    {
+        if (LastClientErr == 0 || ClientErr < LastClientErr)    
+        {   
+            LastClientErr = ClientErr;
+        }
+        else if(!bOnMover)
+        {
+            bMoveSmooth = FastTrace(ClientLoc);
+            if (!bMoveSmooth)
+            {
+                for (P = Level.PawnList; P != None; P = P.NextPawn)
+                {
+                    if (P.bCollideActors && P.bCollideWorld && P.bBlockActors && P != Self && VSize(P.Location - ClientLoc) < ((P.CollisionRadius + CollisionRadius) * CollisionHeight))
+                    {
+                        bMoveSmooth = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (bMoveSmooth)
+            {
+                if( MoveSmooth(ClientLoc - Location))
+                    Velocity = ClientVel;
+                LastClientErr = 0;
+            }
+            else
+            {               
+                bCanTeleport = false;
+                if (SetLocation(ClientLoc))
+                    Velocity = ClientVel;
+                bCanTeleport = true;
+
+                LastClientErr = 0;
+            }
+        }
+    }
+
+    FakeCAP(TimeStamp);
+}
+
+/**
+*   OldServerMove
+*   469b movement adaptation for Rune
+*/
+final function OldServerMove(float TimeStamp, bool NewbJumpStatus, byte OldTimeDelta, int OldAccel)
+{
+    local float OldTimeStamp;
+    local bool OldbRun, OldbDuck, NewbPressedJump;
+    local vector Accel;
+    local EDodgeDir OldDodgeMove;
+
+    OldTimeStamp = TimeStamp - float(OldTimeDelta) / 500 - 0.001;
+    if (CurrentTimeStamp < OldTimeStamp - 0.001)
+    {
+        // split out components of lost move (approx)
+        Accel.X = DecompressAccel(OldAccel >>> 23);
+        Accel.Y = DecompressAccel((OldAccel >>> 15) & 255);
+        Accel.Z = DecompressAccel((OldAccel >>> 7) & 255);
+        Accel *= 20;
+        OldbRun = ((OldAccel & 64) != 0);
+        OldbDuck = ((OldAccel & 32) != 0);
+        NewbPressedJump = ((OldAccel & 16) != 0);
+        if (NewbPressedJump)
+            bJumpStatus = NewbJumpStatus;
+        switch (OldAccel & 7)
+        {
+        case 0:
+            OldDodgeMove = DODGE_None;
+            break;
+        case 1:
+            OldDodgeMove = DODGE_Left;
+            break;
+        case 2:
+            OldDodgeMove = DODGE_Right;
+            break;
+        case 3:
+            OldDodgeMove = DODGE_Forward;
+            break;
+        case 4:
+            OldDodgeMove = DODGE_Back;
+            break;
+        }
+        //      log("Recovered move from "$OldTimeStamp$" acceleration "$Accel$" from "$OldAccel);
+        MoveAutonomous(OldTimeStamp - CurrentTimeStamp, OldbRun, OldbDuck, NewbPressedJump, OldDodgeMove, Accel, rot(0, 0, 0));
+        CurrentTimeStamp = OldTimeStamp;
+    }
+}
+
+/**
+*   FakeCAP
+*   469b movement adaptation for Rune
+*/
+function FakeCAP(float TimeStamp)
+{
+    if (CurrentTimeStamp > TimeStamp )
+        return;
+    CurrentTimeStamp = TimeStamp;
+
+    FakeUpdate = true;
+    bUpdatePosition = true;
+}
+
+/**
+*   NGetFreeMove
+*   469b movement adaptation for Rune
+*/
+function R_SavedMove NGetFreeMove()
+{
+    local R_SavedMove s;
+    if (FreeMoves == None)
+        return Spawn(class 'RMod.R_SavedMove', self);
+    else
+    {
+        s = FreeMoves;
+        FreeMoves = FreeMoves.NextMove;
+        s.NextMove = None;
+        if (s.Owner != self)
+            s.SetOwner(self);
+        return s;
+    }
+}
+
+/**
+*   DecompressAccel
+*   469b movement adaptation for Rune
+*/
+final function float DecompressAccel(int C)
+{
+    if (C > 127)
+        C = -1 * (C - 128);
+    return C;
+}
+
+/**
+*   PreventUndesiredClientVarReplication
+*   Prevent the undesired replication of some variables from client to server
+*/
+function PreventUndesiredClientVarReplication()
+{
+    if (AmbientGlow != 0)           AmbientGlow = 0;
+    if (ScaleGlow != 1.0)           ScaleGlow = 1.0;
+    if (bUnlit)                     bUnlit = false;
+    if (bMeshEnviroMap)             bMeshEnviroMap = false;
+    if (PrePivot != vect(0, 0, 0))  PrePivot = vect(0, 0, 0);
+}
+
+/**
+*   ClientUpdatePosition (override)
+*   469b movement adaptation for Rune
+*/
+function ClientUpdatePosition()
+{
+    local R_SavedMove CurrentMove;
+    local int realbRun, realbDuck;
+    local bool bRealJump;
+    local rotator RealViewRotation, RealRotation;
+
+    local float AdjustDistance;
+    local vector PostAdjustLocation;
+
+    bUpdatePosition = false;
+    realbRun = bRun;
+    realbDuck = bDuck;
+    bRealJump = bPressedJump;
+    RealRotation = Rotation;
+    RealViewRotation = ViewRotation;
+    CurrentMove = SavedMoves;
+    bUpdating = true;
+
+    while (CurrentMove != None)
+    {
+        if (CurrentMove.TimeStamp <= CurrentTimeStamp)
+        {
+            SavedMoves = CurrentMove.NextMove;
+            CurrentMove.NextMove = FreeMoves;
+            FreeMoves = CurrentMove;
+            FreeMoves.Clear();
+            CurrentMove = SavedMoves;
+        }
+        else
+        {
+            if(!FakeUpdate)         
+                ClientReplayMove(CurrentMove);          
+
+            CurrentMove = CurrentMove.NextMove;
+        }
+    }
+
+    // stijn: The original code was not replaying the pending move
+    // here. This was a huge oversight and caused non-stop resynchronizations
+    // because the playerpawn position would be off constantly until the player
+    // stopped moving!
+    if(!FakeUpdate)
+    {
+        if (PendingMove != none)
+            ClientReplayMove(PendingMove);
+
+        // Higor: evaluate location adjustment and see if we should either
+        // - Discard it
+        // - Negate and process over a certain amount of time.
+        // - Keep adjustment as is (instant relocation)
+        AdjustLocationOffset = (Location - PreAdjustLocation);
+        AdjustDistance = VSize(AdjustLocationOffset);
+        AdjustLocationAlpha = 0;
+        if (AdjustDistance < VSize(Acceleration)) //Only do this if player is trying to move
+        {
+            if (AdjustDistance < 2)
+            {
+                // Discard
+                MoveSmooth(-AdjustLocationOffset);
+            }
+            else if ((AdjustDistance < 50) && FastTrace(Location, PreAdjustLocation))
+            {
+                // Undo adjustment and re-enact smoothly
+                PostAdjustLocation = Location;
+                MoveSmooth(-AdjustLocationOffset);
+                AdjustLocationOffset = PostAdjustLocation - Location;
+                AdjustLocationAlpha = 1;
+            }
+        }
+    }
+
+    bUpdating = false;
+    bDuck = realbDuck;
+    bRun = realbRun;
+    bPressedJump = bRealJump;
+    SetRotation(RealRotation);
+    ViewRotation = RealViewRotation;
+    FakeUpdate = false;
+    //log("Client adjusted "$self$" stamp "$CurrentTimeStamp$" location "$Location$" dodge "$DodgeDir);
+}
+
+/**
+*   ClientReplayMove
+*   469b movement adaptation for Rune
+*/
+function ClientReplayMove(R_SavedMove Move)
+{
+    local int i;
+    local float DeltaTime;
+
+    SetRotation(Move.Rotation);
+    ViewRotation = Move.SavedViewRotation;
+    // Replay the move in the same amount of ticks they were created+merged.
+    // Important input needs to be processed last (as it's usually the cause of buffer breakup)
+    DeltaTime = Move.Delta;
+    DeltaTime /= Move.MergeCount + 1;
+    for ( i=0; i<Move.MergeCount; i++)
+        MoveAutonomous( DeltaTime, Move.bRun, Move.bDuck, false, DODGE_None, Move.Acceleration, rot(0,0,0));
+
+    MoveAutonomous(DeltaTime, Move.bRun, Move.bDuck, Move.bPressedJump, Move.DodgeMove, Move.Acceleration, rot(0, 0, 0));
+    Move.SavedLocation = Location;
+    Move.SavedVelocity = Velocity;
+}
+
+/**
+*   EncroachingOn (override)
+*   469b movement adaptation for Rune
+*/
+event bool EncroachingOn(actor Other)
+{
+    if ((Other.Brush != None) || (Brush(Other) != None))
+        return true;
+
+    if (!bCanTeleport && (Pawn(Other) != None) && (Level.NetMode == NM_Client))
+        return false; // Allow relocating inside pawns during ClientAdjustPosition
+
+    if ((!bIsPlayer || bWarping) && (Pawn(Other) != None))
+        return true;
+
+    return false;
+}
+
+/**
+*   AccumulatedPlayerTurn
+*   469b movement adaptation for Rune
+*/
+function int AccumulatedPlayerTurn(float CurrentTurn, out float AccumulatedTurn)
+{
+    local int IntTurn;
+
+    CurrentTurn += AccumulatedTurn;
+    IntTurn = CurrentTurn;
+    AccumulatedTurn = CurrentTurn - IntTurn;
+    return IntTurn;
+}
+
+/**
+*   UpdateRotation (override)
+*   469b movement adaptation for Rune
+*/
+function UpdateRotation(float DeltaTime, float maxPitch)
+{
+    local rotator newRotation;
+
+    DesiredRotation = ViewRotation; //save old rotation
+    ViewRotation.Pitch += AccumulatedPlayerTurn(32.0 * DeltaTime * aLookUp, AccumulatedVTurn);
+    ViewRotation.Pitch = ViewRotation.Pitch & 65535;
+    If((ViewRotation.Pitch > 18000) && (ViewRotation.Pitch < 49152))
+    {
+        If(aLookUp > 0)
+            ViewRotation.Pitch = 18000;
+        else ViewRotation.Pitch = 49152;
+    }
+    ViewRotation.Yaw += AccumulatedPlayerTurn(32.0 * DeltaTime * aTurn, AccumulatedHTurn);
+    //  ViewShake(deltaTime); // RUNE:  ViewShake is handled in the Camera code
+    ViewFlash(deltaTime);
+
+    newRotation = Rotation;
+    newRotation.Yaw = ViewRotation.Yaw;
+    newRotation.Pitch = ViewRotation.Pitch;
+    If((newRotation.Pitch > maxPitch * RotationRate.Pitch) && (newRotation.Pitch < 65536 - maxPitch * RotationRate.Pitch))
+    {
+        If(ViewRotation.Pitch < 32768)
+            newRotation.Pitch = maxPitch * RotationRate.Pitch;
+        else newRotation.Pitch = 65536 - maxPitch * RotationRate.Pitch;
+    }
+    setRotation(newRotation);
+}
+
+/**
+*   PlayerTickEvents
+*   469b movement adaptation for Rune
+*/
+function PlayerTickEvents()
+{
+    if (Player.CurrentNetSpeed != 0 && Level.TimeSeconds - LastStuffUpdate > 500.0/Player.CurrentNetSpeed)  
+        LastStuffUpdate = CurrentTime;  
+}
+
+/**
+*   PlayerTick (override)
+*   469b movement adaptation for Rune
+*/
+event PlayerTick( float Time )
+{
+    PlayerTickEvents();
+}
+//==============================================================================
+//  End 469b movement adaptation for Rune
+//==============================================================================
+
 
 /**
 *   JointDamaged (override)
@@ -1608,14 +2256,6 @@ simulated function Rotator GetViewRotPov()
     return ViewRotPov;
 }
 
-
-
-
-
-
-
-
-
 /**
 *   BoostStrength (override)
 *   Overridden to call EnableBloodlust
@@ -1786,6 +2426,135 @@ function bool CheckShouldSpectateAfterDying()
 {
     // If unable to restart, then go into spectator mode
     return !CheckCanRestart();
+}
+
+/**
+*   ClientSetLocation (override)
+*   Overridden to prevent this function from updating the client's ViewRotation.
+*/
+function ClientSetLocation(Vector NewLocation, Rotator NewRotation)
+{
+    // Only Yaw
+    NewRotation.Roll = 0;
+    NewRotation.Pitch = 0;
+    SetRotation(NewRotation);
+    SetLocation(NewLocation);
+}
+
+//==============================================================================
+//  State PlayerWalking (override)
+//
+//  Overridden for 469b movement adaptation
+//==============================================================================
+state PlayerWalking
+{
+    event PlayerTick(float DeltaTime)
+    {
+        local float ZDist;
+
+        PlayerTickEvents();
+
+        if (bUpdatePosition)
+            ClientUpdatePosition();
+
+        //
+        // stijn: if the server corrected our position in the middle of
+        // a dodge, we might end up in DODGE_Active state with our
+        // Physics set to PHYS_Walking. If this happened before 469,
+        // the player would not be able to dodge again until triggering
+        // a landed event (which usually meant you had to jump).
+        // Here, we just wait for the dodge animation to play out and
+        // then manually force a dodgedir reset.
+        //
+        if (DodgeDir == DODGE_Active &&
+            Physics != PHYS_Falling &&
+            GetAnimGroup(AnimSequence) != 'Dodge' &&
+            GetAnimGroup(AnimSequence) != 'Jumping')
+        {
+            DodgeDir = DODGE_None;
+            DodgeClickTimer = DodgeClickTime;
+        }
+
+        PlayerMove(DeltaTime);
+
+        // Check to player falling death scream
+        if (!bPlayedFallingSound && Physics == PHYS_Falling && Velocity.Z < -1300)
+        { // Play death scream
+            bPlayedFallingSound = true;
+            PlaySound(FallingScreamSound, SLOT_Talk, , true);
+        }
+
+        // Update ZTarget (only if in single-player)
+        if (ZTarget != None && Level.Netmode == NM_Standalone)
+        {
+            ZDist = VSize(ZTarget.Location - Location);
+            if (ZTarget.Health <= 0 || ZDist > ZTARGET_DIST)
+            {
+                ZTarget = None;
+            }
+            else
+            {
+                if (ZTargetDecal == None)               
+                    ZTargetDecal = Spawn(class 'ZTargetDecal', ZTarget, , Location, Rotation);              
+
+                ZTargetDecal.SetOwner(ZTarget);
+                ZTargetDecal.Update(None);
+            }
+        }
+    }
+    
+    function bool GrabEdge(float GrabDistance, vector GrabNormal)
+    {
+        // Only grab ledge in Idle state
+        // AuthoritativeAnimProxyStateName is used instead of AnimProxy.GetStateName() so that
+        // clients can more accurately predict edge grabs, preventing edge grab stuttering.
+        if(AuthoritativeAnimProxyStateName == 'Idle')
+        {
+            GrabLocationUp.X = Location.X;
+            GrabLocationUp.Y = Location.Y;
+            GrabLocationUp.Z = Location.Z + GrabDistance + 8;
+        
+            GrabLocationIn.X = Location.X + GrabNormal.X * (CollisionRadius + 4);
+            GrabLocationIn.Y = Location.Y + GrabNormal.Y * (CollisionRadius + 4);
+            GrabLocationIn.Z = GrabLocationUp.Z + CollisionHeight;
+        
+            SetRotation(rotator(GrabNormal));
+            ViewRotation.Yaw = Rotation.Yaw; // Align View with Player position while grabbing edge
+
+            // Save the final distance (used for choosing the correct anim)
+            GrabLocationDist = GrabLocationUp.Z - Location.Z;
+
+            // Final, absolute check if the player can fit in the new location.
+            // if the player fits, then it is a valid edge grab
+            if(SetLocation(GrabLocationIn))
+            {
+                if(AnimProxy != None)
+                    AnimProxy.GotoState('EdgeHanging');         
+                GotoState('EdgeHanging');
+
+                return true;
+            }
+        }
+        
+        return false;
+    }
+}
+
+//==============================================================================
+//  State EdgeHanging (override)
+//
+//==============================================================================
+state EdgeHanging
+{
+    /**
+    *   ProcessMove (override)
+    *   Overridden to prevent players from jump-mashing out of edge climb
+    */
+    function ProcessMove(float DeltaTime, vector NewAccel, eDodgeDir DodgeMove, rotator DeltaRot)   
+    {
+        Acceleration = Vect(0.0, 0.0, 0.0);
+        Velocity = Vect(0.0, 0.0, 0.0);
+    }
 }
 
 //==============================================================================
@@ -2405,8 +3174,6 @@ defaultproperties
     SuicideCooldown=5.0
     WeaponSwipeTexture=None
     WeaponSwipeBloodlustTexture=Texture'RuneFX.swipe_red'
-    ClientAdjustErrorThreshold=64.0
-    ClientAdjustCooldownSeconds=0.5
     bAlwaysRelevant=True
     bRotateTorso=False
     bLoadoutMenuDoNotShow=False

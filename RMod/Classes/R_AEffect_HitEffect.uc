@@ -26,7 +26,7 @@ simulated event PostNetBeginPlay()
     // Use the two of these to play special client-side bloodlust effects
     if(Owner != None && R_RunePlayer(Owner.Owner) != None)
     {
-        if(R_RunePlayer(Owner.Owner).bBloodlustReplicated)
+        if(R_RunePlayer(Owner.Owner).bAuthoritativeBloodlust)
         {
             SpawnBloodlustHitEffect();
         }
