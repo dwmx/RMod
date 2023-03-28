@@ -35,6 +35,25 @@ var FSkelGroupSkinArray GoreCapArrays[16];
 //==============================================================================
 
 //==============================================================================
+//  Networked movement vars adopted from 469b
+var R_SavedMove SavedMoves;
+var R_SavedMove FreeMoves;
+var R_SavedMove PendingMove;
+
+var transient float AccumulatedHTurn, AccumulatedVTurn; // Discarded fractional parts of horizontal (Yaw) and vertical (Pitch) turns
+var float LastMessageWindow;
+const SmoothAdjustLocationTime = 0.35f;
+const MinPosError = 10;
+const MaxPosError = 1000;
+var transient Vector PreAdjustLocation;
+var transient Vector AdjustLocationOffset;
+var transient float AdjustLocationAlpha;
+var bool OnMover, FakeUpdate, ForceUpdate;
+var float LastClientErr, IgnoreUpdateUntil, ForceUpdateUntil, LastStuffUpdate;
+var transient float LastClientTimestamp;
+//==============================================================================
+
+//==============================================================================
 //  Weapon Swipes
 //  R_WeaponSwipe grabs these textures and updates itself every
 //  time a weapon swing or throw occurs. If no texture is set for the
@@ -107,6 +126,9 @@ replication
     unreliable if(Role == ROLE_Authority && RemoteRole != ROLE_AutonomousProxy)
         ViewRotPovPitch,
         ViewRotPovYaw;
+
+    unreliable if(RemoteRole == ROLE_AutonomousProxy)
+        FakeCAP;
 
     // (RPCs) Server --> Owning Client
     reliable if(Role == ROLE_Authority && RemoteRole == ROLE_AutonomousProxy)
@@ -1312,8 +1334,71 @@ function ClientAdjustPosition
     Actor NewBase
 )
 {
+    local Vector OldLoc, NewLocation, NewVelocity;
+	local R_SavedMove CurrentMove;
     local Vector DebugLineBegin, DebugLineEnd;
+
+	if (CurrentTimeStamp > TimeStamp)
+		return;
+
+	CurrentTimeStamp = TimeStamp;
+
+	NewLocation.X = NewLocX;
+	NewLocation.Y = NewLocY;
+	NewLocation.Z = NewLocZ;
+	NewVelocity.X = NewVelX;
+	NewVelocity.Y = NewVelY;
+	NewVelocity.Z = NewVelZ;
+
+	// Higor: keep track of Position prior to adjustment
+	// and stop current smoothed adjustment (if in progress).
+	PreAdjustLocation = Location;
+	if (AdjustLocationAlpha > 0)
+	{
+		AdjustLocationAlpha = 0;
+		AdjustLocationOffset = vect(0, 0, 0);
+	}
+
+	// stijn: Remove acknowledged moves from the savedmoves list
+	CurrentMove = SavedMoves;
+	while (CurrentMove != None)
+	{
+		if (CurrentMove.TimeStamp <= CurrentTimeStamp)
+		{
+			SavedMoves = CurrentMove.NextMove;
+			CurrentMove.NextMove = FreeMoves;
+			FreeMoves = CurrentMove;
+			FreeMoves.Clear();
+			CurrentMove = SavedMoves;
+		}
+		else
+		{
+			// not yet acknowledged. break out of the loop
+			CurrentMove = None;
+		}
+	}
+
+	SetBase(NewBase);
+	if (Mover(NewBase) != None)
+		NewLocation += NewBase.Location;
+
+	//log("Client "$Role$" adjust "$self$" stamp "$TimeStamp$" location "$Location);
+	OldLoc = Location;
+	bCanTeleport = false;
+	SetLocation(NewLocation);
+	bCanTeleport = true;
+	Velocity = NewVelocity;
+
+	SetPhysics(newPhysics);
+	if (!IsInState(newState))
+	{
+		//log("CAP: GotoState("$newState$")");
+		GotoState(newState);
+	}
+
+	bUpdatePosition = true;
     
+    // Draw debug visualizers
     if(bShowRmodDebug && ClientDebugActor != None)
     {
         DebugLineBegin = Location;
@@ -1328,9 +1413,22 @@ function ClientAdjustPosition
         DebugLineEnd.Z += 96.0;
         ClientDebugActor.DrawLineSegmentForDuration(DebugLineBegin, DebugLineEnd, ColorsClass.Static.ColorGreen(), 5.0);
     }
-    
-    Super.ClientAdjustPosition(TimeStamp, NewState, NewPhysics, NewLocX, NewLocY, NewLocZ, NewVelX, NewVelY, NewVelZ, NewBase);
 }
+
+
+
+
+
+function FakeCAP(float TimeStamp)
+{
+	if (CurrentTimeStamp > TimeStamp )
+		return;
+	CurrentTimeStamp = TimeStamp;
+
+	FakeUpdate = true;
+	bUpdatePosition = true;
+}
+
 
 /**
 *   JointDamaged (override)
