@@ -202,10 +202,49 @@ function SpawnHitEffect(Vector HitLoc, Vector HitNorm, int LowMask, int HighMask
     }
 }
 
-
-
 state Throw
 {
+    event BeginState()
+    {
+        local int i;
+        local rotator wepRot;
+
+        bSimFall = true;    // Replicate physics and simulate falling during throw
+
+        if (bPoweredUp)
+            PowerupEnd();
+
+        ClearSwipeArray();
+        
+        SetPhysics(PHYS_Falling);
+        SetCollision(true, false, false);
+        bCollideWorld = true;
+        bBounce = true;     
+        bFixedRotationDir = true;
+        bLookFocusPlayer = true;
+        bRotateToDesired = false; // Fixes issue where weapons fail to rotate
+        
+        if(Owner != None)
+        {
+            wepRot.Yaw = Owner.Rotation.Yaw - 16384 + 32768;
+            LastThrower = Owner;
+        }
+
+        wepRot.Pitch = 32768;
+        wepRot.Roll = 0;
+        SetRotation(wepRot);
+        
+        RotationRate.Pitch = 0;
+        RotationRate.Yaw = 0;
+        DesiredRotation.Roll = -32768; //Rotation.Roll - 2000;
+        RotationRate.Roll = VSize(Velocity) * 2000 / Mass;
+        PlayThrowFrame();
+
+        AmbientSound = ThrownSoundLOOP;
+        bPlayedDropSound=false;
+        HitMatterSoundCount=0;
+    }
+    
     //=========================================================================
     //
     // Touch
