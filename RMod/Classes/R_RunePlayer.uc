@@ -105,6 +105,8 @@ var R_ClientDebugActor ClientDebugActor;
 //==============================================================================
 //  Authoritative variables replicated to clients
 
+// The authoritative state of this player.
+var Name AuthoritativeStateName;
 //  Since AnimProxy is not an AutonomousProxy, its more efficient to replicate
 //  this variable in R_RunePlayer than in R_RunePlayerProxy.
 //  This is used for improved client-side prediction, fixing things like
@@ -126,6 +128,7 @@ replication
         Camera,
         WeaponSwipeTexture,
         WeaponSwipeBloodlustTexture,
+        AuthoritativeStateName,
         bAuthoritativeBloodlust;
 
     // (Variables) Server --> Owning Client
@@ -173,7 +176,7 @@ function Touch(Actor Other)
     if(Role == ROLE_Authority)
     {
         if( Rope(Other) != None
-        && !Rope(Other).bActorAttached
+        //&& !Rope(Other).bActorAttached
         && (Physics == PHYS_Falling || Physics == PHYS_Swimming)
         && GetStateName() != 'PlayerRopeClimbing'
         && TheRope == None)
@@ -773,11 +776,19 @@ event Tick(float DeltaSeconds)
     // Replicate authoritative vars if they've changed
     if(Role == ROLE_Authority)
     {
+        AuthoritativeStateName = GetStateName();
         bAuthoritativeBloodlust = bBloodlust;
         
         if(AnimProxy != None)
         {
             AuthoritativeAnimProxyStateName = AnimProxy.GetStateName();
+        }
+    }
+    else
+    {
+        if(AuthoritativeStateName != GetStateName())
+        {
+            GotoState(AuthoritativeStateName);
         }
     }
 }
@@ -2836,6 +2847,26 @@ function RopeLeapOff() {}   // Global definition, defined in state
 
 state PlayerRopeClimbing
 {
+    event BeginState()
+    {
+        local Vector NewLocation;
+        
+        Super.BeginState();
+        
+        if(TheRope != None)
+        {
+            NewLocation.X = TheRope.Location.X;
+            NewLocation.Y = TheRope.Location.Y;
+            NewLocation.Z = Self.Location.Z;
+            SetLocation(NewLocation);
+        }
+    }
+    
+    event EndState()
+    {
+        Super.EndState();
+    }
+    
     function ServerMove
     (
         float TimeStamp, 
@@ -2854,22 +2885,7 @@ state PlayerRopeClimbing
         optional byte OldTimeDelta,
         optional int OldAccel
     )
-    {
-        Global.ServerMove(
-            TimeStamp,
-            Accel,
-            ClientLoc,
-            NewbRun,
-            NewbDuck,
-            NewbJumpStatus,
-            bFired,
-            bAltFired,
-            bForceFire,
-            bForceAltFire,
-            DodgeMove,
-            ClientRoll,
-            (32767 & (Rotation.Pitch/2)) * 32768 + (32767 & (Rotation.Yaw/2)));
-    }
+    {}
     
     /**
     *   PlayerMove (override)
@@ -2928,8 +2944,10 @@ state PlayerRopeClimbing
             SetPhysics(PHYS_Flying);
         }
         
-        Acceleration.X = 0;
-        Acceleration.Y = 0;
+        Acceleration.X = 0.0;
+        Acceleration.Y = 0.0;
+        Velocity.X = 0.0;
+        Velocity.Y = 0.0;
         Velocity += NewAccel * DeltaTime;
         
         // Braking deceleration
