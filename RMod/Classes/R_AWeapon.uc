@@ -28,6 +28,45 @@ var Class<Actor> HitIceEffectClass;
 var Class<Actor> HitWaterEffectClass;
 //==============================================================================
 
+//==============================================================================
+//  Client-side simulation variables
+//==============================================================================
+struct FNetReplicatedWeaponRotator
+{
+    var bool bPerformedUpdate;
+    var float Yaw;
+    var float Pitch;
+    var float Roll;
+};
+
+struct FNetReplicatedWeaponRotationState
+{
+    var bool bPerformedUpdate;
+    var bool bRotateToDesired;
+    var bool bFixedRotationDir;
+};
+
+var FNetReplicatedWeaponRotator AuthorityRotation;
+var FNetReplicatedWeaponRotator AuthorityDesiredRotation;
+var FNetReplicatedWeaponRotator AuthorityRotationRate;
+
+var FNetReplicatedWeaponRotationState AuthorityRotationState;
+
+var Vector AuthorityLocation;
+var Name AuthorityStateName;
+//==============================================================================
+
+replication
+{
+    reliable if(Role == ROLE_Authority)
+        AuthorityRotation,
+        AuthorityDesiredRotation,
+        AuthorityRotationRate,
+        AuthorityRotationState,
+        AuthorityLocation,
+        AuthorityStateName;
+}
+
 /**
 *   PostBeginPlay (override)
 *   Overridden to implement ice hit sounds the same way all other matter hit
@@ -48,6 +87,125 @@ event PostBeginPlay()
     }
     
     SpawnWeaponSwipe();
+}
+
+/**
+*   Tick (override)
+*   Overridden to replicate variables for smooth simulation on clients
+*/
+simulated event Tick(float DeltaSeconds)
+{
+    if(Role < ROLE_Authority)
+    {
+        // Perform replication update for clients
+        PerformReplicatedUpdate(DeltaSeconds);
+    }
+    else if(Role == ROLE_Authority && RemoteRole >= ROLE_SimulatedProxy)
+    {
+        AuthorityLocation = Location;
+        AuthorityStateName = GetStateName();
+    }
+}
+
+function ReplicateRotation()
+{
+    AuthorityRotation.Yaw = Rotation.Yaw;
+    AuthorityRotation.Pitch = Rotation.Pitch;
+    AuthorityRotation.Roll = Rotation.Roll;
+    AuthorityRotation.bPerformedUpdate = false;
+}
+
+function ReplicateDesiredRotation()
+{
+    AuthorityDesiredRotation.Yaw = DesiredRotation.Yaw;
+    AuthorityDesiredRotation.Pitch = DesiredRotation.Pitch;
+    AuthorityDesiredRotation.Roll = DesiredRotation.Roll;
+    AuthorityDesiredRotation.bPerformedUpdate = false;
+}
+
+function ReplicateRotationRate()
+{
+    AuthorityRotationRate.Yaw = RotationRate.Yaw;
+    AuthorityRotationRate.Pitch = RotationRate.Pitch;
+    AuthorityRotationRate.Roll = RotationRate.Roll;
+    AuthorityRotationRate.bPerformedUpdate = false;
+}
+
+function ReplicateRotationState()
+{
+    AuthorityRotationState.bRotateToDesired = bRotateToDesired;
+    AuthorityRotationState.bFixedRotationDir = bFixedRotationDir;
+    AuthorityRotationState.bPerformedUpdate = false;
+}
+
+simulated function PerformReplicatedUpdate(float DeltaSeconds)
+{
+    PerformReplicatedUpdate_Rotators(DeltaSeconds);
+    PerformReplicatedUpdate_Location(DeltaSeconds);
+}
+
+simulated function PerformReplicatedUpdate_Rotators(float DeltaSeconds)
+{
+    local Rotator NewRotation;
+    
+    if(!AuthorityRotation.bPerformedUpdate)
+    {
+        NewRotation.Yaw = AuthorityRotation.Yaw;
+        NewRotation.Pitch = AuthorityRotation.Pitch;
+        NewRotation.Roll = AuthorityRotation.Roll;
+        SetRotation(NewRotation);
+        AuthorityRotation.bPerformedUpdate = true;
+    }
+    
+    if(!AuthorityDesiredRotation.bPerformedUpdate)
+    {
+        DesiredRotation.Yaw = AuthorityDesiredRotation.Yaw;
+        DesiredRotation.Pitch = AuthorityDesiredRotation.Pitch;
+        DesiredRotation.Roll = AuthorityDesiredRotation.Roll;
+        AuthorityDesiredRotation.bPerformedUpdate = true;
+    }
+    
+    if(!AuthorityRotationRate.bPerformedUpdate)
+    {
+        RotationRate.Yaw = AuthorityRotationRate.Yaw;
+        RotationRate.Pitch = AuthorityRotationRate.Pitch;
+        RotationRate.Roll = AuthorityRotationRate.Roll;
+        AuthorityRotationRate.bPerformedUpdate = true;
+    }
+    
+    if(!AuthorityRotationState.bPerformedUpdate)
+    {
+        bRotateToDesired = AuthorityRotationState.bRotateToDesired;
+        bFixedRotationDir = AuthorityRotationState.bFixedRotationDir;
+        AuthorityRotationState.bPerformedUpdate = true;
+    }
+}
+
+simulated function PerformReplicatedUpdate_Location(float DeltaSeconds)
+{
+    local Vector Delta;
+    local float DeltaLength;
+    local Vector AdjustedLocation;
+    
+    Delta = AuthorityLocation - Location;
+    
+    if(AuthorityStateName == 'Throw')
+    {
+        // During throws, only adjust if it's really bad
+        DeltaLength = VSize(Delta);
+        if(DeltaLength > 64.0)
+        {
+            AdjustedLocation = AuthorityLocation;
+            SetLocation(AdjustedLocation);
+        }
+    }
+    else if(AuthorityStateName == 'Settling')
+    {
+        // During settling, ease towards the location
+        AdjustedLocation = Location + (Delta * DeltaSeconds * 10.0);
+        SetLocation(AdjustedLocation);
+    }
+    
 }
 
 /**
@@ -206,43 +364,18 @@ state Throw
 {
     event BeginState()
     {
-        local int i;
-        local rotator wepRot;
-
-        bSimFall = true;    // Replicate physics and simulate falling during throw
-
-        if (bPoweredUp)
-            PowerupEnd();
-
-        ClearSwipeArray();
-        
-        SetPhysics(PHYS_Falling);
-        SetCollision(true, false, false);
-        bCollideWorld = true;
-        bBounce = true;     
-        bFixedRotationDir = true;
-        bLookFocusPlayer = true;
+        RemoteRole = ROLE_SimulatedProxy;
+        Super.BeginState();
         bRotateToDesired = false; // Fixes issue where weapons fail to rotate
-        
-        if(Owner != None)
-        {
-            wepRot.Yaw = Owner.Rotation.Yaw - 16384 + 32768;
-            LastThrower = Owner;
-        }
-
-        wepRot.Pitch = 32768;
-        wepRot.Roll = 0;
-        SetRotation(wepRot);
-        
-        RotationRate.Pitch = 0;
-        RotationRate.Yaw = 0;
-        DesiredRotation.Roll = -32768; //Rotation.Roll - 2000;
-        RotationRate.Roll = VSize(Velocity) * 2000 / Mass;
-        PlayThrowFrame();
-
-        AmbientSound = ThrownSoundLOOP;
-        bPlayedDropSound=false;
-        HitMatterSoundCount=0;
+        ReplicateRotationState();
+        ReplicateRotation();
+        ReplicateRotationRate();
+    }
+    
+    event EndState()
+    {
+        RemoteRole = Self.Default.RemoteRole;
+        Super.EndState();
     }
     
     //=========================================================================
@@ -321,7 +454,27 @@ state Throw
     }
 }
 
+state Settling
+{
+    event BeginState()
+    {
+        RemoteRole = ROLE_SimulatedProxy;
+        Super.BeginState();
+        ReplicateRotationState();
+        ReplicateRotation();
+        ReplicateRotationRate();
+        ReplicateDesiredRotation();
+    }
+    
+    event EndState()
+    {
+        RemoteRole = Self.Default.RemoteRole;
+        Super.EndState();
+    }
+}
+
 defaultproperties
 {
+    //RemoteRole=ROLE_SimulatedProxy
     UtilitiesClass=Class'RMod.R_AUtilities'
 }
