@@ -415,7 +415,7 @@ exec function Use()
 {
     if(GetStateName() == 'PlayerRopeClimbing')
     {
-        RopeLeapOff();
+        ClimbableFallOff();
     }
     else
     {
@@ -2900,7 +2900,8 @@ state GameEnded
 //  State PlayerRopeClimbing (override)
 //  Overridden to implement multiplayer compatibility with Rope actors
 //==============================================================================
-function RopeLeapOff() {}   // Global definition, defined in state
+function ClimbableLeapOff() {}   // Global definition, defined in state
+function ClimbableFallOff() {}
 
 state PlayerRopeClimbing
 {
@@ -2971,23 +2972,23 @@ state PlayerRopeClimbing
             return;
 
         // Mangle controls
-        aForward *= 0.00;
+        //aForward *= 0.00;
         aStrafe  *= 0.00;
         aLookup  *= 0.24;
         aTurn    *= 0.24;
 
         if(aUp > 0)
         { // Move slightly slower going up than going down
-            aUp *= 0.056;
+            aForward *= 0.056;
         }
         else
         {
-            aUp *= 0.084;
+            aForward *= 0.084;
         }
 
         NewAccel.X = 0.0;
         NewAccel.Y = 0.0;
-        NewAccel.Z = aUp * 2.0;
+        NewAccel.Z = aForward * 1.5;
 
         // Update view rotation
         OldRotation = Rotation;
@@ -3057,44 +3058,20 @@ state PlayerRopeClimbing
         }
         
         PlayRopeClimb();
+        
+        if(bPressedJump)
+        {
+            ClimbableLeapOff();
+        }
     }
     
     /**
-    *   RopeLeapOff
-    *   Replacement function for LeapOff, which is only state-defined in RunePlayer.
-    *   A Globally defined function is needed for Global.Use to call.
+    *   Jump (override)
+    *   Overridden to allow player to jump off rope by pressing the jump key
     */
-    function RopeLeapOff()
-    { // Release in the direction Ragnar is currently facing (when the Use key is pressed)
-        local vector X, Y, Z;
-        local vector deviation;
-        local float jumpForce;
-
-        deviation = (Location - TheRope.Location);
-        if (VSize2D(deviation) > 50)
-            jumpForce = 0.5;
-        else
-            jumpForce = 0.25;
-        GetAxes(Rotation, X, Y, Z);
-        AddVelocity(X*350 );//+ Z*JumpZ*jumpForce);
-        SetPhysics(PHYS_Falling);
-        TheRope.DetachFromRope(self);
-        TheRope = None;
-
-        PlayRopeLeapOff();
-
-        if (Region.Zone.bWaterZone)
-        {
-            setPhysics(PHYS_Swimming);
-            GotoState('PlayerSwimming');
-        }
-        else
-        {
-            if(AnimProxy != None)
-                AnimProxy.GotoState('Idle');
-
-            GotoState('PlayerWalking');
-        }
+    exec function Jump(optional float f)
+    {
+        bPressedJump = true;
     }
     
     /**
@@ -3107,6 +3084,80 @@ state PlayerRopeClimbing
     exec function Use()
     {
         Global.Use();
+    }
+    
+    /**
+    *   ClimbableLeapOff
+    *   Replacement function for LeapOff, which is only state-defined in RunePlayer.
+    *   A Globally defined function is needed for Global.Use to call.
+    */
+    function ClimbableLeapOff()
+    { // Release in the direction Ragnar is currently facing (when the Use key is pressed)
+        local Vector SavedRopeLocation;
+        local Vector X, Y, Z;
+        local Vector Deviation;
+        local float JumpForce;
+
+        SavedRopeLocation = Vect(0.0, 0.0, 0.0);
+        if(TheRope != None)
+        {
+            SavedRopeLocation = TheRope.Location;
+        }
+        
+        DisconnectFromClimbable();
+
+        Deviation = (Location - SavedRopeLocation);
+        if (VSize2D(Deviation) > 50)
+            JumpForce = 0.5;
+        else
+            JumpForce = 0.25;
+        GetAxes(Rotation, X, Y, Z);
+        AddVelocity(X * 350 );
+
+        PlayRopeLeapOff();
+    }
+    
+    /**
+    *   ClimbableFallOff
+    *   Replacement function for FallOff, which is only state-defined in RunePlayer
+    */
+    function ClimbableFallOff()
+    {
+        local Vector X, Y, Z;
+
+        DisconnectFromClimbable();
+
+        GetAxes(Rotation, X, Y, Z);
+        Velocity = -X * 50;
+        
+        PlayRopeLeapOff();
+    }
+    
+    /**
+    *   DisconnectFromClimbable
+    *   Common function called from ClimbableLeapOff and ClimbableFallOff
+    */
+    function DisconnectFromClimbable()
+    {
+        SetPhysics(PHYS_Falling);
+        if(TheRope != None)
+        {
+            TheRope.DetachFromRope(Self);
+            TheRope = None;
+        }
+        
+        if (Region.Zone.bWaterZone)
+        {
+            SetPhysics(PHYS_Swimming);
+            GotoState('PlayerSwimming');
+        }
+        else
+        {
+            if(AnimProxy != None)
+                AnimProxy.GotoState('Idle');
+
+            GotoState('PlayerWalking');
+        }
     }
 }
 
