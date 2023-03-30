@@ -34,6 +34,20 @@ event BeginPlay()
     }
 }
 
+/**
+*   Tick (override)
+*   Overridden to destroy this LRI when it no longer has an owner.
+*   This is a hack to avoid overriding the Destroyed event on R_RunePlayer,
+*   which is causing client-side crashes.
+*/
+event Tick(float DeltaSeconds)
+{
+    if(Owner == None)
+    {
+        Destroy();
+    }
+}
+
 function ServerUpdateLoadout(
     Class<Inventory> NewPrimaryInventoryClass,
     Class<Inventory> NewSecondaryInventoryClass,
