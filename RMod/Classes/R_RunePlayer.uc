@@ -115,6 +115,14 @@ var Name AuthoritativeAnimProxyStateName;
 var bool bAuthoritativeBloodlust; // Necessary for clients to see bloodlust swipe
 //==============================================================================
 
+//==============================================================================
+//  Rope climbing vars
+
+// Stores the most recently touched rope, so that when the player jumps off,
+// they can't re-grab the same rope.
+var Actor LastTouchedRope;
+//==============================================================================
+
 replication
 {
     // (Variables) Server --> All Clients
@@ -176,10 +184,10 @@ function Touch(Actor Other)
     if(Role == ROLE_Authority)
     {
         if( Rope(Other) != None
-        //&& !Rope(Other).bActorAttached
         && (Physics == PHYS_Falling || Physics == PHYS_Swimming)
         && GetStateName() != 'PlayerRopeClimbing'
-        && TheRope == None)
+        && TheRope == None
+        && LastTouchedRope != Other)
         { // Only grab the rope if the player can and if the player is in the air/swimming
             HandPos = Location;
             HandPos.Z += HandOffset;
@@ -2459,6 +2467,22 @@ function ClientSetLocation(Vector NewLocation, Rotator NewRotation)
 //==============================================================================
 state PlayerWalking
 {
+    /**
+    *   BeginState (override)
+    *   Overridden to reset the LastTouchedRope var, so that this player can
+    *   grab that rope again.
+    */
+    event BeginState()
+    {
+        Super.BeginState();
+        
+        LastTouchedRope = None;
+    }
+    
+    /**
+    *   PlayerTick (override)
+    *   Overridden for 469b movement adaptation.
+    */
     event PlayerTick(float DeltaTime)
     {
         local float ZDist;
@@ -2514,6 +2538,11 @@ state PlayerWalking
         }
     }
     
+    /**
+    *   GrabEdge (override)
+    *   Overridden to prevent client-side stuttering when attacking and grabbing ledge
+    *   at the same time.
+    */
     function bool GrabEdge(float GrabDistance, vector GrabNormal)
     {
         // Only grab ledge in Idle state
@@ -2847,6 +2876,11 @@ function RopeLeapOff() {}   // Global definition, defined in state
 
 state PlayerRopeClimbing
 {
+    /**
+    *   BeginState (override)
+    *   Overridden to update LastTouchedRope variable. This gets reset in
+    *   PlayerWalking.BeginState.
+    */
     event BeginState()
     {
         local Vector NewLocation;
@@ -2859,6 +2893,7 @@ state PlayerRopeClimbing
             NewLocation.Y = TheRope.Location.Y;
             NewLocation.Z = Self.Location.Z;
             SetLocation(NewLocation);
+            LastTouchedRope = TheRope;
         }
     }
     
@@ -2867,6 +2902,11 @@ state PlayerRopeClimbing
         Super.EndState();
     }
     
+    /**
+    *   ServerMove (override)
+    *   Overridden to bypass RunePlayer.PlayerRopeClimbing.ServerMove.
+    *   469b movement takes over the replicated movement.
+    */
     function ServerMove
     (
         float TimeStamp, 
