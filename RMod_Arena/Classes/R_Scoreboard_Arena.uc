@@ -225,7 +225,7 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 	Canvas.SetPos(Canvas.ClipX*RelPosX_Deaths, YOffset);
 	Canvas.DrawText(GetValueForDeathsField(PRI), false);
 
-	// dirtyRMod stuff
+	// RMod stuff
 	RPRI = R_PlayerReplicationInfo(PRI);
 	if(RPRI != None)
 	{
