@@ -2,7 +2,7 @@
 //  R_GameOptions
 //  Implements RMod-specific configurable game options.
 //==============================================================================
-class R_GameOptions extends ReplicationInfo;
+class R_GameOptions extends ReplicationInfo config(RMod);
 
 var Class<R_AUtilities> UtilitiesClass;
 
@@ -44,6 +44,8 @@ event BeginPlay()
         }
 
         LogAllGameOptions();
+        
+        SaveConfig();
     }
 }
 
