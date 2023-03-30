@@ -120,7 +120,7 @@ var bool bAuthoritativeBloodlust; // Necessary for clients to see bloodlust swip
 
 // Stores the most recently touched rope, so that when the player jumps off,
 // they can't re-grab the same rope.
-var Actor LastTouchedRope;
+var Actor LastTouchedClimbable;
 //==============================================================================
 
 replication
@@ -170,6 +170,38 @@ replication
 }
 
 /**
+*   CheckCanGrabClimbable
+*   Returns whether or not the player can currently grab a climbable (rope) actor
+*   Note that server will crash if this function returns true when TheRope != None
+*/
+function bool CheckCanGrabClimbable(R_ClimbableBase ClimbableActor)
+{
+    // Valid climbable actor check
+    if(ClimbableActor == None || TheRope != None)
+        return false;
+    
+    // Physics check
+    if(Physics != PHYS_Falling && Physics != PHYS_Swimming)
+        return false;
+    
+    // State check
+    if(GetStateName() == 'PlayerRopeClimbing')
+        return false;
+    
+    // Anim proxy state check - only allowed while idle
+    if(AnimProxy != None && AnimProxy.GetStateName() != 'Idle')
+        return false;
+    
+    // Never re-grab the most recently grabbed climbable
+    // This is initialized in PlayerRopeClimbing.BeginState,
+    // and it's cleared in PlayerWalking.BeginState
+    if(LastTouchedClimbable == ClimbableActor)
+        return false;
+    
+    return true;
+}
+
+/**
 *   Touch (override)
 *   Overridden to ignore rope if there already is one stored in the TheRope var
 */
@@ -183,11 +215,7 @@ function Touch(Actor Other)
 
     if(Role == ROLE_Authority)
     {
-        if( Rope(Other) != None
-        && (Physics == PHYS_Falling || Physics == PHYS_Swimming)
-        && GetStateName() != 'PlayerRopeClimbing'
-        && TheRope == None
-        && LastTouchedRope != Other)
+        if(CheckCanGrabClimbable(R_ClimbableBase(Other)))
         { // Only grab the rope if the player can and if the player is in the air/swimming
             HandPos = Location;
             HandPos.Z += HandOffset;
@@ -2469,14 +2497,14 @@ state PlayerWalking
 {
     /**
     *   BeginState (override)
-    *   Overridden to reset the LastTouchedRope var, so that this player can
+    *   Overridden to reset the LastTouchedClimbable var, so that this player can
     *   grab that rope again.
     */
     event BeginState()
     {
         Super.BeginState();
         
-        LastTouchedRope = None;
+        LastTouchedClimbable = None;
     }
     
     /**
@@ -2878,7 +2906,7 @@ state PlayerRopeClimbing
 {
     /**
     *   BeginState (override)
-    *   Overridden to update LastTouchedRope variable. This gets reset in
+    *   Overridden to update LastTouchedClimbable variable. This gets reset in
     *   PlayerWalking.BeginState.
     */
     event BeginState()
@@ -2893,7 +2921,7 @@ state PlayerRopeClimbing
             NewLocation.Y = TheRope.Location.Y;
             NewLocation.Z = Self.Location.Z;
             SetLocation(NewLocation);
-            LastTouchedRope = TheRope;
+            LastTouchedClimbable = TheRope;
         }
     }
     
