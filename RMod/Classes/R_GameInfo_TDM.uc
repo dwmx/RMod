@@ -1,6 +1,5 @@
-class R_GameInfo_TDM extends R_GameInfo;
+class R_GameInfo_TDM extends R_GameInfo config(RMod);
 
-var class<R_AColors> ColorsClass;
 
 ////////////////////////////////////////////////////////////////////////////////
 //	RuneI.TeamGame
@@ -533,7 +532,6 @@ function bool CanSpectate( pawn Viewer, actor ViewTarget )
 
 defaultproperties
 {
-    ColorsClass=Class'RMod.R_AColors'
     MaxTeams=4
     MaxTeamSize=16
     NewTeamMessage=" is now on "
@@ -554,4 +552,5 @@ defaultproperties
     ScoreBoardType=Class'RMod.R_Scoreboard_TDM'
     BeaconName="Team"
     GameName="Team Game"
+    GameOptionsClass=Class'RMod.R_GameOptions_DM'
 }

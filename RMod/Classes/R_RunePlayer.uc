@@ -373,19 +373,19 @@ exec function Powerup()
         return;
     }
     
+    // Get manual bloodlust game option
+    bManualBloodlustActivationAllowed = false;
+    if(GameOptionsCheckerClass != None)
+    {
+        bManualBloodlustActivationAllowed = GameOptionsCheckerClass.Static.GetGameOption_ManualBloodlust(Self);
+    }
+    
     // Manual bloodlust attempt when alt fire is held
-    if(bAltFire == 1)
+    if(bAltFire == 1 && bManualBloodlustActivationAllowed)
     {
         if(bBloodLust)
         {
             return;
-        }
-        
-        // Get manual bloodlust game option
-        bManualBloodlustActivationAllowed = false;
-        if(GameOptionsCheckerClass != None)
-        {
-            bManualBloodlustActivationAllowed = GameOptionsCheckerClass.Static.GetGameOption_ManualBloodlust(Self);
         }
         
         // Try to enable bloodlust manually
