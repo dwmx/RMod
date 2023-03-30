@@ -8,7 +8,6 @@ var Class<RunePlayer> RunePlayerClass;
 var Class<RunePlayer> SpectatorMarkerClass;
 var Class<PlayerReplicationInfo> PlayerReplicationInfoClass;
 
-var Class<R_GamePresets> GamePresetsClass; // TODO: Remove this
 var Class<R_AUtilities> UtilitiesClass;
 var Class<R_AActorSubstitution> ActorSubstitutionClass;
 
@@ -884,7 +883,6 @@ defaultproperties
     RunePlayerClass=Class'RMod.R_RunePlayer'
     SpectatorMarkerClass=Class'RMod.R_ASpectatorMarker'
     PlayerReplicationInfoClass=Class'RMod.R_PlayerReplicationInfo'
-    GamePresetsClass=Class'RMod.R_GamePresets'
     UtilitiesClass=Class'RMod.R_AUtilities'
     ActorSubstitutionClass=Class'RMod.R_AActorSubstitution'
     GameOptionsClass=Class'RMod.R_GameOptions'
