@@ -34,9 +34,6 @@ var bool bLoadoutsEnabled;
 // Used at level start to mark actors which stay during level reset
 var bool bMarkSpawnedActorsAsNativeToLevel;
 
-// Gameplay modifications
-var bool bRModEnabled;
-
 // PlayerRestart variables
 var int DefaultPlayerHealth;
 var int DefaultPlayerMaxHealth;
@@ -888,7 +885,6 @@ defaultproperties
     GameOptionsClass=Class'RMod.R_GameOptions'
     LoadoutOptionReplicationInfoClass=Class'RMod.R_LoadoutOptionReplicationInfo'
     bMarkSpawnedActorsAsNativeToLevel=True
-    bRModEnabled=True
     ScoreBoardType=Class'RMod.R_Scoreboard'
     HUDType=Class'RMod.R_RunePlayerHUD'
     HUDTypeSpectator=Class'RMod.R_RunePlayerHUDSpectator'
