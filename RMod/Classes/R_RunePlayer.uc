@@ -105,12 +105,22 @@ var R_ClientDebugActor ClientDebugActor;
 //==============================================================================
 //  Authoritative variables replicated to clients
 
+// The authoritative state of this player.
+var Name AuthoritativeStateName;
 //  Since AnimProxy is not an AutonomousProxy, its more efficient to replicate
 //  this variable in R_RunePlayer than in R_RunePlayerProxy.
 //  This is used for improved client-side prediction, fixing things like
 //  the stuttering ledge grabs.
 var Name AuthoritativeAnimProxyStateName;
 var bool bAuthoritativeBloodlust; // Necessary for clients to see bloodlust swipe
+//==============================================================================
+
+//==============================================================================
+//  Rope climbing vars
+
+// Stores the most recently touched rope, so that when the player jumps off,
+// they can't re-grab the same rope.
+var Actor LastTouchedClimbable;
 //==============================================================================
 
 replication
@@ -126,6 +136,7 @@ replication
         Camera,
         WeaponSwipeTexture,
         WeaponSwipeBloodlustTexture,
+        AuthoritativeStateName,
         bAuthoritativeBloodlust;
 
     // (Variables) Server --> Owning Client
@@ -156,6 +167,79 @@ replication
         
     reliable if(Role < ROLE_Authority)
         ServerMove_v2;
+}
+
+/**
+*   CheckCanGrabClimbable
+*   Returns whether or not the player can currently grab a climbable (rope) actor
+*   Note that server will crash if this function returns true when TheRope != None
+*/
+function bool CheckCanGrabClimbable(R_ClimbableBase ClimbableActor)
+{
+    // Valid climbable actor check
+    if(ClimbableActor == None || TheRope != None)
+        return false;
+    
+    // Physics check
+    if(Physics != PHYS_Falling && Physics != PHYS_Swimming)
+        return false;
+    
+    // State check
+    if(GetStateName() == 'PlayerRopeClimbing')
+        return false;
+    
+    // Anim proxy state check - only allowed while idle
+    if(AnimProxy != None && AnimProxy.GetStateName() != 'Idle')
+        return false;
+    
+    // Never re-grab the most recently grabbed climbable
+    // This is initialized in PlayerRopeClimbing.BeginState,
+    // and it's cleared in PlayerWalking.BeginState
+    if(LastTouchedClimbable == ClimbableActor)
+        return false;
+    
+    return true;
+}
+
+/**
+*   Touch (override)
+*   Overridden to ignore rope if there already is one stored in the TheRope var
+*/
+function Touch(Actor Other)
+{
+    local vector HandPos, pos;
+    LookTarget = Other;
+    
+    // RunePlayer.Touch will cause a stack overflow on clients
+    Super(PlayerPawn).Touch(Other);
+
+    if(Role == ROLE_Authority)
+    {
+        if(CheckCanGrabClimbable(R_ClimbableBase(Other)))
+        { // Only grab the rope if the player can and if the player is in the air/swimming
+            HandPos = Location;
+            HandPos.Z += HandOffset;
+        
+            TheRope = Rope(Other);
+            TheRope.ComputeClimbingEndpoints(HandPos.Z);
+        
+            if (HandPos.Z < TheRope.RopeClimbBottom.Z)
+                return;
+        
+            TheRope.AttachedToRope(self);
+        
+            // Make sure right on rope
+            pos = TheRope.Location;
+            pos.Z = Location.Z;
+            SetLocation(pos);
+        
+            Acceleration = vect(0, 0, 0);
+            Velocity = vect(0, 0, 0);
+            RopeDist = TheRope.RopeClimbTop.Z - HandPos.Z;
+        
+            GotoState('PlayerRopeClimbing');
+        }  
+    }
 }
 
 /**
@@ -271,6 +355,8 @@ exec function Throw()
             PlayAnim('ATK_ALL_throw1_AA0S', 1.0, 0.1);
         }
     }
+    
+    
 }
 
 /**
@@ -317,6 +403,23 @@ exec function Powerup()
     else
     {
         Super.Powerup();
+    }
+}
+
+/**
+*   Use (override)
+*   Overridden to handle PlayerRopeClimbing state. See PlayerRopeClimbing.Use
+*   for notes on why it's necessary to do this in the Global function.
+*/
+exec function Use()
+{
+    if(GetStateName() == 'PlayerRopeClimbing')
+    {
+        ClimbableFallOff();
+    }
+    else
+    {
+        Super.Use();
     }
 }
 
@@ -709,11 +812,19 @@ event Tick(float DeltaSeconds)
     // Replicate authoritative vars if they've changed
     if(Role == ROLE_Authority)
     {
+        AuthoritativeStateName = GetStateName();
         bAuthoritativeBloodlust = bBloodlust;
         
         if(AnimProxy != None)
         {
             AuthoritativeAnimProxyStateName = AnimProxy.GetStateName();
+        }
+    }
+    else
+    {
+        if(AuthoritativeStateName != GetStateName())
+        {
+            GotoState(AuthoritativeStateName);
         }
     }
 }
@@ -2384,6 +2495,22 @@ function ClientSetLocation(Vector NewLocation, Rotator NewRotation)
 //==============================================================================
 state PlayerWalking
 {
+    /**
+    *   BeginState (override)
+    *   Overridden to reset the LastTouchedClimbable var, so that this player can
+    *   grab that rope again.
+    */
+    event BeginState()
+    {
+        Super.BeginState();
+        
+        LastTouchedClimbable = None;
+    }
+    
+    /**
+    *   PlayerTick (override)
+    *   Overridden for 469b movement adaptation.
+    */
     event PlayerTick(float DeltaTime)
     {
         local float ZDist;
@@ -2439,6 +2566,11 @@ state PlayerWalking
         }
     }
     
+    /**
+    *   GrabEdge (override)
+    *   Overridden to prevent client-side stuttering when attacking and grabbing ledge
+    *   at the same time.
+    */
     function bool GrabEdge(float GrabDistance, vector GrabNormal)
     {
         // Only grab ledge in Idle state
@@ -2762,6 +2894,271 @@ state Dying
 state GameEnded
 {
     ignores Throw;
+}
+
+//==============================================================================
+//  State PlayerRopeClimbing (override)
+//  Overridden to implement multiplayer compatibility with Rope actors
+//==============================================================================
+function ClimbableLeapOff() {}   // Global definition, defined in state
+function ClimbableFallOff() {}
+
+state PlayerRopeClimbing
+{
+    /**
+    *   BeginState (override)
+    *   Overridden to update LastTouchedClimbable variable. This gets reset in
+    *   PlayerWalking.BeginState.
+    */
+    event BeginState()
+    {
+        local Vector NewLocation;
+        
+        Super.BeginState();
+        
+        if(TheRope != None)
+        {
+            NewLocation.X = TheRope.Location.X;
+            NewLocation.Y = TheRope.Location.Y;
+            NewLocation.Z = Self.Location.Z;
+            SetLocation(NewLocation);
+            LastTouchedClimbable = TheRope;
+        }
+    }
+    
+    event EndState()
+    {
+        Super.EndState();
+    }
+    
+    /**
+    *   ServerMove (override)
+    *   Overridden to bypass RunePlayer.PlayerRopeClimbing.ServerMove.
+    *   469b movement takes over the replicated movement.
+    */
+    function ServerMove
+    (
+        float TimeStamp, 
+        vector Accel, 
+        vector ClientLoc,
+        bool NewbRun,
+        bool NewbDuck,
+        bool NewbJumpStatus, 
+        bool bFired,
+        bool bAltFired,
+        bool bForceFire,
+        bool bForceAltFire,
+        eDodgeDir DodgeMove, 
+        byte ClientRoll, 
+        int View,
+        optional byte OldTimeDelta,
+        optional int OldAccel
+    )
+    {}
+    
+    /**
+    *   PlayerMove (override)
+    *   Overridden to strip out logic which should be performed in ProcessMove.
+    */
+    function PlayerMove( float DeltaTime)
+    {
+        local vector NewAccel;
+        local vector HandPos;
+        local vector X,Y,Z;
+        local vector RopeVector, VelocityLookahead, RopeDir, NewLocation;
+        local Rotator OldRotation;
+
+        if(TheRope == None)
+            return;
+
+        // Mangle controls
+        //aForward *= 0.00;
+        aStrafe  *= 0.00;
+        aLookup  *= 0.24;
+        aTurn    *= 0.24;
+
+        if(aUp > 0)
+        { // Move slightly slower going up than going down
+            aForward *= 0.056;
+        }
+        else
+        {
+            aForward *= 0.084;
+        }
+
+        NewAccel.X = 0.0;
+        NewAccel.Y = 0.0;
+        NewAccel.Z = aForward * 1.5;
+
+        // Update view rotation
+        OldRotation = Rotation;
+        UpdateRotation(DeltaTime, 1);
+
+        if ( Role < ROLE_Authority ) // then save this move and replicate it
+            ReplicateMove(DeltaTime, NewAccel, DODGE_None, OldRotation - Rotation);
+        else
+            ProcessMove(DeltaTime, NewAccel, DODGE_None, OldRotation - Rotation);
+        bPressedJump = false;
+    }
+    
+    /**
+    *   ProcessMove (override)
+    *   This function performs server-authoritative and client-simulated movement.
+    *   Overridden to move the related logic out of PlayerMove to here.
+    */
+    function ProcessMove(float DeltaTime, vector NewAccel, eDodgeDir DodgeMove, rotator DeltaRot)   
+    {
+        if (Physics != PHYS_Flying)
+        {
+            SetPhysics(PHYS_Flying);
+        }
+        
+        Acceleration.X = 0.0;
+        Acceleration.Y = 0.0;
+        Velocity.X = 0.0;
+        Velocity.Y = 0.0;
+        Velocity += NewAccel * DeltaTime;
+        
+        // Braking deceleration
+        if(NewAccel.Z == 0.0)
+        {
+            if(Velocity.Z > 0.0)
+            {
+                // Up decelerates faster
+                Velocity.Z = Velocity.Z - (Velocity.Z * 0.95 * DeltaTime);
+            }
+            else if(Velocity.Z < 0.0)
+            {
+                // Down is a little slidey
+                Velocity.Z = Velocity.Z - (Velocity.Z * 0.05 * DeltaTime);
+            }
+        }
+        
+        Velocity.Z = FClamp(Velocity.Z, -700.0, 700.0);
+        
+        // Clamp Z location to rope top / bottom
+        if(TheRope != None)
+        {
+            if (Location.Z <= TheRope.RopeClimbBottom.Z)
+            {   // Hit Bottom
+                if (Location.Z < TheRope.RopeClimbBottom.Z)
+                {
+                    SetLocation(TheRope.RopeClimbBottom);
+                }
+                Velocity.Z = Max(0, Velocity.Z);
+            }
+            else if (Location.Z >= TheRope.RopeClimbTop.Z)
+            {   // Hit Top
+                if (Location.Z > TheRope.RopeClimbTop.Z)
+                {
+                    SetLocation(TheRope.RopeClimbTop);
+                }
+                Velocity.Z = Min(0, Velocity.Z);
+            }
+        }
+        
+        PlayRopeClimb();
+        
+        if(bPressedJump)
+        {
+            ClimbableLeapOff();
+        }
+    }
+    
+    /**
+    *   Jump (override)
+    *   Overridden to allow player to jump off rope by pressing the jump key
+    */
+    exec function Jump(optional float f)
+    {
+        bPressedJump = true;
+    }
+    
+    /**
+    *   Use (override)
+    *   Overridden to ignore the RunePlayer Use function in this state, and
+    *   call Global Use, which handles the PlayerRopeClimbing state.
+    *   This is necessary because apparently, the Use function doesn't replicate
+    *   correctly to the server from within this state.
+    */
+    exec function Use()
+    {
+        Global.Use();
+    }
+    
+    /**
+    *   ClimbableLeapOff
+    *   Replacement function for LeapOff, which is only state-defined in RunePlayer.
+    *   A Globally defined function is needed for Global.Use to call.
+    */
+    function ClimbableLeapOff()
+    { // Release in the direction Ragnar is currently facing (when the Use key is pressed)
+        local Vector SavedRopeLocation;
+        local Vector X, Y, Z;
+        local Vector Deviation;
+        local float JumpForce;
+
+        SavedRopeLocation = Vect(0.0, 0.0, 0.0);
+        if(TheRope != None)
+        {
+            SavedRopeLocation = TheRope.Location;
+        }
+        
+        DisconnectFromClimbable();
+
+        Deviation = (Location - SavedRopeLocation);
+        if (VSize2D(Deviation) > 50)
+            JumpForce = 0.5;
+        else
+            JumpForce = 0.25;
+        GetAxes(Rotation, X, Y, Z);
+        AddVelocity(X * 350 );
+
+        PlayRopeLeapOff();
+    }
+    
+    /**
+    *   ClimbableFallOff
+    *   Replacement function for FallOff, which is only state-defined in RunePlayer
+    */
+    function ClimbableFallOff()
+    {
+        local Vector X, Y, Z;
+
+        DisconnectFromClimbable();
+
+        GetAxes(Rotation, X, Y, Z);
+        Velocity = -X * 50;
+        
+        PlayRopeLeapOff();
+    }
+    
+    /**
+    *   DisconnectFromClimbable
+    *   Common function called from ClimbableLeapOff and ClimbableFallOff
+    */
+    function DisconnectFromClimbable()
+    {
+        SetPhysics(PHYS_Falling);
+        if(TheRope != None)
+        {
+            TheRope.DetachFromRope(Self);
+            TheRope = None;
+        }
+        
+        if (Region.Zone.bWaterZone)
+        {
+            SetPhysics(PHYS_Swimming);
+            GotoState('PlayerSwimming');
+        }
+        else
+        {
+            if(AnimProxy != None)
+                AnimProxy.GotoState('Idle');
+
+            GotoState('PlayerWalking');
+        }
+    }
 }
 
 
