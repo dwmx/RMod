@@ -829,15 +829,22 @@ event Tick(float DeltaSeconds)
     }
 }
 
-event Destroyed()
-{
-    if(Role == ROLE_Authority && LoadoutReplicationInfo != None)
-    {
-        LoadoutReplicationInfo.Destroy();
-    }
-    
-    Super.Destroyed();
-}
+/**
+*   Destroyed (override)
+*   Overridden to destroy LRI on RunePlayer destruction.
+*   This event being overridden is causing client crashes for some reason,
+*   even if the event is empty.
+*   For now, the LRI will destroy itself when it no longer has an owner.
+*/
+//event Destroyed()
+//{
+//    if(Role == ROLE_Authority && LoadoutReplicationInfo != None)
+//    {
+//        LoadoutReplicationInfo.Destroy();
+//    }
+//    
+//    Super.Destroyed();
+//}
 
 /**
 *   PreTeleport (override)
