@@ -1,7 +1,3 @@
-//=============================================================================
-// ArenaScoreboard
-//=============================================================================
-//class ArenaScoreboard extends RuneScoreboard;
 class R_Scoreboard_Arena extends RMod.R_Scoreboard;
 
 var localized string ChampionString;
@@ -38,11 +34,11 @@ function DrawTableHeadings(canvas Canvas)
 	Canvas.DrawTile(Seperator, Canvas.ClipX*0.8, YL*0.5, 0, 0, Seperator.USize, Seperator.VSize);
 	YOffset += YL*0.75;
 	Canvas.SetPos(Canvas.ClipX*0.1, YOffset);
-	
+
 	// Scrolling message
 	DrawTextScrolling(
 		Canvas, Canvas.ClipX * 0.1, YOffset, Canvas.ClipX * 0.8, 24.0, GetMOTDString());
-	
+
 	// Scrolling spectators list
 	YOffset += 24.0;
 	SpectatorsString = GetSpectatorsString();
@@ -51,7 +47,7 @@ function DrawTableHeadings(canvas Canvas)
 
 	Canvas.DrawColor = GoldColor;
 	YOffset += 24.0;
-	
+
 	// Draw seperator
 	Canvas.Style = ERenderStyle.STY_Normal;
 	Canvas.DrawColor = WhiteColor;
@@ -143,18 +139,20 @@ function DrawPlayerBackground(Canvas Canvas, PlayerReplicationInfo PRI, float XO
 
 function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset, float YOffset)
 {
-	
+
 	local bool bLocalPlayer;
 	local PlayerPawn PlayerOwner;
 	local float XL,YL;
 	local ArenaGameReplicationInfo GRI;
 	local int i;
 	local R_PlayerReplicationInfo RPRI;
+	local Color DrawColor, ColorT0, ColorT1;
+	local float InterpTime;
 
 	PlayerOwner = PlayerPawn(Owner);
 	bLocalPlayer = (PRI.PlayerName == PlayerOwner.PlayerReplicationInfo.PlayerName);
 	GRI = ArenaGameReplicationInfo(PlayerOwner.GameReplicationInfo);
-	
+
 	if(MyFonts != None)
 		Canvas.Font = MyFonts.GetStaticMedFont();
 	else
@@ -177,9 +175,9 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 		else
 			Canvas.DrawColor = WhiteColor;
 	}
-		
+
 	// Draw Name
-	if (PRI.bAdmin)	
+	if (PRI.bAdmin)
 	{
 		if(MyFonts != None)
 			Canvas.Font = MyFonts.GetStaticSmallFont();
@@ -187,7 +185,7 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 			Canvas.Font = Font'SmallFont';
 	}
 	else
-	{	
+	{
 		if(MyFonts != None)
 			Canvas.Font = MyFonts.GetStaticMedFont();
 		else
@@ -196,7 +194,7 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 
 	Canvas.SetPos(Canvas.ClipX*RelPosX_Name, YOffset);
 	//Canvas.DrawText(PRI.PlayerName, false);
-	
+
 	// If spectating this player, draw an indicator
 	if(Owner != None
 	&& Owner.GetStateName() == 'PlayerSpectating'
@@ -227,7 +225,7 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 	Canvas.SetPos(Canvas.ClipX*RelPosX_Deaths, YOffset);
 	Canvas.DrawText(GetValueForDeathsField(PRI), false);
 
-	// RMod stuff
+	// dirtyRMod stuff
 	RPRI = R_PlayerReplicationInfo(PRI);
 	if(RPRI != None)
 	{
@@ -239,8 +237,32 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 	if (Canvas.ClipX > 512 && Level.Netmode != NM_Standalone)
 	{
 		// Draw Ping
-		Canvas.SetPos(Canvas.ClipX*RelPosX_Ping, YOffset);
-		Canvas.DrawText(GetValueForPingField(PRI), false);
+		Canvas.SetPos(Canvas.ClipX*0.7, YOffset);
+		if(RPRI != None)
+		{
+			InterpTime = float(PRI.Ping);
+			ColorT0 = ColorsClass.Static.ColorGreen();
+			ColorT1 = ColorsClass.Static.ColorRed() * 0.75;
+			DrawColor = Canvas.DrawColor;
+			Canvas.DrawColor = UtilitiesClass.Static.InterpLinear_Color(float(PRI.Ping), ColorT0, ColorT1, 160.0);
+			Canvas.DrawText(PRI.Ping, false);
+			Canvas.DrawColor = DrawColor;
+		}
+		else
+		{
+			Canvas.DrawText(PRI.Ping, false);
+		}
+
+		// Packetloss
+
+		//FONT ALTER
+	//	Canvas.Font = RegFont;
+		if(MyFonts != None)
+			Canvas.Font = MyFonts.GetStaticMedFont();
+		else
+			Canvas.Font = RegFont;
+
+		Canvas.DrawColor = WhiteColor;
 	}
 
 	if(PRI.TeamID <= 16)
@@ -304,7 +326,7 @@ function DrawHeader( canvas Canvas )
 		YOffset += YL;
 
 		ArenaGRI = ArenaGameReplicationInfo(GRI);
-		
+
 		matchType = ArenaGRI.matchSize $ XOnXText $ArenaGRI.matchSize $ ServerText;
 		Canvas.StrLen(matchType, XL, YL2);
 		Canvas.SetPos((Canvas.ClipX * 0.5) - (XL * 0.5), YOffset);
@@ -396,7 +418,7 @@ function DrawTeamMatchInfo(canvas Canvas, float XOffset, float YStart)
 	Canvas.DrawText(VsString, false);
 	Canvas.StrLen(VsString, XL, YL);
 	curX += XL;
-	
+
 	Canvas.DrawColor = GetTeamColor(GRI.TeamColor[1]);
 	Canvas.SetPos(curX, curY);
 	Canvas.DrawText(ChallengersText, false);//GetTeamString(GRI.TeamColor[1]), false);
@@ -496,7 +518,7 @@ function ShowScores( canvas Canvas )
 
 		}
 	}
-		
+
 	DrawTableHeadings(Canvas);
 
 	Canvas.StrLen("TEST", XL, YL);
@@ -632,10 +654,10 @@ function DrawTrailer( canvas Canvas )
 		{
 			text = MatchText $ string(curMatch) $ "/" $ MaxMatch;
 			Canvas.DrawText(text, true);
-		}		
+		}
 	}
 
-	Canvas.bCenter = false;	
+	Canvas.bCenter = false;
 }
 
 defaultproperties
@@ -652,5 +674,5 @@ defaultproperties
      MatchText="Match "
      FragsText="Victories"
      DeathsText="Losses"
-	 RelPosX_Queue=0.8
+     RelPosX_Queue=0.8
 }
