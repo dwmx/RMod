@@ -810,7 +810,16 @@ event PreRender( canvas Canvas )
 */
 event Tick(float DeltaSeconds)
 {
+    local Rotator NewRotation;
+    
     Super.Tick(DeltaSeconds);
+    
+    // Hack - prevents runeplayers from pitching up / down when they change states
+    // This isn't the best place for this, but it's the easiest.
+    NewRotation = Rotation;
+    NewRotation.Pitch = 0;
+    NewRotation.Roll = 0;
+    SetRotation(NewRotation);
     
     // Replicate authoritative vars if they've changed
     if(Role == ROLE_Authority)
