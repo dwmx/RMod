@@ -169,7 +169,7 @@ replication
         ServerMove_v2;
     
     unreliable if(Role < ROLE_Authority)
-        ServerAntiCheat;
+        ServerClientRepVars;
 }
 
 /**
@@ -1492,7 +1492,7 @@ function ReplicateMove(
         bJumpStatus = !bJumpStatus;
 
     SendServerMove(NewMove, OldMove);
-    SendServerAntiCheat();
+    SendServerClientRepVars();
 }
 
 /**
@@ -2110,7 +2110,7 @@ event PlayerTick( float Time )
 //  End 469b movement adaptation for Rune
 //==============================================================================
 
-function SendServerAntiCheat()
+function SendServerClientRepVars()
 {
     local Class<Console> ConsoleClass;
     local float LevelTimeDilation;
@@ -2127,15 +2127,44 @@ function SendServerAntiCheat()
         LevelTimeDilation = Level.TimeDilation;
     }
     
-    ServerAntiCheat(ConsoleClass, LevelTimeDilation);
+    ServerClientRepVars(ConsoleClass, LevelTimeDilation);
 }
 
-function ServerAntiCheat(
+function ServerClientRepVars(
     Class<Console> ConsoleClass,
     float LevelTimeDilation)
 {
-    UtilitiesClass.Static.RModLog("" $ ConsoleClass @ LevelTimeDilation);
-}6503184
+    //UtilitiesClass.Static.RModLog("" $ ConsoleClass @ LevelTimeDilation);
+    
+    if(ConsoleClass != Class'RMenu.RuneConsole')
+    {
+        DisconnectClient("Client is using a custom console class:" @ ConsoleClass);
+        return;
+    }
+    else if(LevelTimeDilation != Level.TimeDilation)
+    {
+        DisconnectClient("Client TimeDilation does not match server's. Client:" @ LevelTimeDilation @ "Server:" @ Level.TimeDilation);
+        return;
+    }
+}
+
+function DisconnectClient(String Reason)
+{
+    local String ClientPlayerName;
+    local String ClientIP;
+    
+    ClientPlayerName = "";
+    if(PlayerReplicationInfo != None)
+    {
+        ClientPlayerName = PlayerReplicationInfo.PlayerName;
+    }
+    
+    ClientIP = GetPlayerNetworkAddress();
+    
+    UtilitiesClass.Static.RModLog("[Client Disconnect]:" @ ClientIP @ ClientPlayerName @ "[Reason]:" @ Reason);
+    
+    Destroy();
+}
 
 
 /**
