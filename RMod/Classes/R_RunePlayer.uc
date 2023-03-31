@@ -167,6 +167,9 @@ replication
         
     reliable if(Role < ROLE_Authority)
         ServerMove_v2;
+    
+    unreliable if(Role < ROLE_Authority)
+        ServerAntiCheat;
 }
 
 /**
@@ -1480,6 +1483,7 @@ function ReplicateMove(
         bJumpStatus = !bJumpStatus;
 
     SendServerMove(NewMove, OldMove);
+    SendServerAntiCheat();
 }
 
 /**
@@ -2096,6 +2100,33 @@ event PlayerTick( float Time )
 //==============================================================================
 //  End 469b movement adaptation for Rune
 //==============================================================================
+
+function SendServerAntiCheat()
+{
+    local Class<Console> ConsoleClass;
+    local float LevelTimeDilation;
+    
+    ConsoleClass = None;
+    if(Player != None)
+    {
+        ConsoleClass = Player.Console.Class;
+    }
+    
+    LevelTimeDilation = -1.0;
+    if(Level != None)
+    {
+        LevelTimeDilation = Level.TimeDilation;
+    }
+    
+    ServerAntiCheat(ConsoleClass, LevelTimeDilation);
+}
+
+function ServerAntiCheat(
+    Class<Console> ConsoleClass,
+    float LevelTimeDilation)
+{
+    UtilitiesClass.Static.RModLog("" $ ConsoleClass @ LevelTimeDilation);
+}6503184
 
 
 /**
