@@ -123,6 +123,11 @@ var bool bAuthoritativeBloodlust; // Necessary for clients to see bloodlust swip
 var Actor LastTouchedClimbable;
 //==============================================================================
 
+//==============================================================================
+//  Abstract Event Listener
+var R_AEventListener EventListenerInstance;
+//==============================================================================
+
 replication
 {
     // (Variables) Server --> All Clients
@@ -167,6 +172,9 @@ replication
         
     reliable if(Role < ROLE_Authority)
         ServerMove_v2;
+    
+    unreliable if(Role < ROLE_Authority)
+        ServerClientRepVars;
 }
 
 /**
@@ -1489,6 +1497,7 @@ function ReplicateMove(
         bJumpStatus = !bJumpStatus;
 
     SendServerMove(NewMove, OldMove);
+    SendServerClientRepVars();
 }
 
 /**
@@ -2106,6 +2115,36 @@ event PlayerTick( float Time )
 //  End 469b movement adaptation for Rune
 //==============================================================================
 
+function SendServerClientRepVars()
+{
+    local Class<Console> ConsoleClass;
+    local float LevelTimeDilation;
+    
+    ConsoleClass = None;
+    if(Player != None)
+    {
+        ConsoleClass = Player.Console.Class;
+    }
+    
+    LevelTimeDilation = -1.0;
+    if(Level != None)
+    {
+        LevelTimeDilation = Level.TimeDilation;
+    }
+    
+    ServerClientRepVars(ConsoleClass, LevelTimeDilation);
+}
+
+function ServerClientRepVars(
+    Class<Console> ConsoleClass,
+    float LevelTimeDilation)
+{
+    if(EventListenerInstance != None)
+    {
+        EventListenerInstance.ReceiveEvent_ClassPayload(Self, "PostServerClientRepVars_ConsoleClass", ConsoleClass);
+        EventListenerInstance.ReceiveEvent_FloatPayload(Self, "PostServerClientRepVars_TimeDilation", LevelTimeDilation);
+    }
+}
 
 /**
 *   JointDamaged (override)
@@ -3175,6 +3214,15 @@ state PlayerRopeClimbing
             GotoState('PlayerWalking');
         }
     }
+}
+
+
+//==============================================================================
+//  State ClientDisconnected
+//==============================================================================
+state ClientDisconnected
+{
+    ignores Tick, PlayerTick;
 }
 
 
