@@ -49,6 +49,11 @@ static function Class<Actor> GetActorSubstitutionClass(Class<Actor> InClass)
         case Class'RuneI.DarkShield':           return Class'RMod.R_Shield_DarkShield';
         case Class'RuneI.DwarfWoodShield':      return Class'RMod.R_Shield_DwarfWoodShield';
         case Class'RuneI.DwarfBattleShield':    return Class'RMod.R_Shield_DwarfBattleShield';
+        
+        // Ropes
+        case Class'RuneI.ClimbableChain':       return Class'RMod.R_ClimbableChain';
+        case Class'RuneI.ClimbableVine':        return Class'RMod.R_ClimbableVine';
+        case Class'RuneI.Rope':                 return Class'RMod.R_ClimbableChain';
     }
 
     return InClass;

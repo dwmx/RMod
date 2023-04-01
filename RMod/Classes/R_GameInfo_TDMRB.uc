@@ -2,7 +2,7 @@
 //  R_GameInfo_TDMRB
 //  Round-based version of team death match.
 //==============================================================================
-class R_GameInfo_TDMRB extends R_GameInfo_TDM;
+class R_GameInfo_TDMRB extends R_GameInfo_TDM config (RMod);
 
 var float GameStateTimeStampSeconds;
 var float GameStateDurationSeconds;
@@ -569,4 +569,5 @@ defaultproperties
     bRemoveNativeWeapons=True
     bRemoveNativeShields=True
     bLoadoutsEnabled=True
+    GameOptionsClass=Class'RMod.R_GameOptions_DM'
 }

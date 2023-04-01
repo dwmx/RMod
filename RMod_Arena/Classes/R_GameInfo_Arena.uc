@@ -9,7 +9,7 @@
 // (D) upgrade to 8 on 8 fights
 // (E) increase queue length to 32
 //=============================================================================
-class R_GameInfo_Arena extends RMod.R_GameInfo;
+class R_GameInfo_Arena extends RMod.R_GameInfo config(RMod);
 
 var() config int TimeBetweenMatch;
 var() config int MaxTeamSupport;
@@ -2585,4 +2585,5 @@ defaultproperties
     bAllowLimbSever=False
     DefaultPlayerMaxHealth=200
     DefaultPlayerHealth=200
+    GameOptionsClass=Class'RMod.R_GameOptions_Arena'
 }

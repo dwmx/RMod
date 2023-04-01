@@ -477,4 +477,15 @@ defaultproperties
 {
     //RemoteRole=ROLE_SimulatedProxy
     UtilitiesClass=Class'RMod.R_AUtilities'
+    HitFleshEffectClass=Class'RMod.R_Effect_HitFlesh'
+    HitWoodEffectClass=Class'RMod.R_Effect_HitWood'
+    HitStoneEffectClass=Class'RMod.R_Effect_HitStone'
+    HitMetalEffectClass=Class'RuneI.HitMetal'
+    HitDirtEffectClass=Class'RuneI.GroundDust'
+    HitShieldEffectClass=Class'RuneI.HitWood'
+    HitWeaponEffectClass=Class'RuneI.HitMetal'
+    HitBreakableWoodEffectClass=Class'RuneI.HitWood'
+    HitBreakableStoneEffectClass=Class'RuneI.HitStone'
+    HitIceEffectClass=Class'RMod.R_Effect_HitIce'
+    HitWaterEffectClass=None
 }

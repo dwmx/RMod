@@ -1,10 +1,11 @@
 //==============================================================================
-//  R_Effect_HitFlesh
+//  R_ClimbableBase
+//  Multiplayer compatible version of the climbable rope actor.
 //==============================================================================
-class R_Effect_HitFlesh extends R_AEffect_HitEffect;
+class R_ClimbableBase extends Rope;
 
 defaultproperties
 {
-    HitEffectClass=Class'RuneI.BloodMist'
-    BloodLustDebrisClass=Class'RMod.R_Debris_Bloodlust_HitFlesh'
+    bNet=True
+    bAlwaysRelevant=true//TEMPORARY
 }

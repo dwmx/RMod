@@ -105,12 +105,27 @@ var R_ClientDebugActor ClientDebugActor;
 //==============================================================================
 //  Authoritative variables replicated to clients
 
+// The authoritative state of this player.
+var Name AuthoritativeStateName;
 //  Since AnimProxy is not an AutonomousProxy, its more efficient to replicate
 //  this variable in R_RunePlayer than in R_RunePlayerProxy.
 //  This is used for improved client-side prediction, fixing things like
 //  the stuttering ledge grabs.
 var Name AuthoritativeAnimProxyStateName;
 var bool bAuthoritativeBloodlust; // Necessary for clients to see bloodlust swipe
+//==============================================================================
+
+//==============================================================================
+//  Rope climbing vars
+
+// Stores the most recently touched rope, so that when the player jumps off,
+// they can't re-grab the same rope.
+var Actor LastTouchedClimbable;
+//==============================================================================
+
+//==============================================================================
+//  Abstract Event Listener
+var R_AEventListener EventListenerInstance;
 //==============================================================================
 
 replication
@@ -126,6 +141,7 @@ replication
         Camera,
         WeaponSwipeTexture,
         WeaponSwipeBloodlustTexture,
+        AuthoritativeStateName,
         bAuthoritativeBloodlust;
 
     // (Variables) Server --> Owning Client
@@ -156,6 +172,82 @@ replication
         
     reliable if(Role < ROLE_Authority)
         ServerMove_v2;
+    
+    unreliable if(Role < ROLE_Authority)
+        ServerClientRepVars;
+}
+
+/**
+*   CheckCanGrabClimbable
+*   Returns whether or not the player can currently grab a climbable (rope) actor
+*   Note that server will crash if this function returns true when TheRope != None
+*/
+function bool CheckCanGrabClimbable(R_ClimbableBase ClimbableActor)
+{
+    // Valid climbable actor check
+    if(ClimbableActor == None || TheRope != None)
+        return false;
+    
+    // Physics check
+    if(Physics != PHYS_Falling && Physics != PHYS_Swimming)
+        return false;
+    
+    // State check
+    if(GetStateName() == 'PlayerRopeClimbing')
+        return false;
+    
+    // Anim proxy state check - only allowed while idle
+    if(AnimProxy != None && AnimProxy.GetStateName() != 'Idle')
+        return false;
+    
+    // Never re-grab the most recently grabbed climbable
+    // This is initialized in PlayerRopeClimbing.BeginState,
+    // and it's cleared in PlayerWalking.BeginState
+    if(LastTouchedClimbable == ClimbableActor)
+        return false;
+    
+    return true;
+}
+
+/**
+*   Touch (override)
+*   Overridden to ignore rope if there already is one stored in the TheRope var
+*/
+function Touch(Actor Other)
+{
+    local vector HandPos, pos;
+    LookTarget = Other;
+    
+    // RunePlayer.Touch will cause a stack overflow on clients
+    Super(PlayerPawn).Touch(Other);
+
+    if(Role == ROLE_Authority)
+    {
+        if(CheckCanGrabClimbable(R_ClimbableBase(Other)))
+        { // Only grab the rope if the player can and if the player is in the air/swimming
+            HandPos = Location;
+            HandPos.Z += HandOffset;
+        
+            TheRope = Rope(Other);
+            TheRope.ComputeClimbingEndpoints(HandPos.Z);
+        
+            if (HandPos.Z < TheRope.RopeClimbBottom.Z)
+                return;
+        
+            TheRope.AttachedToRope(self);
+        
+            // Make sure right on rope
+            pos = TheRope.Location;
+            pos.Z = Location.Z;
+            SetLocation(pos);
+        
+            Acceleration = vect(0, 0, 0);
+            Velocity = vect(0, 0, 0);
+            RopeDist = TheRope.RopeClimbTop.Z - HandPos.Z;
+        
+            GotoState('PlayerRopeClimbing');
+        }  
+    }
 }
 
 /**
@@ -271,6 +363,8 @@ exec function Throw()
             PlayAnim('ATK_ALL_throw1_AA0S', 1.0, 0.1);
         }
     }
+    
+    
 }
 
 /**
@@ -287,19 +381,19 @@ exec function Powerup()
         return;
     }
     
+    // Get manual bloodlust game option
+    bManualBloodlustActivationAllowed = false;
+    if(GameOptionsCheckerClass != None)
+    {
+        bManualBloodlustActivationAllowed = GameOptionsCheckerClass.Static.GetGameOption_ManualBloodlust(Self);
+    }
+    
     // Manual bloodlust attempt when alt fire is held
-    if(bAltFire == 1)
+    if(bAltFire == 1 && bManualBloodlustActivationAllowed)
     {
         if(bBloodLust)
         {
             return;
-        }
-        
-        // Get manual bloodlust game option
-        bManualBloodlustActivationAllowed = false;
-        if(GameOptionsCheckerClass != None)
-        {
-            bManualBloodlustActivationAllowed = GameOptionsCheckerClass.Static.GetGameOption_ManualBloodlust(Self);
         }
         
         // Try to enable bloodlust manually
@@ -317,6 +411,23 @@ exec function Powerup()
     else
     {
         Super.Powerup();
+    }
+}
+
+/**
+*   Use (override)
+*   Overridden to handle PlayerRopeClimbing state. See PlayerRopeClimbing.Use
+*   for notes on why it's necessary to do this in the Global function.
+*/
+exec function Use()
+{
+    if(GetStateName() == 'PlayerRopeClimbing')
+    {
+        ClimbableFallOff();
+    }
+    else
+    {
+        Super.Use();
     }
 }
 
@@ -704,11 +815,21 @@ event PreRender( canvas Canvas )
 */
 event Tick(float DeltaSeconds)
 {
+    local Rotator NewRotation;
+    
     Super.Tick(DeltaSeconds);
+    
+    // Hack - prevents runeplayers from pitching up / down when they change states
+    // This isn't the best place for this, but it's the easiest.
+    NewRotation = Rotation;
+    NewRotation.Pitch = 0;
+    NewRotation.Roll = 0;
+    SetRotation(NewRotation);
     
     // Replicate authoritative vars if they've changed
     if(Role == ROLE_Authority)
     {
+        AuthoritativeStateName = GetStateName();
         bAuthoritativeBloodlust = bBloodlust;
         
         if(AnimProxy != None)
@@ -716,17 +837,31 @@ event Tick(float DeltaSeconds)
             AuthoritativeAnimProxyStateName = AnimProxy.GetStateName();
         }
     }
+    else
+    {
+        if(AuthoritativeStateName != GetStateName())
+        {
+            GotoState(AuthoritativeStateName);
+        }
+    }
 }
 
-event Destroyed()
-{
-    if(Role == ROLE_Authority && LoadoutReplicationInfo != None)
-    {
-        LoadoutReplicationInfo.Destroy();
-    }
-    
-    Super.Destroyed();
-}
+/**
+*   Destroyed (override)
+*   Overridden to destroy LRI on RunePlayer destruction.
+*   This event being overridden is causing client crashes for some reason,
+*   even if the event is empty.
+*   For now, the LRI will destroy itself when it no longer has an owner.
+*/
+//event Destroyed()
+//{
+//    if(Role == ROLE_Authority && LoadoutReplicationInfo != None)
+//    {
+//        LoadoutReplicationInfo.Destroy();
+//    }
+//    
+//    Super.Destroyed();
+//}
 
 /**
 *   PreTeleport (override)
@@ -1087,6 +1222,333 @@ function ApplySubClass_ExtractMenuName(Class<RunePlayer> SubClass)
 //  End Sub-Class Functions
 //==============================================================================
 
+
+//==============================================================================
+//  Begin animation function overrides
+//==============================================================================
+/***
+*   PlayMoving (override)
+*   Overridden to fix the crouching 2-hand backward-45-right animations.
+*   Original issue caused player to enter into the BaseFrame pose because the animation name was invalid.
+*/
+function PlayMoving(optional float tween)
+{
+    local name LowerName, UpperName;
+    local bool bDefending;
+    local float dp;
+    local vector X, Y, Z;
+    local bool bRight;
+    local MovementDir_e dir;
+
+    if (health <= 0)
+        return;
+    
+    if(AnimProxy != None)
+        bDefending = (AnimProxy.GetStateName() == 'Defending');
+    else
+        bDefending = false;
+
+    // Determine the direction the player is attempting to move
+    GetAxes(Rotation, X, Y, Z);
+    dp = vector(Rotation) dot Normal(Acceleration);
+
+    if(Normal(Acceleration) dot Y >= 0)
+    {
+        bRight = true;
+    }
+
+    if(dp > 0.9)
+    { // Distinctly forward
+        dir = MD_FORWARD;
+    }
+    else if(dp > 0.5)
+    { // forward left/right
+        if(bRight)
+        {
+            if (!bMirrored)
+                dir = MD_FORWARDRIGHT;
+            else
+                dir = MD_FORWARDLEFT;
+        }
+        else
+        {
+            if (!bMirrored)
+                dir = MD_FORWARDLEFT;
+            else
+                dir = MD_FORWARDRIGHT;
+        }
+    }
+    else if(dp < -0.9)
+    { // Distinctly backward
+        dir = MD_BACKWARD;      
+    }
+    else if(dp < -0.5)
+    { // backward left/right
+        if(bRight)
+        {
+            if (!bMirrored)
+                dir = MD_BACKWARDRIGHT;
+            else
+                dir = MD_BACKWARDLEFT;
+        }
+        else
+        {
+            if (!bMirrored)
+                dir = MD_BACKWARDLEFT;
+            else
+                dir = MD_BACKWARDRIGHT;
+        }
+    }
+    else if(bRight)
+    { // Strafe right
+        if (!bMirrored)
+            dir = MD_RIGHT;
+        else
+            dir = MD_LEFT;
+    }
+    else
+    { // Strafe left
+        if (!bMirrored)
+            dir = MD_LEFT;
+        else
+            dir = MD_RIGHT;
+    }
+
+    // If Attacking and running foward or backward, then let the upper body handle the leg motion
+    if(AnimProxy != None && AnimProxy.GetStateName() == 'Attacking')
+    {
+        if(GetGroup(AnimSequence) == 'JumpAttack')
+            return;
+        if((dir == MD_FORWARD || dir == MD_BACKWARD) && (GetGroup(AnimSequence) == 'AttackMoving'
+            && AnimSequence != 'ghostthrow'))
+            return;
+    }
+
+    // Set the proper animation based upon the motion
+    LowerName = 'MOV_ALL_run1_AA0N';
+
+    if(Weapon == None)
+    { // Explore mode
+        if(!bIsCrouching)
+        {
+            switch(dir)
+            {
+            case MD_FORWARD:
+                LowerName = 'MOV_ALL_run1_AA0N';
+                break;
+            case MD_FORWARDRIGHT:
+                LowerName = 'MOV_ALL_rstrafe1_AA0S';
+                break;
+            case MD_FORWARDLEFT:
+                LowerName = 'MOV_ALL_lstrafe1_AA0S';
+                break;
+            case MD_BACKWARD:
+                LowerName = 'MOV_ALL_runback1_AA0S';
+                break;
+            case MD_BACKWARDRIGHT:
+                LowerName = 'MOV_ALL_lstrafe1_AA0S';
+                break;
+            case MD_BACKWARDLEFT:
+                LowerName = 'MOV_ALL_rstrafe1_AA0S';
+                break;
+            case MD_RIGHT:
+                LowerName = 'MOV_ALL_rstrafe1_AN0N';
+                break;
+            case MD_LEFT:
+                LowerName = 'MOV_ALL_lstrafe1_AN0N';
+                break;
+            default:
+                break;
+            }
+
+            if(LowerName == 'MOV_ALL_run1_AA0N')
+            {
+                // Upper-body animation
+                if(Shield == None)
+                {
+                    UpperName = 'MOV_ALL_run1_AN0N'; 
+                }
+                else
+                {
+                    UpperName = 'MOV_ALL_run1_AN0S';
+                }
+            }
+            else
+            { // Strafing, so match the upper-body with the lower-body
+                UpperName = LowerName;
+            }
+        }
+        else
+        { // Crouching
+            switch(dir)
+            {
+            case MD_FORWARD:
+                LowerName = 'crouch_walkforward';
+                break;
+            case MD_FORWARDRIGHT:
+                LowerName = 'crouch_walkforward45Right';
+                break;
+            case MD_FORWARDLEFT:
+                LowerName = 'crouch_walkforward45Left';
+                break;
+            case MD_BACKWARD:
+                LowerName = 'crouch_walkbackward';
+                break;
+            case MD_BACKWARDRIGHT:
+                LowerName = 'crouch_walkbackward45Right';
+                break;
+            case MD_BACKWARDLEFT:
+                LowerName = 'crouch_walkbackward45Left';
+                break;
+            case MD_RIGHT:
+                LowerName = 'crouch_straferight';
+                break;
+            case MD_LEFT:
+                LowerName = 'crouch_strafeleft';
+                break;
+            default:
+                break;
+            }
+
+            UpperName = LowerName;
+        }
+    }
+    else
+    { // Combat Mode
+        if(!bIsCrouching)
+        {
+            switch(dir)
+            {
+            case MD_FORWARD:
+                if(!bDefending)
+                {
+                    if(AnimProxy.GetStateName() == 'Attacking')
+                    {
+                        LowerName = Weapon.A_ForwardAttack;
+                    }
+                    else
+                    {
+                        LowerName = Weapon.A_Forward;
+                    }
+                }
+                else
+                    LowerName = 'weapon_DefendWalk'; //Weapon.ForwardAnim;
+                break;
+            case MD_FORWARDRIGHT:
+                if(!bDefending)
+                    LowerName = Weapon.A_Forward45Right;
+                else
+                    LowerName = 'weapon_DefendWalk45Right';
+                break;
+            case MD_FORWARDLEFT:
+                if(!bDefending)
+                    LowerName = Weapon.A_Forward45Left;
+                else
+                    LowerName = 'weapon_DefendWalk45Left';
+                break;
+            case MD_BACKWARD:
+                if(!bDefending)
+                    LowerName = Weapon.A_Backward;
+                else
+                    LowerName = 'weapon_DefendBackup';
+                break;
+            case MD_BACKWARDRIGHT:
+                if(!bDefending)
+                    LowerName = Weapon.A_Backward45Right;
+                else
+                    LowerName = 'weapon_DefendBackup45Right';
+                break;
+            case MD_BACKWARDLEFT:
+                if(!bDefending)
+                    LowerName = Weapon.A_Backward45Left;
+                else
+                    LowerName = 'weapon_DefendBackup45Left';
+                break;
+            case MD_RIGHT:
+                if(!bDefending)
+                    LowerName = Weapon.A_StrafeRight;
+                else
+                    LowerName = Weapon.A_StrafeRight;
+                break;
+            case MD_LEFT:
+                if(!bDefending)
+                    LowerName = Weapon.A_StrafeLeft;
+                else
+                    LowerName = Weapon.A_StrafeLeft;
+                break;
+            default:
+                break;
+            }
+        }
+        else
+        { // Crouch
+            switch(dir)
+            {
+            case MD_FORWARD:
+                if(Weapon.bCrouchTwoHands)
+                    LowerName = 'crouch_walkforward2hands';
+                else
+                    LowerName = 'crouch_walkforward';
+                break;
+            case MD_FORWARDRIGHT:
+                if(Weapon.bCrouchTwoHands)
+                    LowerName = 'crouch_walkforward45Right2hands';
+                else
+                    LowerName = 'crouch_walkforward45Right';
+                break;
+            case MD_FORWARDLEFT:
+                if(Weapon.bCrouchTwoHands)
+                    LowerName = 'crouch_walkforward45Left2hands';
+                else
+                    LowerName = 'crouch_walkforward45Left';
+                break;
+            case MD_BACKWARD:
+                if(Weapon.bCrouchTwoHands)
+                    LowerName = 'crouch_walkbackward2hands';
+                else
+                    LowerName = 'crouch_walkbackward';
+                break;
+            case MD_BACKWARDRIGHT:
+                if(Weapon.bCrouchTwoHands)
+                    LowerName = 'crouch_walkbackward45Right2hand';
+                else
+                    LowerName = 'crouch_walkbackward45Right';
+                break;
+            case MD_BACKWARDLEFT:
+                if(Weapon.bCrouchTwoHands)
+                    LowerName = 'crouch_walkbackward45Left2hands';
+                else
+                    LowerName = 'crouch_walkbackward45Left';
+                break;
+            case MD_RIGHT:
+                if(Weapon.bCrouchTwoHands)
+                    LowerName = 'crouch_straferight2hands';
+                else
+                    LowerName = 'crouch_straferight';
+                break;
+            case MD_LEFT:
+                if(Weapon.bCrouchTwoHands)
+                    LowerName = 'crouch_strafeleft2hands';
+                else
+                    LowerName = 'crouch_strafeleft';
+                break;
+            default:
+                break;
+            }
+        }
+
+        UpperName = LowerName;
+    }
+
+    LoopAnim(LowerName, 1.0, 0.1);
+
+    if(AnimProxy != None)
+        AnimProxy.TryLoopAnim(UpperName, 1.0, 0.1);
+}
+//==============================================================================
+//  End animation function overrides
+//==============================================================================
+
 /**
 *   GetWeaponSwipeTexture
 *   Return the texture this player wishes to use as their weapon swipe texture
@@ -1104,7 +1566,15 @@ simulated function Texture GetWeaponSwipeTexture()
 }
 simulated function float GetWeaponSwipeSpeed()
 {
-    return 7.0;
+    if(bAuthoritativeBloodlust)
+    {
+        return 3.0;
+    }
+    else
+    {
+        return 7.0;
+    }
+    
 }
 
 
@@ -1362,6 +1832,7 @@ function ReplicateMove(
         bJumpStatus = !bJumpStatus;
 
     SendServerMove(NewMove, OldMove);
+    SendServerClientRepVars();
 }
 
 /**
@@ -1979,6 +2450,36 @@ event PlayerTick( float Time )
 //  End 469b movement adaptation for Rune
 //==============================================================================
 
+function SendServerClientRepVars()
+{
+    local Class<Console> ConsoleClass;
+    local float LevelTimeDilation;
+    
+    ConsoleClass = None;
+    if(Player != None)
+    {
+        ConsoleClass = Player.Console.Class;
+    }
+    
+    LevelTimeDilation = -1.0;
+    if(Level != None)
+    {
+        LevelTimeDilation = Level.TimeDilation;
+    }
+    
+    ServerClientRepVars(ConsoleClass, LevelTimeDilation);
+}
+
+function ServerClientRepVars(
+    Class<Console> ConsoleClass,
+    float LevelTimeDilation)
+{
+    if(EventListenerInstance != None)
+    {
+        EventListenerInstance.ReceiveEvent_ClassPayload(Self, "PostServerClientRepVars_ConsoleClass", ConsoleClass);
+        EventListenerInstance.ReceiveEvent_FloatPayload(Self, "PostServerClientRepVars_TimeDilation", LevelTimeDilation);
+    }
+}
 
 /**
 *   JointDamaged (override)
@@ -2384,6 +2885,22 @@ function ClientSetLocation(Vector NewLocation, Rotator NewRotation)
 //==============================================================================
 state PlayerWalking
 {
+    /**
+    *   BeginState (override)
+    *   Overridden to reset the LastTouchedClimbable var, so that this player can
+    *   grab that rope again.
+    */
+    event BeginState()
+    {
+        Super.BeginState();
+        
+        LastTouchedClimbable = None;
+    }
+    
+    /**
+    *   PlayerTick (override)
+    *   Overridden for 469b movement adaptation.
+    */
     event PlayerTick(float DeltaTime)
     {
         local float ZDist;
@@ -2439,6 +2956,11 @@ state PlayerWalking
         }
     }
     
+    /**
+    *   GrabEdge (override)
+    *   Overridden to prevent client-side stuttering when attacking and grabbing ledge
+    *   at the same time.
+    */
     function bool GrabEdge(float GrabDistance, vector GrabNormal)
     {
         // Only grab ledge in Idle state
@@ -2764,6 +3286,280 @@ state GameEnded
     ignores Throw;
 }
 
+//==============================================================================
+//  State PlayerRopeClimbing (override)
+//  Overridden to implement multiplayer compatibility with Rope actors
+//==============================================================================
+function ClimbableLeapOff() {}   // Global definition, defined in state
+function ClimbableFallOff() {}
+
+state PlayerRopeClimbing
+{
+    /**
+    *   BeginState (override)
+    *   Overridden to update LastTouchedClimbable variable. This gets reset in
+    *   PlayerWalking.BeginState.
+    */
+    event BeginState()
+    {
+        local Vector NewLocation;
+        
+        Super.BeginState();
+        
+        if(TheRope != None)
+        {
+            NewLocation.X = TheRope.Location.X;
+            NewLocation.Y = TheRope.Location.Y;
+            NewLocation.Z = Self.Location.Z;
+            SetLocation(NewLocation);
+            LastTouchedClimbable = TheRope;
+        }
+    }
+    
+    event EndState()
+    {
+        Super.EndState();
+    }
+    
+    /**
+    *   ServerMove (override)
+    *   Overridden to bypass RunePlayer.PlayerRopeClimbing.ServerMove.
+    *   469b movement takes over the replicated movement.
+    */
+    function ServerMove
+    (
+        float TimeStamp, 
+        vector Accel, 
+        vector ClientLoc,
+        bool NewbRun,
+        bool NewbDuck,
+        bool NewbJumpStatus, 
+        bool bFired,
+        bool bAltFired,
+        bool bForceFire,
+        bool bForceAltFire,
+        eDodgeDir DodgeMove, 
+        byte ClientRoll, 
+        int View,
+        optional byte OldTimeDelta,
+        optional int OldAccel
+    )
+    {}
+    
+    /**
+    *   PlayerMove (override)
+    *   Overridden to strip out logic which should be performed in ProcessMove.
+    */
+    function PlayerMove( float DeltaTime)
+    {
+        local vector NewAccel;
+        local vector HandPos;
+        local vector X,Y,Z;
+        local vector RopeVector, VelocityLookahead, RopeDir, NewLocation;
+        local Rotator OldRotation;
+
+        if(TheRope == None)
+            return;
+
+        // Mangle controls
+        //aForward *= 0.00;
+        aStrafe  *= 0.00;
+        aLookup  *= 0.24;
+        aTurn    *= 0.24;
+
+        if(aUp > 0)
+        { // Move slightly slower going up than going down
+            aForward *= 0.056;
+        }
+        else
+        {
+            aForward *= 0.084;
+        }
+
+        NewAccel.X = 0.0;
+        NewAccel.Y = 0.0;
+        NewAccel.Z = aForward * 1.5;
+
+        // Update view rotation
+        OldRotation = Rotation;
+        UpdateRotation(DeltaTime, 1);
+
+        if ( Role < ROLE_Authority ) // then save this move and replicate it
+            ReplicateMove(DeltaTime, NewAccel, DODGE_None, OldRotation - Rotation);
+        else
+            ProcessMove(DeltaTime, NewAccel, DODGE_None, OldRotation - Rotation);
+        bPressedJump = false;
+    }
+    
+    /**
+    *   ProcessMove (override)
+    *   This function performs server-authoritative and client-simulated movement.
+    *   Overridden to move the related logic out of PlayerMove to here.
+    */
+    function ProcessMove(float DeltaTime, vector NewAccel, eDodgeDir DodgeMove, rotator DeltaRot)   
+    {
+        if (Physics != PHYS_Flying)
+        {
+            SetPhysics(PHYS_Flying);
+        }
+        
+        Acceleration.X = 0.0;
+        Acceleration.Y = 0.0;
+        Velocity.X = 0.0;
+        Velocity.Y = 0.0;
+        Velocity += NewAccel * DeltaTime;
+        
+        // Braking deceleration
+        if(NewAccel.Z == 0.0)
+        {
+            if(Velocity.Z > 0.0)
+            {
+                // Up decelerates faster
+                Velocity.Z = Velocity.Z - (Velocity.Z * 0.95 * DeltaTime);
+            }
+            else if(Velocity.Z < 0.0)
+            {
+                // Down is a little slidey
+                Velocity.Z = Velocity.Z - (Velocity.Z * 0.05 * DeltaTime);
+            }
+        }
+        
+        Velocity.Z = FClamp(Velocity.Z, -700.0, 700.0);
+        
+        // Clamp Z location to rope top / bottom
+        if(TheRope != None)
+        {
+            if (Location.Z <= TheRope.RopeClimbBottom.Z)
+            {   // Hit Bottom
+                if (Location.Z < TheRope.RopeClimbBottom.Z)
+                {
+                    SetLocation(TheRope.RopeClimbBottom);
+                }
+                Velocity.Z = Max(0, Velocity.Z);
+            }
+            else if (Location.Z >= TheRope.RopeClimbTop.Z)
+            {   // Hit Top
+                if (Location.Z > TheRope.RopeClimbTop.Z)
+                {
+                    SetLocation(TheRope.RopeClimbTop);
+                }
+                Velocity.Z = Min(0, Velocity.Z);
+            }
+        }
+        
+        PlayRopeClimb();
+        
+        if(bPressedJump)
+        {
+            ClimbableLeapOff();
+        }
+    }
+    
+    /**
+    *   Jump (override)
+    *   Overridden to allow player to jump off rope by pressing the jump key
+    */
+    exec function Jump(optional float f)
+    {
+        bPressedJump = true;
+    }
+    
+    /**
+    *   Use (override)
+    *   Overridden to ignore the RunePlayer Use function in this state, and
+    *   call Global Use, which handles the PlayerRopeClimbing state.
+    *   This is necessary because apparently, the Use function doesn't replicate
+    *   correctly to the server from within this state.
+    */
+    exec function Use()
+    {
+        Global.Use();
+    }
+    
+    /**
+    *   ClimbableLeapOff
+    *   Replacement function for LeapOff, which is only state-defined in RunePlayer.
+    *   A Globally defined function is needed for Global.Use to call.
+    */
+    function ClimbableLeapOff()
+    { // Release in the direction Ragnar is currently facing (when the Use key is pressed)
+        local Vector SavedRopeLocation;
+        local Vector X, Y, Z;
+        local Vector Deviation;
+        local float JumpForce;
+
+        SavedRopeLocation = Vect(0.0, 0.0, 0.0);
+        if(TheRope != None)
+        {
+            SavedRopeLocation = TheRope.Location;
+        }
+        
+        DisconnectFromClimbable();
+
+        Deviation = (Location - SavedRopeLocation);
+        if (VSize2D(Deviation) > 50)
+            JumpForce = 0.5;
+        else
+            JumpForce = 0.25;
+        GetAxes(Rotation, X, Y, Z);
+        AddVelocity(X * 350 );
+
+        PlayRopeLeapOff();
+    }
+    
+    /**
+    *   ClimbableFallOff
+    *   Replacement function for FallOff, which is only state-defined in RunePlayer
+    */
+    function ClimbableFallOff()
+    {
+        local Vector X, Y, Z;
+
+        DisconnectFromClimbable();
+
+        GetAxes(Rotation, X, Y, Z);
+        Velocity = -X * 50;
+        
+        PlayRopeLeapOff();
+    }
+    
+    /**
+    *   DisconnectFromClimbable
+    *   Common function called from ClimbableLeapOff and ClimbableFallOff
+    */
+    function DisconnectFromClimbable()
+    {
+        SetPhysics(PHYS_Falling);
+        if(TheRope != None)
+        {
+            TheRope.DetachFromRope(Self);
+            TheRope = None;
+        }
+        
+        if (Region.Zone.bWaterZone)
+        {
+            SetPhysics(PHYS_Swimming);
+            GotoState('PlayerSwimming');
+        }
+        else
+        {
+            if(AnimProxy != None)
+                AnimProxy.GotoState('Idle');
+
+            GotoState('PlayerWalking');
+        }
+    }
+}
+
+
+//==============================================================================
+//  State ClientDisconnected
+//==============================================================================
+state ClientDisconnected
+{
+    ignores Tick, PlayerTick;
+}
+
 
 //==============================================================================
 //  Begin Loadout Menu Functions
@@ -2898,6 +3694,7 @@ function ClientCloseLoadoutMenu()
 {
     CloseLoadoutMenu();
 }
+
 //==============================================================================
 //  End Loadout Menu Functions
 //==============================================================================

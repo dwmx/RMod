@@ -2,47 +2,43 @@
 //  R_GameInfo
 //  Base GameInfo class for all RMod game types.
 //==============================================================================
-class R_GameInfo extends RuneI.RuneMultiPlayer;
+class R_GameInfo extends RuneI.RuneMultiPlayer config(RMod);
 
-var Class<RunePlayer> RunePlayerClass;
+var config Class<RunePlayer> RunePlayerClass;
 var Class<RunePlayer> SpectatorMarkerClass;
-var Class<PlayerReplicationInfo> PlayerReplicationInfoClass;
+var config Class<PlayerReplicationInfo> PlayerReplicationInfoClass;
+var config class<R_AColors> ColorsClass;
 
-var Class<R_GamePresets> GamePresetsClass; // TODO: Remove this
 var Class<R_AUtilities> UtilitiesClass;
-var Class<R_AActorSubstitution> ActorSubstitutionClass;
+var config Class<R_AActorSubstitution> ActorSubstitutionClass;
 
 // RMod Game Options
-var Class<R_GameOptions> GameOptionsClass;
+var config Class<R_GameOptions> GameOptionsClass;
 var R_GameOptions GameOptions;
 
 // Loadout options, spawned when loadout option is enabled
-var Class<R_LoadoutOptionReplicationInfo> LoadoutOptionReplicationInfoClass;
+var config Class<R_LoadoutOptionReplicationInfo> LoadoutOptionReplicationInfoClass;
 var R_LoadoutOptionReplicationInfo LoadoutOptionReplicationInfo;
+var config bool bLoadoutsEnabled;
 
 var private String OldGamePassword;
 
 var Class<HUD> HUDTypeSpectator;
 var bool bAllowSpectatorBroadcastMessage;
 
-var bool bRemoveNativeWeapons;
-var bool bRemoveNativeShields;
-var bool bRemoveNativeRunes;
-var bool bRemoveNativeFoods;
-
-var bool bLoadoutsEnabled;
+var config bool bRemoveNativeWeapons;
+var config bool bRemoveNativeShields;
+var config bool bRemoveNativeRunes;
+var config bool bRemoveNativeFoods;
 
 // Used at level start to mark actors which stay during level reset
 var bool bMarkSpawnedActorsAsNativeToLevel;
 
-// Gameplay modifications
-var bool bRModEnabled;
-
 // PlayerRestart variables
-var int DefaultPlayerHealth;
-var int DefaultPlayerMaxHealth;
-var int DefaultPlayerRunePower;
-var int DefaultPlayerMaxRunePower;
+var config int DefaultPlayerHealth;
+var config int DefaultPlayerMaxHealth;
+var config int DefaultPlayerRunePower;
+var config int DefaultPlayerMaxRunePower;
 
 event Tick(float DeltaSeconds)
 {
@@ -91,6 +87,12 @@ function PlayerSetTimeLimit(PlayerPawn P, int DurationMinutes)
 	SaveConfig();
 	
 	BroadcastMessage("TimeLimit has been set to " $ DurationMinutes $ " minutes.");
+}
+
+event BeginPlay()
+{
+    Super.BeginPlay();
+    SaveConfig();
 }
 
 event PostBeginPlay()
@@ -884,13 +886,12 @@ defaultproperties
     RunePlayerClass=Class'RMod.R_RunePlayer'
     SpectatorMarkerClass=Class'RMod.R_ASpectatorMarker'
     PlayerReplicationInfoClass=Class'RMod.R_PlayerReplicationInfo'
-    GamePresetsClass=Class'RMod.R_GamePresets'
     UtilitiesClass=Class'RMod.R_AUtilities'
     ActorSubstitutionClass=Class'RMod.R_AActorSubstitution'
+    ColorsClass=Class'RMod.R_AColors'
     GameOptionsClass=Class'RMod.R_GameOptions'
     LoadoutOptionReplicationInfoClass=Class'RMod.R_LoadoutOptionReplicationInfo'
     bMarkSpawnedActorsAsNativeToLevel=True
-    bRModEnabled=True
     ScoreBoardType=Class'RMod.R_Scoreboard'
     HUDType=Class'RMod.R_RunePlayerHUD'
     HUDTypeSpectator=Class'RMod.R_RunePlayerHUDSpectator'
