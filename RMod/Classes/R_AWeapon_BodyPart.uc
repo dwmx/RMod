@@ -6,7 +6,6 @@ class R_AWeapon_BodyPart extends R_AWeapon_NonStow;
 var actor Blood;
 var() bool bNeverExpire;
 
-
 function ApplyBodyPartSubClass(Class<Actor> SubClass)
 {
 }
@@ -66,29 +65,8 @@ auto state Pickup
         Style=Default.Style;
         ScaleGlow=Default.ScaleGlow;
     }
-/*
-    function bool JointDamaged(int Damage, Pawn EventInstigator, vector HitLoc, vector Momentum, name DamageType, int joint)
-    {
-        Destroy();
-        return true;
-    }
-*/
-/*
-    function Touch(Actor Other)
-    {
-        if(Other.IsA('Pawn'))
-        {
-            if(Pawn(Other).CanPickUp(self))
-            {
-                SetOwner(Other);
-                GotoState('BeingPickedUp');
-            }
-        }
-    }
-*/
-begin:
-    AmbientGlow = 0;
-    SkelMesh = Default.SkelMesh;
+    
+Begin: // Overridden to avoid overwriting subclass settings
 }
 
 
@@ -115,26 +93,6 @@ state Drop
         Blood.Destroy();        
     }
 }
-
-/* Not yet finished!  -- cjr
-state Swinging
-{
-    function BeginState()
-    {
-        Blood = Spawn(class'Blood',,, Owner.Location,);
-        if(Blood != None)
-        {
-            AttachActorToJoint(Blood, JointNamed('offset'));
-        }
-    }
-    
-    function EndState()
-    {
-        Blood = DetachActorFromJoint(JointNamed('offset'));
-        Blood.Destroy();
-    }
-}
-*/
 
 defaultproperties
 {
