@@ -73,16 +73,17 @@ Begin: // Overridden to avoid overwriting subclass settings
 state Drop
 {
     function BeginState()
-    {       
+    {   
+        bFixedRotationDir = true;
         Super.BeginState();
-
+    
         Blood = Spawn(class'Blood',,, Location,);
         if(Blood != None)
         {
             AttachActorToJoint(Blood, JointNamed('offset'));
         }
         
-        DesiredRotation.Yaw = Rotation.Yaw - Rand(2000) + 1000;     
+        //DesiredRotation.Yaw = Rotation.Yaw - Rand(2000) + 1000;     
     }
     
     function EndState()
@@ -91,6 +92,14 @@ state Drop
 
         Blood = DetachActorFromJoint(JointNamed('offset'));
         Blood.Destroy();        
+    }
+    
+    function InitializeStateRotation()
+    {
+        bFixedRotationDir = true;
+        bRotateToDesired = false;
+        RotationRate.Yaw = VSize(Velocity) * 65536.0 * 0.001;
+        RotationRate.Pitch = VSize(Velocity) * 65536.0 * 0.005;
     }
 }
 

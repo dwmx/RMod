@@ -369,12 +369,18 @@ function SpawnHitEffect(Vector HitLoc, Vector HitNorm, int LowMask, int HighMask
     }
 }
 
+function InitializeStateRotation()
+{
+
+}
+    
 state Drop
 {
     event BeginState()
     {
         RemoteRole = ROLE_SimulatedProxy;
         Super.BeginState();
+        InitializeStateRotation();
         ReplicateRotationState();
         ReplicateRotation();
         ReplicateRotationRate();

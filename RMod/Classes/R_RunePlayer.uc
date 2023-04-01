@@ -2686,6 +2686,11 @@ function Class<Actor> SeveredLimbClass(int BodyPart)
     return None;
 }
 
+exec function testfunction()
+{
+    LimbSevered(BODYPART_HEAD, Vect(500.0, 0.0, 0.0));
+}
+
 /**
 *   LimbSevered (override)
 *   Overridden to spawn RMod body part classes and apply the original
@@ -2722,7 +2727,7 @@ function LimbSevered(int BodyPart, Vector Momentum)
         case BODYPART_HEAD:
             BodyPartSpawnClass = SpawnableSeveredHeadClass;
             JointIndex = JointNamed('head');
-            PartVelocity = 0.75 * (Momentum / Mass) + Vect(0.0, 0.0, 300.0);
+            PartVelocity = (Momentum / Mass) * 20.0 + Vect(0.0, 0.0, 300.0);
             break;
     }
 
@@ -2742,7 +2747,6 @@ function LimbSevered(int BodyPart, Vector Momentum)
             SpawnedBodyPartActor.DrawScale = 1.0;
             SpawnedBodyPartActor.Velocity = PartVelocity;
             SpawnedBodyPartActor.GotoState('Drop');
-            
         }
     }
     
