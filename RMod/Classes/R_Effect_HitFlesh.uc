@@ -6,5 +6,5 @@ class R_Effect_HitFlesh extends R_AEffect_HitEffect;
 defaultproperties
 {
     HitEffectClass=Class'RuneI.BloodMist'
-    DebrisClass=Class'RuneI.DebrisFlesh'
+    BloodLustDebrisClass=Class'RMod.R_Debris_Bloodlust_HitFlesh'
 }
