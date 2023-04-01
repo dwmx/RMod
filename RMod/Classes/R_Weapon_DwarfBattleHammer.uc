@@ -171,4 +171,5 @@ defaultproperties
      Skeletal=SkelModel'weapons.battlehammer'
      SkelGroupSkins(0)=Texture'weapons.battlehammerBhammer'
      SkelGroupSkins(1)=Texture'weapons.battlehammerBhammer'
+     WeaponTier=5
 }

@@ -198,4 +198,5 @@ defaultproperties
      Skeletal=SkelModel'weapons.GoblinClub'
      SkelGroupSkins(0)=Texture'weapons.GoblinClubgoblin_spikeclub'
      SkelGroupSkins(1)=Texture'weapons.GoblinClubgoblin_spikeclub'
+     WeaponTier=2
 }

@@ -160,4 +160,5 @@ defaultproperties
      Skeletal=SkelModel'weapons.broadsword'
      SkelGroupSkins(0)=Texture'weapons.broadswordv_broad'
      SkelGroupSkins(1)=Texture'weapons.broadswordv_broad'
+     WeaponTier=3
 }

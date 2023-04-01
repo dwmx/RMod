@@ -131,4 +131,5 @@ defaultproperties
      Skeletal=SkelModel'weapons.VikingAxe'
      SkelGroupSkins(0)=Texture'weapons.VikingAxeAxeskin'
      SkelGroupSkins(1)=Texture'weapons.VikingAxeAxeskin'
+     WeaponTier=3
 }

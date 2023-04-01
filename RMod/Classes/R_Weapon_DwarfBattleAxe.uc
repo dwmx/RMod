@@ -152,4 +152,5 @@ defaultproperties
     Skeletal=SkelModel'weapons.BattleAxe'
     SkelGroupSkins(0)=Texture'weapons.BattleAxesigaxe'
     SkelGroupSkins(1)=Texture'weapons.BattleAxesigaxe'
+    WeaponTier=5
 }
