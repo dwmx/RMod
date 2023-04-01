@@ -1222,6 +1222,333 @@ function ApplySubClass_ExtractMenuName(Class<RunePlayer> SubClass)
 //  End Sub-Class Functions
 //==============================================================================
 
+
+//==============================================================================
+//  Begin animation function overrides
+//==============================================================================
+/***
+*   PlayMoving (override)
+*   Overridden to fix the crouching 2-hand backward-45-right animations.
+*   Original issue caused player to enter into the BaseFrame pose because the animation name was invalid.
+*/
+function PlayMoving(optional float tween)
+{
+    local name LowerName, UpperName;
+    local bool bDefending;
+    local float dp;
+    local vector X, Y, Z;
+    local bool bRight;
+    local MovementDir_e dir;
+
+    if (health <= 0)
+        return;
+    
+    if(AnimProxy != None)
+        bDefending = (AnimProxy.GetStateName() == 'Defending');
+    else
+        bDefending = false;
+
+    // Determine the direction the player is attempting to move
+    GetAxes(Rotation, X, Y, Z);
+    dp = vector(Rotation) dot Normal(Acceleration);
+
+    if(Normal(Acceleration) dot Y >= 0)
+    {
+        bRight = true;
+    }
+
+    if(dp > 0.9)
+    { // Distinctly forward
+        dir = MD_FORWARD;
+    }
+    else if(dp > 0.5)
+    { // forward left/right
+        if(bRight)
+        {
+            if (!bMirrored)
+                dir = MD_FORWARDRIGHT;
+            else
+                dir = MD_FORWARDLEFT;
+        }
+        else
+        {
+            if (!bMirrored)
+                dir = MD_FORWARDLEFT;
+            else
+                dir = MD_FORWARDRIGHT;
+        }
+    }
+    else if(dp < -0.9)
+    { // Distinctly backward
+        dir = MD_BACKWARD;      
+    }
+    else if(dp < -0.5)
+    { // backward left/right
+        if(bRight)
+        {
+            if (!bMirrored)
+                dir = MD_BACKWARDRIGHT;
+            else
+                dir = MD_BACKWARDLEFT;
+        }
+        else
+        {
+            if (!bMirrored)
+                dir = MD_BACKWARDLEFT;
+            else
+                dir = MD_BACKWARDRIGHT;
+        }
+    }
+    else if(bRight)
+    { // Strafe right
+        if (!bMirrored)
+            dir = MD_RIGHT;
+        else
+            dir = MD_LEFT;
+    }
+    else
+    { // Strafe left
+        if (!bMirrored)
+            dir = MD_LEFT;
+        else
+            dir = MD_RIGHT;
+    }
+
+    // If Attacking and running foward or backward, then let the upper body handle the leg motion
+    if(AnimProxy != None && AnimProxy.GetStateName() == 'Attacking')
+    {
+        if(GetGroup(AnimSequence) == 'JumpAttack')
+            return;
+        if((dir == MD_FORWARD || dir == MD_BACKWARD) && (GetGroup(AnimSequence) == 'AttackMoving'
+            && AnimSequence != 'ghostthrow'))
+            return;
+    }
+
+    // Set the proper animation based upon the motion
+    LowerName = 'MOV_ALL_run1_AA0N';
+
+    if(Weapon == None)
+    { // Explore mode
+        if(!bIsCrouching)
+        {
+            switch(dir)
+            {
+            case MD_FORWARD:
+                LowerName = 'MOV_ALL_run1_AA0N';
+                break;
+            case MD_FORWARDRIGHT:
+                LowerName = 'MOV_ALL_rstrafe1_AA0S';
+                break;
+            case MD_FORWARDLEFT:
+                LowerName = 'MOV_ALL_lstrafe1_AA0S';
+                break;
+            case MD_BACKWARD:
+                LowerName = 'MOV_ALL_runback1_AA0S';
+                break;
+            case MD_BACKWARDRIGHT:
+                LowerName = 'MOV_ALL_lstrafe1_AA0S';
+                break;
+            case MD_BACKWARDLEFT:
+                LowerName = 'MOV_ALL_rstrafe1_AA0S';
+                break;
+            case MD_RIGHT:
+                LowerName = 'MOV_ALL_rstrafe1_AN0N';
+                break;
+            case MD_LEFT:
+                LowerName = 'MOV_ALL_lstrafe1_AN0N';
+                break;
+            default:
+                break;
+            }
+
+            if(LowerName == 'MOV_ALL_run1_AA0N')
+            {
+                // Upper-body animation
+                if(Shield == None)
+                {
+                    UpperName = 'MOV_ALL_run1_AN0N'; 
+                }
+                else
+                {
+                    UpperName = 'MOV_ALL_run1_AN0S';
+                }
+            }
+            else
+            { // Strafing, so match the upper-body with the lower-body
+                UpperName = LowerName;
+            }
+        }
+        else
+        { // Crouching
+            switch(dir)
+            {
+            case MD_FORWARD:
+                LowerName = 'crouch_walkforward';
+                break;
+            case MD_FORWARDRIGHT:
+                LowerName = 'crouch_walkforward45Right';
+                break;
+            case MD_FORWARDLEFT:
+                LowerName = 'crouch_walkforward45Left';
+                break;
+            case MD_BACKWARD:
+                LowerName = 'crouch_walkbackward';
+                break;
+            case MD_BACKWARDRIGHT:
+                LowerName = 'crouch_walkbackward45Right';
+                break;
+            case MD_BACKWARDLEFT:
+                LowerName = 'crouch_walkbackward45Left';
+                break;
+            case MD_RIGHT:
+                LowerName = 'crouch_straferight';
+                break;
+            case MD_LEFT:
+                LowerName = 'crouch_strafeleft';
+                break;
+            default:
+                break;
+            }
+
+            UpperName = LowerName;
+        }
+    }
+    else
+    { // Combat Mode
+        if(!bIsCrouching)
+        {
+            switch(dir)
+            {
+            case MD_FORWARD:
+                if(!bDefending)
+                {
+                    if(AnimProxy.GetStateName() == 'Attacking')
+                    {
+                        LowerName = Weapon.A_ForwardAttack;
+                    }
+                    else
+                    {
+                        LowerName = Weapon.A_Forward;
+                    }
+                }
+                else
+                    LowerName = 'weapon_DefendWalk'; //Weapon.ForwardAnim;
+                break;
+            case MD_FORWARDRIGHT:
+                if(!bDefending)
+                    LowerName = Weapon.A_Forward45Right;
+                else
+                    LowerName = 'weapon_DefendWalk45Right';
+                break;
+            case MD_FORWARDLEFT:
+                if(!bDefending)
+                    LowerName = Weapon.A_Forward45Left;
+                else
+                    LowerName = 'weapon_DefendWalk45Left';
+                break;
+            case MD_BACKWARD:
+                if(!bDefending)
+                    LowerName = Weapon.A_Backward;
+                else
+                    LowerName = 'weapon_DefendBackup';
+                break;
+            case MD_BACKWARDRIGHT:
+                if(!bDefending)
+                    LowerName = Weapon.A_Backward45Right;
+                else
+                    LowerName = 'weapon_DefendBackup45Right';
+                break;
+            case MD_BACKWARDLEFT:
+                if(!bDefending)
+                    LowerName = Weapon.A_Backward45Left;
+                else
+                    LowerName = 'weapon_DefendBackup45Left';
+                break;
+            case MD_RIGHT:
+                if(!bDefending)
+                    LowerName = Weapon.A_StrafeRight;
+                else
+                    LowerName = Weapon.A_StrafeRight;
+                break;
+            case MD_LEFT:
+                if(!bDefending)
+                    LowerName = Weapon.A_StrafeLeft;
+                else
+                    LowerName = Weapon.A_StrafeLeft;
+                break;
+            default:
+                break;
+            }
+        }
+        else
+        { // Crouch
+            switch(dir)
+            {
+            case MD_FORWARD:
+                if(Weapon.bCrouchTwoHands)
+                    LowerName = 'crouch_walkforward2hands';
+                else
+                    LowerName = 'crouch_walkforward';
+                break;
+            case MD_FORWARDRIGHT:
+                if(Weapon.bCrouchTwoHands)
+                    LowerName = 'crouch_walkforward45Right2hands';
+                else
+                    LowerName = 'crouch_walkforward45Right';
+                break;
+            case MD_FORWARDLEFT:
+                if(Weapon.bCrouchTwoHands)
+                    LowerName = 'crouch_walkforward45Left2hands';
+                else
+                    LowerName = 'crouch_walkforward45Left';
+                break;
+            case MD_BACKWARD:
+                if(Weapon.bCrouchTwoHands)
+                    LowerName = 'crouch_walkbackward2hands';
+                else
+                    LowerName = 'crouch_walkbackward';
+                break;
+            case MD_BACKWARDRIGHT:
+                if(Weapon.bCrouchTwoHands)
+                    LowerName = 'crouch_walkbackward45Right2hand';
+                else
+                    LowerName = 'crouch_walkbackward45Right';
+                break;
+            case MD_BACKWARDLEFT:
+                if(Weapon.bCrouchTwoHands)
+                    LowerName = 'crouch_walkbackward45Left2hands';
+                else
+                    LowerName = 'crouch_walkbackward45Left';
+                break;
+            case MD_RIGHT:
+                if(Weapon.bCrouchTwoHands)
+                    LowerName = 'crouch_straferight2hands';
+                else
+                    LowerName = 'crouch_straferight';
+                break;
+            case MD_LEFT:
+                if(Weapon.bCrouchTwoHands)
+                    LowerName = 'crouch_strafeleft2hands';
+                else
+                    LowerName = 'crouch_strafeleft';
+                break;
+            default:
+                break;
+            }
+        }
+
+        UpperName = LowerName;
+    }
+
+    LoopAnim(LowerName, 1.0, 0.1);
+
+    if(AnimProxy != None)
+        AnimProxy.TryLoopAnim(UpperName, 1.0, 0.1);
+}
+//==============================================================================
+//  End animation function overrides
+//==============================================================================
+
 /**
 *   GetWeaponSwipeTexture
 *   Return the texture this player wishes to use as their weapon swipe texture
@@ -3367,6 +3694,7 @@ function ClientCloseLoadoutMenu()
 {
     CloseLoadoutMenu();
 }
+
 //==============================================================================
 //  End Loadout Menu Functions
 //==============================================================================
