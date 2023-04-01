@@ -2909,6 +2909,23 @@ function ShieldDeactivate()
 }
 
 /**
+*   CheckIsPerformingShieldAttack
+*   Returns true if this R_RunePlayer is currently performing a shield attack,
+*   false otherwise.
+*/
+function bool CheckIsPerformingShieldAttack()
+{
+    if(Shield != None
+    && Shield.GetStateName() == 'Swinging'
+    && AnimProxy != None
+    && AnimProxy.GetStateName() == 'Attacking')
+    {
+        return true;
+    }
+    return false;
+}
+
+/**
 *   CheckCanRestart
 *   Returns whether or not this player is allowed to manually restart.
 *   This function includes the original bCanRestart check, but adds an

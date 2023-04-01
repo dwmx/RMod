@@ -428,6 +428,7 @@ state Throw
         local vector VectOther;
         local float dp;
         local bool bThrowBlockable;
+        local R_RunePlayer RP;
 
         if (Other == Owner)
             return;
@@ -441,7 +442,7 @@ state Throw
         HitActor = Other;
         DamageAmount = CalculateDamage(HitActor);
 
-        if(Other.IsA('PlayerPawn') && Other.AnimProxy != None) 
+        if(Other.IsA('PlayerPawn') && Other.AnimProxy != None)
         {
             P = PlayerPawn(Other);
             // Determine the direction the player is attempting to move
@@ -450,7 +451,8 @@ state Throw
 
             if(dp > 0)
             {
-                if(P.Shield != None && R_AShield(P.Shield) != None && P.AnimProxy.GetStateName() == 'Attacking' && P.Shield.GetStateName() == 'Swinging')
+                RP = R_RunePlayer(Other);
+                if(RP != None && RP.CheckIsPerformingShieldAttack())
                 {
                     // Deflect weapons during a shield bash attack
                     R_AShield(P.Shield).PlayHitEffect(Self, HitLoc, Normal(Location - P.Shield.Location), 0, 0);
