@@ -12,12 +12,14 @@ var Class<R_AUtilities> UtilitiesClass;
 //  add a corresponding accessor function in R_AGameOptionsChecker.
 //==============================================================================
 var config bool bOptionShieldHitStun;
+var config bool bOptionShieldDamageBoostsStrength;
 var config bool bOptionManualBloodlust;
 
 replication
 {
     reliable if(Role == ROLE_Authority)
         bOptionShieldHitStun,
+        bOptionShieldDamageBoostsStrength,
         bOptionManualBloodlust;
 }
 
@@ -56,6 +58,7 @@ event BeginPlay()
 function LogAllGameOptions()
 {
     LogGameOption("ShieldHitStun", String(bOptionShieldHitStun));
+    LogGameOption("ShieldDamageBoostsStrength", String(bOptionShieldDamageBoostsStrength));
     LogGameOption("ManualBloodlust", String(bOptionManualBloodlust));
 }
 
@@ -78,5 +81,6 @@ defaultproperties
 {
     UtilitiesClass=Class'RMod.R_AUtilities_GameOptions'
     bOptionShieldHitStun=True
+    bOptionShieldDamageBoostsStrength=True
     bOptionManualBloodlust=True
 }

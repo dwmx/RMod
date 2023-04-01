@@ -48,6 +48,17 @@ static function bool GetGameOption_ShieldHitStun(Actor WorldContextActor)
     return false;
 }
 
+static function bool GetGameOption_ShieldDamageBoostsStrength(Actor WorldContextActor)
+{
+    local R_GameOptions RGO;
+    RGO = GetGameOptionsFromWorldContextActor(WorldContextActor);
+    if(RGO != None)
+    {
+        return RGO.bOptionShieldDamageBoostsStrength;
+    }
+    return false;
+}
+
 static function bool GetGameOption_ManualBloodlust(Actor WorldContextActor)
 {
     local R_GameOptions RGO;

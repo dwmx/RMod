@@ -169,25 +169,45 @@ function NotifySubstitutedForInstance(Actor InActor)
 
 /**
 *   JointDamaged (override)
-*   Overridden to implement shield hit stun
+*   Overridden for the following reasons:
+*   - When shield hit stun game option is enabled, caused owner to enter into hit stunf
+*   - Ignore team shield damage
+*   - Grant strength increase to the instigator
 */
-function bool JointDamaged(int Damage, Pawn EventInstigator, vector HitLoc, vector Momentum, name DamageType, int joint)
+function bool JointDamaged(int Damage, Pawn EventInstigator, Vector HitLoc, Vector Momentum, Name DamageType, int joint)
 {
-    local vector AdjMomentum;
+    local Vector AdjMomentum;
     local Pawn P;
     local Pawn POwner;
     local bool bShieldHitStunEnabled;
+    local bool bShieldDamageBoostsStrengthEnabled;
 
     PlayHitSound(DamageType);
 
-    // Check if shield hit stun is enabled
+    // If teammate hit shield, ignore
+    if(Level.Game != None && Level.Game.bTeamGame)
+    {
+        if(EventInstigator != None
+        && EventInstigator.PlayerReplicationInfo != None
+        && Pawn(Owner) != None
+        && Pawn(Owner).PlayerReplicationInfo != None
+        && EventInstigator.PlayerReplicationInfo.Team == Pawn(Owner).PlayerReplicationInfo.Team)
+        {
+            return false;
+        }
+    }
+
+    // Check shield damage related game options
     bShieldHitStunEnabled = false;
+    bShieldDamageBoostsStrengthEnabled = false;
     if(GameOptionsCheckerClass != None)
     {
         bShieldHitStunEnabled = GameOptionsCheckerClass.Static.GetGameOption_ShieldHitStun(Self);
+        bShieldDamageBoostsStrengthEnabled = GameOptionsCheckerClass.Static.GetGameOption_ShieldDamageBoostsStrength(Self);
     }
 
-    // Cause the owner to enter into HitStun
+    // When ShieldHitStun game option is enabled,
+    // cause the owner to enter into the Pain state to interrupt their attack animation
     // Copy from Pawn.DamageBodyPart, to avoid modifying Pawn
     if(Owner != None && Pawn(Owner) != None && bShieldHitStunEnabled && GetStateName() != 'Active' && GetStateName() != 'Swinging')
     {
@@ -201,6 +221,13 @@ function bool JointDamaged(int Damage, Pawn EventInstigator, vector HitLoc, vect
             POwner.PlayTakeHit(0.1, Damage, HitLoc, 'ShieldHit', Momentum, joint);
             POwner.GotoState('Pain');
         }
+    }
+    
+    // When ShieldDamageBoostsStrength game option is enabled,
+    // grant strength to instigator using similar logic to RunePlayer.DamageBodyPart
+    if(bShieldDamageBoostsStrengthEnabled && EventInstigator != None)
+    {
+       EventInstigator.BoostStrength(0.2 * Damage); 
     }
 
     if (bBreakable)
@@ -226,15 +253,6 @@ function bool JointDamaged(int Damage, Pawn EventInstigator, vector HitLoc, vect
 
         P = Pawn(Owner);
         P.AddVelocity(AdjMomentum);
-
-/* CJR TEST -- Recoil animation when hit in the shield
-        if(P.CanGotoPainState() && Health > 0)
-        { // Recoil from being hit in the shield
-            P.NextState = P.GetStateName();
-            P.PlayAnim('h3_defendPain', 1.0, 0.01);
-            P.GotoState('Pain');
-        }
-*/
     }
 
     if(Health <= 0)
