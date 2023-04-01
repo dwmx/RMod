@@ -5,7 +5,8 @@
 class R_AEffect_HitEffect extends R_AEffect abstract;
 
 var Class<Actor> HitEffectClass;
-var Class<Actor> DebrisClass;
+var Class<Actor> BloodLustDebrisClass;
+var int BloodlustDebrisSpawnCount;
 
 /**
 *   PostNetBeginPlay (override)
@@ -31,6 +32,8 @@ simulated event PostNetBeginPlay()
             SpawnBloodlustHitEffect();
         }
     }
+    
+    Destroy();
 }
 
 /**
@@ -63,11 +66,11 @@ simulated function SpawnBloodlustHitEffect()
     local Actor SpawnedDebris;
     local int i;
     
-    if(DebrisClass != None)
+    if(BloodLustDebrisClass != None)
     {
-        for(i = 0; i < 4; ++i)
+        for(i = 0; i < BloodlustDebrisSpawnCount; ++i)
         {
-            SpawnedDebris = Spawn(DebrisClass);
+            SpawnedDebris = Spawn(BloodLustDebrisClass);
             if(SpawnedDebris != None)
             {
                 SpawnedDebris.RemoteRole = ROLE_None;
@@ -79,5 +82,6 @@ simulated function SpawnBloodlustHitEffect()
 defaultproperties
 {
     HitEffectClass=None
-    DebrisClass=None
+    BloodLustDebrisClass=None
+    BloodlustDebrisSpawnCount=24
 }

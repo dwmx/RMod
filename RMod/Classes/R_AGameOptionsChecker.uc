@@ -70,5 +70,5 @@ static function bool GetGameOption_ManualBloodlust(Actor WorldContextActor)
     return false;
 }
 //==============================================================================
-//  Begin Game Options
+//  End Game Options
 //==============================================================================
