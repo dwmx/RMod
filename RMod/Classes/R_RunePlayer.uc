@@ -1239,7 +1239,15 @@ simulated function Texture GetWeaponSwipeTexture()
 }
 simulated function float GetWeaponSwipeSpeed()
 {
-    return 7.0;
+    if(bAuthoritativeBloodlust)
+    {
+        return 3.0;
+    }
+    else
+    {
+        return 7.0;
+    }
+    
 }
 
 
