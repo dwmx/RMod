@@ -2686,11 +2686,6 @@ function Class<Actor> SeveredLimbClass(int BodyPart)
     return None;
 }
 
-exec function testfunction()
-{
-    LimbSevered(BODYPART_HEAD, Vect(500.0, 0.0, 0.0));
-}
-
 /**
 *   LimbSevered (override)
 *   Overridden to spawn RMod body part classes and apply the original
