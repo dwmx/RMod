@@ -5,6 +5,15 @@
 class R_AWeapon extends Weapon abstract;
 
 var Class<R_AUtilities> UtilitiesClass;
+var Class<R_AGameOptionsChecker> GameOptionsCheckerClass;
+
+// Weapon tier, valid for values 1-5
+// Tier1 weapons = hand axe, bone club, short sword
+// Tier2...Tier3
+// Tier5 weapons = battle axe, battle sword, battle hammer
+// These are used to allow the GameOptions class to specify which weapons
+// are throw-blockable, based on the weapon's size.
+var int WeaponTier;
 
 //==============================================================================
 //  Additional sound variables that correspond with Weapon
@@ -189,22 +198,22 @@ simulated function PerformReplicatedUpdate_Location(float DeltaSeconds)
     
     Delta = AuthorityLocation - Location;
     
-    if(AuthorityStateName == 'Throw')
-    {
-        // During throws, only adjust if it's really bad
-        DeltaLength = VSize(Delta);
-        if(DeltaLength > 64.0)
-        {
-            AdjustedLocation = AuthorityLocation;
-            SetLocation(AdjustedLocation);
-        }
-    }
-    else if(AuthorityStateName == 'Settling')
-    {
-        // During settling, ease towards the location
-        AdjustedLocation = Location + (Delta * DeltaSeconds * 10.0);
-        SetLocation(AdjustedLocation);
-    }
+    //if(AuthorityStateName == 'Throw')
+    //{
+    //    // During throws, only adjust if it's really bad
+    //    DeltaLength = VSize(Delta);
+    //    if(DeltaLength > 64.0)
+    //    {
+    //        AdjustedLocation = AuthorityLocation;
+    //        SetLocation(AdjustedLocation);
+    //    }
+    //}
+    //else if(AuthorityStateName == 'Settling')
+    //{
+    //    // During settling, ease towards the location
+    //    AdjustedLocation = Location + (Delta * DeltaSeconds * 10.0);
+    //    SetLocation(AdjustedLocation);
+    //}
     
 }
 
@@ -394,6 +403,7 @@ state Throw
         local PlayerPawn P;
         local vector VectOther;
         local float dp;
+        local bool bThrowBlockable;
 
         if (Other == Owner)
             return;
@@ -416,9 +426,9 @@ state Throw
 
             if(dp > 0)
             {
-                // Weapon deflection during shield bash
                 if(P.Shield != None && R_AShield(P.Shield) != None && P.AnimProxy.GetStateName() == 'Attacking' && P.Shield.GetStateName() == 'Swinging')
                 {
+                    // Deflect weapons during a shield bash attack
                     R_AShield(P.Shield).PlayHitEffect(Self, HitLoc, Normal(Location - P.Shield.Location), 0, 0);
                     P.Shield.JointDamaged(DamageAmount, Pawn(Owner), HitLoc, Velocity*Mass, ThrownDamageType, 0);
                     Velocity = -Velocity;
@@ -426,14 +436,24 @@ state Throw
                     SetOwner(P); // Necessary in order to hit the original thrower
                     return;
                 }
-                
-                if(P.Shield != None && P.AnimProxy.GetStateName() == 'Defending')
+                else if(P.Shield != None && P.AnimProxy.GetStateName() == 'Defending')
                 {
+                    // If the struck pawn is defending with a shield, block anything and everything
                     HitActor = P.Shield;
                 }
                 else if(P.Weapon != None && P.AnimProxy.GetStateName() == 'Attacking')
                 {
-                    HitActor = P.Weapon;
+                    // If the struck pawn is attacking with a weapon, check the throw block rules (based on weapon tier)
+                    bThrowBlockable = true;
+                    if(GameOptionsCheckerClass != None)
+                    {
+                        bThrowBlockable = GameOptionsCheckerClass.Static.GetGameOption_WeaponTierBlockable(Self, WeaponTier);
+                    }
+                    
+                    if(bThrowBlockable)
+                    {
+                        HitActor = P.Weapon;
+                    }
                 }
             }
         }
@@ -475,8 +495,8 @@ state Settling
 
 defaultproperties
 {
-    //RemoteRole=ROLE_SimulatedProxy
     UtilitiesClass=Class'RMod.R_AUtilities'
+    GameOptionsCheckerClass=Class'RMod.R_AGameOptionsChecker'
     HitFleshEffectClass=Class'RMod.R_Effect_HitFlesh'
     HitWoodEffectClass=Class'RMod.R_Effect_HitWood'
     HitStoneEffectClass=Class'RMod.R_Effect_HitStone'
@@ -488,4 +508,5 @@ defaultproperties
     HitBreakableStoneEffectClass=Class'RuneI.HitStone'
     HitIceEffectClass=Class'RMod.R_Effect_HitIce'
     HitWaterEffectClass=None
+    WeaponTier=WT_TierNone
 }
