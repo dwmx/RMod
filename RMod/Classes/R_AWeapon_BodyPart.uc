@@ -29,6 +29,47 @@ function SpawnBloodSpray(vector HitLoc, vector HitNorm, EMatterType matter)
     }
 }
 
+function bool CheckAndReactToShieldBash()
+{
+    local R_RunePlayer RP;
+    local R_AShield RS;
+    local Vector DeltaLocation;
+    local float DeltaLocationDP;
+    local Vector NewVelocity;
+    
+    if(Physics != PHYS_Falling)
+    {
+        return false;
+    }
+    
+    foreach TouchingActors(Class'RMod.R_RunePlayer', RP)
+    {
+        if(RP.CheckIsPerformingShieldAttack())
+        {
+            RS = R_AShield(RP.Shield);
+            if(RS != None)
+            {
+                RS.PlayHitEffect(
+                    Self,
+                    Self.Location,
+                    Normal(Self.Location - RS.Location),
+                    0, 0);
+                
+                Instigator = RP;
+                SetOwner(RP);
+                
+                NewVelocity = Normal(Vector(RP.Rotation) * Vect(1.0, 1.0, 0.0));
+                NewVelocity = NewVelocity * 400.0 + Vect(0.0, 0.0, 64.0);
+                Velocity = NewVelocity;
+                GotoState('Throw');
+                return true;
+            }
+        }
+       
+    }
+    
+    return false;
+}
 
 //-----------------------------------------------------------------------------
 //
@@ -66,6 +107,12 @@ auto state Pickup
         ScaleGlow=Default.ScaleGlow;
     }
     
+    event Tick(float DeltaSeconds)
+    {
+        Super.Tick(DeltaSeconds);
+        CheckAndReactToShieldBash();
+    }
+    
 Begin: // Overridden to avoid overwriting subclass settings
 }
 
@@ -76,6 +123,7 @@ state Drop
     {   
         bFixedRotationDir = true;
         Super.BeginState();
+        SetCollision(true, false, false);
     
         Blood = Spawn(class'Blood',,, Location,);
         if(Blood != None)
@@ -100,6 +148,12 @@ state Drop
         bRotateToDesired = false;
         RotationRate.Yaw = VSize(Velocity) * 65536.0 * 0.001;
         RotationRate.Pitch = VSize(Velocity) * 65536.0 * 0.005;
+    }
+    
+    event Tick(float DeltaSeconds)
+    {
+        Super.Tick(DeltaSeconds);
+        CheckAndReactToShieldBash();
     }
 }
 
