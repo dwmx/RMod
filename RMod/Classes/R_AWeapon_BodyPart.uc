@@ -9,7 +9,6 @@ var() bool bNeverExpire;
 
 function ApplyBodyPartSubClass(Class<Actor> SubClass)
 {
-Log("yupyup" @ SubClass);
 }
 
 //============================================================

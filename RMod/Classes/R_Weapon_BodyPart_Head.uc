@@ -5,6 +5,23 @@ var(Sounds) Sound LandSound[3];
 var() bool bBloodyHead;
 var int landcount;
 
+function ApplyBodyPartSubClass(Class<Actor> SubClass)
+{
+    local Class<Head> HeadSubClass;
+    local int i;
+    
+    HeadSubClass = Class<Head>(SubClass);
+    if(HeadSubClass == None)
+    {
+        return;
+    }
+    
+    Self.bBloodyHead = HeadSubClass.Default.bBloodyHead;
+    Self.SkelMesh = HeadSubClass.Default.SkelMesh;
+    for(i = 0; i < 16; ++i)
+        Self.SkelGroupSkins[i] = HeadSubClass.Default.SkelGroupSkins[i];
+}
+
 simulated function PostBeginPlay()
 {
     DesiredRotation.Yaw = Rotation.Yaw + Rand(2000) - 1000;     
