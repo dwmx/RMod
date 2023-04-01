@@ -15,7 +15,7 @@ var Class<R_AGameOptionsChecker> GameOptionsCheckerClass;
 
 //==============================================================================
 //  Sub-class variables
-//  During the Login event, R_GameInfo calls R_RunePlayer.ApplySubClass,
+//  During the Login event, R_GameInfo calls R_RunePlayer.ApplyRunePlayerSubClass,
 //  which extracts runeplayer skin data into these variables.
 var Class<RunePlayer> RunePlayerSubClass;
 var Class<RunePlayerProxy> RunePlayerProxyClass;
@@ -977,18 +977,18 @@ function ChangeName(coerce String S)
 //  Begin Sub-Class Functions
 //==============================================================================
 /**
-*   ApplySubClass
+*   ApplyRunePlayerSubClass
 *   The following functions are responsible for extracting all custom skin-based
 *   data from the provided RunePlayer class, and applying it to this instance.
 *   This is called during the login sequence from R_GameInfo.
 */
-function ApplySubClass(Class<RunePlayer> SubClass)
+function ApplyRunePlayerSubClass(Class<RunePlayer> SubClass)
 {
     local RunePlayer Dummy;
     local int i, j;
     
     Self.RunePlayerSubClass = SubClass;
-    ApplySubClass_ExtractDefaults(SubClass);
+    ApplyRunePlayerSubClass_ExtractDefaults(SubClass);
     
     // Spawn a Dummy instance to get info from functions
     if(Role == ROLE_Authority
@@ -1004,9 +1004,9 @@ function ApplySubClass(Class<RunePlayer> SubClass)
             Dummy.bHidden = true;
             Dummy.RemoteRole = ROLE_None;
 
-            ApplySubClass_ExtractBodyPartData(SubClass, Dummy);
-            ApplySubClass_ExtractPainSkinData(SubClass, Dummy);
-            ApplySubClass_ExtractGoreCapData(SubClass, Dummy);
+            ApplyRunePlayerSubClass_ExtractBodyPartData(SubClass, Dummy);
+            ApplyRunePlayerSubClass_ExtractPainSkinData(SubClass, Dummy);
+            ApplyRunePlayerSubClass_ExtractGoreCapData(SubClass, Dummy);
             
             // Destroy Dummy and turn collision back on
             //      When you spawn a PlayerPawn, GameInfo.Login does not get called,
@@ -1021,7 +1021,7 @@ function ApplySubClass(Class<RunePlayer> SubClass)
     }
 
     // Extract the menu name so this looks correct in server browser
-    ApplySubClass_ExtractMenuName(SubClass);
+    ApplyRunePlayerSubClass_ExtractMenuName(SubClass);
     
     // If player explicitly joined as a spectator, disable respawning from spec mode
     if(SubClass == Class'RMod.R_ASpectatorMarker')
@@ -1053,10 +1053,10 @@ static function bool CheckForDummyTag(Actor A)
 }
 
 /**
-*   ApplySubClass_ExtractDefaults
+*   ApplyRunePlayerSubClass_ExtractDefaults
 *   Extract all relevant default properties from the RunePlayer class.
 */
-function ApplySubClass_ExtractDefaults(Class<RunePlayer> SubClass)
+function ApplyRunePlayerSubClass_ExtractDefaults(Class<RunePlayer> SubClass)
 {
     local int i;
 
@@ -1107,12 +1107,12 @@ function ApplySubClass_ExtractDefaults(Class<RunePlayer> SubClass)
 }
 
 /**
-*   ApplySubClass_ExtractBodyPartData
+*   ApplyRunePlayerSubClass_ExtractBodyPartData
 *   Extracts the classes used for severed limb body parts on the provided class.
 *   This data cannot be extracted (that I'm aware of) from the class, so
 *   it requires an instance of the RunePlayer.
 */
-function ApplySubClass_ExtractBodyPartData(Class<RunePlayer> SubClass, RunePlayer SubClassInstance)
+function ApplyRunePlayerSubClass_ExtractBodyPartData(Class<RunePlayer> SubClass, RunePlayer SubClassInstance)
 {
     local int i;
 
@@ -1126,10 +1126,10 @@ function ApplySubClass_ExtractBodyPartData(Class<RunePlayer> SubClass, RunePlaye
 }
 
 /**
-*   ApplySubClass_ExtractPainSkinData
+*   ApplyRunePlayerSubClass_ExtractPainSkinData
 *   Extract the pain skin textures from the provided RunePlayer class.
 */
-function ApplySubClass_ExtractPainSkinData(Class<RunePlayer> SubClass, RunePlayer SubClassInstance)
+function ApplyRunePlayerSubClass_ExtractPainSkinData(Class<RunePlayer> SubClass, RunePlayer SubClassInstance)
 {
     local int i, j;
 
@@ -1160,10 +1160,10 @@ function ApplySubClass_ExtractPainSkinData(Class<RunePlayer> SubClass, RunePlaye
 }
 
 /**
-*   ApplySubClass_ExtractGoreCapData
+*   ApplyRunePlayerSubClass_ExtractGoreCapData
 *   Extract gore cap textures from the provided RunePlayer class.
 */
-function ApplySubClass_ExtractGoreCapData(Class<RunePlayer> SubClass, RunePlayer SubClassInstance)
+function ApplyRunePlayerSubClass_ExtractGoreCapData(Class<RunePlayer> SubClass, RunePlayer SubClassInstance)
 {
     local int i, j;
 
@@ -1194,12 +1194,12 @@ function ApplySubClass_ExtractGoreCapData(Class<RunePlayer> SubClass, RunePlayer
 }
 
 /**
-*   ApplySubClass_ExtractMenuName
+*   ApplyRunePlayerSubClass_ExtractMenuName
 *   Attempts to extract the menu name for the provided RunePlayer class,
 *   so that when viewed from the server browser, players still see the original
 *   name of the skin being used instead of R_RunePlayer.
 */
-function ApplySubClass_ExtractMenuName(Class<RunePlayer> SubClass)
+function ApplyRunePlayerSubClass_ExtractMenuName(Class<RunePlayer> SubClass)
 {
     local String ClassString;
     local String EntryString, DescriptionString;
@@ -2565,7 +2565,7 @@ function PlayTakeHit(float TweenTime, int Damage, Vector HitLoc, Name DamageType
 /**
 *   SetSkinActor (override)
 *   Overridden to apply skin actor in the context of the sub class that would
-*   have been saved during the call to ApplySubClass.
+*   have been saved during the call to ApplyRunePlayerSubClass.
 */
 static function SetSkinActor(Actor SkinActor, int NewSkin)
 {
@@ -2594,7 +2594,7 @@ static function SetSkinActor(Actor SkinActor, int NewSkin)
 
 /**
 *   PainSkin (override)
-*   Overridden to apply the pain skin that was extracted in ApplySubClass.
+*   Overridden to apply the pain skin that was extracted in ApplyRunePlayerSubClass.
 */
 function Texture PainSkin(int BodyPart)
 {
@@ -2620,7 +2620,7 @@ function Texture PainSkin(int BodyPart)
 
 /**
 *   ApplyGoreCap (override)
-*   Overridden to apply the gore cap that was extracted in ApplySubClass.
+*   Overridden to apply the gore cap that was extracted in ApplyRunePlayerSubClass.
 */
 function ApplyGoreCap(int BodyPart)
 {
@@ -2645,7 +2645,7 @@ function ApplyGoreCap(int BodyPart)
 
 /**
 *   BodyPartForPolyGroup (override)
-*   Overridden to return the body part that was extracted in ApplySubClass.
+*   Overridden to return the body part that was extracted in ApplyRunePlayerSubClass.
 */
 function int BodyPartForPolyGroup(int PolyGroup)
 {
@@ -2660,7 +2660,7 @@ function int BodyPartForPolyGroup(int PolyGroup)
 /**
 *   SeveredLimbClass (override)
 *   Overridden to return the severed limb class that was
-*   extracted in ApplySubClass.
+*   extracted in ApplyRunePlayerSubClass.
 */
 function Class<Actor> SeveredLimbClass(int BodyPart)
 {
