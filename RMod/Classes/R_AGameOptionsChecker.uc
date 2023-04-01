@@ -69,6 +69,31 @@ static function bool GetGameOption_ManualBloodlust(Actor WorldContextActor)
     }
     return false;
 }
+
+static function bool GetGameOption_WeaponTierBlockable(Actor WorldContextActor, int WeaponTier)
+{
+    local R_GameOptions RGO;
+    
+    if(WeaponTier <= 0 || WeaponTier > 5)
+    {
+        // Invalid weapon tier
+        return false;
+    }
+    
+    RGO = GetGameOptionsFromWorldContextActor(WorldContextActor);
+    if(RGO != None)
+    {
+        switch(WeaponTier)
+        {
+            case 1: return RGO.bOptionWeaponThrowBlockTier1;
+            case 2: return RGO.bOptionWeaponThrowBlockTier2;
+            case 3: return RGO.bOptionWeaponThrowBlockTier3;
+            case 4: return RGO.bOptionWeaponThrowBlockTier4;
+            case 5: return RGO.bOptionWeaponThrowBlockTier5;
+        }
+    }
+    return false;
+}
 //==============================================================================
 //  End Game Options
 //==============================================================================

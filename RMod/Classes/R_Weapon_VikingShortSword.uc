@@ -120,4 +120,5 @@ defaultproperties
      Skeletal=SkelModel'weapons.shortsword'
      SkelGroupSkins(0)=Texture'weapons.shortswordshortsword'
      SkelGroupSkins(1)=Texture'weapons.shortswordshortsword'
+     WeaponTier=1
 }

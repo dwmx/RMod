@@ -14,13 +14,21 @@ var Class<R_AGameOptionsChecker> GameOptionsCheckerClass;
 //==============================================================================
 
 //==============================================================================
+//  Behavior related classes
+//  These classes are spawned at various parts of the gameplay and define
+//  different aspects of the RunePlayer's behavior.
+var Class<AnimationProxy> SpawnableAnimationProxyClass;
+var Class<Actor> SpawnableSeveredHeadClass;
+var Class<Actor> SpawnableSeveredLimbClass;
+//==============================================================================
+
+//==============================================================================
 //  Sub-class variables
-//  During the Login event, R_GameInfo calls R_RunePlayer.ApplySubClass,
+//  During the Login event, R_GameInfo calls R_RunePlayer.ApplyRunePlayerSubClass,
 //  which extracts runeplayer skin data into these variables.
-var Class<RunePlayer> RunePlayerSubClass;
-var Class<RunePlayerProxy> RunePlayerProxyClass;
-var Class<Actor> RunePlayerSeveredHeadClass;
-var Class<Actor> RunePlayerSeveredLimbClass;
+var Class<RunePlayer> RunePlayerSubClass;       // The RuneI.RunePlayer sub-class
+var Class<Actor> RunePlayerSeveredHeadSubClass; // The RuneI.Head sub-class
+var Class<Actor> RunePlayerSeveredLimbSubClass; // The RuneI.LimbWeapon sub-class
 var byte PolyGroupBodyParts[16];
 
 // PainSkin arrays
@@ -710,7 +718,7 @@ event PreBeginPlay()
     Super(PlayerPawn).PreBeginPlay();
 
     // Spawn Torso Animation proxy
-    AnimProxy = Spawn(Self.RunePlayerProxyClass, Self);
+    AnimProxy = Spawn(Self.SpawnableAnimationProxyClass, Self);
 
     OldCameraStart = Location;
     OldCameraStart.Z += CameraHeight;
@@ -977,18 +985,18 @@ function ChangeName(coerce String S)
 //  Begin Sub-Class Functions
 //==============================================================================
 /**
-*   ApplySubClass
+*   ApplyRunePlayerSubClass
 *   The following functions are responsible for extracting all custom skin-based
 *   data from the provided RunePlayer class, and applying it to this instance.
 *   This is called during the login sequence from R_GameInfo.
 */
-function ApplySubClass(Class<RunePlayer> SubClass)
+function ApplyRunePlayerSubClass(Class<RunePlayer> SubClass)
 {
     local RunePlayer Dummy;
     local int i, j;
     
     Self.RunePlayerSubClass = SubClass;
-    ApplySubClass_ExtractDefaults(SubClass);
+    ApplyRunePlayerSubClass_ExtractDefaults(SubClass);
     
     // Spawn a Dummy instance to get info from functions
     if(Role == ROLE_Authority
@@ -1004,9 +1012,9 @@ function ApplySubClass(Class<RunePlayer> SubClass)
             Dummy.bHidden = true;
             Dummy.RemoteRole = ROLE_None;
 
-            ApplySubClass_ExtractBodyPartData(SubClass, Dummy);
-            ApplySubClass_ExtractPainSkinData(SubClass, Dummy);
-            ApplySubClass_ExtractGoreCapData(SubClass, Dummy);
+            ApplyRunePlayerSubClass_ExtractBodyPartData(SubClass, Dummy);
+            ApplyRunePlayerSubClass_ExtractPainSkinData(SubClass, Dummy);
+            ApplyRunePlayerSubClass_ExtractGoreCapData(SubClass, Dummy);
             
             // Destroy Dummy and turn collision back on
             //      When you spawn a PlayerPawn, GameInfo.Login does not get called,
@@ -1021,7 +1029,7 @@ function ApplySubClass(Class<RunePlayer> SubClass)
     }
 
     // Extract the menu name so this looks correct in server browser
-    ApplySubClass_ExtractMenuName(SubClass);
+    ApplyRunePlayerSubClass_ExtractMenuName(SubClass);
     
     // If player explicitly joined as a spectator, disable respawning from spec mode
     if(SubClass == Class'RMod.R_ASpectatorMarker')
@@ -1053,10 +1061,10 @@ static function bool CheckForDummyTag(Actor A)
 }
 
 /**
-*   ApplySubClass_ExtractDefaults
+*   ApplyRunePlayerSubClass_ExtractDefaults
 *   Extract all relevant default properties from the RunePlayer class.
 */
-function ApplySubClass_ExtractDefaults(Class<RunePlayer> SubClass)
+function ApplyRunePlayerSubClass_ExtractDefaults(Class<RunePlayer> SubClass)
 {
     local int i;
 
@@ -1107,12 +1115,12 @@ function ApplySubClass_ExtractDefaults(Class<RunePlayer> SubClass)
 }
 
 /**
-*   ApplySubClass_ExtractBodyPartData
+*   ApplyRunePlayerSubClass_ExtractBodyPartData
 *   Extracts the classes used for severed limb body parts on the provided class.
 *   This data cannot be extracted (that I'm aware of) from the class, so
 *   it requires an instance of the RunePlayer.
 */
-function ApplySubClass_ExtractBodyPartData(Class<RunePlayer> SubClass, RunePlayer SubClassInstance)
+function ApplyRunePlayerSubClass_ExtractBodyPartData(Class<RunePlayer> SubClass, RunePlayer SubClassInstance)
 {
     local int i;
 
@@ -1121,15 +1129,15 @@ function ApplySubClass_ExtractBodyPartData(Class<RunePlayer> SubClass, RunePlaye
         PolyGroupBodyParts[i] = SubClassInstance.BodyPartForPolyGroup(i);
     }
 
-    RunePlayerSeveredHeadClass = SubClassInstance.SeveredLimbClass(BODYPART_HEAD);
-    RunePlayerSeveredLimbClass = SubClassInstance.SeveredLimbClass(BODYPART_LARM1);
+    RunePlayerSeveredHeadSubClass = SubClassInstance.SeveredLimbClass(BODYPART_HEAD);
+    RunePlayerSeveredLimbSubClass = SubClassInstance.SeveredLimbClass(BODYPART_LARM1);
 }
 
 /**
-*   ApplySubClass_ExtractPainSkinData
+*   ApplyRunePlayerSubClass_ExtractPainSkinData
 *   Extract the pain skin textures from the provided RunePlayer class.
 */
-function ApplySubClass_ExtractPainSkinData(Class<RunePlayer> SubClass, RunePlayer SubClassInstance)
+function ApplyRunePlayerSubClass_ExtractPainSkinData(Class<RunePlayer> SubClass, RunePlayer SubClassInstance)
 {
     local int i, j;
 
@@ -1160,10 +1168,10 @@ function ApplySubClass_ExtractPainSkinData(Class<RunePlayer> SubClass, RunePlaye
 }
 
 /**
-*   ApplySubClass_ExtractGoreCapData
+*   ApplyRunePlayerSubClass_ExtractGoreCapData
 *   Extract gore cap textures from the provided RunePlayer class.
 */
-function ApplySubClass_ExtractGoreCapData(Class<RunePlayer> SubClass, RunePlayer SubClassInstance)
+function ApplyRunePlayerSubClass_ExtractGoreCapData(Class<RunePlayer> SubClass, RunePlayer SubClassInstance)
 {
     local int i, j;
 
@@ -1194,12 +1202,12 @@ function ApplySubClass_ExtractGoreCapData(Class<RunePlayer> SubClass, RunePlayer
 }
 
 /**
-*   ApplySubClass_ExtractMenuName
+*   ApplyRunePlayerSubClass_ExtractMenuName
 *   Attempts to extract the menu name for the provided RunePlayer class,
 *   so that when viewed from the server browser, players still see the original
 *   name of the skin being used instead of R_RunePlayer.
 */
-function ApplySubClass_ExtractMenuName(Class<RunePlayer> SubClass)
+function ApplyRunePlayerSubClass_ExtractMenuName(Class<RunePlayer> SubClass)
 {
     local String ClassString;
     local String EntryString, DescriptionString;
@@ -2565,7 +2573,7 @@ function PlayTakeHit(float TweenTime, int Damage, Vector HitLoc, Name DamageType
 /**
 *   SetSkinActor (override)
 *   Overridden to apply skin actor in the context of the sub class that would
-*   have been saved during the call to ApplySubClass.
+*   have been saved during the call to ApplyRunePlayerSubClass.
 */
 static function SetSkinActor(Actor SkinActor, int NewSkin)
 {
@@ -2594,7 +2602,7 @@ static function SetSkinActor(Actor SkinActor, int NewSkin)
 
 /**
 *   PainSkin (override)
-*   Overridden to apply the pain skin that was extracted in ApplySubClass.
+*   Overridden to apply the pain skin that was extracted in ApplyRunePlayerSubClass.
 */
 function Texture PainSkin(int BodyPart)
 {
@@ -2620,7 +2628,7 @@ function Texture PainSkin(int BodyPart)
 
 /**
 *   ApplyGoreCap (override)
-*   Overridden to apply the gore cap that was extracted in ApplySubClass.
+*   Overridden to apply the gore cap that was extracted in ApplyRunePlayerSubClass.
 */
 function ApplyGoreCap(int BodyPart)
 {
@@ -2645,7 +2653,7 @@ function ApplyGoreCap(int BodyPart)
 
 /**
 *   BodyPartForPolyGroup (override)
-*   Overridden to return the body part that was extracted in ApplySubClass.
+*   Overridden to return the body part that was extracted in ApplyRunePlayerSubClass.
 */
 function int BodyPartForPolyGroup(int PolyGroup)
 {
@@ -2659,8 +2667,10 @@ function int BodyPartForPolyGroup(int PolyGroup)
 
 /**
 *   SeveredLimbClass (override)
-*   Overridden to return the severed limb class that was
-*   extracted in ApplySubClass.
+*   Overridden to return the body part sub-class that was extracted in
+*   ApplyRunePlayerSubClass. Originally, this class was spawned directly by
+*   LimbSevered, but now the returned class is used to apply default properties
+*   to the spawned RMod body part in LimbSevered.
 */
 function Class<Actor> SeveredLimbClass(int BodyPart)
 {
@@ -2668,13 +2678,83 @@ function Class<Actor> SeveredLimbClass(int BodyPart)
     {
         case BODYPART_LARM1:
         case BODYPART_RARM1:
-            return Self.RunePlayerSeveredLimbClass;
+            return Self.RunePlayerSeveredLimbSubClass;
         case BODYPART_HEAD:
-            return Self.RunePlayerSeveredHeadClass;
+            return Self.RunePlayerSeveredHeadSubClass;
     }
 
     return None;
 }
+
+/**
+*   LimbSevered (override)
+*   Overridden to spawn RMod body part classes and apply the original
+*   body part class as a sub-class.
+*/
+function LimbSevered(int BodyPart, Vector Momentum)
+{
+    local int JointIndex;
+    local Vector JointPosition;
+    local Class<Actor> BodyPartSpawnClass, BodyPartSubClass;
+    local Actor SpawnedBodyPartActor, SpawnedEffectActor;
+    local Vector X,Y,Z;
+    local Vector PartVelocity;
+    
+    GetAxes(Rotation, X, Y, Z);
+
+    switch(BodyPart)
+    {
+        case BODYPART_LARM1:
+            BodyPartSpawnClass = SpawnableSeveredLimbClass;
+            DropShield();
+            JointIndex = JointNamed('lshouldb');
+            PartVelocity = -Y * 100 + Vect(0.0, 0.0, 175.0);
+            break;
+    
+        case BODYPART_RARM1:
+            BodyPartSpawnClass = SpawnableSeveredLimbClass;
+            LastHeldWeapon = None; // No retrieving
+            DropWeapon();
+            JointIndex = JointNamed('rshouldb');
+            PartVelocity = Y * 100 + Vect(0.0, 0.0, 175.0);
+            break;
+            
+        case BODYPART_HEAD:
+            BodyPartSpawnClass = SpawnableSeveredHeadClass;
+            JointIndex = JointNamed('head');
+            PartVelocity = (Momentum / Mass) * 20.0 + Vect(0.0, 0.0, 300.0);
+            break;
+    }
+
+    ApplyGoreCap(BodyPart);
+    JointPosition = GetJointPos(JointIndex);
+    
+    if(BodyPartSpawnClass != None)
+    {
+        BodyPartSubClass = SeveredLimbClass(BodyPart);
+        SpawnedBodyPartActor = Spawn(BodyPartSpawnClass,,, JointPosition, Rotation);
+        if(SpawnedBodyPartActor != None)
+        {
+            if(R_AWeapon_BodyPart(SpawnedBodyPartActor) != None)
+            {
+                R_AWeapon_BodyPart(SpawnedBodyPartActor).ApplyBodyPartSubClass(BodyPartSubClass);
+            }
+            SpawnedBodyPartActor.DrawScale = 1.0;
+            SpawnedBodyPartActor.Velocity = PartVelocity;
+            SpawnedBodyPartActor.GotoState('Drop');
+        }
+    }
+    
+    // Attach blood spurt effect on the sever location
+    SpawnedEffectActor = Spawn(Class'RuneI.BloodSpurt', Self,, JointPosition, Rotation);
+    if(SpawnedEffectActor != None)
+    {
+        AttachActorToJoint(SpawnedEffectActor, JointIndex);
+    }
+
+    SetMovementMode(); // Set combat or exploration mode (player could lose an arm)
+}
+
 
 /**
 *   GetViewRotPov
@@ -2826,6 +2906,23 @@ function ShieldDeactivate()
     {
         R_AShield(Shield).FinishAttack();
     }
+}
+
+/**
+*   CheckIsPerformingShieldAttack
+*   Returns true if this R_RunePlayer is currently performing a shield attack,
+*   false otherwise.
+*/
+function bool CheckIsPerformingShieldAttack()
+{
+    if(Shield != None
+    && Shield.GetStateName() == 'Swinging'
+    && AnimProxy != None
+    && AnimProxy.GetStateName() == 'Attacking')
+    {
+        return true;
+    }
+    return false;
 }
 
 /**
@@ -3704,7 +3801,9 @@ defaultproperties
     UtilitiesClass=Class'RMod.R_AUtilities'
     ColorsClass=Class'RMod.R_AColors'
     GameOptionsCheckerClass=Class'RMod.R_AGameOptionsChecker'
-    RunePlayerProxyClass=Class'RMod.R_RunePlayerProxy'
+    SpawnableAnimationProxyClass=Class'RMod.R_RunePlayerProxy'
+    SpawnableSeveredHeadClass=Class'RMod.R_Weapon_BodyPart_Head'
+    SpawnableSeveredLimbClass=Class'RMod.R_Weapon_BodyPart_Limb'
     SpectatorCameraClass=Class'RMod.R_Camera_Spectator'
     LoadoutReplicationInfoClass='RMod.R_LoadoutReplicationInfo'
     bMessageBeep=True

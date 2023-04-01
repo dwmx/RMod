@@ -516,7 +516,7 @@ event PlayerPawn Login(
 		UtilitiesClass.Static.RModLog("Incoming player subclass: " $ IncomingClass);
 		if(R_RunePlayer(P) != None)
 		{
-			R_RunePlayer(P).ApplySubClass(Class<RunePlayer>(IncomingClass));
+			R_RunePlayer(P).ApplyRunePlayerSubClass(Class<RunePlayer>(IncomingClass));
 		}
 	}
 	else if(Class<Spectator>(IncomingClass) != None)
@@ -530,7 +530,7 @@ event PlayerPawn Login(
 		UtilitiesClass.Static.RModLog("Incoming spectator class: " $ IncomingClass);
 		if(R_RunePlayer(P) != None)
 		{
-			R_RunePlayer(P).ApplySubClass(Self.SpectatorMarkerClass);
+			R_RunePlayer(P).ApplyRunePlayerSubClass(Self.SpectatorMarkerClass);
 		}
 	}
 	

@@ -99,4 +99,5 @@ defaultproperties
      Skeletal=SkelModel'weapons.handaxe'
      SkelGroupSkins(0)=Texture'weapons.handaxehandaxe'
      SkelGroupSkins(1)=Texture'weapons.handaxehandaxe'
+     WeaponTier=1
 }

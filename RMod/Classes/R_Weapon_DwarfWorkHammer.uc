@@ -179,4 +179,5 @@ defaultproperties
      Skeletal=SkelModel'weapons.WorkHammer'
      SkelGroupSkins(0)=Texture'weapons.WorkHammerd_work_hammer'
      SkelGroupSkins(1)=Texture'weapons.WorkHammerd_work_hammer'
+     WeaponTier=4
 }

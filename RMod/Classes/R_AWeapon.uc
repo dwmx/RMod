@@ -5,6 +5,15 @@
 class R_AWeapon extends Weapon abstract;
 
 var Class<R_AUtilities> UtilitiesClass;
+var Class<R_AGameOptionsChecker> GameOptionsCheckerClass;
+
+// Weapon tier, valid for values 1-5
+// Tier1 weapons = hand axe, bone club, short sword
+// Tier2...Tier3
+// Tier5 weapons = battle axe, battle sword, battle hammer
+// These are used to allow the GameOptions class to specify which weapons
+// are throw-blockable, based on the weapon's size.
+var int WeaponTier;
 
 //==============================================================================
 //  Additional sound variables that correspond with Weapon
@@ -28,6 +37,45 @@ var Class<Actor> HitIceEffectClass;
 var Class<Actor> HitWaterEffectClass;
 //==============================================================================
 
+//==============================================================================
+//  Client-side simulation variables
+//==============================================================================
+struct FNetReplicatedWeaponRotator
+{
+    var bool bPerformedUpdate;
+    var float Yaw;
+    var float Pitch;
+    var float Roll;
+};
+
+struct FNetReplicatedWeaponRotationState
+{
+    var bool bPerformedUpdate;
+    var bool bRotateToDesired;
+    var bool bFixedRotationDir;
+};
+
+var FNetReplicatedWeaponRotator AuthorityRotation;
+var FNetReplicatedWeaponRotator AuthorityDesiredRotation;
+var FNetReplicatedWeaponRotator AuthorityRotationRate;
+
+var FNetReplicatedWeaponRotationState AuthorityRotationState;
+
+var Vector AuthorityLocation;
+var Name AuthorityStateName;
+//==============================================================================
+
+replication
+{
+    reliable if(Role == ROLE_Authority)
+        AuthorityRotation,
+        AuthorityDesiredRotation,
+        AuthorityRotationRate,
+        AuthorityRotationState,
+        AuthorityLocation,
+        AuthorityStateName;
+}
+
 /**
 *   PostBeginPlay (override)
 *   Overridden to implement ice hit sounds the same way all other matter hit
@@ -48,6 +96,125 @@ event PostBeginPlay()
     }
     
     SpawnWeaponSwipe();
+}
+
+/**
+*   Tick (override)
+*   Overridden to replicate variables for smooth simulation on clients
+*/
+simulated event Tick(float DeltaSeconds)
+{
+    if(Role < ROLE_Authority)
+    {
+        // Perform replication update for clients
+        PerformReplicatedUpdate(DeltaSeconds);
+    }
+    else if(Role == ROLE_Authority && RemoteRole >= ROLE_SimulatedProxy)
+    {
+        AuthorityLocation = Location;
+        AuthorityStateName = GetStateName();
+    }
+}
+
+function ReplicateRotation()
+{
+    AuthorityRotation.Yaw = Rotation.Yaw;
+    AuthorityRotation.Pitch = Rotation.Pitch;
+    AuthorityRotation.Roll = Rotation.Roll;
+    AuthorityRotation.bPerformedUpdate = false;
+}
+
+function ReplicateDesiredRotation()
+{
+    AuthorityDesiredRotation.Yaw = DesiredRotation.Yaw;
+    AuthorityDesiredRotation.Pitch = DesiredRotation.Pitch;
+    AuthorityDesiredRotation.Roll = DesiredRotation.Roll;
+    AuthorityDesiredRotation.bPerformedUpdate = false;
+}
+
+function ReplicateRotationRate()
+{
+    AuthorityRotationRate.Yaw = RotationRate.Yaw;
+    AuthorityRotationRate.Pitch = RotationRate.Pitch;
+    AuthorityRotationRate.Roll = RotationRate.Roll;
+    AuthorityRotationRate.bPerformedUpdate = false;
+}
+
+function ReplicateRotationState()
+{
+    AuthorityRotationState.bRotateToDesired = bRotateToDesired;
+    AuthorityRotationState.bFixedRotationDir = bFixedRotationDir;
+    AuthorityRotationState.bPerformedUpdate = false;
+}
+
+simulated function PerformReplicatedUpdate(float DeltaSeconds)
+{
+    PerformReplicatedUpdate_Rotators(DeltaSeconds);
+    PerformReplicatedUpdate_Location(DeltaSeconds);
+}
+
+simulated function PerformReplicatedUpdate_Rotators(float DeltaSeconds)
+{
+    local Rotator NewRotation;
+    
+    if(!AuthorityRotation.bPerformedUpdate)
+    {
+        NewRotation.Yaw = AuthorityRotation.Yaw;
+        NewRotation.Pitch = AuthorityRotation.Pitch;
+        NewRotation.Roll = AuthorityRotation.Roll;
+        SetRotation(NewRotation);
+        AuthorityRotation.bPerformedUpdate = true;
+    }
+    
+    if(!AuthorityDesiredRotation.bPerformedUpdate)
+    {
+        DesiredRotation.Yaw = AuthorityDesiredRotation.Yaw;
+        DesiredRotation.Pitch = AuthorityDesiredRotation.Pitch;
+        DesiredRotation.Roll = AuthorityDesiredRotation.Roll;
+        AuthorityDesiredRotation.bPerformedUpdate = true;
+    }
+    
+    if(!AuthorityRotationRate.bPerformedUpdate)
+    {
+        RotationRate.Yaw = AuthorityRotationRate.Yaw;
+        RotationRate.Pitch = AuthorityRotationRate.Pitch;
+        RotationRate.Roll = AuthorityRotationRate.Roll;
+        AuthorityRotationRate.bPerformedUpdate = true;
+    }
+    
+    if(!AuthorityRotationState.bPerformedUpdate)
+    {
+        bRotateToDesired = AuthorityRotationState.bRotateToDesired;
+        bFixedRotationDir = AuthorityRotationState.bFixedRotationDir;
+        AuthorityRotationState.bPerformedUpdate = true;
+    }
+}
+
+simulated function PerformReplicatedUpdate_Location(float DeltaSeconds)
+{
+    local Vector Delta;
+    local float DeltaLength;
+    local Vector AdjustedLocation;
+    
+    Delta = AuthorityLocation - Location;
+    
+    //if(AuthorityStateName == 'Throw')
+    //{
+    //    // During throws, only adjust if it's really bad
+    //    DeltaLength = VSize(Delta);
+    //    if(DeltaLength > 64.0)
+    //    {
+    //        AdjustedLocation = AuthorityLocation;
+    //        SetLocation(AdjustedLocation);
+    //    }
+    //}
+    //else if(AuthorityStateName == 'Settling')
+    //{
+    //    // During settling, ease towards the location
+    //    AdjustedLocation = Location + (Delta * DeltaSeconds * 10.0);
+    //    SetLocation(AdjustedLocation);
+    //}
+    
 }
 
 /**
@@ -202,10 +369,48 @@ function SpawnHitEffect(Vector HitLoc, Vector HitNorm, int LowMask, int HighMask
     }
 }
 
+function InitializeStateRotation()
+{
 
+}
+    
+state Drop
+{
+    event BeginState()
+    {
+        RemoteRole = ROLE_SimulatedProxy;
+        Super.BeginState();
+        InitializeStateRotation();
+        ReplicateRotationState();
+        ReplicateRotation();
+        ReplicateRotationRate();
+    }
+    
+    event EndState()
+    {
+        RemoteRole = Self.Default.RemoteRole;
+        Super.EndState();
+    }
+}
 
 state Throw
 {
+    event BeginState()
+    {
+        RemoteRole = ROLE_SimulatedProxy;
+        Super.BeginState();
+        bRotateToDesired = false; // Fixes issue where weapons fail to rotate
+        ReplicateRotationState();
+        ReplicateRotation();
+        ReplicateRotationRate();
+    }
+    
+    event EndState()
+    {
+        RemoteRole = Self.Default.RemoteRole;
+        Super.EndState();
+    }
+    
     //=========================================================================
     //
     // Touch
@@ -222,6 +427,8 @@ state Throw
         local PlayerPawn P;
         local vector VectOther;
         local float dp;
+        local bool bThrowBlockable;
+        local R_RunePlayer RP;
 
         if (Other == Owner)
             return;
@@ -235,7 +442,7 @@ state Throw
         HitActor = Other;
         DamageAmount = CalculateDamage(HitActor);
 
-        if(Other.IsA('PlayerPawn') && Other.AnimProxy != None) 
+        if(Other.IsA('PlayerPawn') && Other.AnimProxy != None)
         {
             P = PlayerPawn(Other);
             // Determine the direction the player is attempting to move
@@ -244,9 +451,10 @@ state Throw
 
             if(dp > 0)
             {
-                // Weapon deflection during shield bash
-                if(P.Shield != None && R_AShield(P.Shield) != None && P.AnimProxy.GetStateName() == 'Attacking' && P.Shield.GetStateName() == 'Swinging')
+                RP = R_RunePlayer(Other);
+                if(RP != None && RP.CheckIsPerformingShieldAttack())
                 {
+                    // Deflect weapons during a shield bash attack
                     R_AShield(P.Shield).PlayHitEffect(Self, HitLoc, Normal(Location - P.Shield.Location), 0, 0);
                     P.Shield.JointDamaged(DamageAmount, Pawn(Owner), HitLoc, Velocity*Mass, ThrownDamageType, 0);
                     Velocity = -Velocity;
@@ -254,14 +462,24 @@ state Throw
                     SetOwner(P); // Necessary in order to hit the original thrower
                     return;
                 }
-                
-                if(P.Shield != None && P.AnimProxy.GetStateName() == 'Defending')
+                else if(P.Shield != None && P.AnimProxy.GetStateName() == 'Defending')
                 {
+                    // If the struck pawn is defending with a shield, block anything and everything
                     HitActor = P.Shield;
                 }
                 else if(P.Weapon != None && P.AnimProxy.GetStateName() == 'Attacking')
                 {
-                    HitActor = P.Weapon;
+                    // If the struck pawn is attacking with a weapon, check the throw block rules (based on weapon tier)
+                    bThrowBlockable = true;
+                    if(GameOptionsCheckerClass != None)
+                    {
+                        bThrowBlockable = GameOptionsCheckerClass.Static.GetGameOption_WeaponTierBlockable(Self, WeaponTier);
+                    }
+                    
+                    if(bThrowBlockable)
+                    {
+                        HitActor = P.Weapon;
+                    }
                 }
             }
         }
@@ -282,9 +500,29 @@ state Throw
     }
 }
 
+state Settling
+{
+    event BeginState()
+    {
+        RemoteRole = ROLE_SimulatedProxy;
+        Super.BeginState();
+        ReplicateRotationState();
+        ReplicateRotation();
+        ReplicateRotationRate();
+        ReplicateDesiredRotation();
+    }
+    
+    event EndState()
+    {
+        RemoteRole = Self.Default.RemoteRole;
+        Super.EndState();
+    }
+}
+
 defaultproperties
 {
     UtilitiesClass=Class'RMod.R_AUtilities'
+    GameOptionsCheckerClass=Class'RMod.R_AGameOptionsChecker'
     HitFleshEffectClass=Class'RMod.R_Effect_HitFlesh'
     HitWoodEffectClass=Class'RMod.R_Effect_HitWood'
     HitStoneEffectClass=Class'RMod.R_Effect_HitStone'
@@ -296,4 +534,5 @@ defaultproperties
     HitBreakableStoneEffectClass=Class'RuneI.HitStone'
     HitIceEffectClass=Class'RMod.R_Effect_HitIce'
     HitWaterEffectClass=None
+    WeaponTier=WT_TierNone
 }
