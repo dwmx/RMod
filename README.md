@@ -15,6 +15,8 @@ RMod is a quality-of-life mod for Rune: Halls of Valhalla, aiming to improve the
 - Added new game options specified on a per-game type basis:
     - Shield hit stun
     - Manually activated bloodlust
+- Thrown and dropped weapons are now client-simulated, improving the visual smoothness of their animations
+- Wide variety of new and improved visual effects with minimal changes to core gameplay
 
 ## Client Command Interface Extension
 The following exec functions added to R_RunePlayer allow additional client-side and admin-authorized server functionality. The following commands are listed with their unrealscript declaration, along with an example of how they may be called using the in-game console.
