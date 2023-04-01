@@ -1,0 +1,1 @@
+class R_Weapon_BodyPart_Limb extends R_AWeapon_BodyPart;

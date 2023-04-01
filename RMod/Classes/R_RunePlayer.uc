@@ -14,13 +14,21 @@ var Class<R_AGameOptionsChecker> GameOptionsCheckerClass;
 //==============================================================================
 
 //==============================================================================
+//  Behavior related classes
+//  These classes are spawned at various parts of the gameplay and define
+//  different aspects of the RunePlayer's behavior.
+var Class<AnimationProxy> SpawnableAnimationProxyClass;
+var Class<Actor> SpawnableSeveredHeadClass;
+var Class<Actor> SpawnableSeveredLimbClass;
+//==============================================================================
+
+//==============================================================================
 //  Sub-class variables
 //  During the Login event, R_GameInfo calls R_RunePlayer.ApplyRunePlayerSubClass,
 //  which extracts runeplayer skin data into these variables.
-var Class<RunePlayer> RunePlayerSubClass;
-var Class<RunePlayerProxy> RunePlayerProxyClass;
-var Class<Actor> RunePlayerSeveredHeadClass;
-var Class<Actor> RunePlayerSeveredLimbClass;
+var Class<RunePlayer> RunePlayerSubClass;       // The RuneI.RunePlayer sub-class
+var Class<Actor> RunePlayerSeveredHeadSubClass; // The RuneI.Head sub-class
+var Class<Actor> RunePlayerSeveredLimbSubClass; // The RuneI.LimbWeapon sub-class
 var byte PolyGroupBodyParts[16];
 
 // PainSkin arrays
@@ -710,7 +718,7 @@ event PreBeginPlay()
     Super(PlayerPawn).PreBeginPlay();
 
     // Spawn Torso Animation proxy
-    AnimProxy = Spawn(Self.RunePlayerProxyClass, Self);
+    AnimProxy = Spawn(Self.SpawnableAnimationProxyClass, Self);
 
     OldCameraStart = Location;
     OldCameraStart.Z += CameraHeight;
@@ -1121,8 +1129,8 @@ function ApplyRunePlayerSubClass_ExtractBodyPartData(Class<RunePlayer> SubClass,
         PolyGroupBodyParts[i] = SubClassInstance.BodyPartForPolyGroup(i);
     }
 
-    RunePlayerSeveredHeadClass = SubClassInstance.SeveredLimbClass(BODYPART_HEAD);
-    RunePlayerSeveredLimbClass = SubClassInstance.SeveredLimbClass(BODYPART_LARM1);
+    RunePlayerSeveredHeadSubClass = SubClassInstance.SeveredLimbClass(BODYPART_HEAD);
+    RunePlayerSeveredLimbSubClass = SubClassInstance.SeveredLimbClass(BODYPART_LARM1);
 }
 
 /**
@@ -2659,8 +2667,10 @@ function int BodyPartForPolyGroup(int PolyGroup)
 
 /**
 *   SeveredLimbClass (override)
-*   Overridden to return the severed limb class that was
-*   extracted in ApplyRunePlayerSubClass.
+*   Overridden to return the body part sub-class that was extracted in
+*   ApplyRunePlayerSubClass. Originally, this class was spawned directly by
+*   LimbSevered, but now the returned class is used to apply default properties
+*   to the spawned RMod body part in LimbSevered.
 */
 function Class<Actor> SeveredLimbClass(int BodyPart)
 {
@@ -2668,13 +2678,84 @@ function Class<Actor> SeveredLimbClass(int BodyPart)
     {
         case BODYPART_LARM1:
         case BODYPART_RARM1:
-            return Self.RunePlayerSeveredLimbClass;
+            return Self.RunePlayerSeveredLimbSubClass;
         case BODYPART_HEAD:
-            return Self.RunePlayerSeveredHeadClass;
+            return Self.RunePlayerSeveredHeadSubClass;
     }
 
     return None;
 }
+
+/**
+*   LimbSevered (override)
+*   Overridden to spawn RMod body part classes and apply the original
+*   body part class as a sub-class.
+*/
+function LimbSevered(int BodyPart, Vector Momentum)
+{
+    local int JointIndex;
+    local Vector JointPosition;
+    local Class<Actor> BodyPartSpawnClass, BodyPartSubClass;
+    local Actor SpawnedBodyPartActor, SpawnedEffectActor;
+    local Vector X,Y,Z;
+    local Vector PartVelocity;
+    
+    GetAxes(Rotation, X, Y, Z);
+
+    switch(BodyPart)
+    {
+        case BODYPART_LARM1:
+            BodyPartSpawnClass = SpawnableSeveredLimbClass;
+            DropShield();
+            JointIndex = JointNamed('lshouldb');
+            PartVelocity = -Y * 100 + Vect(0.0, 0.0, 175.0);
+            break;
+    
+        case BODYPART_RARM1:
+            BodyPartSpawnClass = SpawnableSeveredLimbClass;
+            LastHeldWeapon = None; // No retrieving
+            DropWeapon();
+            JointIndex = JointNamed('rshouldb');
+            PartVelocity = Y * 100 + Vect(0.0, 0.0, 175.0);
+            break;
+            
+        case BODYPART_HEAD:
+            BodyPartSpawnClass = SpawnableSeveredHeadClass;
+            JointIndex = JointNamed('head');
+            PartVelocity = 0.75 * (Momentum / Mass) + Vect(0.0, 0.0, 300.0);
+            break;
+    }
+
+    ApplyGoreCap(BodyPart);
+    JointPosition = GetJointPos(JointIndex);
+    
+    if(BodyPartSpawnClass != None)
+    {
+        BodyPartSubClass = SeveredLimbClass(BodyPart);
+        SpawnedBodyPartActor = Spawn(BodyPartSpawnClass,,, JointPosition, Rotation);
+        if(SpawnedBodyPartActor != None)
+        {
+            if(R_AWeapon_BodyPart(SpawnedBodyPartActor) != None)
+            {
+                R_AWeapon_BodyPart(SpawnedBodyPartActor).ApplyBodyPartSubClass(BodyPartSubClass);
+            }
+            SpawnedBodyPartActor.DrawScale = 1.0;
+            SpawnedBodyPartActor.Velocity = PartVelocity;
+            SpawnedBodyPartActor.GotoState('Drop');
+            
+        }
+    }
+    
+    // Attach blood spurt effect on the sever location
+    SpawnedEffectActor = Spawn(Class'RuneI.BloodSpurt', Self,, JointPosition, Rotation);
+    if(SpawnedEffectActor != None)
+    {
+        AttachActorToJoint(SpawnedEffectActor, JointIndex);
+    }
+
+    SetMovementMode(); // Set combat or exploration mode (player could lose an arm)
+}
+
 
 /**
 *   GetViewRotPov
@@ -3704,7 +3785,9 @@ defaultproperties
     UtilitiesClass=Class'RMod.R_AUtilities'
     ColorsClass=Class'RMod.R_AColors'
     GameOptionsCheckerClass=Class'RMod.R_AGameOptionsChecker'
-    RunePlayerProxyClass=Class'RMod.R_RunePlayerProxy'
+    SpawnableAnimationProxyClass=Class'RMod.R_RunePlayerProxy'
+    SpawnableSeveredHeadClass=Class'RMod.R_Weapon_BodyPart_Head'
+    SpawnableSeveredLimbClass=Class'RMod.R_Weapon_BodyPart_Limb'
     SpectatorCameraClass=Class'RMod.R_Camera_Spectator'
     LoadoutReplicationInfoClass='RMod.R_LoadoutReplicationInfo'
     bMessageBeep=True
