@@ -1251,6 +1251,22 @@ function PlayMoving(optional float tween)
     if (health <= 0)
         return;
     
+    if (Role == ROLE_AutonomousProxy && IsAnimating()) { // 108  fix client-side leg animations
+        if (AnimSequence == 'neutral_kick' ||
+            AnimSequence == 'PumpTrigger' ||
+            AnimSequence == 'LeverTrigger' ||
+            AnimSequence == 'S3_Taunt')
+                return;
+
+        if (Weapon != None) {
+            if (AnimSequence == Weapon.A_JumpAttack ||
+                AnimSequence == Weapon.A_Taunt ||
+                AnimSequence == Weapon.A_PumpTrigger ||
+                AnimSequence == Weapon.A_LeverTrigger)
+                    return;
+        }
+    }
+    
     if(AnimProxy != None)
         bDefending = (AnimProxy.GetStateName() == 'Defending');
     else
