@@ -34,7 +34,7 @@ function NotifyScoredKill(Pawn Killer, Pawn Other)
         // triple kill or better at the same time
         if(ConsecutiveKillStreakCount >= 3 && bCurrentKillBloodLustState && !bPreviousKillBloodLustState)
         {
-            //BroadcastHolyShit(Killer, Other);
+            MessageForHolyShit(Killer, Other);
         }
     }
     else
@@ -58,6 +58,22 @@ function NotifyScoredKill(Pawn Killer, Pawn Other)
     {
         MessageForHeadshot(Killer, Other);
     }
+}
+
+function MessageForHolyShit(Pawn Killer, Pawn Other)
+{
+    local int MessageSwitch;
+    local PlayerReplicationInfo PRI1;
+    local PlayerReplicationInfo PRI2;
+    
+    MessageSwitch = class'RKSMessage_Announcement'.Static.GetSwitch_HolyShit();
+    
+    if(MutatorOwner == None)
+    {
+        return;
+    }
+    
+    MutatorOwner.BroadcastLocalizedRKSMessage(class'RKSMessage_Announcement', MessageSwitch, PRI1, PRI2, Killer);
 }
 
 function MessageForConsecutiveKillStreak(int KillStreak, Pawn Killer, Pawn Other)

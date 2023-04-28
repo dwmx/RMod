@@ -31,6 +31,7 @@ static function string GetString(
     case GetSwitch_MegaKill():      return GetString_MegaKill(PRI1, PRI2, OptionalObject);
     case GetSwitch_UltraKill():     return GetString_UltraKill(PRI1, PRI2, OptionalObject);
     case GetSwitch_MonsterKill():   return GetString_MonsterKill(PRI1, PRI2, OptionalObject);
+    case GetSwitch_HolyShit():      return GetString_HolyShit(PRI1, PRI2, OptionalObject);
     case GetSwitch_KillingSpree():  return GetString_KillingSpree(PRI1, PRI2, OptionalObject);
     case GetSwitch_Rampage():       return GetString_Rampage(PRI1, PRI2, OptionalObject);
     case GetSwitch_Dominating():    return GetString_Dominating(PRI1, PRI2, OptionalObject);
@@ -70,6 +71,11 @@ static function string GetString_UltraKill(PlayerReplicationInfo PRI1, PlayerRep
 static function string GetString_MonsterKill(PlayerReplicationInfo PRI1, PlayerReplicationInfo PRI2, Object OptionalObject)
 {
     return "monster kill!";
+}
+
+static function string GetString_HolyShit(PlayerReplicationInfo PRI1, PlayerReplicationInfo PRI2, Object OptionalObject)
+{
+    return "HOLY SHIT";
 }
 
 static function string GetString_KillingSpree(PlayerReplicationInfo PRI1, PlayerReplicationInfo PRI2, Object OptionalObject)
@@ -118,6 +124,7 @@ static function Sound GetMessageSound(
     case GetSwitch_MegaKill():      return Sound'megakill';
     case GetSwitch_UltraKill():     return Sound'ultrakill';
     case GetSwitch_MonsterKill():   return Sound'monsterkill';
+    case GetSwitch_HolyShit():      return Sound'holyshit';
     case GetSwitch_KillingSpree():  return Sound'killingspree';
     case GetSwitch_Rampage():       return Sound'rampage';
     case GetSwitch_Dominating():    return Sound'dominating';
