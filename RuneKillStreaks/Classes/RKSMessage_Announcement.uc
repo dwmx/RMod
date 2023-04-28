@@ -13,6 +13,7 @@ static function int GetSwitch_Rampage()         { return 8; }
 static function int GetSwitch_Dominating()      { return 9; }
 static function int GetSwitch_Unstoppable()     { return 10; }
 static function int GetSwitch_Godlike()         { return 11; }
+static function int GetSwitch_Headshot()        { return 12; }
 
 //==============================================================================
 //  Strings
@@ -35,6 +36,7 @@ static function string GetString(
     case GetSwitch_Dominating():    return GetString_Dominating(PRI1, PRI2, OptionalObject);
     case GetSwitch_Unstoppable():   return GetString_Unstoppable(PRI1, PRI2, OptionalObject);
     case GetSwitch_Godlike():       return GetString_Godlike(PRI1, PRI2, OptionalObject);
+    case GetSwitch_Headshot():      return GetString_Headshot(PRI1, PRI2, OptionalObject);
     }
 
     return "";
@@ -95,6 +97,11 @@ static function string GetString_Godlike(PlayerReplicationInfo PRI1, PlayerRepli
     return "is GODLIKE";
 }
 
+static function string GetString_Headshot(PlayerReplicationInfo PRI1, PlayerReplicationInfo PRI2, Object OptionalObject)
+{
+    return "headshot";
+}
+
 //==============================================================================
 //  Sounds
 static function Sound GetMessageSound(
@@ -116,6 +123,7 @@ static function Sound GetMessageSound(
     case GetSwitch_Dominating():    return Sound'dominating';
     case GetSwitch_Unstoppable():   return Sound'unstoppable';
     case GetSwitch_Godlike():       return Sound'godlike';
+    case GetSwitch_Headshot():      return Sound'headshot';
     }
 
     return None;

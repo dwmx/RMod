@@ -11,3 +11,4 @@ class RKSImports extends Object;
 #EXEC AUDIO IMPORT NAME=dominating FILE=..\RuneKillStreaks\Sounds\dominating.wav
 #EXEC AUDIO IMPORT NAME=unstoppable FILE=..\RuneKillStreaks\Sounds\unstoppable.wav
 #EXEC AUDIO IMPORT NAME=godlike FILE=..\RuneKillStreaks\Sounds\godlike.wav
+#EXEC AUDIO IMPORT NAME=headshot FILE=..\RuneKillStreaks\Sounds\headshot.wav

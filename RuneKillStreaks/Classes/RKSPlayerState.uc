@@ -52,6 +52,12 @@ function NotifyScoredKill(Pawn Killer, Pawn Other)
     // Second, check for running kill streak messages (rampage, godlike, etc)
     ++RunningKillStreakCount;
     MessageForRunningKillStreak(RunningKillStreakCount, Killer, Other);
+    
+    // Third, if this was a headshot kill then send a headshot message
+    if(PlayerPawn(Other) != None && PlayerPawn(Other).BodyPartHealth[Other.BODYPART_HEAD] <= 0)
+    {
+        MessageForHeadshot(Killer, Other);
+    }
 }
 
 function MessageForConsecutiveKillStreak(int KillStreak, Pawn Killer, Pawn Other)
@@ -134,6 +140,24 @@ function MessageForRunningKillStreak(int KillStreak, Pawn Killer, Pawn Other)
             MutatorOwner.BroadcastLocalizedRKSMessage(class'RKSMessage_Announcement', MessageSwitch, PRI1, PRI2, Killer);
         }
     }
+}
+
+function MessageForHeadshot(Pawn Killer, Pawn Other)
+{
+    local int MessageSwitch;
+    local PlayerReplicationInfo PRI1;
+    local PlayerReplicationInfo PRI2;
+    
+    if(MutatorOwner == None)
+    {
+        return;
+    }
+    
+    if(Killer != None)  { PRI1 = Killer.PlayerReplicationInfo; }
+    if(Other != None)   { PRI2 = Other.PlayerReplicationInfo; }
+    MessageSwitch = class'RKSMessage_Announcement'.Static.GetSwitch_Headshot();
+    
+    MutatorOwner.SendClientLocalizedRKSMessage(Self, class'RKSMessage_Announcement', MessageSwitch, PRI1, PRI2, Killer);
 }
 
 //  NotifyScoredDeath
