@@ -68,12 +68,12 @@ function MessageForHolyShit(Pawn Killer, Pawn Other)
     
     MessageSwitch = class'RKSMessage_Announcement'.Static.GetSwitch_HolyShit();
     
-    if(MutatorOwner == None)
+    if(MutatorOwner != None)
     {
-        return;
+        if(Killer != None)  { PRI1 = Killer.PlayerReplicationInfo; }
+        if(Other != None)   { PRI2 = Other.PlayerReplicationInfo; }
+        MutatorOwner.BroadcastLocalizedRKSMessage(class'RKSMessage_Announcement', MessageSwitch, PRI1, PRI2, Killer);
     }
-    
-    MutatorOwner.BroadcastLocalizedRKSMessage(class'RKSMessage_Announcement', MessageSwitch, PRI1, PRI2, Killer);
 }
 
 function MessageForConsecutiveKillStreak(int KillStreak, Pawn Killer, Pawn Other)
