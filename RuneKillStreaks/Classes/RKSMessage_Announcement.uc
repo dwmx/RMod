@@ -177,3 +177,29 @@ static function Color GetDrawColor2(
 
     return Result;
 }
+
+static function float GetLifeTimeSecondsMaximum(
+    int Switch,
+    string CriticalString)
+{
+    // Dramatic effect for holy shit messages
+    if(Switch == GetSwitch_HolyShit())
+    {
+        return 4.0;
+    }
+    
+    return 3.0;
+}
+
+static function float GetLifeTimeSecondsMinimum(
+    int Switch,
+    string CriticalString)
+{
+    // Dramatic effect for holy shit messages
+    if(Switch == GetSwitch_HolyShit())
+    {
+        return 4.0;
+    }
+    
+    return 0.5;
+}
