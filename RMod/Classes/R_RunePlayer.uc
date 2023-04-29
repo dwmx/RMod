@@ -173,7 +173,7 @@ replication
         ClientCloseLoadoutMenu;
 
     // (RPCs) Owning Client --> Server
-    reliable if(Role == ROLE_AutonomousProxy && bNetOwner)
+    reliable if(Role == ROLE_AutonomousProxy)
         ServerResetLevel,
         ServerSpectate,
         ServerTimeLimit;
