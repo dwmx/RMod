@@ -3829,6 +3829,6 @@ defaultproperties
     bAlwaysRelevant=True
     bRotateTorso=False
     bLoadoutMenuDoNotShow=False
-    bRespawnWhenSpectating=True
+    bRespawnWhenSpectating=False
     bShowRmodDebug=False
 }
