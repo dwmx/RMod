@@ -352,8 +352,8 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 
 		// Packetloss
 
-		//FONT ALTER
-	//	Canvas.Font = RegFont;
+		        //FONT ALTER
+	        //Canvas.Font = RegFont;
 		if(MyFonts != None)
 			Canvas.Font = MyFonts.GetStaticMedFont();
 		else
