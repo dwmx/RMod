@@ -314,6 +314,10 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 	else
 		Canvas.Font = RegFont;
 
+	// Draw Frags
+	Canvas.SetPos(Canvas.ClipX*RelPosX_Score, YOffset);
+	Canvas.DrawText(int(PRI.Score), false);
+
 	// Draw Deaths
 	Canvas.SetPos(Canvas.ClipX*RelPosX_Deaths, YOffset);
 	Canvas.DrawText(int(PRI.Deaths), false);
@@ -330,12 +334,26 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 	if (Canvas.ClipX > 512 && Level.Netmode != NM_Standalone)
 	{
 		// Draw Ping
-		Canvas.SetPos(Canvas.ClipX*RelPosX_Ping, YOffset);
-		Canvas.DrawText(PRI.Ping, false);
+		Canvas.SetPos(Canvas.ClipX*0.7, YOffset);
+		if(RPRI != None)
+		{
+			InterpTime = float(PRI.Ping);
+			ColorT0 = ColorsClass.static.ColorGreen();
+			ColorT1 = ColorsClass.Static.ColorRed() * 0.75;
+			DrawColor = Canvas.DrawColor;
+			Canvas.DrawColor = UtilitiesClass.Static.InterpLinear_Color(float(PRI.Ping), ColorT0, ColorT1, 160.0);
+			Canvas.DrawText(PRI.Ping, false);
+			Canvas.DrawColor = DrawColor;
+		}
+		else
+		{
+			Canvas.DrawText(PRI.Ping, false);
+		}
 
 		// Packetloss
-			//FONT ALTER
-		//Canvas.Font = RegFont;
+
+		//FONT ALTER
+	//	Canvas.Font = RegFont;
 		if(MyFonts != None)
 			Canvas.Font = MyFonts.GetStaticMedFont();
 		else
