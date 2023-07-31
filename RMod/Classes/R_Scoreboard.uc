@@ -246,6 +246,8 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 	local float XL,YL;
 	local int AwardPos;
 	local R_PlayerReplicationInfo RPRI;
+	local color DrawColor, ColorT0, ColorT1;
+	local float InterpTime;
 
 	PlayerOwner = PlayerPawn(Owner);
 	bLocalPlayer = (PRI.PlayerName == PlayerOwner.PlayerReplicationInfo.PlayerName);
