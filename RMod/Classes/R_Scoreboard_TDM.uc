@@ -292,6 +292,10 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 		Canvas.DrawText(int(PRI.Deaths), false);
 	}
 
+	//Draw KillDeaths Ratio
+	Canvas.SetPos(Canvas.ClipX*RelPosX_KDR, YOffset);
+	Canvas.DrawText(RPRI.GetKDR(), false);
+
 	if (Canvas.ClipX > 512 && Level.Netmode != NM_Standalone)
 	{
 		// Draw Ping
