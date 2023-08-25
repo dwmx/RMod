@@ -45,6 +45,19 @@ simulated event Tick(float DeltaSeconds)
     }
 }
 
+simulated function string getKDR()
+{
+    if (Deaths == 0) {
+        if (Score == 0) {
+            return "N/A";
+        } else {
+            return "GOD";
+        }
+    } else {
+        return Left(Score / Deaths, 4);
+    }
+}
+
 function ResetPlayerReplicationInfo()
 {
     Score = Default.Score;
