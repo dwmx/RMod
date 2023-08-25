@@ -10,10 +10,12 @@ var float RelPosX_Name;
 var float RelPosX_Score;
 var float RelPosX_Deaths;
 var float RelPosX_DamageDealt;
+var float RelPosX_KDR;
 var float RelPosX_Ping;
 var float RelPosX_Awards;
 
 var localized String DamageDealtText;
+var localized String KDRText;
 
 // Used for relative Canvas drawing
 struct FCanvasContext
@@ -177,6 +179,10 @@ simulated function DrawTableHeadings( canvas Canvas)
 	Canvas.SetPos(Canvas.ClipX*RelPosX_DamageDealt, YOffset);
 	Canvas.DrawText(DamageDealtText, false);
 
+	// Draw KDR
+	Canvas.SetPos(Canvas.ClipX*RelPosX_KDR, YOffset);
+	Canvas.DrawText(KDRText, false);
+
 	// Draw Awards
 	Canvas.SetPos(Canvas.ClipX*RelPosX_Awards, YOffset);
 	Canvas.DrawText(AwardsText, false);
@@ -325,6 +331,10 @@ function DrawPlayerInfo( canvas Canvas, PlayerReplicationInfo PRI, float XOffset
 		// Draw Damage Dealt
 		Canvas.SetPos(Canvas.ClipX*RelPosX_DamageDealt, YOffset);
 		Canvas.DrawText(RPRI.DamageDealt, false);
+
+		//Draw KillDeaths Ratio
+		Canvas.SetPos(Canvas.ClipX*RelPosX_KDR, YOffset);
+		Canvas.DrawText(RPRI.GetKDR(), false);
 	}
 
 	if (Canvas.ClipX > 512 && Level.Netmode != NM_Standalone)
@@ -398,11 +408,13 @@ defaultproperties
      ScoreboardNotes(2)="Thrown weapons of tier 1-3 cannot be blocked, but tiers 4-5 can be blocked"
      ScoreboardNotes(3)="Increased attack range of the DwarfBattleSword and SigurdAxe"
      ScoreboardNotes(4)="Enabled blade weaving for VikingAxe and SigurdAxe"
-     RelPosX_Name=0.100000
-     RelPosX_Score=0.350000
-     RelPosX_Deaths=0.450000
-     RelPosX_DamageDealt=0.550000
+     RelPosX_Name=0.10000
+     RelPosX_Score=0.300000
+     RelPosX_Deaths=0.400000
+     RelPosX_DamageDealt=0.500000
+     RelPosX_KDR=0.600000
      RelPosX_Ping=0.700000
      RelPosX_Awards=0.800000
      DamageDealtText="Damage"
+     KDRText="Ratio"
 }
