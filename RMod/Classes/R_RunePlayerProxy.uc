@@ -83,15 +83,114 @@ function ShieldDeactivate()
 auto state Idle
 {
     /**
+    *   AttackModified
+    *   Original attack function modified to allow players to perform neutral standing attacks
+    *   based on acceleration rather than velocity. This has the effect of allowing players to perform
+    *   stand-still attacks while dodging or jumping in a direction.
+    */
+    function bool AttackModified()
+    {
+        local float dp;
+        local vector X, Y, Z;
+        local bool bRight;
+        local int i;
+
+        TorsoIntroAnim = 'None';
+        TorsoLoop = 'None';
+
+        if(RunePlayer(Owner).Weapon == None || RunePlayer(Owner).Weapon.A_AttackA == 'None')
+            return(false);
+
+        // Determine the direction the player is attempting to move
+        GetAxes(RunePlayer(Owner).Rotation, X, Y, Z);
+        dp = vector(RunePlayer(Owner).Rotation) dot Normal(RunePlayer(Owner).Acceleration);
+
+        if(Normal(RunePlayer(Owner).Acceleration) dot Y >= 0)
+        {
+            bRight = true;
+        }
+        else
+        {
+            bRight = false;
+        }
+
+        if(RunePlayer(Owner).bIsCrouching)
+        { // Crouch attack
+            if(dp < 0.9 && dp > -0.9)
+            { // Strafing
+                if(bRight)
+                { // Strafe right
+                TorsoAnim = RunePlayer(Owner).Weapon.A_AttackStrafeRight;
+                }
+                else
+                { // Strafe left
+                TorsoAnim = RunePlayer(Owner).Weapon.A_AttackStrafeLeft;
+                }
+            }
+            else
+                TorsoAnim = RunePlayer(Owner).Weapon.A_AttackStrafeRight;
+
+            GotoState('Attacking');
+            return(true);
+        }
+
+        // [RMod]: Base this on acceleration rather than velocity
+        //if(RunePlayer(Owner).Velocity.X * RunePlayer(Owner).Velocity.X + RunePlayer(Owner).Velocity.Y * RunePlayer(Owner).Velocity.Y < 1000)
+        if(RunePlayer(Owner).Acceleration.X * RunePlayer(Owner).Acceleration.X + RunePlayer(Owner).Acceleration.Y * RunePlayer(Owner).Acceleration.Y < 1000)
+        { // Standing Still
+            TorsoAnim = RunePlayer(Owner).Weapon.A_AttackStandA;        
+        }
+        else if(dp > 0.9)
+        { // Distinctly forward
+            if(RunePlayer(Owner).AnimSequence == RunePlayer(Owner).Weapon.A_Jump)
+            { // Jump Attack and moving forward results in a special spin attack
+                TorsoAnim = RunePlayer(Owner).Weapon.A_JumpAttack;
+                
+                GotoState('Attacking');
+                return(true);           
+            }
+            else
+            {
+                TorsoAnim = RunePlayer(Owner).Weapon.A_AttackA;     
+            }
+        }
+        else if(dp < -0.9)
+        { // Distinctly backward
+            TorsoAnim = RunePlayer(Owner).Weapon.A_AttackBackupA;
+        }
+        else if(bRight)
+        { // Strafe right
+            TorsoAnim = RunePlayer(Owner).Weapon.A_AttackStrafeRight;
+        }
+        else
+        { // Strafe left
+            TorsoAnim = RunePlayer(Owner).Weapon.A_AttackStrafeLeft;
+        }
+        
+        // If berserking, play a random berserk yell (if an enemy is nearby)
+        if(RunePlayer(Owner).bBloodLust && RunePlayer(Owner).LookTarget != None
+            && RunePlayer(Owner).LookTarget.IsA('Pawn'))
+        {
+            i = Rand(6);
+            RunePlayer(Owner).PlaySound(RunePlayer(Owner).BerserkYellSound[i], 
+                SLOT_Talk, 1.0, false, 1200, FRand() * 0.08 + 0.96);            
+        }   
+
+        GotoState('Attacking');
+
+        return(true);
+    }
+
+    /**
     *   Attack (override)
-    *   Overridden to update attack state when triggered
+    *   Overridden to update attack state when triggered and call modified attack function rather than super
     */
     function bool Attack()
     {
         local bool bResult;
         
         SetCurrentAttackType(AT_WeaponAttack);
-        bResult = Super.Attack();
+        bResult = AttackModified();
         
         // If super failed, reset attack state
         if(!bResult)
