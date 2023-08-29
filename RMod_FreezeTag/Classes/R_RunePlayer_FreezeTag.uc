@@ -280,18 +280,6 @@ function PerformThaw()
     GotoState('PlayerWalking');
 }
 
-exec function Suicide()
-{
-    // Anti spam
-	if(Level.TimeSeconds - SuicideTimeStamp <= SuicideCooldown)
-	{
-		return;
-	}
-
-	SuicideTimeStamp = Level.TimeSeconds;
-    KilledBy(Self);
-}
-
 function KilledBy(Pawn EventInstigator)
 {
     Died(EventInstigator, 'suicided', Location );

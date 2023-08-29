@@ -93,8 +93,12 @@ var private float ViewRotPovYaw;
 
 //==============================================================================
 //  Prevent lamers from stupid stuff
-var float SuicideTimeStamp;
-var float SuicideCooldown;
+struct FSuicideSpamParameters
+{
+    var float TimeStamp;
+    var float CooldownDuration;
+};
+var FSuicideSpamParameters SuicideSpamParameters;
 
 struct FChatSpamParameters
 {
@@ -456,12 +460,12 @@ exec function Use()
 exec function Suicide()
 {
     // Anti spam
-    if(Level.TimeSeconds - SuicideTimeStamp <= SuicideCooldown)
+    if(Level.TimeSeconds - SuicideSpamParameters.TimeStamp <= SuicideSpamParameters.CooldownDuration)
     {
         return;
     }
 
-    SuicideTimeStamp = Level.TimeSeconds;
+    SuicideSpamParameters.TimeStamp = Level.TimeSeconds;
     KilledBy( None );
 }
 
@@ -3858,12 +3862,12 @@ defaultproperties
     SpectatorCameraClass=Class'RMod.R_Camera_Spectator'
     LoadoutReplicationInfoClass='RMod.R_LoadoutReplicationInfo'
     bMessageBeep=True
-    SuicideCooldown=5.0
     WeaponSwipeTexture=None
     WeaponSwipeBloodlustTexture=Texture'RuneFX.swipe_red'
     bAlwaysRelevant=True
     bRotateTorso=False
     bLoadoutMenuDoNotShow=False
     bShowRmodDebug=False
+    SuicideSpamParameters=(TimeStamp=0.0,CooldownDuration=5.0)
     ChatSpamParameters=(TimeCost=1.0,TimeAccumulator=20.0,TimeAccumulationMax=20.0,TimePenalty=5.0)
 }
