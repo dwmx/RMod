@@ -90,9 +90,6 @@ var Name PreviousStateName;
 var private float ViewRotPovPitch;  
 var private float ViewRotPovYaw;
 
-// When spectating, Fire() will attempt to respawn when this flag is true
-// If not true, Fire() will cycle through spectator targets
-var bool bRespawnWhenSpectating;
 //==============================================================================
 
 var float SuicideTimeStamp;
@@ -672,8 +669,6 @@ function ServerSpectate()
     GI = R_GameInfo(Level.Game);
     if(GI != None)
     {
-        // Disable respawning as spectator since player explicitly went into spec mode
-        bRespawnWhenSpectating = false;
         GI.RequestSpectate(Self);
     }
 }
@@ -1030,12 +1025,6 @@ function ApplyRunePlayerSubClass(Class<RunePlayer> SubClass)
 
     // Extract the menu name so this looks correct in server browser
     ApplyRunePlayerSubClass_ExtractMenuName(SubClass);
-    
-    // If player explicitly joined as a spectator, disable respawning from spec mode
-    if(SubClass == Class'RMod.R_ASpectatorMarker')
-    {
-        bRespawnWhenSpectating = false;
-    }
 }
 
 /**
@@ -3262,16 +3251,9 @@ state PlayerSpectating
     // Fire cycles view targets
     exec function Fire(optional float F)
     {
-        if(bRespawnWhenSpectating && CheckCanRestart())
+        if(Self.Camera != None)
         {
-            ServerReStartPlayer();
-        }
-        else
-        {
-            if(Self.Camera != None)
-            {
-                Self.Camera.Input_Fire();
-            }
+            Self.Camera.Input_Fire();
         }
     }
     
@@ -3829,6 +3811,5 @@ defaultproperties
     bAlwaysRelevant=True
     bRotateTorso=False
     bLoadoutMenuDoNotShow=False
-    bRespawnWhenSpectating=True
     bShowRmodDebug=False
 }
