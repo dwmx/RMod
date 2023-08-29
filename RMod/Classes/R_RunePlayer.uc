@@ -89,11 +89,25 @@ var Name PreviousStateName;
 // Replicated for spectator POV mode
 var private float ViewRotPovPitch;  
 var private float ViewRotPovYaw;
-
 //==============================================================================
 
-var float SuicideTimeStamp;
-var float SuicideCooldown;
+//==============================================================================
+//  Prevent lamers from stupid stuff
+struct FSuicideSpamParameters
+{
+    var float TimeStamp;
+    var float CooldownDuration;
+};
+var FSuicideSpamParameters SuicideSpamParameters;
+
+struct FChatSpamParameters
+{
+    var float TimeCost;             // Every message costs this much time
+    var float TimeAccumulator;      // How much available time the player has
+    var float TimeAccumulationMax;  // Maximum accumlated chat time
+    var float TimePenalty;          // Time-out for spamming
+};
+var FChatSpamParameters ChatSpamParameters;
 
 //==============================================================================
 //  Client Adjustment variables
@@ -446,13 +460,40 @@ exec function Use()
 exec function Suicide()
 {
     // Anti spam
-    if(Level.TimeSeconds - SuicideTimeStamp <= SuicideCooldown)
+    if(Level.TimeSeconds - SuicideSpamParameters.TimeStamp <= SuicideSpamParameters.CooldownDuration)
     {
         return;
     }
 
-    SuicideTimeStamp = Level.TimeSeconds;
+    SuicideSpamParameters.TimeStamp = Level.TimeSeconds;
     KilledBy( None );
+}
+
+/**
+*   CheckAndHandleChatSpam
+*   Checks if the player is spamming chat and puts them in cooldown if so.
+*   Should be called from any Say functions.
+*   Returns whether or not the player is spamming chat.
+*/
+function bool CheckAndHandleChatSpam()
+{
+    // Check anti spam
+    if(ChatSpamParameters.TimeAccumulator - ChatSpamParameters.TimeCost < 0.0)
+    {
+        // Put player into spam timeout
+        ChatSpamParameters.TimeAccumulator = -ChatSpamParameters.TimePenalty;
+
+        // Tell player to stop spamming
+        ClientMessage("Stop spamming." @ int(ChatSpamParameters.TimePenalty) @ "second cooldown.");
+
+        return true;
+    }
+    else
+    {
+        ChatSpamParameters.TimeAccumulator -= ChatSpamParameters.TimeCost;
+    }
+
+    return false;
 }
 
 /**
@@ -464,6 +505,12 @@ exec function Say( string Msg )
 {
     local Pawn P;
     local R_GameInfo RGI;
+
+    // Anti spam
+    if(CheckAndHandleChatSpam())
+    {
+        return;
+    }
 
     if ( Level.Game.AllowsBroadcast(self, Len(Msg)) )
     {
@@ -502,6 +549,12 @@ exec function TeamSay( string Msg )
     if ( !Level.Game.bTeamGame )
     {
         Say(Msg);
+        return;
+    }
+
+    // Anti spam
+    if(CheckAndHandleChatSpam())
+    {
         return;
     }
 
@@ -822,6 +875,10 @@ event Tick(float DeltaSeconds)
     
     Super.Tick(DeltaSeconds);
     
+    // Anti spam update
+    ChatSpamParameters.TimeAccumulator += DeltaSeconds;
+    ChatSpamParameters.TimeAccumulator = FMin(ChatSpamParameters.TimeAccumulator, ChatSpamParameters.TimeAccumulationMax);
+
     // Hack - prevents runeplayers from pitching up / down when they change states
     // This isn't the best place for this, but it's the easiest.
     NewRotation = Rotation;
@@ -3805,11 +3862,12 @@ defaultproperties
     SpectatorCameraClass=Class'RMod.R_Camera_Spectator'
     LoadoutReplicationInfoClass='RMod.R_LoadoutReplicationInfo'
     bMessageBeep=True
-    SuicideCooldown=5.0
     WeaponSwipeTexture=None
     WeaponSwipeBloodlustTexture=Texture'RuneFX.swipe_red'
     bAlwaysRelevant=True
     bRotateTorso=False
     bLoadoutMenuDoNotShow=False
     bShowRmodDebug=False
+    SuicideSpamParameters=(TimeStamp=0.0,CooldownDuration=5.0)
+    ChatSpamParameters=(TimeCost=1.0,TimeAccumulator=20.0,TimeAccumulationMax=20.0,TimePenalty=5.0)
 }
