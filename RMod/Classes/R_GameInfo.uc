@@ -12,6 +12,11 @@ var config class<R_AColors> ColorsClass;
 var Class<R_AUtilities> UtilitiesClass;
 var config Class<R_AActorSubstitution> ActorSubstitutionClass;
 
+// Persistent score tracking
+var Class<R_PersistentScoreManager> PersistentScoreManagerClass;
+var R_PersistentScoreManager PersistentScoreManager;
+var config bool bEnablePersistentScoreTracking;
+
 // RMod Game Options
 var config Class<R_GameOptions> GameOptionsClass;
 var R_GameOptions GameOptions;
@@ -114,6 +119,7 @@ event PostBeginPlay()
         SpawnLoadoutOptionReplicationInfo();
     }
 
+    SpawnPersistentScoreManager();
     SpawnGameOptions();
 
     RGRI = R_GameReplicationInfo(GameReplicationInfo);
@@ -128,11 +134,35 @@ function SpawnLoadoutOptionReplicationInfo()
     if(LoadoutOptionReplicationInfoClass != None)
     {
         LoadoutOptionReplicationInfo = Spawn(LoadoutOptionReplicationInfoClass);
-        UtilitiesClass.Static.Log("Spawned LoadoutOptionReplicationInfo from class" @ LoadoutOptionReplicationInfoClass);
+        UtilitiesClass.Static.RModLog("Spawned LoadoutOptionReplicationInfo from class" @ LoadoutOptionReplicationInfoClass);
     }
     else
     {
-        UtilitiesClass.Static.Warn("Failed to spawn LoadoutOptionReplicationInfo, no class specified");
+        UtilitiesClass.Static.RModWarn("Failed to spawn LoadoutOptionReplicationInfo, no class specified");
+    }
+}
+
+function SpawnPersistentScoreManager()
+{
+    if(!bEnablePersistentScoreTracking)
+    {
+        UtilitiesClass.Static.RModLog("Persistent score tracking disabled");
+        return;
+    }
+
+    if(PersistentScoreManagerClass != None)
+    {
+        PersistentScoreManager = New(None) PersistentScoreManagerClass;
+    }
+
+    if(PersistentScoreManager != None)
+    {
+        UtilitiesClass.Static.RModLog("Spawned persistent score manager from class" @ PersistentScoreManagerClass);
+        PersistentScoreManager.Initialize(Self);
+    }
+    else
+    {
+        UtilitiesClass.Static.RModWarn("Failed to spawn persistent score manager");
     }
 }
 
@@ -503,7 +533,7 @@ event PlayerPawn Login(
 	IncomingClass = SpawnClass;
 	
 	SpawnClass = RunePlayerClass;
-	
+
 	P = Super.Login(
 		Portal,
 		Options,
@@ -539,8 +569,10 @@ event PlayerPawn Login(
 
 event PostLogin(PlayerPawn NewPlayer)
 {
+    local String IPString;
+
 	Super.PostLogin(NewPlayer);
-	
+
 	// Take care of incoming spectators
 	if(R_RunePlayer(NewPlayer) != None)
 	{
@@ -549,6 +581,20 @@ event PostLogin(PlayerPawn NewPlayer)
 			MakePlayerSpectate(R_RunePlayer(NewPlayer));
 		}
 	}
+
+    // Save player IP to PRI
+    if(NewPlayer != None && R_PlayerReplicationInfo(NewPlayer.PlayerReplicationInfo) != None)
+    {
+        IPString = NewPlayer.GetPlayerNetworkAddress();
+        IPString = Left(IPString, InStr(IPString, ":"));
+        R_PlayerReplicationInfo(NewPlayer.PlayerReplicationInfo).PlayerIP = IPString;
+    }
+
+    // Allow persistent score manager to match saved score data
+    if(PersistentScoreManager != None)
+    {
+        PersistentScoreManager.ApplyPersistentScore(NewPlayer);
+    }
 }
 
 event Logout(Pawn P)
@@ -558,6 +604,12 @@ event Logout(Pawn P)
 	{
 		return;
 	}
+
+    // Update persistent score info when player leaves
+    if(PersistentScoreManager != None)
+    {
+        PersistentScoreManager.SavePersistentScore(P);
+    }
 	
 	Super.Logout(P);
 }
@@ -896,6 +948,8 @@ defaultproperties
     HUDType=Class'RMod.R_RunePlayerHUD'
     HUDTypeSpectator=Class'RMod.R_RunePlayerHUDSpectator'
     GameReplicationInfoClass=Class'RMod.R_GameReplicationInfo'
+    PersistentScoreManagerClass=Class'RMod.R_PersistentScoreManager'
+    bEnablePersistentScoreTracking=true
     bAllowSpectatorBroadcastMessage=false
     AutoAim=0.0
     DefaultPlayerHealth=100
