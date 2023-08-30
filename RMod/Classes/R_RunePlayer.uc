@@ -187,7 +187,8 @@ replication
     reliable if(Role == ROLE_AutonomousProxy)
         ServerResetLevel,
         ServerSpectate,
-        ServerTimeLimit;
+        ServerTimeLimit,
+        ServerTempBan;
         
     reliable if(Role < ROLE_Authority)
         ServerMove_v2;
@@ -693,6 +694,38 @@ function ServerTimeLimit(int DurationMinutes)
     }
     
     GI.PlayerSetTimeLimit(self, DurationMinutes);
+}
+
+/**
+*   TempBan
+*   Temporarily ban a player for some duration.
+*/
+exec function TempBan(int PlayerID, float DurationSeconds, String Reason)
+{
+    ServerTempBan(PlayerID, DurationSeconds, Reason);
+}
+
+function ServerTempBan(int PlayerID, float DurationSeconds, String Reason)
+{
+    local R_GameInfo RGI;
+    local PlayerPawn PlayerPawn;
+
+    if(!VerifyAdminWithErrorMessage())
+    {
+        return;
+    }
+
+    RGI = R_GameInfo(Level.Game);
+    if(RGI == None)
+    {
+        return;
+    }
+
+    PlayerPawn = RGI.GetPlayerPawnByID(PlayerID);
+    if(PlayerPawn != None)
+    {
+        RGI.TempBan(PlayerPawn, DurationSeconds, Reason);
+    }
 }
 
 /**

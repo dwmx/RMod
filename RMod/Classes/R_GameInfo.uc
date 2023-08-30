@@ -12,6 +12,10 @@ var config class<R_AColors> ColorsClass;
 var Class<R_AUtilities> UtilitiesClass;
 var config Class<R_AActorSubstitution> ActorSubstitutionClass;
 
+// Temporary ban management
+var Class<R_TempBanManager> TempBanManagerClass;
+var R_TempBanManager TempBanManager;
+
 // Persistent score tracking
 var Class<R_PersistentScoreManager> PersistentScoreManagerClass;
 var R_PersistentScoreManager PersistentScoreManager;
@@ -119,6 +123,7 @@ event PostBeginPlay()
         SpawnLoadoutOptionReplicationInfo();
     }
 
+    SpawnTempBanManager();
     SpawnPersistentScoreManager();
     SpawnGameOptions();
 
@@ -139,6 +144,20 @@ function SpawnLoadoutOptionReplicationInfo()
     else
     {
         UtilitiesClass.Static.RModWarn("Failed to spawn LoadoutOptionReplicationInfo, no class specified");
+    }
+}
+
+function SpawnTempBanManager()
+{
+    if(TempBanManagerClass != None)
+    {
+        TempBanManager = New(None) TempBanManagerClass;
+    }
+
+    if(TempBanManager != None)
+    {
+        UtilitiesClass.Static.RModLog("Temp ban manager spawned from class" @ TempBanManagerClass);
+        TempBanManager.Initialize(Self);
     }
 }
 
@@ -507,20 +526,96 @@ function PlayerPawn GetPlayerPawnByID(int PlayerID)
 	return None;
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-////	PreLogin
-////	TODO: Add an incoming message or something
-//event PreLogin(
-//	String Options,
-//	String Address,
-//	out String Error,
-//	out String FailCode)
-//{
-//	Super.PreLogin(Options, Address, Error, FailCode);
-//}
+/**
+*   TempBan
+*   Temporarily ban a player for some duration.
+*/
+function TempBan(PlayerPawn P, float DurationSeconds, optional String ReasonString)
+{
+    local String PlayerIPString;
+    local String PlayerIPStringIterator;
+    local Pawn PawnIterator;
+    local Pawn PendingDestroyPawns[64];
+    local int i;
 
-////////////////////////////////////////////////////////////////////////////////
-//	Login
+    if(DurationSeconds < 1.0)
+    {
+        return;
+    }
+
+    if(TempBanManager != None)
+    {
+        PlayerIPString = P.GetPlayerNetworkAddress();
+        PlayerIPString = Left(PlayerIPString, InStr(PlayerIPString, ":"));
+        TempBanManager.ApplyTempBan(PlayerIPString, DurationSeconds, ReasonString);
+
+        i = 0;
+        for(PawnIterator = Level.PawnList; PawnIterator != None; PawnIterator = PawnIterator.NextPawn)
+        {
+            if(PlayerPawn(PawnIterator) != None)
+            {
+                PlayerIPStringIterator = PlayerPawn(PawnIterator).GetPlayerNetworkAddress();
+                PlayerIPStringIterator = Left(PlayerIPStringIterator, InStr(PlayerIPStringIterator, ":"));
+                if(PlayerIPStringIterator == PlayerIPString)
+                {
+                    PendingDestroyPawns[i] = PawnIterator;
+                    ++i;
+                }
+            }
+        }
+
+        for(i = 0; i < 64; ++i)
+        {
+            if(PendingDestroyPawns[i] != None)
+            {
+                PendingDestroyPawns[i].Destroy();
+            }
+        }
+    }
+}
+
+/**
+*   PreLogin (override)
+*   Overridden to check for temporary bans on incoming connections.
+*/
+event PreLogin(
+	String Options,
+	String Address,
+	out String Error,
+	out String FailCode)
+{
+    local String PlayerIPString;
+    local float RemainingTempBanDurationSeconds;
+    local String BanReasonString;
+
+    // Check for temp ban
+    if(TempBanManager != None)
+    {
+        PlayerIPString = Address;
+        PlayerIPString = Left(PlayerIPString, InStr(PlayerIPString, ":"));
+        if(TempBanManager.CheckTempBan(PlayerIPString, RemainingTempBanDurationSeconds, BanReasonString))
+        {
+            Error = "You are temporarily banned.";
+
+            if(BanReasonString != "")
+            {
+                Error = Error @ "Reason:" @ BanReasonString $ ".";
+            }
+
+            Error = Error @ int(RemainingTempBanDurationSeconds) @ "seconds remaining";
+
+            return;
+        }
+    }
+
+	Super.PreLogin(Options, Address, Error, FailCode);
+}
+
+/**
+*   Login (override)
+*   Overridden to force all incoming players to spawn with a common class.
+*   Individual class data is extracted and applied to R_RunePlayer.
+*/
 event PlayerPawn Login(
 	String Portal,
 	String Options,
@@ -948,6 +1043,7 @@ defaultproperties
     HUDType=Class'RMod.R_RunePlayerHUD'
     HUDTypeSpectator=Class'RMod.R_RunePlayerHUDSpectator'
     GameReplicationInfoClass=Class'RMod.R_GameReplicationInfo'
+    TempBanManagerClass=Class'RMod.R_TempBanManager'
     PersistentScoreManagerClass=Class'RMod.R_PersistentScoreManager'
     bEnablePersistentScoreTracking=true
     bAllowSpectatorBroadcastMessage=false
