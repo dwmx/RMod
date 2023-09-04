@@ -109,6 +109,11 @@ struct FChatSpamParameters
 };
 var FChatSpamParameters ChatSpamParameters;
 
+struct FPlayerValidationParameters
+{
+    var float TimeDilation;
+};
+
 //==============================================================================
 //  Client Adjustment variables
 //  These variables control the frequency and client error threshold for the
@@ -191,6 +196,7 @@ replication
         ServerTempBan;
         
     reliable if(Role < ROLE_Authority)
+        ServerValidatePlayer,
         ServerMove_v2;
     
     unreliable if(Role < ROLE_Authority)
@@ -838,6 +844,45 @@ event PostBeginPlay()
             SpawnLoadoutReplicationInfo();
         }
     }
+}
+
+event PostNetBeginPlay()
+{
+    Super.PostNetBeginPlay();
+
+    if(Role < ROLE_Authority)
+    {
+        ValidatePlayer();
+    }
+}
+
+function ValidatePlayer()
+{
+    local FPlayerValidationParameters ValidationParams;
+
+    ValidationParams.TimeDilation = Level.TimeDilation;
+
+    ServerValidatePlayer(ValidationParams);
+}
+
+function ServerValidatePlayer(FPlayerValidationParameters ValidationParams)
+{
+    local R_GameInfo RGI;
+
+    RGI = R_GameInfo(Level.Game);
+    if(RGI == None)
+    {
+        UtilitiesClass.Static.RModLog("ServerValidatePlayer failed, RGI is None");
+        return;
+    }
+
+    if(ValidationParams.TimeDilation != 1.0)
+    {
+        RGI.ReportValidationFailed(Self, "client-side timedilation =" @ ValidationParams.TimeDilation);
+        return;
+    }
+
+    RGI.ReportValidationSucceeded(Self);
 }
 
 /**
@@ -3204,6 +3249,36 @@ state EdgeHanging
     {
         Acceleration = Vect(0.0, 0.0, 0.0);
         Velocity = Vect(0.0, 0.0, 0.0);
+    }
+}
+
+state PlayerValidation
+{
+    event BeginState()
+    {
+        Self.SetCollision(false, false, false);
+        Self.bCollideWorld = false;
+        Self.DrawType = DT_None;
+        Self.bAlwaysRelevant = false;
+        Self.SetPhysics(PHYS_None);
+
+        if(PlayerReplicationInfo != None)
+        {
+            PlayerReplicationInfo.bIsSpectator = true;
+        }
+    }
+
+    event EndState()
+    {
+        Self.SetCollision(true, true, true);
+        Self.bCollideWorld = Self.Default.bCollideWorld;
+        Self.DrawType = Self.Default.DrawType;
+        Self.bAlwaysRelevant = Self.Default.bAlwaysRelevant;
+
+        if(PlayerReplicationInfo != None)
+        {
+            PlayerReplicationInfo.bIsSpectator = false;
+        }
     }
 }
 

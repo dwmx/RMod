@@ -668,13 +668,10 @@ event PostLogin(PlayerPawn NewPlayer)
 
 	Super.PostLogin(NewPlayer);
 
-	// Take care of incoming spectators
+	// All players initially enter into player validation state
 	if(R_RunePlayer(NewPlayer) != None)
 	{
-		if(R_RunePlayer(NewPlayer).RunePlayerSubClass == SpectatorMarkerClass)
-		{
-			MakePlayerSpectate(R_RunePlayer(NewPlayer));
-		}
+        R_RunePlayer(NewPlayer).GotoState('PlayerValidation');
 	}
 
     // Save player IP to PRI
@@ -690,6 +687,36 @@ event PostLogin(PlayerPawn NewPlayer)
     {
         PersistentScoreManager.ApplyPersistentScore(NewPlayer);
     }
+}
+
+function ReportValidationSucceeded(PlayerPawn P)
+{
+    local String PlayerLogString;
+
+    PlayerLogString = UtilitiesClass.Static.GetPlayerIdentityLogString(P);
+    UtilitiesClass.Static.RModLog("Player validation succeeded for" @ PlayerLogString);
+
+    if(R_RunePlayer(P) != None)
+    {
+        if(R_RunePlayer(P).RunePlayerSubClass == SpectatorMarkerClass)
+        {
+            MakePlayerSpectate(R_RunePlayer(P));
+        }
+        else
+        {
+            RestartPlayer(P);
+        }
+    }
+}
+
+function ReportValidationFailed(PlayerPawn P, String ReasonString)
+{
+    local String PlayerLogString;
+
+    PlayerLogString = UtilitiesClass.Static.GetPlayerIdentityLogString(P);
+    UtilitiesClass.Static.RModLog("Player validation failed for" @ PlayerLogString @ "Reason:" @ ReasonString);
+
+    TempBan(P, 300.0);
 }
 
 event Logout(Pawn P)
