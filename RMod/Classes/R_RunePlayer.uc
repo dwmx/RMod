@@ -3264,7 +3264,6 @@ state PlayerValidation
 
         if(PlayerReplicationInfo != None)
         {
-            PlayerReplicationInfo.Team = 255;
             PlayerReplicationInfo.bIsSpectator = true;
         }
     }
@@ -3275,6 +3274,11 @@ state PlayerValidation
         Self.bCollideWorld = Self.Default.bCollideWorld;
         Self.DrawType = Self.Default.DrawType;
         Self.bAlwaysRelevant = Self.Default.bAlwaysRelevant;
+
+        if(PlayerReplicationInfo != None)
+        {
+            PlayerReplicationInfo.bIsSpectator = false;
+        }
     }
 }
 

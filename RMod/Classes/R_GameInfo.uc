@@ -671,11 +671,6 @@ event PostLogin(PlayerPawn NewPlayer)
 	// All players initially enter into player validation state
 	if(R_RunePlayer(NewPlayer) != None)
 	{
-		//if(R_RunePlayer(NewPlayer).RunePlayerSubClass == SpectatorMarkerClass)
-		//{
-		//	MakePlayerSpectate(R_RunePlayer(NewPlayer));
-		//}
-
         R_RunePlayer(NewPlayer).GotoState('PlayerValidation');
 	}
 
