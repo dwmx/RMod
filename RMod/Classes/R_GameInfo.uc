@@ -508,7 +508,6 @@ function bool RestartPlayer( pawn aPlayer )
 	foundStart = aPlayer.SetLocation(startSpot.Location);
 	if( foundStart )
 	{
-		PointCenter = normal(vect(0,0,0) - StartSpot.Location) * randrange(500,700);
 		startSpot.PlayTeleportEffect(aPlayer, true);
 		aPlayer.ClientSetRotation(startSpot.Rotation);
 		aPlayer.SetRotation(startSpot.Rotation);
