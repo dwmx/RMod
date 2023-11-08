@@ -487,28 +487,113 @@ function ResetLevelSoft(optional int DelaySeconds)
 
 function bool RestartPlayer( pawn aPlayer )
 {
-    local bool bResult;
-	if(R_RunePlayer(aPlayer) != None)
-	{
-		R_RunePlayer(aPlayer).DiscardInventory();
-	}
-	DiscardInventory(aPlayer);
+	local NavigationPoint startSpot;
+	local bool foundStart;
+	local int i;
+	local actor A;
+
 	aPlayer.GotoState('PlayerWalking');
+	aplayer.setPhysics(phys_Falling);
 
-	bResult = Super.RestartPlayer(aPlayer);
+	if( bRestartLevel && Level.NetMode!=NM_DedicatedServer && Level.NetMode!=NM_ListenServer )
+		return true;
 
-    if(!bResult)
-    {
-        return false;
-    }
+	startSpot = FindPlayerStart(aPlayer, 255);
+	if( startSpot == None )
+	{
+		log(" Player start not found!!!");
+		return false;
+	}
+		
+	foundStart = aPlayer.SetLocation(startSpot.Location);
+	if( foundStart )
+	{
+		PointCenter = normal(vect(0,0,0) - StartSpot.Location) * randrange(500,700);
+		startSpot.PlayTeleportEffect(aPlayer, true);
+		aPlayer.ClientSetRotation(startSpot.Rotation);
+		aPlayer.SetRotation(startSpot.Rotation);
+		aPlayer.ViewRotation = aPlayer.Rotation;
+		aPlayer.Acceleration = vect(0,0,0);
+		aPlayer.Health = aPlayer.Default.Health;
+		aPlayer.SetCollision( true, true, true );
+		aPlayer.bCollideWorld = true;
+		aPlayer.SetCollisionSize(aPlayer.Default.CollisionRadius, aPlayer.Default.CollisionHeight);
+		aPlayer.ClientSetLocation( startSpot.Location, startSpot.Rotation );
+		aPlayer.bHidden = false;
+		aPlayer.DamageScaling = aPlayer.Default.DamageScaling;
+		aPlayer.SoundDampening = aPlayer.Default.SoundDampening;
 
-    // Override with game stats
-    aPlayer.MaxHealth = DefaultPlayerMaxHealth;
-    aPlayer.Health = DefaultPlayerHealth;
-    aPlayer.MaxPower = DefaultPlayerMaxRunePower;
-    aPlayer.RunePower = DefaultPlayerRunePower;
+		// Team games require this
+		if (bTeamGame)
+			aPlayer.DesiredColorAdjust = GetTeamVectorColor(aPlayer.PlayerReplicationInfo.Team);
+		else
+			aPlayer.DesiredColorAdjust = aPlayer.Default.DesiredColorAdjust;
 
-    return true;
+		if (PlayerPawn(aPlayer)!=None)
+		{
+			PlayerPawn(aPlayer).DesiredPolyColorAdjust = PlayerPawn(aPlayer).Default.DesiredPolyColorAdjust;
+			PlayerPawn(aPlayer).PolyColorAdjust = PlayerPawn(aPlayer).Default.PolyColorAdjust;
+		}
+
+		aPlayer.ReducedDamageType = aPlayer.Default.ReducedDamageType;
+		aPlayer.ReducedDamagePct = aPlayer.Default.ReducedDamagePct;
+		aPlayer.Style = aPlayer.Default.Style;
+		aPlayer.bInvisible = aPlayer.Default.bInvisible;
+		aPlayer.SpeedScale = SS_Circular;
+		aPlayer.bLookFocusPlayer = aPlayer.Default.bLookFocusPlayer;
+		aPlayer.bAlignToFloor = aPlayer.Default.bAlignToFloor;
+		aPlayer.ColorAdjust = aPlayer.Default.ColorAdjust;
+		aPlayer.ScaleGlow = aPlayer.Default.ScaleGlow;
+		aPlayer.Fatness = aPlayer.Default.Fatness;
+		aPlayer.BlendAnimSequence = aPlayer.Default.BlendAnimSequence;
+		aPlayer.DesiredFatness = aPlayer.Default.DesiredFatness;
+		aPlayer.MaxHealth = aPlayer.Default.MaxHealth;
+		aPlayer.Strength = aPlayer.Default.Strength;
+		aPlayer.MaxStrength = aPlayer.Default.MaxStrength;
+		aPlayer.RunePower = aPlayer.Default.RunePower;
+		aPlayer.MaxPower = aPlayer.Default.MaxPower;
+		aPlayer.GroundSpeed = aPlayer.Default.GroundSpeed;
+		// Override with game stats
+		aPlayer.MaxHealth = DefaultPlayerMaxHealth;
+		aPlayer.Health = DefaultPlayerHealth;
+		aPlayer.MaxPower = DefaultPlayerMaxRunePower;
+		aPlayer.RunePower = DefaultPlayerRunePower;
+		aPlayer.SetDefaultPolyGroups();
+		aPlayer.SetDefaultJointFlags();
+		for (i=0; i<aPlayer.NumJoints(); i++)
+		{	// Get rid of all attachments
+			A = aPlayer.DetachActorFromJoint(i);
+			if (A!=None)
+				A.Destroy();
+		}
+		for (i=0; i<NUM_BODYPARTS; i++)
+		{	// Restore body part health
+			aPlayer.BodyPartHealth[i] = aPlayer.Default.BodyPartHealth[i];
+		}
+		// Restore joint flags
+		aPlayer.SetDefaultJointFlags();
+		for (i=0; i<16; i++)
+		{	// Restore polygroup skins/properties
+			aPlayer.SkelGroupSkins[i] = aPlayer.Default.SkelGroupSkins[i];
+			aPlayer.SkelGroupFlags[i] = aPlayer.Default.SkelGroupFlags[i];
+		}
+		aPlayer.SetSkinActor(aPlayer, aPlayer.CurrentSkin);
+
+		AddDefaultInventory(aPlayer);		
+
+		// Reset anim proxy vars
+		if(PlayerPawn(aPlayer) != None && PlayerPawn(aPlayer).AnimProxy != None)
+		{
+			PlayerPawn(aPlayer).AnimProxy.GotoState('Idle');
+		}
+	}
+	else
+		{
+			log(startspot$" Player start not useable!!!");
+			RestartPlayer(aPlayer);
+		}
+
+    return foundStart;
 }
 
 function PlayerPawn GetPlayerPawnByID(int PlayerID)
