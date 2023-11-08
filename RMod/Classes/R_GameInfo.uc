@@ -12,6 +12,15 @@ var config class<R_AColors> ColorsClass;
 var Class<R_AUtilities> UtilitiesClass;
 var config Class<R_AActorSubstitution> ActorSubstitutionClass;
 
+// Temporary ban management
+var Class<R_TempBanManager> TempBanManagerClass;
+var R_TempBanManager TempBanManager;
+
+// Persistent score tracking
+var Class<R_PersistentScoreManager> PersistentScoreManagerClass;
+var R_PersistentScoreManager PersistentScoreManager;
+var config bool bEnablePersistentScoreTracking;
+
 // RMod Game Options
 var config Class<R_GameOptions> GameOptionsClass;
 var R_GameOptions GameOptions;
@@ -114,6 +123,8 @@ event PostBeginPlay()
         SpawnLoadoutOptionReplicationInfo();
     }
 
+    SpawnTempBanManager();
+    SpawnPersistentScoreManager();
     SpawnGameOptions();
 
     RGRI = R_GameReplicationInfo(GameReplicationInfo);
@@ -128,11 +139,49 @@ function SpawnLoadoutOptionReplicationInfo()
     if(LoadoutOptionReplicationInfoClass != None)
     {
         LoadoutOptionReplicationInfo = Spawn(LoadoutOptionReplicationInfoClass);
-        UtilitiesClass.Static.Log("Spawned LoadoutOptionReplicationInfo from class" @ LoadoutOptionReplicationInfoClass);
+        UtilitiesClass.Static.RModLog("Spawned LoadoutOptionReplicationInfo from class" @ LoadoutOptionReplicationInfoClass);
     }
     else
     {
-        UtilitiesClass.Static.Warn("Failed to spawn LoadoutOptionReplicationInfo, no class specified");
+        UtilitiesClass.Static.RModWarn("Failed to spawn LoadoutOptionReplicationInfo, no class specified");
+    }
+}
+
+function SpawnTempBanManager()
+{
+    if(TempBanManagerClass != None)
+    {
+        TempBanManager = New(None) TempBanManagerClass;
+    }
+
+    if(TempBanManager != None)
+    {
+        UtilitiesClass.Static.RModLog("Temp ban manager spawned from class" @ TempBanManagerClass);
+        TempBanManager.Initialize(Self);
+    }
+}
+
+function SpawnPersistentScoreManager()
+{
+    if(!bEnablePersistentScoreTracking)
+    {
+        UtilitiesClass.Static.RModLog("Persistent score tracking disabled");
+        return;
+    }
+
+    if(PersistentScoreManagerClass != None)
+    {
+        PersistentScoreManager = New(None) PersistentScoreManagerClass;
+    }
+
+    if(PersistentScoreManager != None)
+    {
+        UtilitiesClass.Static.RModLog("Spawned persistent score manager from class" @ PersistentScoreManagerClass);
+        PersistentScoreManager.Initialize(Self);
+    }
+    else
+    {
+        UtilitiesClass.Static.RModWarn("Failed to spawn persistent score manager");
     }
 }
 
@@ -477,20 +526,96 @@ function PlayerPawn GetPlayerPawnByID(int PlayerID)
 	return None;
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-////	PreLogin
-////	TODO: Add an incoming message or something
-//event PreLogin(
-//	String Options,
-//	String Address,
-//	out String Error,
-//	out String FailCode)
-//{
-//	Super.PreLogin(Options, Address, Error, FailCode);
-//}
+/**
+*   TempBan
+*   Temporarily ban a player for some duration.
+*/
+function TempBan(PlayerPawn P, float DurationSeconds, optional String ReasonString)
+{
+    local String PlayerIPString;
+    local String PlayerIPStringIterator;
+    local Pawn PawnIterator;
+    local Pawn PendingDestroyPawns[64];
+    local int i;
 
-////////////////////////////////////////////////////////////////////////////////
-//	Login
+    if(DurationSeconds < 1.0)
+    {
+        return;
+    }
+
+    if(TempBanManager != None)
+    {
+        PlayerIPString = P.GetPlayerNetworkAddress();
+        PlayerIPString = Left(PlayerIPString, InStr(PlayerIPString, ":"));
+        TempBanManager.ApplyTempBan(PlayerIPString, DurationSeconds, ReasonString);
+
+        i = 0;
+        for(PawnIterator = Level.PawnList; PawnIterator != None; PawnIterator = PawnIterator.NextPawn)
+        {
+            if(PlayerPawn(PawnIterator) != None)
+            {
+                PlayerIPStringIterator = PlayerPawn(PawnIterator).GetPlayerNetworkAddress();
+                PlayerIPStringIterator = Left(PlayerIPStringIterator, InStr(PlayerIPStringIterator, ":"));
+                if(PlayerIPStringIterator == PlayerIPString)
+                {
+                    PendingDestroyPawns[i] = PawnIterator;
+                    ++i;
+                }
+            }
+        }
+
+        for(i = 0; i < 64; ++i)
+        {
+            if(PendingDestroyPawns[i] != None)
+            {
+                PendingDestroyPawns[i].Destroy();
+            }
+        }
+    }
+}
+
+/**
+*   PreLogin (override)
+*   Overridden to check for temporary bans on incoming connections.
+*/
+event PreLogin(
+	String Options,
+	String Address,
+	out String Error,
+	out String FailCode)
+{
+    local String PlayerIPString;
+    local float RemainingTempBanDurationSeconds;
+    local String BanReasonString;
+
+    // Check for temp ban
+    if(TempBanManager != None)
+    {
+        PlayerIPString = Address;
+        PlayerIPString = Left(PlayerIPString, InStr(PlayerIPString, ":"));
+        if(TempBanManager.CheckTempBan(PlayerIPString, RemainingTempBanDurationSeconds, BanReasonString))
+        {
+            Error = "You are temporarily banned.";
+
+            if(BanReasonString != "")
+            {
+                Error = Error @ "Reason:" @ BanReasonString $ ".";
+            }
+
+            Error = Error @ int(RemainingTempBanDurationSeconds) @ "seconds remaining";
+
+            return;
+        }
+    }
+
+	Super.PreLogin(Options, Address, Error, FailCode);
+}
+
+/**
+*   Login (override)
+*   Overridden to force all incoming players to spawn with a common class.
+*   Individual class data is extracted and applied to R_RunePlayer.
+*/
 event PlayerPawn Login(
 	String Portal,
 	String Options,
@@ -503,7 +628,7 @@ event PlayerPawn Login(
 	IncomingClass = SpawnClass;
 	
 	SpawnClass = RunePlayerClass;
-	
+
 	P = Super.Login(
 		Portal,
 		Options,
@@ -539,16 +664,59 @@ event PlayerPawn Login(
 
 event PostLogin(PlayerPawn NewPlayer)
 {
+    local String IPString;
+
 	Super.PostLogin(NewPlayer);
-	
-	// Take care of incoming spectators
+
+	// All players initially enter into player validation state
 	if(R_RunePlayer(NewPlayer) != None)
 	{
-		if(R_RunePlayer(NewPlayer).RunePlayerSubClass == SpectatorMarkerClass)
-		{
-			MakePlayerSpectate(R_RunePlayer(NewPlayer));
-		}
+        R_RunePlayer(NewPlayer).GotoState('PlayerValidation');
 	}
+
+    // Save player IP to PRI
+    if(NewPlayer != None && R_PlayerReplicationInfo(NewPlayer.PlayerReplicationInfo) != None)
+    {
+        IPString = NewPlayer.GetPlayerNetworkAddress();
+        IPString = Left(IPString, InStr(IPString, ":"));
+        R_PlayerReplicationInfo(NewPlayer.PlayerReplicationInfo).PlayerIP = IPString;
+    }
+
+    // Allow persistent score manager to match saved score data
+    if(PersistentScoreManager != None)
+    {
+        PersistentScoreManager.ApplyPersistentScore(NewPlayer);
+    }
+}
+
+function ReportValidationSucceeded(PlayerPawn P)
+{
+    local String PlayerLogString;
+
+    PlayerLogString = UtilitiesClass.Static.GetPlayerIdentityLogString(P);
+    UtilitiesClass.Static.RModLog("Player validation succeeded for" @ PlayerLogString);
+
+    if(R_RunePlayer(P) != None)
+    {
+        if(R_RunePlayer(P).RunePlayerSubClass == SpectatorMarkerClass)
+        {
+            MakePlayerSpectate(R_RunePlayer(P));
+        }
+        else
+        {
+            RestartPlayer(P);
+        }
+    }
+}
+
+function ReportValidationFailed(PlayerPawn P, String ReasonString)
+{
+    local String PlayerLogString;
+
+    PlayerLogString = UtilitiesClass.Static.GetPlayerIdentityLogString(P);
+    UtilitiesClass.Static.RModLog("Player validation failed for" @ PlayerLogString @ "Reason:" @ ReasonString);
+
+    TempBan(P, 300.0);
 }
 
 event Logout(Pawn P)
@@ -558,6 +726,12 @@ event Logout(Pawn P)
 	{
 		return;
 	}
+
+    // Update persistent score info when player leaves
+    if(PersistentScoreManager != None)
+    {
+        PersistentScoreManager.SavePersistentScore(P);
+    }
 	
 	Super.Logout(P);
 }
@@ -896,6 +1070,9 @@ defaultproperties
     HUDType=Class'RMod.R_RunePlayerHUD'
     HUDTypeSpectator=Class'RMod.R_RunePlayerHUDSpectator'
     GameReplicationInfoClass=Class'RMod.R_GameReplicationInfo'
+    TempBanManagerClass=Class'RMod.R_TempBanManager'
+    PersistentScoreManagerClass=Class'RMod.R_PersistentScoreManager'
+    bEnablePersistentScoreTracking=true
     bAllowSpectatorBroadcastMessage=false
     AutoAim=0.0
     DefaultPlayerHealth=100

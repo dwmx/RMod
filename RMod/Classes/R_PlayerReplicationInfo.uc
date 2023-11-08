@@ -3,6 +3,13 @@
 //=============================================================================
 class R_PlayerReplicationInfo extends Engine.PlayerReplicationInfo;
 
+var String PlayerIP; // Set from R_GameInfo.PostLogin
+
+// If true, this PRI's data will persist between logins when R_GameInfo has
+// persistent score tracking enabled.
+// R_GameInfo sets this to false when multipler players are sharing an IP.
+var bool bShouldPersist;
+
 var int DamageDealt; // Cumulative damage dealt throughout the game
 
 struct FStatTracker
@@ -75,4 +82,5 @@ defaultproperties
     bFirstBlood=False
     MaxSpree=0
     HeadKills=0
+    bShouldPersist=true
 }

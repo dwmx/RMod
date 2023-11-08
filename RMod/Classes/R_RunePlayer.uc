@@ -89,14 +89,30 @@ var Name PreviousStateName;
 // Replicated for spectator POV mode
 var private float ViewRotPovPitch;  
 var private float ViewRotPovYaw;
-
-// When spectating, Fire() will attempt to respawn when this flag is true
-// If not true, Fire() will cycle through spectator targets
-var bool bRespawnWhenSpectating;
 //==============================================================================
 
-var float SuicideTimeStamp;
-var float SuicideCooldown;
+//==============================================================================
+//  Prevent lamers from stupid stuff
+struct FSuicideSpamParameters
+{
+    var float TimeStamp;
+    var float CooldownDuration;
+};
+var FSuicideSpamParameters SuicideSpamParameters;
+
+struct FChatSpamParameters
+{
+    var float TimeCost;             // Every message costs this much time
+    var float TimeAccumulator;      // How much available time the player has
+    var float TimeAccumulationMax;  // Maximum accumlated chat time
+    var float TimePenalty;          // Time-out for spamming
+};
+var FChatSpamParameters ChatSpamParameters;
+
+struct FPlayerValidationParameters
+{
+    var float TimeDilation;
+};
 
 //==============================================================================
 //  Client Adjustment variables
@@ -176,9 +192,11 @@ replication
     reliable if(Role == ROLE_AutonomousProxy)
         ServerResetLevel,
         ServerSpectate,
-        ServerTimeLimit;
+        ServerTimeLimit,
+        ServerTempBan;
         
     reliable if(Role < ROLE_Authority)
+        ServerValidatePlayer,
         ServerMove_v2;
     
     unreliable if(Role < ROLE_Authority)
@@ -449,13 +467,40 @@ exec function Use()
 exec function Suicide()
 {
     // Anti spam
-    if(Level.TimeSeconds - SuicideTimeStamp <= SuicideCooldown)
+    if(Level.TimeSeconds - SuicideSpamParameters.TimeStamp <= SuicideSpamParameters.CooldownDuration)
     {
         return;
     }
 
-    SuicideTimeStamp = Level.TimeSeconds;
+    SuicideSpamParameters.TimeStamp = Level.TimeSeconds;
     KilledBy( None );
+}
+
+/**
+*   CheckAndHandleChatSpam
+*   Checks if the player is spamming chat and puts them in cooldown if so.
+*   Should be called from any Say functions.
+*   Returns whether or not the player is spamming chat.
+*/
+function bool CheckAndHandleChatSpam()
+{
+    // Check anti spam
+    if(ChatSpamParameters.TimeAccumulator - ChatSpamParameters.TimeCost < 0.0)
+    {
+        // Put player into spam timeout
+        ChatSpamParameters.TimeAccumulator = -ChatSpamParameters.TimePenalty;
+
+        // Tell player to stop spamming
+        ClientMessage("Stop spamming." @ int(ChatSpamParameters.TimePenalty) @ "second cooldown.");
+
+        return true;
+    }
+    else
+    {
+        ChatSpamParameters.TimeAccumulator -= ChatSpamParameters.TimeCost;
+    }
+
+    return false;
 }
 
 /**
@@ -467,6 +512,12 @@ exec function Say( string Msg )
 {
     local Pawn P;
     local R_GameInfo RGI;
+
+    // Anti spam
+    if(CheckAndHandleChatSpam())
+    {
+        return;
+    }
 
     if ( Level.Game.AllowsBroadcast(self, Len(Msg)) )
     {
@@ -505,6 +556,12 @@ exec function TeamSay( string Msg )
     if ( !Level.Game.bTeamGame )
     {
         Say(Msg);
+        return;
+    }
+
+    // Anti spam
+    if(CheckAndHandleChatSpam())
+    {
         return;
     }
 
@@ -646,6 +703,38 @@ function ServerTimeLimit(int DurationMinutes)
 }
 
 /**
+*   TempBan
+*   Temporarily ban a player for some duration.
+*/
+exec function TempBan(int PlayerID, float DurationSeconds, String Reason)
+{
+    ServerTempBan(PlayerID, DurationSeconds, Reason);
+}
+
+function ServerTempBan(int PlayerID, float DurationSeconds, String Reason)
+{
+    local R_GameInfo RGI;
+    local PlayerPawn PlayerPawn;
+
+    if(!VerifyAdminWithErrorMessage())
+    {
+        return;
+    }
+
+    RGI = R_GameInfo(Level.Game);
+    if(RGI == None)
+    {
+        return;
+    }
+
+    PlayerPawn = RGI.GetPlayerPawnByID(PlayerID);
+    if(PlayerPawn != None)
+    {
+        RGI.TempBan(PlayerPawn, DurationSeconds, Reason);
+    }
+}
+
+/**
 *   Loadout
 *   Opens the loadout menu when the game mode allows for it
 *   R_GameInfo.bLoadoutsEnabled must be true
@@ -672,8 +761,6 @@ function ServerSpectate()
     GI = R_GameInfo(Level.Game);
     if(GI != None)
     {
-        // Disable respawning as spectator since player explicitly went into spec mode
-        bRespawnWhenSpectating = false;
         GI.RequestSpectate(Self);
     }
 }
@@ -759,6 +846,45 @@ event PostBeginPlay()
     }
 }
 
+event PostNetBeginPlay()
+{
+    Super.PostNetBeginPlay();
+
+    if(Role < ROLE_Authority)
+    {
+        ValidatePlayer();
+    }
+}
+
+function ValidatePlayer()
+{
+    local FPlayerValidationParameters ValidationParams;
+
+    ValidationParams.TimeDilation = Level.TimeDilation;
+
+    ServerValidatePlayer(ValidationParams);
+}
+
+function ServerValidatePlayer(FPlayerValidationParameters ValidationParams)
+{
+    local R_GameInfo RGI;
+
+    RGI = R_GameInfo(Level.Game);
+    if(RGI == None)
+    {
+        UtilitiesClass.Static.RModLog("ServerValidatePlayer failed, RGI is None");
+        return;
+    }
+
+    if(ValidationParams.TimeDilation != 1.0)
+    {
+        RGI.ReportValidationFailed(Self, "client-side timedilation =" @ ValidationParams.TimeDilation);
+        return;
+    }
+
+    RGI.ReportValidationSucceeded(Self);
+}
+
 /**
 *   PostRender (override)
 *   Overridden to render the RMod client debug actor when enabled
@@ -827,6 +953,10 @@ event Tick(float DeltaSeconds)
     
     Super.Tick(DeltaSeconds);
     
+    // Anti spam update
+    ChatSpamParameters.TimeAccumulator += DeltaSeconds;
+    ChatSpamParameters.TimeAccumulator = FMin(ChatSpamParameters.TimeAccumulator, ChatSpamParameters.TimeAccumulationMax);
+
     // Hack - prevents runeplayers from pitching up / down when they change states
     // This isn't the best place for this, but it's the easiest.
     NewRotation = Rotation;
@@ -1030,12 +1160,6 @@ function ApplyRunePlayerSubClass(Class<RunePlayer> SubClass)
 
     // Extract the menu name so this looks correct in server browser
     ApplyRunePlayerSubClass_ExtractMenuName(SubClass);
-    
-    // If player explicitly joined as a spectator, disable respawning from spec mode
-    if(SubClass == Class'RMod.R_ASpectatorMarker')
-    {
-        bRespawnWhenSpectating = false;
-    }
 }
 
 /**
@@ -3128,6 +3252,36 @@ state EdgeHanging
     }
 }
 
+state PlayerValidation
+{
+    event BeginState()
+    {
+        Self.SetCollision(false, false, false);
+        Self.bCollideWorld = false;
+        Self.DrawType = DT_None;
+        Self.bAlwaysRelevant = false;
+        Self.SetPhysics(PHYS_None);
+
+        if(PlayerReplicationInfo != None)
+        {
+            PlayerReplicationInfo.bIsSpectator = true;
+        }
+    }
+
+    event EndState()
+    {
+        Self.SetCollision(true, true, true);
+        Self.bCollideWorld = Self.Default.bCollideWorld;
+        Self.DrawType = Self.Default.DrawType;
+        Self.bAlwaysRelevant = Self.Default.bAlwaysRelevant;
+
+        if(PlayerReplicationInfo != None)
+        {
+            PlayerReplicationInfo.bIsSpectator = false;
+        }
+    }
+}
+
 //==============================================================================
 //  State PlayerSpectating (override)
 //
@@ -3262,16 +3416,9 @@ state PlayerSpectating
     // Fire cycles view targets
     exec function Fire(optional float F)
     {
-        if(bRespawnWhenSpectating && CheckCanRestart())
+        if(Self.Camera != None)
         {
-            ServerReStartPlayer();
-        }
-        else
-        {
-            if(Self.Camera != None)
-            {
-                Self.Camera.Input_Fire();
-            }
+            Self.Camera.Input_Fire();
         }
     }
     
@@ -3823,12 +3970,12 @@ defaultproperties
     SpectatorCameraClass=Class'RMod.R_Camera_Spectator'
     LoadoutReplicationInfoClass='RMod.R_LoadoutReplicationInfo'
     bMessageBeep=True
-    SuicideCooldown=5.0
     WeaponSwipeTexture=None
     WeaponSwipeBloodlustTexture=Texture'RuneFX.swipe_red'
     bAlwaysRelevant=True
     bRotateTorso=False
     bLoadoutMenuDoNotShow=False
-    bRespawnWhenSpectating=True
     bShowRmodDebug=False
+    SuicideSpamParameters=(TimeStamp=0.0,CooldownDuration=5.0)
+    ChatSpamParameters=(TimeCost=1.0,TimeAccumulator=20.0,TimeAccumulationMax=20.0,TimePenalty=5.0)
 }

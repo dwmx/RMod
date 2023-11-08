@@ -13,6 +13,30 @@ static function RModWarn(String S)
 	Warn("[RMod]: " $ S);
 }
 
+/**
+*   GetPlayerIdentityLogString
+*   Returns a uniform identifiable string for a player meant for logging
+*/
+static function String GetPlayerIdentityLogString(Pawn P)
+{
+    local String Result;
+    local PlayerReplicationInfo PRI;
+
+    Result = "{Actor:" @ P $ "}";
+
+    if(P.PlayerReplicationInfo != None)
+    {
+        Result = Result @ "{Name:" @ P.PlayerReplicationInfo.PlayerName $ "}";
+    }
+
+    if(PlayerPawn(P) != None)
+    {
+        Result = Result @ "{IP:" @ PlayerPawn(P).GetPlayerNetworkAddress() $ "}";
+    }
+
+    return Result;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //  Interpolation functions
 //  t: Current time
