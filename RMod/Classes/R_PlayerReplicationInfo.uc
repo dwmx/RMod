@@ -11,6 +11,7 @@ var String PlayerIP; // Set from R_GameInfo.PostLogin
 var bool bShouldPersist;
 
 var int DamageDealt; // Cumulative damage dealt throughout the game
+var string ComputerName;
 
 struct FStatTracker
 {
@@ -25,7 +26,8 @@ var FStatTracker PingTracker;
 replication
 {
     reliable if(Role == ROLE_Authority)
-        DamageDealt;
+        DamageDealt,
+        ComputerName;
 }
 
 simulated function UpdateStatTracker(out FStatTracker StatTracker, int Value)
