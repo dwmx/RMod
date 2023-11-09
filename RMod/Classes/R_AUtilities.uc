@@ -29,6 +29,11 @@ static function String GetPlayerIdentityLogString(Pawn P)
         Result = Result @ "{Name:" @ P.PlayerReplicationInfo.PlayerName $ "}";
     }
 
+    if(R_PlayerReplicationInfo(P.PlayerReplicationInfo) != None)
+    {
+        Result = Result @ "{Device:" @ R_PlayerReplicationInfo(P.PlayerReplicationInfo).Device $ "}";
+    }
+
     if(PlayerPawn(P) != None)
     {
         Result = Result @ "{IP:" @ PlayerPawn(P).GetPlayerNetworkAddress() $ "}";
