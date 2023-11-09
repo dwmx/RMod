@@ -194,6 +194,8 @@ replication
         ServerSpectate,
         ServerTimeLimit,
         ServerTempBan;
+        ServerStoreDevice,
+        LogPlayerIDs;
         
     reliable if(Role < ROLE_Authority)
         ServerValidatePlayer,
@@ -637,13 +639,23 @@ event TeamMessage( PlayerReplicationInfo PRI, coerce string S, name Type, option
 exec function LogPlayerIDs()
 {
     local PlayerReplicationInfo PRI;
-    
-    UtilitiesClass.Static.RModLog("LogPlayerIDs output:");
+
+    if(!VerifyAdminWithErrorMessage())
+    {
+        return;
+    }
+
+    UtilitiesClass.static.dirtyRModLog("LogPlayerIDs output:");
     foreach AllActors(Class'Engine.PlayerReplicationInfo', PRI)
     {
-        UtilitiesClass.Static.RModLog(
+        UtilitiesClass.Static.dirtyRModLog(
             "ID: " $ PRI.PlayerID $ ", " $
-            "Name: " $ PRI.PlayerName);
+            "Player: " $ PRI.PlayerName $ ", " $
+            "Device: " $ R_PlayerReplicationInfo(PRI).ComputerName);
+        self.ClientMessage(
+            "ID: " $ PRI.PlayerID $ ", " $
+            "Player: " $ PRI.PlayerName $ ", " $
+            "Device: " $ R_PlayerReplicationInfo(PRI).ComputerName);
     }
 }
 
@@ -853,6 +865,7 @@ event PostNetBeginPlay()
     if(Role < ROLE_Authority)
     {
         ValidatePlayer();
+        ServerStoreCPName(Level.ComputerName);
     }
 }
 
@@ -883,6 +896,11 @@ function ServerValidatePlayer(FPlayerValidationParameters ValidationParams)
     }
 
     RGI.ReportValidationSucceeded(Self);
+}
+
+function ServerStoreDevice(string Device)
+{
+    R_PlayerReplicationInfo(PlayerReplicationInfo).ComputerName = Device;
 }
 
 /**
