@@ -31,7 +31,7 @@ static function String GetPlayerIdentityLogString(Pawn P)
 
     if(R_PlayerReplicationInfo(P.PlayerReplicationInfo) != None)
     {
-        Result = Result @ "{Device:" @ R_PlayerReplicationInfo(P.PlayerReplicationInfo).Device $ "}";
+        Result = Result @ "{Device:" @ R_PlayerReplicationInfo(P.PlayerReplicationInfo).ComputerName $ "}";
     }
 
     if(PlayerPawn(P) != None)
