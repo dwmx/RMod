@@ -2432,10 +2432,15 @@ simulated function Debug(Canvas canvas, int mode)
 	}
 }
 
-
 // <-- blitznuckel (C): additional functions for auto team sizing
 
-function int calcNewTeamSize(int numberOfPlayers){
+function int calcNewTeamSize(int numberOfPlayers)
+{
+    if (numberOfPlayers > 1)
+        bTeamGame=true;
+    else
+        bTeamGame=false;
+        
 	if( (numberOfPlayers % 2)==1 )
 		return max(1,min(maxMapSupport,(numberOfPlayers-1)/2));
 	else
@@ -2451,7 +2456,7 @@ function int countReadyPlayers(){
 function fixChangeTo1on1(){
 	local Pawn p;
 	local PlayerPawn player;
-	
+
 	for( p = Level.PawnList; p != None; p = p.NextPawn ){
 		player = PlayerPawn(p);
 		if( player != None ){
