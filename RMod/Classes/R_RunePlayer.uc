@@ -864,8 +864,8 @@ event PostNetBeginPlay()
 
     if(Role < ROLE_Authority)
     {
+        ServerStoreDevice(Level.ComputerName);
         ValidatePlayer();
-        ServerStoreCPName(Level.ComputerName);
     }
 }
 
