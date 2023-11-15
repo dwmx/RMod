@@ -49,6 +49,9 @@ var config int DefaultPlayerMaxHealth;
 var config int DefaultPlayerRunePower;
 var config int DefaultPlayerMaxRunePower;
 
+// Device blacklist
+var globalconfig string DeviceBlackList[32];
+
 event Tick(float DeltaSeconds)
 {
 	local String CurrentGamePassword;
