@@ -873,14 +873,13 @@ function ValidatePlayer()
 {
     local FPlayerValidationParameters ValidationParams;
     ValidationParams.TimeDilation = Level.TimeDilation;
-    //ValidationParams.ComputerName = R_PlayerReplicationInfo(PlayerReplicationInfo).ComputerName;
     ServerValidatePlayer(ValidationParams);
 }
 
 function ServerValidatePlayer(FPlayerValidationParameters ValidationParams)
 {
     local R_GameInfo RGI;
-    local String ComputerNameMatchOnBlackList;
+    local String DeviceMatchOnBlackList;
     local int i;
 
     RGI = R_GameInfo(Level.Game);
@@ -894,14 +893,14 @@ function ServerValidatePlayer(FPlayerValidationParameters ValidationParams)
     {
         if(R_PlayerReplicationInfo(PlayerReplicationInfo).ComputerName == RGI.DeviceBlackList[i])
         {
-            ComputerNameMatchOnBlackList = RGI.DeviceBlackList[i];
-            UtilitiesClass.static.dirtyRModLog("ServerValidatePlayer failed, device is blacklisted " @ ComputerNameMatchOnBlackList);
+            DeviceMatchOnBlackList = RGI.DeviceBlackList[i];
+            UtilitiesClass.static.dirtyRModLog("ServerValidatePlayer failed, device is blacklisted " @ DeviceMatchOnBlackList);
             //break if found
             break;
         }
     }
 
-    if(R_PlayerReplicationInfo(PlayerReplicationInfo).ComputerName == ComputerNameMatchOnBlackList)
+    if(R_PlayerReplicationInfo(PlayerReplicationInfo).ComputerName == DeviceMatchOnBlackList)
     {
         RGI.ReportValidationFailed(self, "client-side device is on the blacklist");
         return;
