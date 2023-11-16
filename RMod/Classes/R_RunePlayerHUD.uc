@@ -907,6 +907,13 @@ simulated function Tick(float DeltaSeconds)
 	}
 }
 
+simulated function preRender( canvas Canvas )
+{
+	super.preRender(Canvas);
+
+	PlayerPawn(Owner).RendMap=5;
+}
+
 simulated function PostRender( canvas Canvas )
 {
 	local PlayerPawn thePlayer;
@@ -915,8 +922,6 @@ simulated function PostRender( canvas Canvas )
 	local String DrawString;
 
 	thePlayer = PlayerPawn(Owner);
-
-	thePlayer.RendMap=5;
 	//thePlayer = GetPawnContext();
 	if (thePlayer == None || thePlayer.RendMap == 0)
 		return;
