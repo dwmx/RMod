@@ -3,6 +3,13 @@ class R_RunePlayerHUD_Arena extends RMod.R_RunePlayerHUD;
 var Texture DisplayNumbers[10];
 var float BackgroundFade;
 
+simulated function preRender( canvas Canvas )
+{
+	super.preRender(Canvas);
+
+	PlayerPawn(Owner).RendMap=5;
+}
+
 simulated function PostRender( canvas Canvas )
 {
 	local PlayerPawn thePlayer;
@@ -10,8 +17,6 @@ simulated function PostRender( canvas Canvas )
 	Super.PostRender(Canvas);
 
 	thePlayer = PlayerPawn(Owner);
-
-	thePlayer.RendMap=5;
 
 	if(thePlayer == None || HudMode == 0 || thePlayer.bShowMenu 
 		|| thePlayer.bShowScores || Level.Pauser != "" || thePlayer.RendMap == 0)
