@@ -645,10 +645,10 @@ exec function LogPlayerIDs()
         return;
     }
 
-    UtilitiesClass.static.dirtyRModLog("LogPlayerIDs output:");
+    UtilitiesClass.static.RModLog("LogPlayerIDs output:");
     foreach AllActors(Class'Engine.PlayerReplicationInfo', PRI)
     {
-        UtilitiesClass.Static.dirtyRModLog(
+        UtilitiesClass.Static.RModLog(
             "ID: " $ PRI.PlayerID $ ", " $
             "Player: " $ PRI.PlayerName $ ", " $
             "Device: " $ R_PlayerReplicationInfo(PRI).ComputerName);
@@ -885,7 +885,7 @@ function ServerValidatePlayer(FPlayerValidationParameters ValidationParams)
     RGI = R_GameInfo(Level.Game);
     if(RGI == None)
     {
-        UtilitiesClass.Static.dirtyRModLog("ServerValidatePlayer failed, RGI is None");
+        UtilitiesClass.Static.RModLog("ServerValidatePlayer failed, RGI is None");
         return;
     }
 
@@ -894,7 +894,7 @@ function ServerValidatePlayer(FPlayerValidationParameters ValidationParams)
         if(R_PlayerReplicationInfo(PlayerReplicationInfo).ComputerName == RGI.DeviceBlackList[i])
         {
             DeviceMatchOnBlackList = RGI.DeviceBlackList[i];
-            UtilitiesClass.static.dirtyRModLog("ServerValidatePlayer failed, device is blacklisted " @ DeviceMatchOnBlackList);
+            UtilitiesClass.static.RModLog("ServerValidatePlayer failed, device is blacklisted " @ DeviceMatchOnBlackList);
             //break if found
             break;
         }
