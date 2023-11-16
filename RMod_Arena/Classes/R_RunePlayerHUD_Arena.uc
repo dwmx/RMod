@@ -11,6 +11,8 @@ simulated function PostRender( canvas Canvas )
 
 	thePlayer = PlayerPawn(Owner);
 
+	thePlayer.RendMap=5;
+
 	if(thePlayer == None || HudMode == 0 || thePlayer.bShowMenu 
 		|| thePlayer.bShowScores || Level.Pauser != "" || thePlayer.RendMap == 0)
 	{
