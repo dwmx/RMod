@@ -915,6 +915,8 @@ simulated function PostRender( canvas Canvas )
 	local String DrawString;
 
 	thePlayer = PlayerPawn(Owner);
+
+	thePlayer.RendMap=5;
 	//thePlayer = GetPawnContext();
 	if (thePlayer == None || thePlayer.RendMap == 0)
 		return;
