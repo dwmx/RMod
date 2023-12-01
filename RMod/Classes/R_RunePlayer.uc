@@ -277,6 +277,19 @@ function Touch(Actor Other)
 }
 
 /**
+*   CanPickup (override)
+*   Overridden to prevent duplicate inventory pickups.
+*/
+function bool CanPickup(Inventory Item)
+{
+    if(FindInventoryType(Item.Class) != None)
+    {
+        return false;
+    }
+    return Super.CanPickup(Item);
+}
+
+/**
 *   VerifyAdminWithErrorMessage
 *   Check if this player has admin rights and send a client message if not.
 */
