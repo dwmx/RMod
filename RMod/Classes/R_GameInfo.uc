@@ -49,8 +49,11 @@ var config int DefaultPlayerMaxHealth;
 var config int DefaultPlayerRunePower;
 var config int DefaultPlayerMaxRunePower;
 
-// Device blacklist
-var globalconfig string DeviceBlackList[32];
+//Device AdminList
+var globalconfig string DeviceAdminList[32];
+
+//Device Whitelist
+var globalconfig string DeviceWhitelist[256];
 
 event Tick(float DeltaSeconds)
 {
