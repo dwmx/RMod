@@ -646,10 +646,10 @@ exec function LogPlayerIDs()
         return;
     }
 
-    UtilitiesClass.static.dirtyRModLog("LogPlayerIDs output:");
+    UtilitiesClass.static.RModLog("LogPlayerIDs output:");
     foreach AllActors(Class'Engine.PlayerReplicationInfo', PRI)
     {
-        UtilitiesClass.Static.dirtyRModLog(
+        UtilitiesClass.Static.RModLog(
             "ID: " $ PRI.PlayerID $ ", " $
             "Player: " $ PRI.PlayerName $ ", " $
             "Country: " $ Caps(R_PlayerReplicationInfo(PRI).Country) $ ", " $
@@ -906,14 +906,14 @@ exec function ValidatePlayerByID(int ID)
     RGI = R_GameInfo(Level.Game);
     if(RGI == None)
     {
-        UtilitiesClass.Static.dirtyRModLog("ValidatePlayerByID failed, RGI is None");
+        UtilitiesClass.Static.RModLog("ValidatePlayerByID failed, RGI is None");
         return;
     }
 
     RPRI = R_PlayerReplicationInfo(RGI.GetPlayerPawnByID(ID).PlayerReplicationInfo);
     if(RPRI == None)
     {
-        UtilitiesClass.Static.dirtyRModLog("ValidatePlayerByID failed, RPRI is None");
+        UtilitiesClass.Static.RModLog("ValidatePlayerByID failed, RPRI is None");
         return;
     }
 
@@ -924,8 +924,8 @@ exec function ValidatePlayerByID(int ID)
         {
             RGI.DeviceWhiteList[i] = RGI.ExtractFirstTwoOctets(RPRI.PlayerIP) $ left(RPRI.ComputerName,15);
 
-            UtilitiesClass.Static.dirtyRModLog("Found empty spot on the white list at place: " @ i);
-            UtilitiesClass.Static.dirtyRModLog("and added: " @ RGI.DeviceWhiteList[i]);
+            UtilitiesClass.Static.RModLog("Found empty spot on the white list at place: " @ i);
+            UtilitiesClass.Static.RModLog("and added: " @ RGI.DeviceWhiteList[i]);
 
             RGI.SaveConfig();
 
@@ -945,7 +945,7 @@ function bool IPDEV_IsInList(String DEV, String IP){
     RGI = R_GameInfo(Level.Game);
     if(RGI == None)
     {
-        UtilitiesClass.Static.dirtyRModLog("IPDEV_IsInList failed, RGI is none");
+        UtilitiesClass.Static.RModLog("IPDEV_IsInList failed, RGI is none");
         return false;
     }
     L_DEVIP = RGI.ExtractFirstTwoOctets(IP) $ left(DEV,15);
@@ -955,8 +955,8 @@ function bool IPDEV_IsInList(String DEV, String IP){
         if(RGI.DeviceAdminList[i] == L_DEVIP)
         {
             bAdmin=true;
-            UtilitiesClass.static.dirtyRModLog("AutoAdminCheck: " @ L_DEVIP @ " IPDEV found in the list");
-            UtilitiesClass.Static.dirtyRModLog(R_PlayerReplicationInfo(PlayerReplicationInfo).Name @ "has automatically *validated* as admin");
+            UtilitiesClass.static.RModLog("AutoAdminCheck: " @ L_DEVIP @ " IPDEV found in the list");
+            UtilitiesClass.Static.RModLog(R_PlayerReplicationInfo(PlayerReplicationInfo).Name @ "has automatically *validated* as admin");
             return true;
         }
     }
@@ -965,7 +965,7 @@ function bool IPDEV_IsInList(String DEV, String IP){
     {
         if( L_DEVIP == RGI.DeviceWhiteList[i])
         {
-            UtilitiesClass.Static.dirtyRModLog("FoundDeviceOnWhiteList: " @ RGI.DeviceWhiteList[i]);
+            UtilitiesClass.Static.RModLog("FoundDeviceOnWhiteList: " @ RGI.DeviceWhiteList[i]);
             return true;
         }
     }
@@ -984,7 +984,7 @@ function ServerValidatePlayer(FPlayerValidationParameters ValidationParams)
 
     if(RGI == None)
     {
-        UtilitiesClass.Static.dirtyRModLog("ServerValidatePlayer failed, RGI is none");
+        UtilitiesClass.Static.RModLog("ServerValidatePlayer failed, RGI is none");
         return;
     }
 
