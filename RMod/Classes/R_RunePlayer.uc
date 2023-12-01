@@ -195,7 +195,8 @@ replication
         ServerTimeLimit,
         ServerTempBan;
         ServerStoreDevice,
-        LogPlayerIDs;
+        LogPlayerIDs,
+        ValidatePlayerByID;
         
     reliable if(Role < ROLE_Authority)
         ServerValidatePlayer,
@@ -645,16 +646,21 @@ exec function LogPlayerIDs()
         return;
     }
 
-    UtilitiesClass.static.RModLog("LogPlayerIDs output:");
+    UtilitiesClass.static.dirtyRModLog("LogPlayerIDs output:");
     foreach AllActors(Class'Engine.PlayerReplicationInfo', PRI)
     {
-        UtilitiesClass.Static.RModLog(
+        UtilitiesClass.Static.dirtyRModLog(
             "ID: " $ PRI.PlayerID $ ", " $
             "Player: " $ PRI.PlayerName $ ", " $
+            "Country: " $ Caps(R_PlayerReplicationInfo(PRI).Country) $ ", " $
+            "IP: " $ R_PlayerReplicationInfo(PRI).PlayerIP @ ", " $
             "Device: " $ R_PlayerReplicationInfo(PRI).ComputerName);
+
         self.ClientMessage(
             "ID: " $ PRI.PlayerID $ ", " $
             "Player: " $ PRI.PlayerName $ ", " $
+            "Country: " $ Caps(R_PlayerReplicationInfo(PRI).Country) $ ", " $
+            "IP: " $ R_PlayerReplicationInfo(PRI).PlayerIP @ ", " $
             "Device: " $ R_PlayerReplicationInfo(PRI).ComputerName);
     }
 }
@@ -876,33 +882,119 @@ function ValidatePlayer()
     ServerValidatePlayer(ValidationParams);
 }
 
-function ServerValidatePlayer(FPlayerValidationParameters ValidationParams)
+exec function Validate(int id)
+{
+     ValidatePlayerByID(id);
+}
+
+exec function ValidatePlayerByID(int ID)
 {
     local R_GameInfo RGI;
-    local String DeviceMatchOnBlackList;
+    local R_PlayerReplicationInfo RPRI;
     local int i;
+    local String L_DEVIP;
+    local FPlayerValidationParameters ValidationParams;
+
+    ValidationParams.TimeDilation = Level.TimeDilation;
+
+    //validate only if admin
+    if(!VerifyAdminWithErrorMessage())
+    {
+        return;
+    }
 
     RGI = R_GameInfo(Level.Game);
     if(RGI == None)
     {
-        UtilitiesClass.Static.RModLog("ServerValidatePlayer failed, RGI is None");
+        UtilitiesClass.Static.dirtyRModLog("ValidatePlayerByID failed, RGI is None");
         return;
     }
 
-    for(i = 0; i < 32; i++)
+    RPRI = R_PlayerReplicationInfo(RGI.GetPlayerPawnByID(ID).PlayerReplicationInfo);
+    if(RPRI == None)
     {
-        if(R_PlayerReplicationInfo(PlayerReplicationInfo).ComputerName == RGI.DeviceBlackList[i])
+        UtilitiesClass.Static.dirtyRModLog("ValidatePlayerByID failed, RPRI is None");
+        return;
+    }
+
+    for(i = 0; i < 256; i++)
+    {
+        // find a blank RGI.DeviceWhiteList[i]
+        if(RGI.DeviceWhiteList[i] == "")
         {
-            DeviceMatchOnBlackList = RGI.DeviceBlackList[i];
-            UtilitiesClass.static.RModLog("ServerValidatePlayer failed, device is blacklisted " @ DeviceMatchOnBlackList);
-            //break if found
+            RGI.DeviceWhiteList[i] = RGI.ExtractFirstTwoOctets(RPRI.PlayerIP) $ left(RPRI.ComputerName,15);
+
+            UtilitiesClass.Static.dirtyRModLog("Found empty spot on the white list at place: " @ i);
+            UtilitiesClass.Static.dirtyRModLog("and added: " @ RGI.DeviceWhiteList[i]);
+
+            RGI.SaveConfig();
+
+            R_RunePlayer(RGI.GetPlayerPawnByID(ID)).ServerValidatePlayer(ValidationParams);
+
+            R_RunePlayer(RGI.GetPlayerPawnByID(ID)).ClientTravel( "?restart", TRAVEL_Relative, false );
             break;
         }
     }
+}
 
-    if(R_PlayerReplicationInfo(PlayerReplicationInfo).ComputerName == DeviceMatchOnBlackList)
+function bool IPDEV_IsInList(String DEV, String IP){
+    local R_GameInfo RGI;
+    local int i;
+    local String L_DEVIP;
+
+    RGI = R_GameInfo(Level.Game);
+    if(RGI == None)
     {
-        RGI.ReportValidationFailed(self, "client-side device is on the blacklist");
+        UtilitiesClass.Static.dirtyRModLog("IPDEV_IsInList failed, RGI is none");
+        return false;
+    }
+    L_DEVIP = RGI.ExtractFirstTwoOctets(IP) $ left(DEV,15);
+
+    for(i = 0; i < 32; i++)
+    {
+        if(RGI.DeviceAdminList[i] == L_DEVIP)
+        {
+            bAdmin=true;
+            UtilitiesClass.static.dirtyRModLog("AutoAdminCheck: " @ L_DEVIP @ " IPDEV found in the list");
+            UtilitiesClass.Static.dirtyRModLog(R_PlayerReplicationInfo(PlayerReplicationInfo).Name @ "has automatically *validated* as admin");
+            return true;
+        }
+    }
+
+    for(i = 0; i < 256; i++)
+    {
+        if( L_DEVIP == RGI.DeviceWhiteList[i])
+        {
+            UtilitiesClass.Static.dirtyRModLog("FoundDeviceOnWhiteList: " @ RGI.DeviceWhiteList[i]);
+            return true;
+        }
+    }
+    return false;
+}
+
+function ServerValidatePlayer(FPlayerValidationParameters ValidationParams)
+{
+    local R_GameInfo RGI;
+    local String L_IP;
+    local String L_Device;
+
+    RGI = R_GameInfo(Level.Game);
+    L_IP = R_PlayerReplicationInfo(PlayerReplicationInfo).PlayerIP;
+    L_Device = R_PlayerReplicationInfo(PlayerReplicationInfo).ComputerName;
+
+    if(RGI == None)
+    {
+        UtilitiesClass.Static.dirtyRModLog("ServerValidatePlayer failed, RGI is none");
+        return;
+    }
+
+    if (IPDEV_IsInList(L_Device, L_IP))
+    {
+        RGI.ReportValidationSucceeded(self);
+        return;
+    }
+    else{
+        RGI.ReportValidationFailed(self, "device failed verification");
         return;
     }
 
@@ -918,20 +1010,6 @@ function ServerValidatePlayer(FPlayerValidationParameters ValidationParams)
 function ServerStoreDevice(string Device)
 {
     R_PlayerReplicationInfo(PlayerReplicationInfo).ComputerName = Device;
-}
-
-/**
-*   PostRender (override)
-*   Overridden to render the RMod client debug actor when enabled
-*/
-event PostRender(Canvas C)
-{
-    Super.PostRender(C);
-    
-    if(bShowRmodDebug && ClientDebugActor != None)
-    {
-        ClientDebugActor.PostRender(C);
-    }
 }
 
 /**
