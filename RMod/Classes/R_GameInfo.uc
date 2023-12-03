@@ -905,6 +905,7 @@ function AddDefaultInventory(Pawn PlayerPawn)
             newWeapon = Spawn(SpawnWeaponClass,,,PlayerPawn.Location);
             if(newWeapon != None)
             {
+                newWeapon.RespawnTime = 0.0;
                 newWeapon.bTossedOut = true;
                 newWeapon.Instigator = PlayerPawn;
                 newWeapon.BecomeItem();
@@ -932,6 +933,7 @@ function AddDefaultInventory(Pawn PlayerPawn)
             newShield = Spawn(SpawnShieldClass,,,PlayerPawn.Location);
             if(newShield != None)
             {
+                newShield.RespawnTime = 0.0;
                 newShield.bTossedOut = true;
                 newShield.Instigator = PlayerPawn;
                 newShield.BecomeItem();
