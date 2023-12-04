@@ -1759,6 +1759,7 @@ function SetArenaTeleportSpot(NavigationPoint N, Pawn aPlayer)
 		N.PlayTeleportEffect(aPlayer, true);
 		aPlayer.SetRotation(N.Rotation);
 		aPlayer.ViewRotation = aPlayer.Rotation;
+		aPlayer.ClientSetRotation(N.Rotation);
 		aPlayer.Acceleration = vect(0,0,0);
 		aPlayer.Velocity = vect(0,0,0);
 		aPlayer.ClientSetLocation(N.Location, N.Rotation);
@@ -1766,8 +1767,6 @@ function SetArenaTeleportSpot(NavigationPoint N, Pawn aPlayer)
 
 	ArenaStart(N).Trigger(None, None);
 }
-
-
 
 //==============================================================
 //
