@@ -510,7 +510,6 @@ function bool RestartPlayer( pawn aPlayer )
 	{
 		startSpot.PlayTeleportEffect(aPlayer, True);
 		aPlayer.ClientSetRotation(startSpot.Rotation);
-		aPlayer.SetRotation(startSpot.Rotation);
 		aPlayer.ViewRotation = aPlayer.Rotation;
 		aPlayer.Acceleration = vect(0,0,0);
 		aPlayer.Health = aPlayer.default.Health;
