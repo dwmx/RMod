@@ -3,6 +3,13 @@ class R_RunePlayerHUD_Arena extends RMod.R_RunePlayerHUD;
 var Texture DisplayNumbers[10];
 var float BackgroundFade;
 
+simulated function preRender( canvas Canvas )
+{
+	Super.preRender(Canvas);
+
+	PlayerPawn(Owner).RendMap = 5;
+}
+
 simulated function PostRender( canvas Canvas )
 {
 	local PlayerPawn thePlayer;
