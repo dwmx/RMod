@@ -484,6 +484,17 @@ state Throw
             }
         }
 
+		if (Pawn(HitActor) != None && HitActor.Skeletal != None) 
+		{
+			hitjoint = HitActor.ClosestJointTo(Location);
+			HitLoc = HitActor.GetJointPos(hitjoint);
+		}
+		else 
+		{
+			hitjoint = 0;
+			HitLoc = HitActor.Location;
+		}
+
         if(SwipeArrayCheck(HitActor, 0, 0))
         {
             if(HitActor.JointDamaged(DamageAmount, Pawn(Owner), HitLoc, Velocity*Mass, ThrownDamageType, 0))
