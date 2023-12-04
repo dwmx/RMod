@@ -3228,6 +3228,7 @@ state PlayerWalking
         
             SetRotation(rotator(GrabNormal));
             ViewRotation.Yaw = Rotation.Yaw; // Align View with Player position while grabbing edge
+			ClientSetRotation(rotator(GrabNormal));
 
             // Save the final distance (used for choosing the correct anim)
             GrabLocationDist = GrabLocationUp.Z - Location.Z;
