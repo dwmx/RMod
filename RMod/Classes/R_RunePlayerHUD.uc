@@ -907,6 +907,13 @@ simulated function Tick(float DeltaSeconds)
 	}
 }
 
+simulated function preRender( canvas Canvas )
+{
+	Super.preRender(Canvas);
+
+	PlayerPawn(Owner).RendMap = 5;
+}
+
 simulated function PostRender( canvas Canvas )
 {
 	local PlayerPawn thePlayer;
