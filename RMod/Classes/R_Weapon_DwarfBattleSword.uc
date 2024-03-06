@@ -194,5 +194,6 @@ defaultproperties
      SkelGroupSkins(0)=Texture'weapons.battleswordsword'
      SkelGroupSkins(1)=Texture'weapons.battleswordsword'
      SkelGroupSkins(2)=Texture'weapons.battleswordsword'
+     BloodTexture=Texture'weapons.battleswordsword'
      WeaponTier=5
 }
