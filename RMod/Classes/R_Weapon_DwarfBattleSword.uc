@@ -188,8 +188,12 @@ defaultproperties
      DropSound=Sound'WeaponsSnd.Drops.sworddrop01'
      Mass=18.000000
      Skeletal=SkelModel'weapons.battlesword'
+     SkelGroupFlags(0)=2
+     SkelGroupFlags(1)=2
+     SkelGroupFlags(2)=2
      SkelGroupSkins(0)=Texture'weapons.battleswordsword'
-     SkelGroupSkins(1)=Texture'weapons.battleswordChrome'
+     SkelGroupSkins(1)=Texture'weapons.battleswordsword'
      SkelGroupSkins(2)=Texture'weapons.battleswordsword'
+     BloodTexture=Texture'weapons.battleswordsword'
      WeaponTier=5
 }
