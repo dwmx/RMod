@@ -818,7 +818,7 @@ event PreBeginPlay()
     Super(PlayerPawn).PreBeginPlay();
 
     // Spawn Torso Animation proxy
-    AnimProxy = Spawn(Self.SpawnableAnimationProxyClass, Self);
+    SpawnAnimProxy();
 
     OldCameraStart = Location;
     OldCameraStart.Z += CameraHeight;
@@ -830,6 +830,11 @@ event PreBeginPlay()
 
     // Adjust CrouchHeight to new DrawScale
     CrouchHeight = CrouchHeight * DrawScale;
+}
+
+function SpawnAnimProxy()
+{
+    AnimProxy = Spawn(Self.SpawnableAnimationProxyClass, Self);
 }
 
 /**
@@ -1371,43 +1376,12 @@ function ApplyRunePlayerSubClass_ExtractMenuName(Class<RunePlayer> SubClass)
 //==============================================================================
 //  Begin animation function overrides
 //==============================================================================
-/***
-*   PlayMoving (override)
-*   Overridden to fix the crouching 2-hand backward-45-right animations.
-*   Original issue caused player to enter into the BaseFrame pose because the animation name was invalid.
-*/
-function PlayMoving(optional float tween)
+function MovementDir_e GetAnimationMovementDirection()
 {
-    local name LowerName, UpperName;
-    local bool bDefending;
     local float dp;
     local vector X, Y, Z;
     local bool bRight;
     local MovementDir_e dir;
-
-    if (health <= 0)
-        return;
-    
-    if (Role == ROLE_AutonomousProxy && IsAnimating()) { // 108  fix client-side leg animations
-        if (AnimSequence == 'neutral_kick' ||
-            AnimSequence == 'PumpTrigger' ||
-            AnimSequence == 'LeverTrigger' ||
-            AnimSequence == 'S3_Taunt')
-                return;
-
-        if (Weapon != None) {
-            if (AnimSequence == Weapon.A_JumpAttack ||
-                AnimSequence == Weapon.A_Taunt ||
-                AnimSequence == Weapon.A_PumpTrigger ||
-                AnimSequence == Weapon.A_LeverTrigger)
-                    return;
-        }
-    }
-    
-    if(AnimProxy != None)
-        bDefending = (AnimProxy.GetStateName() == 'Defending');
-    else
-        bDefending = false;
 
     // Determine the direction the player is attempting to move
     GetAxes(Rotation, X, Y, Z);
@@ -1474,6 +1448,46 @@ function PlayMoving(optional float tween)
         else
             dir = MD_RIGHT;
     }
+
+    return dir;
+}
+
+/***
+*   PlayMoving (override)
+*   Overridden to fix the crouching 2-hand backward-45-right animations.
+*   Original issue caused player to enter into the BaseFrame pose because the animation name was invalid.
+*/
+function PlayMoving(optional float tween)
+{
+    local name LowerName, UpperName;
+    local bool bDefending;
+    local MovementDir_e dir;
+
+    if (health <= 0)
+        return;
+    
+    if (Role == ROLE_AutonomousProxy && IsAnimating()) { // 108  fix client-side leg animations
+        if (AnimSequence == 'neutral_kick' ||
+            AnimSequence == 'PumpTrigger' ||
+            AnimSequence == 'LeverTrigger' ||
+            AnimSequence == 'S3_Taunt')
+                return;
+
+        if (Weapon != None) {
+            if (AnimSequence == Weapon.A_JumpAttack ||
+                AnimSequence == Weapon.A_Taunt ||
+                AnimSequence == Weapon.A_PumpTrigger ||
+                AnimSequence == Weapon.A_LeverTrigger)
+                    return;
+        }
+    }
+    
+    if(AnimProxy != None)
+        bDefending = (AnimProxy.GetStateName() == 'Defending');
+    else
+        bDefending = false;
+
+    dir = GetAnimationMovementDirection();
 
     // If Attacking and running foward or backward, then let the upper body handle the leg motion
     if(AnimProxy != None && AnimProxy.GetStateName() == 'Attacking')

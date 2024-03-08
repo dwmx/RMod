@@ -1,0 +1,375 @@
+//==============================================================================
+//  R_RunePlayer_Creature
+//==============================================================================
+class R_RunePlayer_Creature extends R_RunePlayer config(RMod);
+
+// These are for dwarf skel
+const SKELGROUP_TORSO = 1;
+const SKELGROUP_HEAD = 2;
+const SKELGROUP_NECK_CAP = 8;
+const SKELGROUP_ARM_R = 3;
+const SKELGROUP_SHOULDER_R = 4;
+const SKELGROOP_ARM_CAP_R = 5;
+const SKELGROUP_ARM_CAP_L = 6;
+const SKELGROUP_SHOULDER_L = 7;
+const SKELGROUP_LEG_R = 9;
+const SKELGROUP_LEG_L = 10;
+const SKELGROUP_ARM_L = 11;
+const SKELGROUP_EARS_FACE = 12;
+
+var R_CreatureProxy UpperProxy;
+
+replication
+{
+    reliable if(Role == ROLE_Authority)
+        UpperProxy;
+}
+
+function SpawnAnimProxy()
+{
+    UpperProxy = Spawn(Class'RMod.R_CreatureProxy', Self);
+    UpperProxy.Skeletal = Self.Skeletal;
+    UpperProxy.AnimToPlay = 'baseframe';
+
+   SetSkelGroupFlags();
+}
+
+function SetSkelGroupFlags()
+{
+    // Hide Self's upper body
+    SkelGroupFlags[SKELGROUP_TORSO] = 1;
+    SkelGroupFlags[SKELGROUP_HEAD] = 1;
+    SkelGroupFlags[SKELGROUP_NECK_CAP] = 1;
+    SkelGroupFlags[SKELGROUP_ARM_R] = 1;
+    SkelGroupFlags[SKELGROOP_ARM_CAP_R] = 1;
+    SkelGroupFlags[SKELGROUP_SHOULDER_R] = 1;
+    SkelGroupFlags[SKELGROUP_SHOULDER_L] = 1;
+    SkelGroupFlags[SKELGROUP_ARM_L] = 1;
+    SkelGroupFlags[SKELGROUP_ARM_CAP_L] = 1;
+    SkelGroupFlags[SKELGROUP_EARS_FACE] = 1;
+
+    // Hide Proxy's lower body
+    UpperProxy.SkelGroupFlags[SKELGROUP_LEG_R] = 1;
+    UpperProxy.SkelGroupFlags[SKELGROUP_LEG_L] = 1;
+}
+
+function PlayerRestart()
+{
+    Super.PlayerRestart();
+    SetSkelGroupFlags();
+
+    UpperProxy.DesiredColorAdjust = DesiredColorAdjust;
+}
+
+event Tick(float DeltaSeconds)
+{
+    local Vector PelvisLocation;
+
+    PelvisLocation = GetJointPos(JointNamed('pelvis'));
+
+    UpperProxy.SetLocation(Location);
+    UpperProxy.SetRotation(Rotation);
+}
+exec function AltFire( optional float F )
+{
+    PlayAltFiring();
+}
+
+function PlayAltFiring()
+{
+    if(UpperProxy != None)
+    {
+        UpperProxy.Defend();
+    }
+}
+
+function PlayFiring()
+{
+    if(UpperProxy != None)
+    {
+        UpperProxy.Attack();
+    }
+
+    if(Velocity.X * Velocity.X + Velocity.Y * Velocity.Y >= 1000)
+    {
+        PlayMoving();
+    }
+}
+
+function LoopAnimWithProxy(Name AnimName, float Rate, float Tween)
+{
+    LoopAnim(AnimName, Rate, Tween);
+    if(UpperProxy != None)
+    {
+        UpperProxy.LoopProxyAnim(AnimName, Rate, Tween);
+    }
+}
+
+function PlayAnimWithProxy(Name AnimName, float Rate, float Tween)
+{
+    PlayAnim(AnimName, Rate, Tween);
+    if(UpperProxy != None)
+    {
+        UpperProxy.PlayProxyAnim(AnimName, Rate, Tween);
+    }
+}
+
+function PlayWaiting(optional float tween)
+{
+    LoopAnimWithProxy('idleA', RandRange(0.8, 1.2), tween);
+}
+
+function PlayMoving(optional float tween)
+{
+    local MovementDir_e dir;
+    local Name anim;
+
+    dir = GetAnimationMovementDirection();
+
+    switch(dir)
+    {
+    case MD_FORWARD:
+        anim = 'runA';
+        break;
+    case MD_FORWARDRIGHT:
+        anim = 'straferight';
+        break;
+    case MD_FORWARDLEFT:
+        anim = 'strafeleft';
+        break;
+    case MD_BACKWARD:
+        anim = 'backupA';
+        break;
+    case MD_BACKWARDRIGHT:
+        anim = 'straferight';
+        break;
+    case MD_BACKWARDLEFT:
+        anim = 'strafeleft';
+        break;
+    case MD_RIGHT:
+        anim = 'straferight';
+        break;
+    case MD_LEFT:
+        anim = 'strafeleft';
+        break;
+    default:
+        break;
+    }
+
+    LoopAnimWithProxy(anim, 1.0, 0.1);
+}
+
+function PlayJump()
+{
+    PlayAnimWithProxy('fallingA', 1.0, 0.1);
+}
+
+function PlayDuck(optional float tween)
+{
+    LoopAnimWithProxy('duck', 1.0, 0.1);
+}
+
+/*
+function PlayFiring()
+{
+    //Log("Play Firing");
+    PlayAnim('attackA',   1.0, 0.1);
+}
+*/
+
+function PlayCower(optional float tween)      { LoopAnim  ('cower',     1.0, tween);  Log("PlayCower");  }
+function PlayThrowing(optional float tween)   { PlayAnim  ('throwB',   1.0, tween); Log("PlayThrowing"); }
+function PlayTaunting(optional float tween)   { PlayAnim  ('pain',      1.0, tween);  Log("PlayTaunting");  }
+function PlayInAir(optional float tween)
+{
+    LoopAnim  ('fallingA',  1.0, tween);
+}
+function LongFall()
+{
+    if (AnimSequence != 'fallingC')
+        LoopAnim  ('fallingC',  1.0, 0.1);
+}
+function PlayLanding(optional float tween)
+{
+    if (AnimSequence == 'fallingC')
+        PlayAnim('landingC', 1.0, 0.1);
+    else if (AnimSequence == 'fallingB')
+        PlayAnim('landingB', 1.0, 0.1);
+    else
+        PlayAnim('landingA', 1.0, 0.1);
+}
+
+exec function HideSkelGroup(int SkelGroupIndex)
+{
+    SkelGroupFlags[SkelGroupIndex] = 1;
+}
+
+exec function ShowSkelGroup(int SkelGroupIndex)
+{
+    SkelGroupFlags[SkelGroupIndex] = 0;
+}
+
+defaultproperties
+{
+    GroundSpeed=240.000000
+    AccelRate=1000.000000
+    JumpZ=400.000000
+    MaxStepHeight=30.000000
+    WalkingSpeed=160.000000
+    HitSound1=Sound'CreaturesSnd.Dwarves.hit02'
+    HitSound2=Sound'CreaturesSnd.Dwarves.word26'
+    HitSound3=Sound'CreaturesSnd.Dwarves.hit07'
+    Die=Sound'CreaturesSnd.Dwarves.death09'
+    Die2=Sound'CreaturesSnd.Dwarves.death10'
+    Die3=Sound'CreaturesSnd.Dwarves.death12'
+    FootStepWood(0)=None
+    FootStepWood(1)=None
+    FootStepWood(2)=None
+    FootStepMetal(0)=Sound'FootstepsSnd.Metal.footmetal10'
+    FootStepMetal(1)=Sound'FootstepsSnd.Metal.footmetal11'
+    FootStepMetal(2)=Sound'FootstepsSnd.Metal.footmetal12'
+    FootStepStone(0)=Sound'FootstepsSnd.Earth.footgravel13'
+    FootStepStone(1)=Sound'FootstepsSnd.Earth.footgravel12'
+    FootStepStone(2)=Sound'FootstepsSnd.Earth.footgravel13'
+    FootStepIce(0)=Sound'FootstepsSnd.Ice.footice04'
+    FootStepIce(1)=Sound'FootstepsSnd.Ice.footice05'
+    FootStepIce(2)=Sound'FootstepsSnd.Ice.footice06'
+    FootStepEarth(0)=Sound'FootstepsSnd.Earth.footgravel03'
+    FootStepEarth(1)=Sound'FootstepsSnd.Earth.footgravel05'
+    FootStepEarth(2)=Sound'FootstepsSnd.Earth.footgravel06'
+    FootStepSnow(0)=Sound'FootstepsSnd.Snow.footsnow10'
+    FootStepSnow(1)=Sound'FootstepsSnd.Snow.footsnow11'
+    FootStepSnow(2)=Sound'FootstepsSnd.Snow.footsnow12'
+    WeaponJoint=attach_hand
+    ShieldJoint=attach_shielda
+    CollisionRadius=35.000000
+    CollisionHeight=33.000000
+    Skeletal=SkelModel'creatures.Dwarf'
+    SpawnableAnimationProxyClass=None
+    bFrameNotifies=true
+}
+
+/*
+var R_CreatureProxy CreatureProxyBase;
+var R_CreatureProxy CreatureProxyUpper;
+var R_CreatureProxy CreatureProxyLower;
+
+replication
+{
+    reliable if(Role == ROLE_Authority)
+        CreatureProxyBase,
+        CreatureProxyUpper,
+        CreatureProxyLower;
+}
+
+function PlayJump()
+{
+    PlayAnim('fallingA', 1.0, 0.1);
+}
+
+function PlayDuck(optional float tween)
+{
+    LoopAnim('duck', 1.0, 0.1);
+}
+
+/*
+function PlayFiring()
+{
+    //Log("Play Firing");
+    PlayAnim('attackA',   1.0, 0.1);
+}
+*/
+
+
+function PlayAttack1(optional float tween)  { PlayAnim('attackA',   1.0, tween);   Log("PlayAttack1");  }
+function PlayAttack2(optional float tween)  { PlayAnim('attackB',   1.0, tween);   Log("PlayAttack2");  }
+function PlayAttack3(optional float tween)  { PlayAnim('attackC',   1.0, tween);   Log("PlayAttack3");  }
+
+function PlayCower(optional float tween)      { LoopAnim  ('cower',     1.0, tween);  Log("PlayCower");  }
+function PlayThrowing(optional float tween)   { PlayAnim  ('throwB',   1.0, tween); Log("PlayThrowing"); }
+function PlayTaunting(optional float tween)   { PlayAnim  ('pain',      1.0, tween);  Log("PlayTaunting");  }
+function PlayInAir(optional float tween)
+{
+    LoopAnim  ('fallingA',  1.0, tween);
+}
+function LongFall()
+{
+    if (AnimSequence != 'fallingC')
+        LoopAnim  ('fallingC',  1.0, 0.1);
+}
+function PlayLanding(optional float tween)
+{
+    if (AnimSequence == 'fallingC')
+        PlayAnim('landingC', 1.0, 0.1);
+    else if (AnimSequence == 'fallingB')
+        PlayAnim('landingB', 1.0, 0.1);
+    else
+        PlayAnim('landingA', 1.0, 0.1);
+}
+
+function PlayDodgeLeft(optional float tween)  { PlayAnim  ('runA',   1.0, tween);  Log("PlayDodgeLeft");  }
+function PlayDodgeRight(optional float tween) { PlayAnim  ('runA',   1.0, tween);  Log("PlayDodgeRight");  }
+function PlayDodgeForward(optional float tween){PlayAnim  ('runA',   1.0, tween);  Log("PlayDodgeForward");  }
+function PlayDodgeBack(optional float tween)  { PlayAnim  ('runA',   1.0, tween);  Log("PlayDodgeBack");  }
+function PlayDodgeBackflip(optional float tween){PlayAnim ('jump',   1.0, tween);  Log("PlayDodgeBackflip");  }
+function PlayDodgeDuck(optional float tween)  { PlayAnim  ('duck',   1.0, tween);  Log("PlayDodgeDuck");  }
+function PlayBlockHigh(optional float tween)  { LoopAnim  ('duck',   1.0, tween);  Log("PlayBlockHigh");  }
+function PlayBlockLow(optional float tween)   { LoopAnim  ('block',  1.0, tween);  Log("PlayBlockLow");  }
+
+function PlayFrontHit(float tweentime){}
+function PlayHeadHit(optional float tween)    { PlayAnim  ('damage',   1.0, tween);  Log("PlayHeadHit");  }
+function PlayBodyHit(optional float tween)    { PlayAnim  ('damage',   1.0, tween);  Log("PlayBodyHit");  }
+function PlayLArmHit(optional float tween)    { PlayAnim  ('damage',   1.0, tween);  Log("PlayLArmHit");  }
+function PlayRArmHit(optional float tween)    { PlayAnim  ('damage',   1.0, tween);   Log("PlayRArmHit"); }
+function PlayLLegHit(optional float tween)    { PlayAnim  ('damage',   1.0, tween);  Log("PlayLLegHit");  }
+function PlayRLegHit(optional float tween)    { PlayAnim  ('damage',   1.0, tween);  Log("PlayRLegHit");  }
+function PlayDrowning(optional float tween)   { LoopAnim  ('drown',  1.0, tween);   }
+
+function PlayBackDeath(name DamageType)       { PlayAnim  ('deathf', 1.0, 0.1);    Log("PlayBackDeath");  }
+function PlayLeftDeath(name DamageType)       { PlayAnim  ('deathl', 1.0, 0.1);    Log("PlayLeftDeath");  }
+function PlayRightDeath(name DamageType)      { PlayAnim  ('deathr', 1.0, 0.1);    Log("PlayRightDeath");  }
+function PlayHeadDeath(name DamageType)       { PlayAnim  ('deathf', 1.0, 0.1);    Log("PlayHeadDeath");  }
+function PlayDeath(name DamageType)           { PlayAnim  ('deatha', 1.0, 0.1);    Log("PlayDeath");  }
+function PlayDrownDeath(name DamageType)      { PlayAnim  ('drown_death', 1.0, 0.1);Log("PlayDrownDeath"); }
+function PlaySkewerDeath(name DamageType)     { PlayAnim  ('deaths', 1.0, 0.1);    Log("PlaySkewerDeath");  }
+
+defaultproperties
+{
+    GroundSpeed=240.000000
+    AccelRate=1000.000000
+    JumpZ=400.000000
+    MaxStepHeight=30.000000
+    WalkingSpeed=160.000000
+    HitSound1=Sound'CreaturesSnd.Dwarves.hit02'
+    HitSound2=Sound'CreaturesSnd.Dwarves.word26'
+    HitSound3=Sound'CreaturesSnd.Dwarves.hit07'
+    Die=Sound'CreaturesSnd.Dwarves.death09'
+    Die2=Sound'CreaturesSnd.Dwarves.death10'
+    Die3=Sound'CreaturesSnd.Dwarves.death12'
+    FootStepWood(0)=None
+    FootStepWood(1)=None
+    FootStepWood(2)=None
+    FootStepMetal(0)=Sound'FootstepsSnd.Metal.footmetal10'
+    FootStepMetal(1)=Sound'FootstepsSnd.Metal.footmetal11'
+    FootStepMetal(2)=Sound'FootstepsSnd.Metal.footmetal12'
+    FootStepStone(0)=Sound'FootstepsSnd.Earth.footgravel13'
+    FootStepStone(1)=Sound'FootstepsSnd.Earth.footgravel12'
+    FootStepStone(2)=Sound'FootstepsSnd.Earth.footgravel13'
+    FootStepIce(0)=Sound'FootstepsSnd.Ice.footice04'
+    FootStepIce(1)=Sound'FootstepsSnd.Ice.footice05'
+    FootStepIce(2)=Sound'FootstepsSnd.Ice.footice06'
+    FootStepEarth(0)=Sound'FootstepsSnd.Earth.footgravel03'
+    FootStepEarth(1)=Sound'FootstepsSnd.Earth.footgravel05'
+    FootStepEarth(2)=Sound'FootstepsSnd.Earth.footgravel06'
+    FootStepSnow(0)=Sound'FootstepsSnd.Snow.footsnow10'
+    FootStepSnow(1)=Sound'FootstepsSnd.Snow.footsnow11'
+    FootStepSnow(2)=Sound'FootstepsSnd.Snow.footsnow12'
+    WeaponJoint=attach_hand
+    ShieldJoint=attach_shielda
+    CollisionRadius=35.000000
+    CollisionHeight=33.000000
+    Skeletal=SkelModel'creatures.Dwarf'
+    SpawnableAnimationProxyClass=None
+    bFrameNotifies=true
+}
+*/
