@@ -26,8 +26,8 @@ function SetSkelGroupFlags()
     SkelGroupFlags[SKELGROUP_GOBLIN_ARM_R] = 1;
 
     // Hide Proxy's lower body
-    UpperProxy.SkelGroupFlags[SKELGROUP_GOBLIN_LEG_L] = 1;
-    UpperProxy.SkelGroupFlags[SKELGROUP_GOBLIN_LEG_R] = 1;
+    //UpperProxy.SkelGroupFlags[SKELGROUP_GOBLIN_LEG_L] = 1;
+    //UpperProxy.SkelGroupFlags[SKELGROUP_GOBLIN_LEG_R] = 1;
 }
 
 function PlayWaiting(optional float tween)
@@ -70,7 +70,7 @@ function PlayMoving(optional float tween)
         break;
     }
     SetJointRot(0, RotationOffset);
-    UpperProxy.SetJointRot(0, RotationOffset);
+    //UpperProxy.SetJointRot(0, RotationOffset);
     LoopAnimWithProxy('w_gallopB', 1.0, 0.1);
 }
 
@@ -92,7 +92,7 @@ function PlayDodge(eDodgeDir DodgeMove)
     RotationOffset.Pitch = 0;
     RotationOffset.Roll = 0;
     SetJointRot(0, RotationOffset);
-    UpperProxy.SetJointRot(0, RotationOffset);
+    //UpperProxy.SetJointRot(0, RotationOffset);
 
     switch(DodgeMove)
     {

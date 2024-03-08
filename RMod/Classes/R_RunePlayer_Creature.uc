@@ -17,59 +17,83 @@ const SKELGROUP_LEG_L = 10;
 const SKELGROUP_ARM_L = 11;
 const SKELGROUP_EARS_FACE = 12;
 
-var R_CreatureProxy UpperProxy;
+//var R_CreatureProxy UpperProxy;
 
+/*
 replication
 {
     reliable if(Role == ROLE_Authority)
         UpperProxy;
 }
+*/
 
 function SpawnAnimProxy()
 {
-    UpperProxy = Spawn(Class'RMod.R_CreatureProxy', Self);
-    UpperProxy.Skeletal = Self.Skeletal;
-    UpperProxy.AnimToPlay = 'baseframe';
-
-   SetSkelGroupFlags();
-}
-
-function SetSkelGroupFlags()
-{
-    // Hide Self's upper body
-    SkelGroupFlags[SKELGROUP_TORSO] = 1;
-    SkelGroupFlags[SKELGROUP_HEAD] = 1;
-    SkelGroupFlags[SKELGROUP_NECK_CAP] = 1;
-    SkelGroupFlags[SKELGROUP_ARM_R] = 1;
-    SkelGroupFlags[SKELGROOP_ARM_CAP_R] = 1;
-    SkelGroupFlags[SKELGROUP_SHOULDER_R] = 1;
-    SkelGroupFlags[SKELGROUP_SHOULDER_L] = 1;
-    SkelGroupFlags[SKELGROUP_ARM_L] = 1;
-    SkelGroupFlags[SKELGROUP_ARM_CAP_L] = 1;
-    SkelGroupFlags[SKELGROUP_EARS_FACE] = 1;
-
-    // Hide Proxy's lower body
-    UpperProxy.SkelGroupFlags[SKELGROUP_LEG_R] = 1;
-    UpperProxy.SkelGroupFlags[SKELGROUP_LEG_L] = 1;
+    AnimProxy = Spawn(Class'RMod.R_CreaturePlayerProxy', Self);
+    ApplyOwnerAndProxySkelGroupFlags();
 }
 
 function PlayerRestart()
 {
     Super.PlayerRestart();
-    SetSkelGroupFlags();
-
-    UpperProxy.DesiredColorAdjust = DesiredColorAdjust;
+    ApplyOwnerAndProxySkelGroupFlags();
+    AnimProxy.DesiredColorAdjust = DesiredColorAdjust;
 }
+
+/**
+*   ApplyOwnerAndProxySkelGroupFlags
+*   Hides the upper skelgroups of Self, and hides the lower skelgroups
+*   of the AnimProxy
+*/
+function ApplyOwnerAndProxySkelGroupFlags()
+{
+    local int LowerBodyGroups[2];
+    local int UpperBodyGroups[10];
+    local int i;
+
+    // Only works with creature proxy
+    if(R_CreaturePlayerProxy(AnimProxy) != None)
+    {
+        // These skelgroups are just for Dwarf at the moment
+        // Upper body groups
+        UpperBodyGroups[0] = SKELGROUP_TORSO;
+        UpperBodyGroups[1] = SKELGROUP_HEAD;
+        UpperBodyGroups[2] = SKELGROUP_NECK_CAP;
+        UpperBodyGroups[3] = SKELGROUP_ARM_R;
+        UpperBodyGroups[4] = SKELGROOP_ARM_CAP_R;
+        UpperBodyGroups[5] = SKELGROUP_SHOULDER_R;
+        UpperBodyGroups[6] = SKELGROUP_SHOULDER_L;
+        UpperBodyGroups[7] = SKELGROUP_ARM_L;
+        UpperBodyGroups[8] = SKELGROUP_ARM_CAP_L;
+        UpperBodyGroups[9] = SKELGROUP_EARS_FACE;
+
+        // Lower body groups
+        LowerBodyGroups[0] = SKELGROUP_LEG_R;
+        LowerBodyGroups[1] = SKELGROUP_LEG_L;
+
+        // Hide self's upper body
+        for(i = 0; i < 10; ++i)
+        {
+            SkelGroupFlags[UpperBodyGroups[i]] = POLYFLAG_INVISIBLE;
+        }
+
+        // Hide proxy's lower body
+        for(i = 0; i < 2; ++i)
+        {
+            AnimProxy.SkelGroupFlags[LowerBodyGroups[i]] = POLYFLAG_INVISIBLE;
+        }
+    }
+    
+}
+
+
 
 event Tick(float DeltaSeconds)
 {
-    local Vector PelvisLocation;
-
-    PelvisLocation = GetJointPos(JointNamed('pelvis'));
-
-    UpperProxy.SetLocation(Location);
-    UpperProxy.SetRotation(Rotation);
+    Super.Tick(DeltaSeconds);
+    Log(Weapon);
 }
+
 exec function AltFire( optional float F )
 {
     PlayAltFiring();
@@ -77,12 +101,28 @@ exec function AltFire( optional float F )
 
 function PlayAltFiring()
 {
-    if(UpperProxy != None)
+    if(AnimProxy != None)
     {
-        UpperProxy.Defend();
+        AnimProxy.Defend();
     }
 }
 
+/*
+function PlayFiring()
+{
+    if(AnimProxy != None)
+    {
+        AnimProxy.Attack();
+    }
+
+    if(Velocity.X * Velocity.X + Velocity.Y * Velocity.Y >= 1000)
+    {
+        PlayMoving();
+    }
+}
+*/
+
+/*
 function PlayFiring()
 {
     if(UpperProxy != None)
@@ -95,22 +135,23 @@ function PlayFiring()
         PlayMoving();
     }
 }
+*/
 
 function LoopAnimWithProxy(Name AnimName, float Rate, float Tween)
 {
     LoopAnim(AnimName, Rate, Tween);
-    if(UpperProxy != None)
+    if(AnimProxy != None)
     {
-        UpperProxy.LoopProxyAnim(AnimName, Rate, Tween);
+        AnimProxy.TryLoopAnim(AnimName, Rate, Tween);
     }
 }
 
 function PlayAnimWithProxy(Name AnimName, float Rate, float Tween)
 {
     PlayAnim(AnimName, Rate, Tween);
-    if(UpperProxy != None)
+    if(AnimProxy != None)
     {
-        UpperProxy.PlayProxyAnim(AnimName, Rate, Tween);
+        AnimProxy.TryPlayAnim(AnimName, Rate, Tween);
     }
 }
 
