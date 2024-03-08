@@ -17,16 +17,6 @@ const SKELGROUP_LEG_L = 10;
 const SKELGROUP_ARM_L = 11;
 const SKELGROUP_EARS_FACE = 12;
 
-//var R_CreatureProxy UpperProxy;
-
-/*
-replication
-{
-    reliable if(Role == ROLE_Authority)
-        UpperProxy;
-}
-*/
-
 function SpawnAnimProxy()
 {
     AnimProxy = Spawn(Class'RMod.R_CreaturePlayerProxy', Self);
@@ -91,7 +81,6 @@ function ApplyOwnerAndProxySkelGroupFlags()
 event Tick(float DeltaSeconds)
 {
     Super.Tick(DeltaSeconds);
-    Log(Weapon);
 }
 
 exec function AltFire( optional float F )

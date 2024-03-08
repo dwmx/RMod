@@ -35,6 +35,7 @@ enum EAttackDirection
 };
 
 var Name TorsoAnim;
+var Actor PendingPickupActor;
 
 event BeginPlay()
 {
@@ -97,8 +98,113 @@ function AcquireShield(Shield ShieldActor)
     }
 }
 
+function bool CanPickup(Inventory InventoryActor)
+{
+    return false;
+}
+
+function bool WantsToPickup(Inventory InventoryActor)
+{
+    local Pawn PawnOwner;
+
+    if(InventoryActor == None)
+    {
+        return false;
+    }
+
+    PawnOwner = Pawn(Owner);
+    if(PawnOwner != None)
+    {
+        if(PawnOwner.FindInventoryType(InventoryActor.Class) != None)
+        { // Only hold one of each class
+            return false;
+        }
+    }
+
+    if(Weapon(InventoryActor) != None)
+    {
+        return WantsToPickupWeapon(Weapon(InventoryActor));
+    }
+    if(Shield(InventoryActor) != None)
+    {
+        return WantsToPickupShield(Shield(InventoryActor));
+    }
+
+    return false;
+}
+
+function bool WantsToPickupWeapon(Weapon WeaponActor)
+{
+    return true;
+}
+
+function bool WantsToPickupShield(Shield ShieldActor)
+{
+    return true;
+}
+
+event FrameNotify(int FramePassed)
+{
+    local Pawn PawnOwner;
+    local Weapon WeaponActor;
+    local R_AShield ShieldActor;
+
+    PawnOwner = Pawn(Owner);
+    if(PawnOwner != None)
+    {
+        WeaponActor = PawnOwner.Weapon;
+        if(WeaponActor != None)
+        {
+            WeaponActor.FrameNotify(FramePassed);
+        }
+        
+        ShieldActor = R_AShield(PawnOwner.Shield);
+        if(ShieldActor != None)
+        {
+            ShieldActor.FrameNotify(FramePassed);
+        }
+    }
+}
+
+function WeaponActivate()
+{
+    local Pawn PawnOwner;
+    local Weapon WeaponActor;
+
+    PawnOwner = Pawn(Owner);
+    if(PawnOwner != None)
+    {
+        WeaponActor = PawnOwner.Weapon;
+        if(WeaponActor != None)
+        {
+            PawnOwner.WeaponActivate();
+            WeaponActor.PlaySwipeSound();
+
+            // I think this just triggers runepower attacks?
+            WeaponActor.WeaponFire(0);
+        }
+    }
+}
+
+function WeaponDeactivate()
+{
+    local Pawn PawnOwner;
+
+    PawnOwner = Pawn(Owner);
+    if(PawnOwner != None)
+    {
+        PawnOwner.WeaponDeactivate();
+    }
+}
+
 auto state Idle
 {
+    function bool Use()
+    {
+        GoToState('PickingUp');
+        return true;
+    }
+
     function EAttackDirection DetermineInitialAttackDirection()
     {
         local Vector X, Y, Z;
@@ -168,6 +274,11 @@ auto state Idle
 
 state Attacking
 {
+    event EndState()
+    {
+        WeaponDeactivate();
+    }
+
     function bool CanPickup(Inventory InventoryActor)
     {
         return false;
@@ -185,9 +296,9 @@ state Attacking
 
 Begin:
     PlayAnim(TorsoAnim, 1.5, 0.1);
-    Sleep(0.1);
-    WeaponActivate();
     TorsoAnim = 'None';
+    //Sleep(0.1);
+    //WeaponActivate(); // Weapon activate gets called from animation events
     FinishAnim();
     WeaponDeactivate();
     if(TorsoAnim != 'None')
@@ -219,6 +330,74 @@ Begin:
     }
     SyncAnimation(0.15);
     GoToState('Idle');
+}
+
+state PickingUp
+{
+    function bool CanPickup(Inventory InventoryActor)
+    {
+        return InventoryActor == PendingPickupActor;
+    }
+
+    function UpdatePendingPickupActor()
+    {
+        local Pawn PawnOwner;
+
+        PawnOwner = Pawn(Owner);
+        if(PawnOwner != None && PawnOwner.UseActor != None)
+        {
+            if(PawnOwner.UseActor.Owner == None)
+            {
+                PendingPickupActor = PawnOwner.UseActor;
+            }
+        }
+    }
+
+    function AttachToHand()
+    {
+        local int WeaponJoint;
+        
+        if(Pawn(Owner) != None)
+        {
+            if(R_RunePlayer(Owner) != None)
+            {
+                R_RunePlayer(Owner).InstantStow();
+            }
+            WeaponJoint = Owner.JointNamed(Pawn(Owner).WeaponJoint);
+        }
+
+        AttachActorToJoint(PendingPickupActor, WeaponJoint);
+    }
+
+Begin:
+    UpdatePendingPickupActor();
+    R_RunePlayer(Owner).LastHeldWeapon = None;
+    if(PendingPickupActor != None)
+    {
+        Inventory(PendingPickupActor).LifeSpan = 0;
+        PendingPickupActor.Style = Default.Style;
+
+        // No moving while picking up
+        R_RunePlayer(Owner).UninterruptedAnim = 'None';
+        R_RunePlayer(Owner).GotoState('Uninterrupted');
+
+        if(Food(PendingPickupActor) != None)
+        {
+            R_RunePlayer(Owner).LastHeldWeapon = R_RunePlayer(Owner).Weapon;
+        }
+
+        if(R_RunePlayer(Owner).Weapon != None && Shield(PendingPickupActor) == None && Runes(PendingPickupActor) == None)
+        {
+            if(NonStow(R_RunePlayer(Owner).Weapon) != None)
+            {
+                R_RunePlayer(Owner).LastHeldWeapon = None;
+            }
+        }
+    }
+
+    //AttachToHand();
+    //Sleep(0.1);
+    //GoToState('Idle');
 }
 
 defaultproperties
