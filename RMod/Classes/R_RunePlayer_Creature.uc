@@ -21,13 +21,6 @@ var Name AttachAxeJoint;
 var Name AttachSwordJoint;
 var Name AttachHammerJoint;
 
-exec function TestFunc()
-{
-    Log("TestFunc");
-    DropWeapon();
-    DropShield();
-}
-
 function InstantStow()
 {
     Super.InstantStow();
@@ -545,9 +538,9 @@ defaultproperties
     Skeletal=SkelModel'creatures.Dwarf'
     SpawnableAnimationProxyClass=None
     bFrameNotifies=true
-    AttachAxeJoint='attach_axe'
-    AttachSwordJoint='attatch_sword'
-    AttachHammerJoint='attach_hammer'
+    AttachAxeJoint=attach_axe
+    AttachSwordJoint=attatch_sword
+    AttachHammerJoint=attach_hammer
 }
 
 /*
