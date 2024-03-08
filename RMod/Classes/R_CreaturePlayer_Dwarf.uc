@@ -1,0 +1,1 @@
+class R_CreaturePlayer_Dwarf extends R_RunePlayer_Creature;

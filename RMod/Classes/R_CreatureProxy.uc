@@ -14,7 +14,7 @@ simulated event PreBeginPlay()
 simulated event PostBeginPlay()
 {
     Super.PostBeginPlay();
-    SpawnEquipment();
+    //SpawnEquipment();
 }
 
 simulated event Tick(float DeltaSeconds)

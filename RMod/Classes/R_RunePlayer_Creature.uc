@@ -177,9 +177,9 @@ function PlayFiring()
 }
 */
 
-function PlayCower(optional float tween)      { LoopAnim  ('cower',     1.0, tween);  Log("PlayCower");  }
-function PlayThrowing(optional float tween)   { PlayAnim  ('throwB',   1.0, tween); Log("PlayThrowing"); }
-function PlayTaunting(optional float tween)   { PlayAnim  ('pain',      1.0, tween);  Log("PlayTaunting");  }
+//function PlayCower(optional float tween)      { LoopAnim  ('cower',     1.0, tween);  Log("PlayCower");  }
+//function PlayThrowing(optional float tween)   { PlayAnim  ('throwB',   1.0, tween); Log("PlayThrowing"); }
+//function PlayTaunting(optional float tween)   { PlayAnim  ('pain',      1.0, tween);  Log("PlayTaunting");  }
 function PlayInAir(optional float tween)
 {
     LoopAnim  ('fallingA',  1.0, tween);
@@ -197,16 +197,6 @@ function PlayLanding(optional float tween)
         PlayAnim('landingB', 1.0, 0.1);
     else
         PlayAnim('landingA', 1.0, 0.1);
-}
-
-exec function HideSkelGroup(int SkelGroupIndex)
-{
-    SkelGroupFlags[SkelGroupIndex] = 1;
-}
-
-exec function ShowSkelGroup(int SkelGroupIndex)
-{
-    SkelGroupFlags[SkelGroupIndex] = 0;
 }
 
 defaultproperties
