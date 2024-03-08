@@ -17,6 +17,22 @@ const SKELGROUP_LEG_L = 10;
 const SKELGROUP_ARM_L = 11;
 const SKELGROUP_EARS_FACE = 12;
 
+var Name AttachAxeJoint;
+var Name AttachSwordJoint;
+var Name AttachHammerJoint;
+
+exec function TestFunc()
+{
+    Log("TestFunc");
+    DropWeapon();
+    DropShield();
+}
+
+function InstantStow()
+{
+    Super.InstantStow();
+}
+
 function SpawnAnimProxy()
 {
     AnimProxy = Spawn(Class'RMod.R_CreaturePlayerProxy', Self);
@@ -229,6 +245,268 @@ function PlayLanding(optional float tween)
         PlayAnim('landingA', 1.0, 0.1);
 }
 
+/**
+*   GetAttachmentParentActor
+*   Return the actor that Inventory actors should attach to
+*/
+function Actor GetAttachmentParentActor()
+{
+    if(AnimProxy != None)
+    {
+        // Should always return the AnimProxy for creatures
+        return AnimProxy;
+    }
+    return Self;
+}
+
+/**
+*   DropWeapon (override)
+*   Overridden to detach weapon from AnimProxy instead of Self
+*   See R_CreaturePlayerProxy for more details
+*/
+function DropWeapon()
+{
+    local Actor ParentActor;
+    local int AttachedJoint;
+    local Vector X, Y, Z;
+
+    if(Weapon == None)
+    {
+        return;
+    }
+
+    if(Weapon.bPoweredUp)
+    {
+        Weapon.PowerupEnd();
+    }
+
+    ParentActor = GetAttachmentParentActor();
+    AttachedJoint = ParentActor.JointNamed(WeaponJoint);
+
+    if(AttachedJoint != 0)
+    {
+        ParentActor.DetachActorFromJoint(AttachedJoint);
+
+        GetAxes(Rotation, X, Y, Z);
+        Weapon.DropFrom(GetJointPos(AttachedJoint));
+
+        if(Weapon != None)
+        {
+            Weapon.SetPhysics(PHYS_Falling);
+            Weapon.Velocity = Y * 100 + X * 75;
+            Weapon.Velocity.Z = 50;
+            Weapon.GotoState('Drop');
+            Weapon.DisableSwipeTrail();
+
+            DeleteInventory(Weapon);
+        }
+    }
+}
+
+/**
+*   DropShield (override)
+*   Overridden to detach shield from AnimProxy instead of Self
+*   See R_CreaturePlayerProxy for more details
+*/
+function DropShield()
+{
+    local Actor ParentActor;
+    local int AttachedJoint;
+    local Vector X, Y, Z;
+
+    if(Shield == None)
+    {
+        return;
+    }
+
+    ParentActor = GetAttachmentParentActor();
+    AttachedJoint = ParentActor.JointNamed(ShieldJoint);
+
+    if(AttachedJoint != 0)
+    {
+        ParentActor.DetachActorFromJoint(AttachedJoint);
+
+        GetAxes(Rotation, X, Y, Z);
+
+        Shield.DropFrom(GetJointPos(AttachedJoint));
+        Shield.SetPhysics(PHYS_Falling);
+        Shield.Velocity = Y * 100 + X * 75;
+        Shield.Velocity.Z = 50;
+        Shield.GoToState('Drop');
+
+        DeleteInventory(Shield);
+    }
+}
+
+/**
+*   SelectWeapon (override)
+*   Overridden to attach selected weapons to the AnimProxy instead of Self
+*   See R_CreaturePlayerProxy for more details
+*/
+function SelectWeapon(Weapon NewWeapon)
+{
+    local Actor ParentActor;
+    local int AttachJoint;
+
+    Weapon = NewWeapon;
+
+    ParentActor = GetAttachmentParentActor();
+
+    AttachJoint = ParentActor.JointNamed(WeaponJoint);
+    if(AttachJoint != 0)
+    {
+        ParentActor.AttachActorToJoint(Weapon, AttachJoint);
+    }
+}
+
+/**
+*   StowWeapon (override)
+*   Overridden to attach stowed weapons to the AnimProxy instead of Self
+*   See R_CreaturePlayerProxy for more details
+*/
+function StowWeapon(Weapon OldWeapon)
+{
+    local Actor ParentActor;
+    local int StowAttachJoint;
+    local int EquipAttachJoint;
+    local int StowIndex;
+
+    if(Weapon == None)
+    {
+        return;
+    }
+
+    ParentActor = GetAttachmentParentActor();
+
+    switch(Weapon.MeleeType)
+    {
+    case MELEE_SWORD:   
+        StowAttachJoint = ParentActor.JointNamed(AttachSwordJoint);
+        break;
+    case MELEE_AXE:
+        StowAttachJoint = ParentActor.JointNamed(AttachAxeJoint);
+        break;
+    case MELEE_HAMMER:
+        StowAttachJoint = ParentActor.JointNamed(AttachHammerJoint);
+        break;
+    default:
+        StowAttachJoint = 0;
+        break;
+    }
+
+    EquipAttachJoint = ParentActor.JointNamed(WeaponJoint);
+
+    if(StowAttachJoint != 0 && EquipAttachJoint != 0)
+    {
+        ParentActor.DetachActorFromJoint(EquipAttachJoint);
+        ParentActor.AttachActorToJoint(Weapon, StowAttachJoint);
+
+        if(R_RunePlayerProxy(AnimProxy) != None)
+        {
+            StowIndex = R_RunePlayerProxy(AnimProxy).GetStowIndex(Weapon);
+        }
+        SetStowedWeapon(StowIndex, Weapon);
+        Weapon.GoToState('Stow');
+        Weapon = None;
+    }
+}
+
+/**
+*   RetrieveWeapon (override)
+*   Overridden to attach retrieved weapons to the AnimProxy instead of Self
+*   See R_CreaturePlayerProxy for more details
+*/
+function RetrieveWeapon(int StowIndex)
+{
+    local Actor ParentActor;
+    local int StowAttachJoint;
+    local Weapon CurrentWeapon;
+    local Weapon NextWeapon;
+
+    ParentActor = GetAttachmentParentActor();
+
+    switch(StowIndex)
+    {
+    case 0: // MELEE_SWORD
+        StowAttachJoint = ParentActor.JointNamed(AttachSwordJoint); // Compensate for a spelling error...  for now.
+        break;
+    case 1: // MELEE_HAMMER
+        StowAttachJoint = ParentActor.JointNamed(AttachHammerJoint);
+        break;
+    case 2: // MELEE_AXE
+        StowAttachJoint = ParentActor.JointNamed(AttachAxeJoint);
+        break;
+    default:
+        StowAttachJoint = 0;
+        break;
+    }
+
+    CurrentWeapon = GetStowedWeapon(StowIndex);
+    if(StowAttachJoint != 0 && CurrentWeapon != None)
+    {
+        ParentActor.DetachActorFromJoint(StowAttachJoint);
+        SelectWeapon(CurrentWeapon);
+
+        SetStowedWeapon(StowIndex, None);
+        NextWeapon = GetNextWeapon(CurrentWeapon);
+        if(NextWeapon != None && NextWeapon != CurrentWeapon)
+        {
+            ParentActor.AttachActorToJoint(NextWeapon, StowAttachJoint);
+            NextWeapon.bHidden = false;
+            SetStowedWeapon(StowIndex, NextWeapon);
+        }
+    }
+}
+
+/**
+*   SwapStowToNext (override)
+*   Overridden to attach stowed weapons to the AnimProxy instead of Self
+*   See R_CreaturePlayerProxy for more details
+*/
+function SwapStowToNext(int StowIndex)
+{
+    local Actor ParentActor;
+    local int StowAttachJoint;
+    local Weapon StowedWeapon;
+    local Weapon NextWeapon;
+
+    ParentActor = GetAttachmentParentActor();
+
+    StowedWeapon = GetStowedWeapon(StowIndex);
+    if(StowedWeapon != None)
+    {
+        NextWeapon = GetNextWeapon(StowedWeapon);
+        if(NextWeapon != None && NextWeapon != StowedWeapon)
+        {
+            StowedWeapon.bHidden = true;
+            NextWeapon.bHidden = false;
+
+            switch(StowIndex)
+            {
+            case 0: // MELEE_SWORD
+                StowAttachJoint = ParentActor.JointNamed(AttachSwordJoint); // Compensate for a spelling error...  for now.
+                break;
+            case 1: // MELEE_HAMMER
+                StowAttachJoint = ParentActor.JointNamed(AttachHammerJoint);
+                break;
+            case 2: // MELEE_AXE
+                StowAttachJoint = ParentActor.JointNamed(AttachAxeJoint);
+                break;
+            default:
+                StowAttachJoint = 0;
+                break;
+            }
+
+            if(StowAttachJoint != 0)
+            {
+                ParentActor.DetachActorFromJoint(StowAttachJoint);
+                ParentActor.AttachActorToJoint(NextWeapon, StowAttachJoint);
+                SetStowedWeapon(StowIndex, NextWeapon);
+            }
+        }
+    }
+}
+
 defaultproperties
 {
     GroundSpeed=240.000000
@@ -267,6 +545,9 @@ defaultproperties
     Skeletal=SkelModel'creatures.Dwarf'
     SpawnableAnimationProxyClass=None
     bFrameNotifies=true
+    AttachAxeJoint='attach_axe'
+    AttachSwordJoint='attatch_sword'
+    AttachHammerJoint='attach_hammer'
 }
 
 /*

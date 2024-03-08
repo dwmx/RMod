@@ -22,7 +22,8 @@
 //  to itself, and NOT to the ownining RunePlayer the way AnimationProxy
 //  normally does.
 //==============================================================================
-class R_CreaturePlayerProxy extends AnimationProxy;
+//class R_CreaturePlayerProxy extends AnimationProxy;
+class R_CreaturePlayerProxy extends R_RunePlayerProxy;
 
 // Enumerator for the different directional attacks
 enum EAttackDirection
@@ -36,6 +37,8 @@ enum EAttackDirection
 
 var Name TorsoAnim;
 var Actor PendingPickupActor;
+
+var bool bDoStowExecuted;
 
 event BeginPlay()
 {
@@ -63,8 +66,16 @@ function LockSelfMeshToOwnerMesh()
     SetRotation(Owner.Rotation);
 }
 
+/**
+*   AcquireInventory (override)
+*   This is overridden to attach Inventory actors to the AnimProxy instead of to the
+*   owner.
+*/
 function AcquireInventory(Inventory InventoryActor)
 {
+    InventoryActor.FireEvent(InventoryActor.Event);
+    InventoryActor.Event = '';
+
     if(Weapon(InventoryActor) != None)
     {
         AcquireWeapon(Weapon(InventoryActor));
@@ -76,28 +87,132 @@ function AcquireInventory(Inventory InventoryActor)
         AcquireShield(Shield(InventoryActor));
         return;
     }
+
+    if(Runes(InventoryActor) != None)
+    {
+        AcquireRunes(Runes(InventoryActor));
+        return;
+    }
+
+    if(Pickup(InventoryActor) != None)
+    {
+        // No original functionality for this
+        return;
+    }
 }
 
 function AcquireWeapon(Weapon WeaponActor)
 {
-    local Name WeaponJoint;
-    if(Pawn(Owner) != None)
+    local R_RunePlayer RPOwner;
+
+    RPOwner = R_RunePlayer(Owner);
+    if(RPOwner != None)
     {
-        WeaponJoint = Pawn(Owner).WeaponJoint;
-        AttachActorToJoint(WeaponActor, JointNamed(WeaponJoint));
+        RPOwner.InstantStow();
+        RPOwner.SelectWeapon(WeaponActor);
+        RPOwner.Weapon = WeaponActor;
+
+        CurWeapon = RPOwner.Weapon;
+        NewWeapon = WeaponActor; // k...?
+
+        if(NonStow(WeaponActor) != None)
+        {
+            StowWeapon = None;
+        }
+        else
+        {
+            StowWeapon = RPOwner.GetStowedWeapon(GetStowIndex(NewWeapon));
+        }
+
+        // Original two hander vs shield code - this doesn't matter for creatures
+        // TODO: Will likely need some other logic here at some point
+
+        //if(CurWeapon != None && CurWeapon.A_Defend == 'None')
+        //{ // This weapon just picked up cannot be used with a shield
+        //    RunePlayer(Owner).DropShield();
+        //}
+
+        if(Owner.IsInState('PlayerSwimming'))
+        {
+            RPOwner.InstantStow();
+        }
     }
 }
 
 function AcquireShield(Shield ShieldActor)
 {
-    local Name ShieldJoint;
-    if(Pawn(Owner) != None)
+    local int ShieldJoint;
+    local R_RunePlayer RPOwner;
+
+    RPOwner = R_RunePlayer(Owner);
+    if(RPOwner != None)
     {
-        ShieldJoint = Pawn(Owner).ShieldJoint;
-        AttachActorToJoint(ShieldActor, JointNamed(ShieldJoint));
+        RPOwner.DropShield();
+        RPOwner.Shield = ShieldActor;
+
+        ShieldJoint = JointNamed(RPOwner.ShieldJoint);
+        if(ShieldJoint != 0)
+        {
+            AttachActorToJoint(RPOwner.Shield, ShieldJoint);
+        }
+
     }
 }
 
+function AcquireRunes(Runes RunesActor)
+{
+    RunesActor.GoToState('Activated');
+}
+
+/**
+*   ProxyPickup (override)
+*   Overridden to play the Dwarf pickup animation
+*   TODO:
+*   Generalize the function to work with all creatures
+*/
+function ProxyPickup()
+{
+    local Name AnimToPlay;
+
+    AnimToPlay = 'GetWeapon';
+    BlendAnimSequence = 'GetWeapon';
+    BlendAnimAlpha = 1.0;
+    R_RunePlayer(Owner).BlendAnimSequence = BlendAnimSequence;
+    R_RunePlayer(Owner).BlendAnimAlpha = BlendAnimAlpha;
+
+    PlayAnim(AnimToPlay, 1.0, 0.1);
+    R_RunePlayer(Owner).TryPlayTorsoAnim(AnimToPlay, 1.0, 0.1);
+}
+
+/**
+*   ProxyStowWeapon (override)
+*   Creatures don't have stow or select animations, so just auto stow
+*/
+function ProxyStowWeapon(int StowIndex)
+{
+    local R_RunePlayer RPOwner;
+
+    DoStowIndex = StowIndex;
+
+   //RPOwner = R_RunePlayer(Owner);
+    //if(RPOwner != None)
+    //{
+    //    RPOwner.InstantStow();
+    //}
+}
+
+/**
+*   DoStow (override)
+*/
+function DoStow()
+{
+    //R_RunePlayer(Owner).InstantStow();
+    Super.DoStow();
+    bDoStowExecuted = true;
+    //Log("DoStow called");
+}
+
+/*
 function bool CanPickup(Inventory InventoryActor)
 {
     return false;
@@ -142,7 +257,9 @@ function bool WantsToPickupShield(Shield ShieldActor)
 {
     return true;
 }
+*/
 
+/*
 event FrameNotify(int FramePassed)
 {
     local Pawn PawnOwner;
@@ -165,6 +282,7 @@ event FrameNotify(int FramePassed)
         }
     }
 }
+*/
 
 function WeaponActivate()
 {
@@ -334,6 +452,66 @@ Begin:
 
 state PickingUp
 {
+    event BeginState()
+    {
+        bDoStowExecuted = false;
+    }
+
+begin:
+    FindPickupItem();
+    RunePlayer(Owner).LastHeldWeapon = None;
+    if(PendingItem != None)
+    { // Retrieve the current item
+        PendingItem.LifeSpan = 0; // This item is about to be picked up, so it shouldn't go away
+        PendingItem.Style = Default.Style; // Item could possibly be in fade-out alpha blend mode
+            
+        RunePlayer(Owner).UninterruptedAnim = 'None';
+        RunePlayer(Owner).GotoState('Uninterrupted'); // Don't allow the lower-body to move while picking up		
+
+        if(PendingItem.IsA('Food'))
+        { // Save the last weapon in RunePlayer(Owner)'s hand to switch back after eating food
+            RunePlayer(Owner).LastHeldWeapon = RunePlayer(Owner).Weapon;
+        }
+
+        if(RunePlayer(Owner).Weapon != None && !PendingItem.IsA('Shield') && !PendingItem.IsA('Runes'))
+        { // If RunePlayer(Owner) has a weapon in his hand, stow it (or drop a weapon if it's a non-stow)
+          // No need to stow the weapon if picking up a shield or rune, which are done left-handed
+            if(RunePlayer(Owner).Weapon.IsA('NonStow'))
+                RunePlayer(Owner).LastHeldWeapon = None;
+
+            DoStowType = DST_STOW;
+            ProxyStowWeapon(GetStowIndex(RunePlayer(Owner).Weapon));
+            FinishAnim();
+            if(!bDoStowExecuted)
+            {
+                DoStow();
+            }
+        }
+
+        // Pickup the new item		
+        DoStowType = DST_PICKUP;
+        RunePlayer(Owner).PlaySound(RunePlayer(Owner).WeaponPickupSound, SLOT_Talk, 1.0, false, 1200, FRand() * 0.08 + 0.96);
+        ProxyPickup();
+        FinishAnim();
+        ProxyDonePickup();
+        PendingItem = None;
+        RunePlayer(Owner).GotoState('PlayerWalking');   
+    }
+
+    RunePlayer(Owner).SetMovementMode(); // Set combat or exploration mode
+
+    if(RunePlayer(Owner).LastHeldWeapon == None)
+    {
+        SyncAnimation(0.4);
+        GotoState('Idle');
+    }
+    else
+        RetrieveLastHeldWeapon();
+}
+
+/*
+state PickingUp
+{
     function bool CanPickup(Inventory InventoryActor)
     {
         return InventoryActor == PendingPickupActor;
@@ -399,6 +577,7 @@ Begin:
     //Sleep(0.1);
     //GoToState('Idle');
 }
+*/
 
 defaultproperties
 {
