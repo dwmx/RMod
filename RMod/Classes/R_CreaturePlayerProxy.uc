@@ -186,19 +186,23 @@ function ProxyPickup()
 
 /**
 *   ProxyStowWeapon (override)
-*   Creatures don't have stow or select animations, so just auto stow
+*   Any time this function is called in RunePlayer, it is expected that the triggered animation
+*   will fire an event which calls DoStow().
+*
+*   Because Creatures do not have these events in any of their animations, they will never trigger
+*   the call do DoStow.
+*
+*   Instead, this function now sets the flag bDoStowExecuted to false, which is flipped back in DoStow.
+*   Latent state scripts look for this flag and force the call to DoStow if the event was never fired.
 */
 function ProxyStowWeapon(int StowIndex)
 {
     local R_RunePlayer RPOwner;
 
     DoStowIndex = StowIndex;
+    bDoStowExecuted = false;
 
-   //RPOwner = R_RunePlayer(Owner);
-    //if(RPOwner != None)
-    //{
-    //    RPOwner.InstantStow();
-    //}
+    // TODO: Optionally play some animation here
 }
 
 /**
@@ -206,10 +210,8 @@ function ProxyStowWeapon(int StowIndex)
 */
 function DoStow()
 {
-    //R_RunePlayer(Owner).InstantStow();
     Super.DoStow();
     bDoStowExecuted = true;
-    //Log("DoStow called");
 }
 
 /*
@@ -452,11 +454,6 @@ Begin:
 
 state PickingUp
 {
-    event BeginState()
-    {
-        bDoStowExecuted = false;
-    }
-
 begin:
     FindPickupItem();
     RunePlayer(Owner).LastHeldWeapon = None;
@@ -507,6 +504,91 @@ begin:
     }
     else
         RetrieveLastHeldWeapon();
+}
+
+/**
+*   State: Switching (override)
+*   This state is originally set up to work by listening for events in animations which trigger
+*   the actual inventory interactions. Because Creatures do not have animations with these events,
+*   this state is overridden to force the interaction to happen.
+*/
+state Switching
+{
+begin:          
+    curWeapon = RunePlayer(Owner).Weapon;
+    newWeapon = RunePlayer(Owner).GetStowedWeapon(index);
+    nextWeapon = RunePlayer(Owner).GetNextWeapon(curWeapon);
+    RunePlayer(Owner).LastHeldWeapon = None;
+
+    if(curWeapon != None && GetStowIndex(curWeapon) == index && nextWeapon != None
+        && nextWeapon != curWeapon && newWeapon != None)
+    { // Swap between weapons of similar types
+        DoStowType = DST_SWAP;
+        ProxyStowWeapon(index);
+        FinishAnim();
+        if(!bDoStowExecuted)
+        {
+            DoStow();
+        }
+
+        // Activate the current weapon	
+        RunePlayer(Owner).Weapon.GotoState('Active');
+
+        goto('done');
+    }
+    else if(curWeapon != None)
+    {
+        if(index >= 0)
+        { // Real weapon (not fists)
+            if(newWeapon == None)
+            { // No weapon of type was stowed
+                goto('done');
+            }
+        }
+
+        DoStowType = DST_STOW;
+        ProxyStowWeapon(GetStowIndex(curWeapon));
+        FinishAnim();
+        if(!bDoStowExecuted)
+        {
+            DoStow();
+        }
+    }       
+
+    if(index == -1)
+    { // Fists (no weapon)
+        RunePlayer(Owner).Weapon = None;
+        goto('done');
+    }
+
+    if(newWeapon != None)
+    {
+        DoStowType = DST_RETRIEVE;
+        ProxyStowWeapon(index);
+        FinishAnim();
+        if(!bDoStowExecuted)
+        {
+            DoStow();
+        }
+    }
+
+    // Retrieve the current weapon	
+    if(RunePlayer(Owner).Weapon != None)
+        RunePlayer(Owner).Weapon.GotoState('Active');
+
+done:       
+    if(RunePlayer(Owner).Weapon != None && RunePlayer(Owner).Weapon.A_Defend == 'None')
+    { // This weapon just switched to cannot be used with a shield
+        RunePlayer(Owner).DropShield();
+    }
+
+    if(Owner.Region.Zone.bWaterZone)
+        RunePlayer(Owner).InstantStow(); // Disallow switching weapons while jumping into water
+    
+    RunePlayer(Owner).SetMovementMode(); // Set combat or exploration mode
+
+    SyncAnimation(0.3);
+    GotoState('Idle');
 }
 
 /*
