@@ -42,6 +42,7 @@ function PlayerRestart()
     Super.PlayerRestart();
     ApplyOwnerAndProxySkelGroupFlags();
     AnimProxy.DesiredColorAdjust = DesiredColorAdjust;
+    AnimProxy.bHidden = false;
 }
 
 
@@ -88,7 +89,17 @@ function ApplyOwnerAndProxySkelGroupFlags()
             AnimProxy.SkelGroupFlags[LowerBodyGroups[i]] = POLYFLAG_INVISIBLE;
         }
     }
-    
+}
+
+function RevertOwnerAndProxySkelGroupFlags()
+{
+    local int i;
+
+    for(i = 0; i < 16; ++i)
+    {
+        SkelGroupFlags[i] = Default.SkelGroupFlags[i];
+        AnimProxy.SkelGroupFlags[i] = AnimProxy.Default.SkelGroupFlags[i];
+    }
 }
 
 
@@ -362,6 +373,105 @@ function PlayLanding(optional float tween)
         PlayAnim('landingB', 1.0, 0.1);
     else
         PlayAnim('landingA', 1.0, 0.1);
+}
+
+
+
+/**
+*   Died (Override)
+*   Overridden to hide the anim proxy on death and play death anim only on Self.
+*/
+function Died(Pawn Killer, Name DamageType, Vector HitLocation)
+{
+    RevertOwnerAndProxySkelGroupFlags();
+    if(AnimProxy != None)
+    {
+        AnimProxy.bHidden = true;
+    }
+
+    Super.Died(Killer, DamageType, HitLocation);
+}
+
+/**
+*   PlayDying (override)
+*   Overridden to catch DamageTypes 'fell' and 'fire' and pass animation control to appropriate functions
+*/
+function PlayDying(Name DamageType, vector HitLoc)
+{
+    if(DamageType == 'fell')
+    {
+        PlayFellDeath(DamageType);
+    }
+    else if(DamageType == 'fire')
+    {
+        PlayFireDeath(DamageType);
+    }
+    else
+    {
+        Super.PlayDying(DamageType, HitLoc);
+    }
+}
+
+function PlayFellDeath(Name DamageType)
+{
+    local Name AnimToPlay;
+
+    if(AnimSequence == 'fallingB')
+    {
+        AnimToPlay = 'landingB';
+    }
+    else
+    {
+        AnimToPlay = 'landingC';
+    }
+
+    PlayAnimWithProxy(AnimToPlay, 1.0, 0.1);
+}
+
+/**
+*   Death animations
+*/
+function PlayDeath(Name DamageType)
+{
+    local Name AnimToPlay;
+    local int RandIndex;
+
+    RandIndex = RandRange(0, 5);
+    switch(RandIndex)
+    {
+    case 0: AnimToPlay = 'Deaths'; break;
+    case 1: AnimToPlay = 'DeathF'; break;
+    case 2: AnimToPlay = 'deathA'; break;
+    case 3: AnimToPlay = 'DeathR'; break;
+    case 4: AnimToPlay = 'deathL'; break;
+    }
+
+    PlayAnimWithProxy(AnimToPlay, 1.0, 0.1);
+}
+
+function PlayBackDeath(name DamageType)     { PlayDeath(DamageType); }
+function PlayLeftDeath(name DamageType)     { PlayDeath(DamageType); }
+function PlayRightDeath(name DamageType)    { PlayDeath(DamageType); }
+function PlayHeadDeath(name DamageType)     { PlayDeath(DamageType); }
+function PlaySkewerDeath(name DamageType)   { PlayDeath(DamageType); }
+function PlayFireDeath(Name DamageType)     { PlayDeath(DamageType); }
+function PlayDrownDeath(name DamageType)    { PlayAnimWithProxy('drown_death', 1.0, 0.1);}
+
+/**
+*   Pain animations
+*/
+function PlayFrontHit   (optional float tweentime)
+{
+    PlayAnimWithProxy('Damage', 1.0, 0.1);
+}
+function PlayBackHit    (optional float tweentime)  { PlayFrontHit(tweentime);  }
+function PlayLeftHit    (optional float tweentime)  { PlayFrontHit(tweentime);  }
+function PlayRightHit   (optional float tweentime)  { PlayFrontHit(tweentime);  }
+function PlayHeadHit    (optional float tweentime)  { PlayFrontHit(tweentime);  }
+
+function PlayDrowning   (optional float tweentime)
+{
+    PlayAnimWithProxy('drown', 1.0, 0.1);
 }
 
 /**
