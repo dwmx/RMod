@@ -193,7 +193,8 @@ replication
         ServerResetLevel,
         ServerSpectate,
         ServerTimeLimit,
-        ServerTempBan;
+        ServerTempBan,
+        RServerTaunt;
         
     reliable if(Role < ROLE_Authority)
         ServerValidatePlayer,
@@ -611,6 +612,55 @@ exec function TeamSay( string Msg )
                 }
             }
         }
+    }
+}
+
+/**
+*   Taunt (override)
+*   Overridden to reroute Taunt through RServerTaunt, because ServerTaunt allows clients to send their own
+*   taunt animations to play.
+*/
+exec function Taunt()
+{
+    RServerTaunt();
+}
+function ServerTaunt(Name AnimSequence)  {} // Do nothing
+function RServerTaunt()
+{
+    local Name AnimToPlay;
+
+    if(Physics != PHYS_Walking)
+    {
+        return;
+    }
+
+    if(bShowMenu || (Level.Pauser != ""))
+    {
+        return;
+    }
+
+    if(AnimProxy != None && AnimProxy.GetStateName() != 'Idle')
+    {
+        return;
+    }
+
+    AnimToPlay = SelectTauntAnim();
+    PlayUninterruptedAnim(AnimToPlay);
+}
+
+/**
+*   SelectTauntAnim
+*   Override-friendly function for selection taunt animations to play
+*/
+function Name SelectTauntAnim()
+{
+    if(Weapon != None)
+    {
+        return Weapon.A_Taunt;
+    }
+    else
+    {
+        return 'S3_Taunt';
     }
 }
 //==============================================================================
@@ -1724,6 +1774,7 @@ function PlayMoving(optional float tween)
     if(AnimProxy != None)
         AnimProxy.TryLoopAnim(UpperName, 1.0, 0.1);
 }
+
 //==============================================================================
 //  End animation function overrides
 //==============================================================================

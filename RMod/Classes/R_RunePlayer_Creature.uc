@@ -698,6 +698,32 @@ function SwapStowToNext(int StowIndex)
 }
 
 /**
+*   SelectTauntAnim (Override)
+*   Select the taunt animation to play when triggered
+*/
+function Name SelectTauntAnim()
+{
+    local Name AnimToPlay;
+    local int RandIndex;
+
+    RandIndex = RandRange(0, 3);
+    switch(RandIndex)
+    {
+    case 0:
+        AnimToPlay = 'talkB';
+        break;
+    case 1:
+        AnimToPlay = 'talkA';
+        break;
+    case 2:
+        AnimToPlay = 'dd_idleB';
+        break;
+    }
+
+    return AnimToPlay;
+}
+
+/**
 *   SelectThrowAnim
 *   Called by anim proxy to select the throw animation to play
 *   when throwing the current weapon.
