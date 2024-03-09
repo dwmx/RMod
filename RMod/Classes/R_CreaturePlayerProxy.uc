@@ -173,15 +173,20 @@ function AcquireRunes(Runes RunesActor)
 function ProxyPickup()
 {
     local Name AnimToPlay;
+    local float AnimRate;
+
+    bDoStowExecuted = false;
 
     AnimToPlay = 'GetWeapon';
-    BlendAnimSequence = 'GetWeapon';
+    AnimRate = 1.5;
+
+    BlendAnimSequence = AnimToPlay;
     BlendAnimAlpha = 1.0;
     R_RunePlayer(Owner).BlendAnimSequence = BlendAnimSequence;
     R_RunePlayer(Owner).BlendAnimAlpha = BlendAnimAlpha;
 
-    PlayAnim(AnimToPlay, 1.0, 0.1);
-    R_RunePlayer(Owner).TryPlayTorsoAnim(AnimToPlay, 1.0, 0.1);
+    PlayAnim(AnimToPlay, AnimRate, 0.1);
+    R_RunePlayer(Owner).TryPlayTorsoAnim(AnimToPlay, AnimRate, 0.1);
 }
 
 /**
@@ -202,7 +207,7 @@ function ProxyStowWeapon(int StowIndex)
     DoStowIndex = StowIndex;
     bDoStowExecuted = false;
 
-    // TODO: Optionally play some animation here
+    PlayAnim('TOblock', 1.0, 0.1);
 }
 
 /**
@@ -479,7 +484,7 @@ begin:
             DoStowType = DST_STOW;
             ProxyStowWeapon(GetStowIndex(RunePlayer(Owner).Weapon));
             FinishAnim();
-            if(!bDoStowExecuted)
+            if(!bDoStowExecuted) // [RMod]: Force call to DoStow if animation event never received
             {
                 DoStow();
             }
@@ -490,6 +495,10 @@ begin:
         RunePlayer(Owner).PlaySound(RunePlayer(Owner).WeaponPickupSound, SLOT_Talk, 1.0, false, 1200, FRand() * 0.08 + 0.96);
         ProxyPickup();
         FinishAnim();
+        if(!bDoStowExecuted) // [RMod]: Force call to DoStow if animation event never received
+        {
+            DoStow();
+        }
         ProxyDonePickup();
         PendingItem = None;
         RunePlayer(Owner).GotoState('PlayerWalking');   
@@ -526,7 +535,7 @@ begin:
         DoStowType = DST_SWAP;
         ProxyStowWeapon(index);
         FinishAnim();
-        if(!bDoStowExecuted)
+        if(!bDoStowExecuted) // [RMod]: Force call to DoStow if animation event never received
         {
             DoStow();
         }
@@ -549,7 +558,7 @@ begin:
         DoStowType = DST_STOW;
         ProxyStowWeapon(GetStowIndex(curWeapon));
         FinishAnim();
-        if(!bDoStowExecuted)
+        if(!bDoStowExecuted) // [RMod]: Force call to DoStow if animation event never received
         {
             DoStow();
         }
@@ -566,7 +575,7 @@ begin:
         DoStowType = DST_RETRIEVE;
         ProxyStowWeapon(index);
         FinishAnim();
-        if(!bDoStowExecuted)
+        if(!bDoStowExecuted) // [RMod]: Force call to DoStow if animation event never received
         {
             DoStow();
         }
