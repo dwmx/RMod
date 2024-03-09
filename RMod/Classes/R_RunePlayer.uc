@@ -399,11 +399,15 @@ exec function Throw()
         
         if(AnimProxy != None && AnimProxy.Throw())
         {
-            PlayAnim('ATK_ALL_throw1_AA0S', 1.0, 0.1);
+            PlayThrow();
         }
     }
-    
-    
+}
+
+function PlayThrow()
+{
+    // TODO: Optionally play animation here
+    PlayAnim('ATK_ALL_throw1_AA0S', 1.0, 0.1);
 }
 
 /**

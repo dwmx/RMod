@@ -150,29 +150,6 @@ function PlayAltFiring()
     }
 }
 
-/**
-*   Throw (override)
-*   Overridden to call PlayThrow instead of using RunePlayer's function which attempts
-*   to play an animation that creatures will not have.
-*/
-exec function Throw()
-{
-    if(Weapon == None)
-    {
-        return;
-    }
-
-    if( bShowMenu || (Level.Pauser!=""))
-    {
-        return;
-    }
-
-    if(AnimProxy != None && AnimProxy.Throw())
-    {
-        PlayThrow();
-    }
-}
-
 function PlayThrow()
 {
     // TODO: Optionally play animation here
