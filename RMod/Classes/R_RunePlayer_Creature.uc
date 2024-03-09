@@ -214,36 +214,6 @@ function ThrowWeapon()
     ThrownWeapon.GoToState('Throw');
 }
 
-/*
-function PlayFiring()
-{
-    if(AnimProxy != None)
-    {
-        AnimProxy.Attack();
-    }
-
-    if(Velocity.X * Velocity.X + Velocity.Y * Velocity.Y >= 1000)
-    {
-        PlayMoving();
-    }
-}
-*/
-
-/*
-function PlayFiring()
-{
-    if(UpperProxy != None)
-    {
-        UpperProxy.Attack();
-    }
-
-    if(Velocity.X * Velocity.X + Velocity.Y * Velocity.Y >= 1000)
-    {
-        PlayMoving();
-    }
-}
-*/
-
 function LoopAnimWithProxy(Name AnimName, float Rate, float Tween)
 {
     LoopAnim(AnimName, Rate, Tween);
@@ -317,34 +287,42 @@ function PlayDuck(optional float tween)
     LoopAnimWithProxy('duck', 1.0, 0.1);
 }
 
-/*
-function PlayFiring()
-{
-    //Log("Play Firing");
-    PlayAnim('attackA',   1.0, 0.1);
-}
-*/
-
-//function PlayCower(optional float tween)      { LoopAnim  ('cower',     1.0, tween);  Log("PlayCower");  }
-//function PlayThrowing(optional float tween)   { PlayAnim  ('throwB',   1.0, tween); Log("PlayThrowing"); }
-//function PlayTaunting(optional float tween)   { PlayAnim  ('pain',      1.0, tween);  Log("PlayTaunting");  }
 function PlayInAir(optional float tween)
 {
-    LoopAnim  ('fallingA',  1.0, tween);
+    LoopAnimWithProxy  ('fallingA',  1.0, tween);
+}
+function PlayFalling(optional float tween)
+{
+    if(Velocity.Z < -1000)
+    {
+        LoopAnimWithProxy  ('fallingC',  1.0, tween);
+    }
+}
+function Falling()
+{
+    local vector end;
+
+    end = Location;
+    end.Z -= CollisionHeight * 2.5;
+
+    if(FastTrace(end, Location))
+        PlayInAir(0.1);
+    else
+        PlayFalling(0.1);
 }
 function LongFall()
 {
     if (AnimSequence != 'fallingC')
-        LoopAnim  ('fallingC',  1.0, 0.1);
+        LoopAnimWithProxy  ('fallingC',  1.0, 0.1);
 }
 function PlayLanding(optional float tween)
 {
     if (AnimSequence == 'fallingC')
-        PlayAnim('landingC', 1.0, 0.1);
+        PlayAnimWithProxy('landingC', 1.0, 0.1);
     else if (AnimSequence == 'fallingB')
-        PlayAnim('landingB', 1.0, 0.1);
+        PlayAnimWithProxy('landingB', 1.0, 0.1);
     else
-        PlayAnim('landingA', 1.0, 0.1);
+        PlayAnimWithProxy('landingA', 1.0, 0.1);
 }
 
 
@@ -740,6 +718,22 @@ function Name SelectThrowAnim()
     return 'Throw';
 }
 
+function SelectPickupAnim(out Name OutAnimToPlay, out float OutAnimRate)
+{
+    if(UseActor != None)
+    {
+        if(Shield(UseActor) != None || Runes(UseActor) != None)
+        {
+            OutAnimToPlay = 'TOblock';
+            OutAnimRate = 1.0;
+            return;
+        }
+    }
+
+    OutAnimToPlay = 'GetWeapon';
+    OutAnimRate = 1.5;
+}
+
 defaultproperties
 {
     GroundSpeed=240.000000
@@ -773,7 +767,7 @@ defaultproperties
     FootStepSnow(2)=Sound'FootstepsSnd.Snow.footsnow12'
     WeaponJoint=attach_hand
     ShieldJoint=attach_shielda
-    CollisionRadius=35.000000
+    CollisionRadius=24.000000
     CollisionHeight=33.000000
     Skeletal=SkelModel'creatures.Dwarf'
     SkelMesh=0
@@ -785,70 +779,3 @@ defaultproperties
     bCanHoldShieldWithTwoHandedWeapons=true
     ThrowStrengthMultiplier=1.0
 }
-
-/*
-
-function PlayJump()
-{
-    PlayAnim('fallingA', 1.0, 0.1);
-}
-
-function PlayDuck(optional float tween)
-{
-    LoopAnim('duck', 1.0, 0.1);
-}
-
-
-
-function PlayAttack1(optional float tween)  { PlayAnim('attackA',   1.0, tween);   Log("PlayAttack1");  }
-function PlayAttack2(optional float tween)  { PlayAnim('attackB',   1.0, tween);   Log("PlayAttack2");  }
-function PlayAttack3(optional float tween)  { PlayAnim('attackC',   1.0, tween);   Log("PlayAttack3");  }
-
-function PlayCower(optional float tween)      { LoopAnim  ('cower',     1.0, tween);  Log("PlayCower");  }
-function PlayThrowing(optional float tween)   { PlayAnim  ('throwB',   1.0, tween); Log("PlayThrowing"); }
-function PlayTaunting(optional float tween)   { PlayAnim  ('pain',      1.0, tween);  Log("PlayTaunting");  }
-function PlayInAir(optional float tween)
-{
-    LoopAnim  ('fallingA',  1.0, tween);
-}
-function LongFall()
-{
-    if (AnimSequence != 'fallingC')
-        LoopAnim  ('fallingC',  1.0, 0.1);
-}
-function PlayLanding(optional float tween)
-{
-    if (AnimSequence == 'fallingC')
-        PlayAnim('landingC', 1.0, 0.1);
-    else if (AnimSequence == 'fallingB')
-        PlayAnim('landingB', 1.0, 0.1);
-    else
-        PlayAnim('landingA', 1.0, 0.1);
-}
-
-function PlayDodgeLeft(optional float tween)  { PlayAnim  ('runA',   1.0, tween);  Log("PlayDodgeLeft");  }
-function PlayDodgeRight(optional float tween) { PlayAnim  ('runA',   1.0, tween);  Log("PlayDodgeRight");  }
-function PlayDodgeForward(optional float tween){PlayAnim  ('runA',   1.0, tween);  Log("PlayDodgeForward");  }
-function PlayDodgeBack(optional float tween)  { PlayAnim  ('runA',   1.0, tween);  Log("PlayDodgeBack");  }
-function PlayDodgeBackflip(optional float tween){PlayAnim ('jump',   1.0, tween);  Log("PlayDodgeBackflip");  }
-function PlayDodgeDuck(optional float tween)  { PlayAnim  ('duck',   1.0, tween);  Log("PlayDodgeDuck");  }
-function PlayBlockHigh(optional float tween)  { LoopAnim  ('duck',   1.0, tween);  Log("PlayBlockHigh");  }
-function PlayBlockLow(optional float tween)   { LoopAnim  ('block',  1.0, tween);  Log("PlayBlockLow");  }
-
-function PlayFrontHit(float tweentime){}
-function PlayHeadHit(optional float tween)    { PlayAnim  ('damage',   1.0, tween);  Log("PlayHeadHit");  }
-function PlayBodyHit(optional float tween)    { PlayAnim  ('damage',   1.0, tween);  Log("PlayBodyHit");  }
-function PlayLArmHit(optional float tween)    { PlayAnim  ('damage',   1.0, tween);  Log("PlayLArmHit");  }
-function PlayRArmHit(optional float tween)    { PlayAnim  ('damage',   1.0, tween);   Log("PlayRArmHit"); }
-function PlayLLegHit(optional float tween)    { PlayAnim  ('damage',   1.0, tween);  Log("PlayLLegHit");  }
-function PlayRLegHit(optional float tween)    { PlayAnim  ('damage',   1.0, tween);  Log("PlayRLegHit");  }
-function PlayDrowning(optional float tween)   { LoopAnim  ('drown',  1.0, tween);   }
-
-function PlayBackDeath(name DamageType)       { PlayAnim  ('deathf', 1.0, 0.1);    Log("PlayBackDeath");  }
-function PlayLeftDeath(name DamageType)       { PlayAnim  ('deathl', 1.0, 0.1);    Log("PlayLeftDeath");  }
-function PlayRightDeath(name DamageType)      { PlayAnim  ('deathr', 1.0, 0.1);    Log("PlayRightDeath");  }
-function PlayHeadDeath(name DamageType)       { PlayAnim  ('deathf', 1.0, 0.1);    Log("PlayHeadDeath");  }
-function PlayDeath(name DamageType)           { PlayAnim  ('deatha', 1.0, 0.1);    Log("PlayDeath");  }
-function PlayDrownDeath(name DamageType)      { PlayAnim  ('drown_death', 1.0, 0.1);Log("PlayDrownDeath"); }
-function PlaySkewerDeath(name DamageType)     { PlayAnim  ('deaths', 1.0, 0.1);    Log("PlaySkewerDeath");  }
-*/

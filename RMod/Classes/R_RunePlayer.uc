@@ -1775,6 +1775,9 @@ function PlayMoving(optional float tween)
         AnimProxy.TryLoopAnim(UpperName, 1.0, 0.1);
 }
 
+function PlayFalling(optional float tween)
+{}
+
 //==============================================================================
 //  End animation function overrides
 //==============================================================================
@@ -3272,6 +3275,79 @@ state PlayerWalking
                 ZTargetDecal.SetOwner(ZTarget);
                 ZTargetDecal.Update(None);
             }
+        }
+    }
+
+    /**
+    *   ProcessMove (override)
+    *   Overriden to add a call to PlayFalling when the player is in air and falling
+    */
+    function ProcessMove(float DeltaTime, vector NewAccel, eDodgeDir DodgeMove, rotator DeltaRot)   
+    {
+        local vector OldAccel;
+
+        OldAccel = Acceleration;
+        Acceleration = NewAccel;
+        bIsTurning = ( Abs(DeltaRot.Yaw/DeltaTime) > 10000 ); // RUNE:  was 5000
+
+        if ( (DodgeMove == DODGE_Active) && (Physics == PHYS_Falling) )
+            DodgeDir = DODGE_Active;    
+        else if ( (DodgeMove != DODGE_None) && (DodgeMove < DODGE_Active) )
+            Dodge(DodgeMove);
+
+        if(bPressedJump)
+        {
+            DoJump();
+        }
+
+        if((Physics == PHYS_Walking)) // && (GetGroup(AnimSequence) != 'Dodge'))
+        {
+            if(!bIsCrouching)
+            {
+                if(bDuck != 0)
+                {
+                    SetCrouch(true);
+                    PlayDuck();
+                }
+            }
+            else if(bDuck == 0)
+            {
+                OldAccel = vect(0,0,0);
+                SetCrouch(false);
+            }
+
+            if ( !bIsCrouching )
+            {
+                if(VSize(Acceleration) >= 1)
+                {
+                    PlayMoving();
+                }
+                else if(Velocity.X * Velocity.X + Velocity.Y * Velocity.Y < 1000)
+                {
+                    PlayWaiting(0.2);
+/*
+                    if(bIsTurning)
+                    {
+                        PlayTurning();
+                    }
+                    else
+                    {
+                        PlayWaiting(0.2);
+                    }
+*/
+                }
+            }
+            else
+            {
+                if(VSize(Acceleration) >= 1)
+                    PlayCrawling();
+                else
+                    PlayDuck();
+            }
+        }
+        else if(Physics == PHYS_Falling)
+        {
+            PlayFalling();
         }
     }
     

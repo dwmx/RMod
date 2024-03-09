@@ -174,13 +174,17 @@ function AcquireRunes(Runes RunesActor)
 */
 function ProxyPickup()
 {
+    local R_RunePlayer_Creature RPOwner;
     local Name AnimToPlay;
     local float AnimRate;
 
     bDoStowExecuted = false;
 
-    AnimToPlay = 'GetWeapon';
-    AnimRate = 1.5;
+    RPOwner = R_RunePlayer_Creature(Owner);
+    if(RPOwner != None)
+    {
+        RPOwner.SelectPickupAnim(AnimToPlay, AnimRate);
+    }
 
     BlendAnimSequence = AnimToPlay;
     BlendAnimAlpha = 1.0;
