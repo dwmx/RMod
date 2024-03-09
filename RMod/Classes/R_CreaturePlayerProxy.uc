@@ -39,6 +39,7 @@ var Name TorsoAnim;
 var Actor PendingPickupActor;
 
 var bool bDoStowExecuted;
+var bool bDoThrowExecuted;
 
 event BeginPlay()
 {
@@ -681,6 +682,56 @@ done:
 
     SyncAnimation(0.3);
     GotoState('Idle');
+}
+
+/**
+*   State: Throwing (override)
+*   Overridden to play creature-specific animations for throws and force DoThrow call
+*   no matter what animation is played.
+*/
+state Throwing
+{
+    event BeginState()
+    {
+        bDoThrowExecuted = false;
+    }
+
+    function PlayThrowAnim()
+    {
+        local R_RunePlayer_Creature RPOwner;
+        local Name AnimToPlay;
+        local float AnimRate;
+
+        RPOwner = R_RunePlayer_Creature(Owner);
+        if(RPOwner != None)
+        {
+            AnimToPlay = RPOwner.A_Throw;
+            AnimRate = RPOwner.A_Throw_Rate;
+
+            if(AnimToPlay != '')
+            {
+                AnimRate = Clamp(AnimRate, 0.1, 2.0);
+                PlayAnim(AnimToPlay, AnimRate, 0.1);
+            }
+        }
+    }
+
+    function DoThrow()
+    {
+        Super.DoThrow();
+        bDoThrowExecuted = true;
+    }
+
+Begin:
+    PlayThrowAnim();
+    FinishAnim();
+    if(!bDoThrowExecuted)
+    {
+        DoThrow();
+    }
+    RunePlayer(Owner).SetMovementMode();
+    SyncAnimation(0.15);
+    GoToState('Idle');
 }
 
 /*

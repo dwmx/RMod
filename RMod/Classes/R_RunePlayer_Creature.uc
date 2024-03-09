@@ -17,6 +17,13 @@ const SKELGROUP_LEG_L = 10;
 const SKELGROUP_ARM_L = 11;
 const SKELGROUP_EARS_FACE = 12;
 
+// Animations requested by anim proxy
+var Name A_Throw;
+var float A_Throw_Rate;
+
+var float ThrowStrengthMultiplier;
+
+// Relevant skeletal joints
 var Name AttachAxeJoint;
 var Name AttachSwordJoint;
 var Name AttachHammerJoint;
@@ -106,6 +113,93 @@ function PlayAltFiring()
     {
         AnimProxy.Defend();
     }
+}
+
+/**
+*   Throw (override)
+*   Overridden to call PlayThrow instead of using RunePlayer's function which attempts
+*   to play an animation that creatures will not have.
+*/
+exec function Throw()
+{
+    if(Weapon == None)
+    {
+        return;
+    }
+
+    if( bShowMenu || (Level.Pauser!=""))
+    {
+        return;
+    }
+
+    if(AnimProxy != None && AnimProxy.Throw())
+    {
+        PlayThrow();
+    }
+}
+
+function PlayThrow()
+{
+    // TODO: Optionally play animation here
+}
+
+function CalcThrowMagnitudeForWeapon(Weapon ThrownWeapon, out float ThrowXMagnitude, out float ThrowZMagnitude)
+{
+    ThrowXMagnitude = ThrowStrengthMultiplier * 7500.0 / ThrownWeapon.Mass;
+    ThrowXMagnitude = Clamp(ThrowXMagnitude, 0.0, 750.0);
+
+    ThrowZMagnitude = ThrowStrengthMultiplier * 2000.0 / ThrownWeapon.Mass;
+    ThrowZMagnitude = Clamp(ThrowZMagnitude, 0.0, 200.0); 
+}
+
+/**
+*   ThrowWeapon (override)
+*   Overridden to detach weapons from AnimProxy instead of Self
+*   Also allows creatures to throw farther than other Players
+*/
+function ThrowWeapon()
+{
+    local Actor ParentActor;
+    local int AttachJoint;
+    local Vector X, Y, Z;
+    local Vector Extent;
+    local Vector WeaponLocation;
+    local Vector HitLocation, HitNormal;
+    local Weapon ThrownWeapon;
+    local float ThrowXMagnitude, ThrowZMagnitude;
+
+    if(Weapon == None)
+    {
+        return;
+    }
+
+    ParentActor = GetAttachmentParentActor();
+    AttachJoint = ParentActor.JointNamed(WeaponJoint);
+    ParentActor.DetachActorFromJoint(AttachJoint);
+
+    GetAxes(ViewRotation, X, Y, Z);
+
+    Extent.X = Weapon.CollisionRadius;
+    Extent.Y = Weapon.CollisionRadius;
+    Extent.Z = Weapon.CollisionRadius;
+
+    WeaponLocation = GetJointPos(AttachJoint);
+
+    if(Trace(HitLocation, HitNormal, WeaponLocation, Location, true, Extent) != None)
+    {
+        WeaponLocation = Location;
+    }
+
+    Weapon.SetLocation(WeaponLocation);
+
+    ThrownWeapon = Weapon;
+    DeleteInventory(Weapon);
+    ThrownWeapon.SetOwner(Self);
+
+    CalcThrowMagnitudeForWeapon(ThrownWeapon, ThrowXMagnitude, ThrowZMagnitude);
+
+    ThrownWeapon.Velocity = X * ThrowXMagnitude + Z * ThrowZMagnitude;
+    ThrownWeapon.GoToState('Throw');
 }
 
 /*
@@ -480,7 +574,7 @@ function SwapStowToNext(int StowIndex)
             switch(StowIndex)
             {
             case 0: // MELEE_SWORD
-                StowAttachJoint = ParentActor.JointNamed(AttachSwordJoint); // Compensate for a spelling error...  for now.
+                StowAttachJoint = ParentActor.JointNamed(AttachSwordJoint);
                 break;
             case 1: // MELEE_HAMMER
                 StowAttachJoint = ParentActor.JointNamed(AttachHammerJoint);
@@ -545,6 +639,9 @@ defaultproperties
     AttachSwordJoint=attatch_sword
     AttachHammerJoint=attach_hammer
     bCanHoldShieldWithTwoHandedWeapons=true
+    A_Throw=Throw
+    A_Throw_Rate=1.0
+    ThrowStrengthMultiplier=1.0
 }
 
 /*
