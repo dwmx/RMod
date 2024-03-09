@@ -701,20 +701,13 @@ state Throwing
     {
         local R_RunePlayer_Creature RPOwner;
         local Name AnimToPlay;
-        local float AnimRate;
 
         RPOwner = R_RunePlayer_Creature(Owner);
         if(RPOwner != None)
         {
-            AnimToPlay = RPOwner.A_Throw;
-            AnimRate = RPOwner.A_Throw_Rate;
-
-            if(AnimToPlay != '')
-            {
-                AnimRate = Clamp(AnimRate, 0.1, 2.0);
-                PlayAnim(AnimToPlay, AnimRate, 0.1);
-            }
+            AnimToPlay = RPOwner.SelectThrowAnim();
         }
+        PlayAnim(AnimToPlay, 1.0, 0.1);
     }
 
     function DoThrow()

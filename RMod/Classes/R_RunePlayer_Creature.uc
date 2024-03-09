@@ -17,10 +17,6 @@ const SKELGROUP_LEG_L = 10;
 const SKELGROUP_ARM_L = 11;
 const SKELGROUP_EARS_FACE = 12;
 
-// Animations requested by anim proxy
-var Name A_Throw;
-var float A_Throw_Rate;
-
 var float ThrowStrengthMultiplier;
 
 // Relevant skeletal joints
@@ -44,7 +40,6 @@ function PlayerRestart()
     AnimProxy.DesiredColorAdjust = DesiredColorAdjust;
     AnimProxy.bHidden = false;
 }
-
 
 /**
 *   ApplyOwnerAndProxySkelGroupFlags
@@ -725,6 +720,23 @@ function SwapStowToNext(int StowIndex)
     }
 }
 
+/**
+*   SelectThrowAnim
+*   Called by anim proxy to select the throw animation to play
+*   when throwing the current weapon.
+*/
+function Name SelectThrowAnim()
+{
+    if(Weapon != None && Shield == None)
+    {
+        if(Weapon.A_Defend == 'None')
+        {
+            return 'ThrowB';
+        }
+    }
+    return 'Throw';
+}
+
 defaultproperties
 {
     GroundSpeed=240.000000
@@ -768,8 +780,6 @@ defaultproperties
     AttachSwordJoint=attatch_sword
     AttachHammerJoint=attach_hammer
     bCanHoldShieldWithTwoHandedWeapons=true
-    A_Throw=Throw
-    A_Throw_Rate=1.0
     ThrowStrengthMultiplier=1.0
 }
 
