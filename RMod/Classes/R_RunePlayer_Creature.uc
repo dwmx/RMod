@@ -21,6 +21,9 @@ var Name AttachAxeJoint;
 var Name AttachSwordJoint;
 var Name AttachHammerJoint;
 
+// If true, this creature can hold shields with 2 handers
+var bool bCanHoldShieldWithTwoHandedWeapons;
+
 function InstantStow()
 {
     Super.InstantStow();
@@ -541,6 +544,7 @@ defaultproperties
     AttachAxeJoint=attach_axe
     AttachSwordJoint=attatch_sword
     AttachHammerJoint=attach_hammer
+    bCanHoldShieldWithTwoHandedWeapons=true
 }
 
 /*

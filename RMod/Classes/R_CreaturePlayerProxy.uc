@@ -219,6 +219,63 @@ function DoStow()
     bDoStowExecuted = true;
 }
 
+function bool WantsToPickup(Inventory InventoryActor)
+{
+    local R_RunePlayer RPOwner;
+
+    RPOwner = R_RunePlayer(Owner);
+    if(RPOwner != None)
+    {
+        // This is specific to dwarves, but always let them pick up shields
+        if(Shield(InventoryActor) != None)
+        {
+            if(RPOwner.Weapon != None && !CanUseWeaponWithShield(RPOwner.Weapon))
+            {
+                // Can't use current weapon with a shield
+                return false;
+            }
+            if(RPOwner.BodyPartMissing(BODYPART_LARM1))
+            {
+                // Arm is not available
+                return false;
+            }
+            return true;
+        }
+    }
+
+    return Super.WantsToPickup(InventoryActor);
+}
+
+/**
+*   CanUseWeaponWithShield
+*   Returns whether or not this AnimProxy can use the given weapon with a shield
+*/
+function bool CanUseWeaponWithShield(Weapon WeaponActor)
+{
+    local R_RunePlayer_Creature RPOwner;
+
+    if(WeaponActor == None)
+    {
+        return true;
+    }
+
+    RPOwner = R_RunePlayer_Creature(Owner);
+    if(RPOwner != None)
+    {
+        if(RPOwner.bCanHoldShieldWithTwoHandedWeapons)
+        {
+            return true;
+        }
+
+        if(WeaponActor.A_Defend == 'None')
+        { // This weapon is a 2 hander
+            return false;
+        }
+    }
+    // RunePlayer normally returns false if the WeaponActor does not have an A_Defend anim set
+    return true;
+}
+
 /*
 function bool CanPickup(Inventory InventoryActor)
 {
@@ -459,6 +516,17 @@ Begin:
 
 state PickingUp
 {
+    function bool ShouldDropShield()
+    {
+        local R_RunePlayer_Creature RPOwner;
+
+        RPOwner = R_RunePlayer_Creature(Owner);
+        if(RPOwner != None)
+        {
+            return !CanUseWeaponWithShield(RPOwner.Weapon);
+        }
+    }
+
 begin:
     FindPickupItem();
     RunePlayer(Owner).LastHeldWeapon = None;
@@ -500,6 +568,10 @@ begin:
             DoStow();
         }
         ProxyDonePickup();
+        if(ShouldDropShield())
+        {
+            RunePlayer(Owner).DropShield();
+        }
         PendingItem = None;
         RunePlayer(Owner).GotoState('PlayerWalking');   
     }
@@ -523,7 +595,18 @@ begin:
 */
 state Switching
 {
-begin:          
+    function bool ShouldDropShield()
+    {
+        local R_RunePlayer_Creature RPOwner;
+
+        RPOwner = R_RunePlayer_Creature(Owner);
+        if(RPOwner != None)
+        {
+            return !CanUseWeaponWithShield(RPOwner.Weapon);
+        }
+    }
+
+begin:
     curWeapon = RunePlayer(Owner).Weapon;
     newWeapon = RunePlayer(Owner).GetStowedWeapon(index);
     nextWeapon = RunePlayer(Owner).GetNextWeapon(curWeapon);
@@ -585,9 +668,9 @@ begin:
     if(RunePlayer(Owner).Weapon != None)
         RunePlayer(Owner).Weapon.GotoState('Active');
 
-done:       
-    if(RunePlayer(Owner).Weapon != None && RunePlayer(Owner).Weapon.A_Defend == 'None')
-    { // This weapon just switched to cannot be used with a shield
+done:
+    if(ShouldDropShield())
+    {
         RunePlayer(Owner).DropShield();
     }
 
