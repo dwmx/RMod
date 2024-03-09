@@ -450,6 +450,21 @@ function SelectWeapon(Weapon NewWeapon)
 }
 
 /**
+*   GetStowAttachJointForMeleeType
+*   Returns the joint index for attaching weapon categories (axes, hammers, swords)
+*/
+function int GetStowAttachJointForMeleeType(Actor ParentActor, Weapon WeaponActor)
+{
+    switch(WeaponActor.MeleeType)
+    {
+    case MELEE_SWORD:   return ParentActor.JointNamed(AttachSwordJoint);
+    case MELEE_AXE:     return ParentActor.JointNamed(AttachAxeJoint);
+    case MELEE_HAMMER:  return ParentActor.JointNamed(AttachHammerJoint);
+    default:            return 0;
+    }
+}
+
+/**
 *   StowWeapon (override)
 *   Overridden to attach stowed weapons to the AnimProxy instead of Self
 *   See R_CreaturePlayerProxy for more details
@@ -468,21 +483,7 @@ function StowWeapon(Weapon OldWeapon)
 
     ParentActor = GetAttachmentParentActor();
 
-    switch(Weapon.MeleeType)
-    {
-    case MELEE_SWORD:   
-        StowAttachJoint = ParentActor.JointNamed(AttachSwordJoint);
-        break;
-    case MELEE_AXE:
-        StowAttachJoint = ParentActor.JointNamed(AttachAxeJoint);
-        break;
-    case MELEE_HAMMER:
-        StowAttachJoint = ParentActor.JointNamed(AttachHammerJoint);
-        break;
-    default:
-        StowAttachJoint = 0;
-        break;
-    }
+    StowAttachJoint = GetStowAttachJointForMeleeType(ParentActor, Weapon);
 
     EquipAttachJoint = ParentActor.JointNamed(WeaponJoint);
 
@@ -502,6 +503,22 @@ function StowWeapon(Weapon OldWeapon)
 }
 
 /**
+*   GetAttachJointForStowIndex
+*   Return the joint index associated with the given ParentActor for the specified StowIndex.
+*   Determines which joint to stow a weapon at based on type.
+*/
+function int GetAttachJointForStowIndex(Actor ParentActor, int StowIndex)
+{
+    switch(StowIndex)
+    {
+    case 0:     return ParentActor.JointNamed(AttachSwordJoint);// MELEE_SWORD
+    case 1:     return ParentActor.JointNamed(AttachHammerJoint);// MELEE_HAMMER
+    case 2:     return ParentActor.JointNamed(AttachAxeJoint);// MELEE_AXE
+    default:    return 0;
+    }
+}
+
+/**
 *   RetrieveWeapon (override)
 *   Overridden to attach retrieved weapons to the AnimProxy instead of Self
 *   See R_CreaturePlayerProxy for more details
@@ -515,21 +532,7 @@ function RetrieveWeapon(int StowIndex)
 
     ParentActor = GetAttachmentParentActor();
 
-    switch(StowIndex)
-    {
-    case 0: // MELEE_SWORD
-        StowAttachJoint = ParentActor.JointNamed(AttachSwordJoint); // Compensate for a spelling error...  for now.
-        break;
-    case 1: // MELEE_HAMMER
-        StowAttachJoint = ParentActor.JointNamed(AttachHammerJoint);
-        break;
-    case 2: // MELEE_AXE
-        StowAttachJoint = ParentActor.JointNamed(AttachAxeJoint);
-        break;
-    default:
-        StowAttachJoint = 0;
-        break;
-    }
+    StowAttachJoint = GetAttachJointForStowIndex(ParentActor, StowIndex);
 
     CurrentWeapon = GetStowedWeapon(StowIndex);
     if(StowAttachJoint != 0 && CurrentWeapon != None)
@@ -571,21 +574,7 @@ function SwapStowToNext(int StowIndex)
             StowedWeapon.bHidden = true;
             NextWeapon.bHidden = false;
 
-            switch(StowIndex)
-            {
-            case 0: // MELEE_SWORD
-                StowAttachJoint = ParentActor.JointNamed(AttachSwordJoint);
-                break;
-            case 1: // MELEE_HAMMER
-                StowAttachJoint = ParentActor.JointNamed(AttachHammerJoint);
-                break;
-            case 2: // MELEE_AXE
-                StowAttachJoint = ParentActor.JointNamed(AttachAxeJoint);
-                break;
-            default:
-                StowAttachJoint = 0;
-                break;
-            }
+            StowAttachJoint = GetAttachJointForStowIndex(ParentActor, StowIndex);
 
             if(StowAttachJoint != 0)
             {
@@ -645,17 +634,6 @@ defaultproperties
 }
 
 /*
-var R_CreatureProxy CreatureProxyBase;
-var R_CreatureProxy CreatureProxyUpper;
-var R_CreatureProxy CreatureProxyLower;
-
-replication
-{
-    reliable if(Role == ROLE_Authority)
-        CreatureProxyBase,
-        CreatureProxyUpper,
-        CreatureProxyLower;
-}
 
 function PlayJump()
 {
@@ -667,13 +645,6 @@ function PlayDuck(optional float tween)
     LoopAnim('duck', 1.0, 0.1);
 }
 
-/*
-function PlayFiring()
-{
-    //Log("Play Firing");
-    PlayAnim('attackA',   1.0, 0.1);
-}
-*/
 
 
 function PlayAttack1(optional float tween)  { PlayAnim('attackA',   1.0, tween);   Log("PlayAttack1");  }
@@ -727,44 +698,4 @@ function PlayHeadDeath(name DamageType)       { PlayAnim  ('deathf', 1.0, 0.1); 
 function PlayDeath(name DamageType)           { PlayAnim  ('deatha', 1.0, 0.1);    Log("PlayDeath");  }
 function PlayDrownDeath(name DamageType)      { PlayAnim  ('drown_death', 1.0, 0.1);Log("PlayDrownDeath"); }
 function PlaySkewerDeath(name DamageType)     { PlayAnim  ('deaths', 1.0, 0.1);    Log("PlaySkewerDeath");  }
-
-defaultproperties
-{
-    GroundSpeed=240.000000
-    AccelRate=1000.000000
-    JumpZ=400.000000
-    MaxStepHeight=30.000000
-    WalkingSpeed=160.000000
-    HitSound1=Sound'CreaturesSnd.Dwarves.hit02'
-    HitSound2=Sound'CreaturesSnd.Dwarves.word26'
-    HitSound3=Sound'CreaturesSnd.Dwarves.hit07'
-    Die=Sound'CreaturesSnd.Dwarves.death09'
-    Die2=Sound'CreaturesSnd.Dwarves.death10'
-    Die3=Sound'CreaturesSnd.Dwarves.death12'
-    FootStepWood(0)=None
-    FootStepWood(1)=None
-    FootStepWood(2)=None
-    FootStepMetal(0)=Sound'FootstepsSnd.Metal.footmetal10'
-    FootStepMetal(1)=Sound'FootstepsSnd.Metal.footmetal11'
-    FootStepMetal(2)=Sound'FootstepsSnd.Metal.footmetal12'
-    FootStepStone(0)=Sound'FootstepsSnd.Earth.footgravel13'
-    FootStepStone(1)=Sound'FootstepsSnd.Earth.footgravel12'
-    FootStepStone(2)=Sound'FootstepsSnd.Earth.footgravel13'
-    FootStepIce(0)=Sound'FootstepsSnd.Ice.footice04'
-    FootStepIce(1)=Sound'FootstepsSnd.Ice.footice05'
-    FootStepIce(2)=Sound'FootstepsSnd.Ice.footice06'
-    FootStepEarth(0)=Sound'FootstepsSnd.Earth.footgravel03'
-    FootStepEarth(1)=Sound'FootstepsSnd.Earth.footgravel05'
-    FootStepEarth(2)=Sound'FootstepsSnd.Earth.footgravel06'
-    FootStepSnow(0)=Sound'FootstepsSnd.Snow.footsnow10'
-    FootStepSnow(1)=Sound'FootstepsSnd.Snow.footsnow11'
-    FootStepSnow(2)=Sound'FootstepsSnd.Snow.footsnow12'
-    WeaponJoint=attach_hand
-    ShieldJoint=attach_shielda
-    CollisionRadius=35.000000
-    CollisionHeight=33.000000
-    Skeletal=SkelModel'creatures.Dwarf'
-    SpawnableAnimationProxyClass=None
-    bFrameNotifies=true
-}
 */
