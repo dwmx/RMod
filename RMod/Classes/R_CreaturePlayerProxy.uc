@@ -45,14 +45,15 @@ event BeginPlay()
 {
     Super.BeginPlay();
     Skeletal = Owner.Skeletal;
+    SkelMesh = Owner.SkelMesh;
 }
 
-event Tick(float DeltaSeconds)
+simulated event Tick(float DeltaSeconds)
 {
     LockSelfMeshToOwnerMesh();
 }
 
-function LockSelfMeshToOwnerMesh()
+simulated function LockSelfMeshToOwnerMesh()
 {
     local Vector OwnerMeshOffset;
     local Vector ProxyMeshOffset;
@@ -733,76 +734,6 @@ Begin:
     SyncAnimation(0.15);
     GoToState('Idle');
 }
-
-/*
-state PickingUp
-{
-    function bool CanPickup(Inventory InventoryActor)
-    {
-        return InventoryActor == PendingPickupActor;
-    }
-
-    function UpdatePendingPickupActor()
-    {
-        local Pawn PawnOwner;
-
-        PawnOwner = Pawn(Owner);
-        if(PawnOwner != None && PawnOwner.UseActor != None)
-        {
-            if(PawnOwner.UseActor.Owner == None)
-            {
-                PendingPickupActor = PawnOwner.UseActor;
-            }
-        }
-    }
-
-    function AttachToHand()
-    {
-        local int WeaponJoint;
-        
-        if(Pawn(Owner) != None)
-        {
-            if(R_RunePlayer(Owner) != None)
-            {
-                R_RunePlayer(Owner).InstantStow();
-            }
-            WeaponJoint = Owner.JointNamed(Pawn(Owner).WeaponJoint);
-        }
-
-        AttachActorToJoint(PendingPickupActor, WeaponJoint);
-    }
-
-Begin:
-    UpdatePendingPickupActor();
-    R_RunePlayer(Owner).LastHeldWeapon = None;
-    if(PendingPickupActor != None)
-    {
-        Inventory(PendingPickupActor).LifeSpan = 0;
-        PendingPickupActor.Style = Default.Style;
-
-        // No moving while picking up
-        R_RunePlayer(Owner).UninterruptedAnim = 'None';
-        R_RunePlayer(Owner).GotoState('Uninterrupted');
-
-        if(Food(PendingPickupActor) != None)
-        {
-            R_RunePlayer(Owner).LastHeldWeapon = R_RunePlayer(Owner).Weapon;
-        }
-
-        if(R_RunePlayer(Owner).Weapon != None && Shield(PendingPickupActor) == None && Runes(PendingPickupActor) == None)
-        {
-            if(NonStow(R_RunePlayer(Owner).Weapon) != None)
-            {
-                R_RunePlayer(Owner).LastHeldWeapon = None;
-            }
-        }
-    }
-
-    //AttachToHand();
-    //Sleep(0.1);
-    //GoToState('Idle');
-}
-*/
 
 defaultproperties
 {

@@ -31,11 +31,6 @@ var Name AttachHammerJoint;
 // If true, this creature can hold shields with 2 handers
 var bool bCanHoldShieldWithTwoHandedWeapons;
 
-function InstantStow()
-{
-    Super.InstantStow();
-}
-
 function SpawnAnimProxy()
 {
     AnimProxy = Spawn(Class'RMod.R_CreaturePlayerProxy', Self);
@@ -48,6 +43,7 @@ function PlayerRestart()
     ApplyOwnerAndProxySkelGroupFlags();
     AnimProxy.DesiredColorAdjust = DesiredColorAdjust;
 }
+
 
 /**
 *   ApplyOwnerAndProxySkelGroupFlags
@@ -93,6 +89,39 @@ function ApplyOwnerAndProxySkelGroupFlags()
         }
     }
     
+}
+
+
+
+state EdgeHanging
+{
+    function PlayPullUp(optional float Tween)
+    {
+        PlayStepUp(Tween);
+    }
+
+    function PlayStepUp(optional float Tween)
+    {
+        // play sound
+        PlayAnim('pullupB', 1.0, tween);
+        if(AnimProxy != None)
+        {
+            AnimProxy.TryPlayAnim('pullupB', 1.0, tween);
+        }
+    }
+
+    function AnimEnd()
+    {
+        PlayWaiting(0.2);
+
+        // Done climbing
+        if(AnimProxy != None)
+        {
+            AnimProxy.GoToState('Idle');
+        }
+
+        GoToState('PlayerWalking');
+    }
 }
 
 
@@ -622,6 +651,7 @@ defaultproperties
     CollisionRadius=35.000000
     CollisionHeight=33.000000
     Skeletal=SkelModel'creatures.Dwarf'
+    SkelMesh=0
     SpawnableAnimationProxyClass=None
     bFrameNotifies=true
     AttachAxeJoint=attach_axe
