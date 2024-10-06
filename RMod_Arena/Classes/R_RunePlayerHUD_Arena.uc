@@ -62,30 +62,32 @@ simulated function DrawCountdownTimer(canvas Canvas)
 
 	PlayerOwner = PlayerPawn(Owner);
 
-	if(PlayerOwner == None || PlayerOwner.GameReplicationInfo==None)
+	if (PlayerOwner == None)
 		return;
 
-	if(PlayerOwner.PlayerReplicationInfo.Team == 255)
+	if (PlayerOwner.PlayerReplicationInfo == None || PlayerOwner.PlayerReplicationInfo.Team == 255)
 		return;
 
 	ArenaRepInfo = ArenaGameReplicationInfo(PlayerOwner.GameReplicationInfo);
-	if(ArenaRepInfo == None)
+	if (ArenaRepInfo == None)
 		return;
 
-	if(!ArenaRepInfo.bDrawTimer)
+	if (!ArenaRepInfo.bDrawTimer)
 		return;
 
 	strTime = TwoDigitString(ArenaRepInfo.curTimer);
-	if(ArenaRepInfo.curTimer <= 3)
+
+	if (ArenaRepInfo.curTimer <= 3)
 		Canvas.SetColor(255, 0, 0);
 	else
-		Canvas.SetColor(255,255,255);
-	
+		Canvas.SetColor(255, 255, 255);
+
 	Canvas.StrLen(strTime, XL, YL);
 	Canvas.SetPos((Canvas.ClipX * 0.5) - (XL * 0.5), (Canvas.ClipY * 0.3) - (YL * 0.5));
+
 	Canvas.DrawText(strTime, false);
 
-	Canvas.SetColor(255,255,255);	
+	Canvas.SetColor(255, 255, 255);
 }
 
 simulated function DrawQueueNumbers(canvas Canvas)
