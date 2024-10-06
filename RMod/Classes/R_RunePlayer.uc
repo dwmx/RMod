@@ -917,43 +917,48 @@ event PostRender(Canvas C)
 *   Overridden to ensure that when the player is not in spectator state,
 *   they will use the normal HUD. Spectator state applies a different HUD.
 */
-event PreRender( canvas Canvas )
+event PreRender(canvas Canvas)
 {
-    if (bDebug==1)
-    {
-        if (myDebugHUD   != None)
-            myDebugHUD.PreRender(Canvas);
-        else if ( Viewport(Player) != None )
-            myDebugHUD = spawn(Class'Engine.DebugHUD', self);
-    }
+	if (bDebug == 1)
+	{
+		if (myDebugHUD != None)
+		{
+			myDebugHUD.PreRender(Canvas);
+		}
+		else if (Viewport(Player) != None)
+		{
+			myDebugHUD = spawn(Class'Engine.DebugHUD', Self);
+		}
+	}
 
-    // Ensure normal hud is in use
-    if(myHUD != None && R_RunePlayerHUDSpectator(myHUD) != None)
-    {
-        myHUD.Destroy();
-    }
+	if (myHUD != None && R_RunePlayerHUDSpectator(myHUD) != None)
+	{
+		myHUD.Destroy();
+		myHUD = None;
+	}
 
-    if(myHUD == None || (myHUD != None && HUDType != None && myHUD.Class != HUDType))
-    {
-        if(myHUD == None)
-        {
-            myHUD.Destroy();
-        }
-        myHUD = Spawn(HUDType, Self);
-    }
+	if (myHUD == None && HUDType != None)
+	{
+		myHUD = Spawn(HUDType, Self);
+	}
+	else if (myHUD != None && myHUD.Class != HUDType)
+	{
+		myHUD.Destroy();
+		myHUD = Spawn(HUDType, Self);
+	}
 
-    if(myHUD != None)
-    {
-        myHUD.PreRender(Canvas);
-    }
+	if (myHUD != None)
+	{
+		myHUD.PreRender(Canvas);
+	}
 
-    if (bClientSideAlpha)
-    {
-        OldStyle = Style;
-        OldScale = AlphaScale;
-        Style = STY_AlphaBlend;
-        AlphaScale = ClientSideAlphaScale;
-    }
+	if (bClientSideAlpha)
+	{
+		OldStyle = Style;
+		OldScale = AlphaScale;
+		Style = STY_AlphaBlend;
+		AlphaScale = ClientSideAlphaScale;
+	}
 }
 
 /**
