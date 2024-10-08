@@ -2,47 +2,52 @@
 //  R_GameInfo
 //  Base GameInfo class for all RMod game types.
 //==============================================================================
-class R_GameInfo extends RuneI.RuneMultiPlayer;
+class R_GameInfo extends RuneI.RuneMultiPlayer config(RMod);
 
-var Class<RunePlayer> RunePlayerClass;
+var config Class<RunePlayer> RunePlayerClass;
 var Class<RunePlayer> SpectatorMarkerClass;
-var Class<PlayerReplicationInfo> PlayerReplicationInfoClass;
+var config Class<PlayerReplicationInfo> PlayerReplicationInfoClass;
+var config class<R_AColors> ColorsClass;
 
-var Class<R_GamePresets> GamePresetsClass; // TODO: Remove this
 var Class<R_AUtilities> UtilitiesClass;
-var Class<R_AActorSubstitution> ActorSubstitutionClass;
+var config Class<R_AActorSubstitution> ActorSubstitutionClass;
+
+// Temporary ban management
+var Class<R_TempBanManager> TempBanManagerClass;
+var R_TempBanManager TempBanManager;
+
+// Persistent score tracking
+var Class<R_PersistentScoreManager> PersistentScoreManagerClass;
+var R_PersistentScoreManager PersistentScoreManager;
+var config bool bEnablePersistentScoreTracking;
 
 // RMod Game Options
-var Class<R_GameOptions> GameOptionsClass;
+var config Class<R_GameOptions> GameOptionsClass;
 var R_GameOptions GameOptions;
 
 // Loadout options, spawned when loadout option is enabled
-var Class<R_LoadoutOptionReplicationInfo> LoadoutOptionReplicationInfoClass;
+var config Class<R_LoadoutOptionReplicationInfo> LoadoutOptionReplicationInfoClass;
 var R_LoadoutOptionReplicationInfo LoadoutOptionReplicationInfo;
+var config bool bLoadoutsEnabled;
 
 var private String OldGamePassword;
 
 var Class<HUD> HUDTypeSpectator;
 var bool bAllowSpectatorBroadcastMessage;
 
-var bool bRemoveNativeWeapons;
-var bool bRemoveNativeShields;
-var bool bRemoveNativeRunes;
-var bool bRemoveNativeFoods;
-
-var bool bLoadoutsEnabled;
+var config bool bRemoveNativeWeapons;
+var config bool bRemoveNativeShields;
+var config bool bRemoveNativeRunes;
+var config bool bRemoveNativeFoods;
 
 // Used at level start to mark actors which stay during level reset
 var bool bMarkSpawnedActorsAsNativeToLevel;
 
-// Gameplay modifications
-var bool bRModEnabled;
-
 // PlayerRestart variables
-var int DefaultPlayerHealth;
-var int DefaultPlayerMaxHealth;
-var int DefaultPlayerRunePower;
-var int DefaultPlayerMaxRunePower;
+var config int DefaultPlayerHealth;
+var config int DefaultPlayerMaxHealth;
+var config int DefaultPlayerRunePower;
+var config int DefaultPlayerMaxRunePower;
 
 event Tick(float DeltaSeconds)
 {
@@ -74,69 +79,6 @@ function bool CheckMapExists(String MapString)
 	return true;
 }
 
-function SwitchGame(PlayerPawn Sender, String S)
-{
-	//TODO:
-	// native(539) final function string GetMapName( string NameEnding, string MapName, int Dir );
-	// native(547) final function string GetURLMap();
-	local R_GamePresets GP;
-	local String GameTag;
-	local String MapString;
-	local String ErrorToken;
-	local String URL;
-	local int i;
-	
-	// Verify valid input string
-	GameTag = GetToken(S);
-	MapString = GetToken(S);
-	ErrorToken = GetToken(S);
-	
-	if(ErrorToken != "")
-	{
-		SwitchGameErrorMessage(Sender);
-		return;
-	}
-	
-	// Find options string
-	GP = Spawn(GamePresetsClass);
-	URL = GP.FindOptions(GameTag);
-	GP.Destroy();
-	
-	if(URL == "")
-	{
-		SwitchGameErrorMessage(
-			Sender, "Game tag " $ GameTag $ " is not configured");
-		return;
-	}
-	
-	// Verify map is installed
-	if(MapString == "")
-	{
-		SwitchGameErrorMessage(
-			Sender, "Map name not specified");
-		return;
-	}
-	else if(!CheckMapExists(MapString))
-	{
-		SwitchGameErrorMessage(
-			Sender, "Map: " $ MapString $ " is not installed on this server");
-		return;
-	}
-	
-	// Switch level
-	URL = MapString $ "?" $ URL;
-	Level.ServerTravel(URL, false);
-}
-
-function SwitchGameErrorMessage(PlayerPawn Sender, optional String ErrorMessage)
-{
-	if(ErrorMessage != "")
-	{
-		Sender.ClientMessage(ErrorMessage);
-	}
-	Sender.ClientMessage("Usage: SwitchGame <game tag> <map name>");
-}
-
 function PlayerSetTimeLimit(PlayerPawn P, int DurationMinutes)
 {
 	local R_RunePlayer RP;
@@ -154,6 +96,12 @@ function PlayerSetTimeLimit(PlayerPawn P, int DurationMinutes)
 	SaveConfig();
 	
 	BroadcastMessage("TimeLimit has been set to " $ DurationMinutes $ " minutes.");
+}
+
+event BeginPlay()
+{
+    Super.BeginPlay();
+    SaveConfig();
 }
 
 event PostBeginPlay()
@@ -175,6 +123,8 @@ event PostBeginPlay()
         SpawnLoadoutOptionReplicationInfo();
     }
 
+    SpawnTempBanManager();
+    SpawnPersistentScoreManager();
     SpawnGameOptions();
 
     RGRI = R_GameReplicationInfo(GameReplicationInfo);
@@ -189,11 +139,49 @@ function SpawnLoadoutOptionReplicationInfo()
     if(LoadoutOptionReplicationInfoClass != None)
     {
         LoadoutOptionReplicationInfo = Spawn(LoadoutOptionReplicationInfoClass);
-        UtilitiesClass.Static.Log("Spawned LoadoutOptionReplicationInfo from class" @ LoadoutOptionReplicationInfoClass);
+        UtilitiesClass.Static.RModLog("Spawned LoadoutOptionReplicationInfo from class" @ LoadoutOptionReplicationInfoClass);
     }
     else
     {
-        UtilitiesClass.Static.Warn("Failed to spawn LoadoutOptionReplicationInfo, no class specified");
+        UtilitiesClass.Static.RModWarn("Failed to spawn LoadoutOptionReplicationInfo, no class specified");
+    }
+}
+
+function SpawnTempBanManager()
+{
+    if(TempBanManagerClass != None)
+    {
+        TempBanManager = New(None) TempBanManagerClass;
+    }
+
+    if(TempBanManager != None)
+    {
+        UtilitiesClass.Static.RModLog("Temp ban manager spawned from class" @ TempBanManagerClass);
+        TempBanManager.Initialize(Self);
+    }
+}
+
+function SpawnPersistentScoreManager()
+{
+    if(!bEnablePersistentScoreTracking)
+    {
+        UtilitiesClass.Static.RModLog("Persistent score tracking disabled");
+        return;
+    }
+
+    if(PersistentScoreManagerClass != None)
+    {
+        PersistentScoreManager = New(None) PersistentScoreManagerClass;
+    }
+
+    if(PersistentScoreManager != None)
+    {
+        UtilitiesClass.Static.RModLog("Spawned persistent score manager from class" @ PersistentScoreManagerClass);
+        PersistentScoreManager.Initialize(Self);
+    }
+    else
+    {
+        UtilitiesClass.Static.RModWarn("Failed to spawn persistent score manager");
     }
 }
 
@@ -538,20 +526,96 @@ function PlayerPawn GetPlayerPawnByID(int PlayerID)
 	return None;
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-////	PreLogin
-////	TODO: Add an incoming message or something
-//event PreLogin(
-//	String Options,
-//	String Address,
-//	out String Error,
-//	out String FailCode)
-//{
-//	Super.PreLogin(Options, Address, Error, FailCode);
-//}
+/**
+*   TempBan
+*   Temporarily ban a player for some duration.
+*/
+function TempBan(PlayerPawn P, float DurationSeconds, optional String ReasonString)
+{
+    local String PlayerIPString;
+    local String PlayerIPStringIterator;
+    local Pawn PawnIterator;
+    local Pawn PendingDestroyPawns[64];
+    local int i;
 
-////////////////////////////////////////////////////////////////////////////////
-//	Login
+    if(DurationSeconds < 1.0)
+    {
+        return;
+    }
+
+    if(TempBanManager != None)
+    {
+        PlayerIPString = P.GetPlayerNetworkAddress();
+        PlayerIPString = Left(PlayerIPString, InStr(PlayerIPString, ":"));
+        TempBanManager.ApplyTempBan(PlayerIPString, DurationSeconds, ReasonString);
+
+        i = 0;
+        for(PawnIterator = Level.PawnList; PawnIterator != None; PawnIterator = PawnIterator.NextPawn)
+        {
+            if(PlayerPawn(PawnIterator) != None)
+            {
+                PlayerIPStringIterator = PlayerPawn(PawnIterator).GetPlayerNetworkAddress();
+                PlayerIPStringIterator = Left(PlayerIPStringIterator, InStr(PlayerIPStringIterator, ":"));
+                if(PlayerIPStringIterator == PlayerIPString)
+                {
+                    PendingDestroyPawns[i] = PawnIterator;
+                    ++i;
+                }
+            }
+        }
+
+        for(i = 0; i < 64; ++i)
+        {
+            if(PendingDestroyPawns[i] != None)
+            {
+                PendingDestroyPawns[i].Destroy();
+            }
+        }
+    }
+}
+
+/**
+*   PreLogin (override)
+*   Overridden to check for temporary bans on incoming connections.
+*/
+event PreLogin(
+	String Options,
+	String Address,
+	out String Error,
+	out String FailCode)
+{
+    local String PlayerIPString;
+    local float RemainingTempBanDurationSeconds;
+    local String BanReasonString;
+
+    // Check for temp ban
+    if(TempBanManager != None)
+    {
+        PlayerIPString = Address;
+        PlayerIPString = Left(PlayerIPString, InStr(PlayerIPString, ":"));
+        if(TempBanManager.CheckTempBan(PlayerIPString, RemainingTempBanDurationSeconds, BanReasonString))
+        {
+            Error = "You are temporarily banned.";
+
+            if(BanReasonString != "")
+            {
+                Error = Error @ "Reason:" @ BanReasonString $ ".";
+            }
+
+            Error = Error @ int(RemainingTempBanDurationSeconds) @ "seconds remaining";
+
+            return;
+        }
+    }
+
+	Super.PreLogin(Options, Address, Error, FailCode);
+}
+
+/**
+*   Login (override)
+*   Overridden to force all incoming players to spawn with a common class.
+*   Individual class data is extracted and applied to R_RunePlayer.
+*/
 event PlayerPawn Login(
 	String Portal,
 	String Options,
@@ -564,7 +628,7 @@ event PlayerPawn Login(
 	IncomingClass = SpawnClass;
 	
 	SpawnClass = RunePlayerClass;
-	
+
 	P = Super.Login(
 		Portal,
 		Options,
@@ -577,7 +641,7 @@ event PlayerPawn Login(
 		UtilitiesClass.Static.RModLog("Incoming player subclass: " $ IncomingClass);
 		if(R_RunePlayer(P) != None)
 		{
-			R_RunePlayer(P).ApplySubClass(Class<RunePlayer>(IncomingClass));
+			R_RunePlayer(P).ApplyRunePlayerSubClass(Class<RunePlayer>(IncomingClass));
 		}
 	}
 	else if(Class<Spectator>(IncomingClass) != None)
@@ -591,7 +655,7 @@ event PlayerPawn Login(
 		UtilitiesClass.Static.RModLog("Incoming spectator class: " $ IncomingClass);
 		if(R_RunePlayer(P) != None)
 		{
-			R_RunePlayer(P).ApplySubClass(Self.SpectatorMarkerClass);
+			R_RunePlayer(P).ApplyRunePlayerSubClass(Self.SpectatorMarkerClass);
 		}
 	}
 	
@@ -600,16 +664,59 @@ event PlayerPawn Login(
 
 event PostLogin(PlayerPawn NewPlayer)
 {
+    local String IPString;
+
 	Super.PostLogin(NewPlayer);
-	
-	// Take care of incoming spectators
+
+	// All players initially enter into player validation state
 	if(R_RunePlayer(NewPlayer) != None)
 	{
-		if(R_RunePlayer(NewPlayer).RunePlayerSubClass == SpectatorMarkerClass)
-		{
-			MakePlayerSpectate(R_RunePlayer(NewPlayer));
-		}
+        R_RunePlayer(NewPlayer).GotoState('PlayerValidation');
 	}
+
+    // Save player IP to PRI
+    if(NewPlayer != None && R_PlayerReplicationInfo(NewPlayer.PlayerReplicationInfo) != None)
+    {
+        IPString = NewPlayer.GetPlayerNetworkAddress();
+        IPString = Left(IPString, InStr(IPString, ":"));
+        R_PlayerReplicationInfo(NewPlayer.PlayerReplicationInfo).PlayerIP = IPString;
+    }
+
+    // Allow persistent score manager to match saved score data
+    if(PersistentScoreManager != None)
+    {
+        PersistentScoreManager.ApplyPersistentScore(NewPlayer);
+    }
+}
+
+function ReportValidationSucceeded(PlayerPawn P)
+{
+    local String PlayerLogString;
+
+    PlayerLogString = UtilitiesClass.Static.GetPlayerIdentityLogString(P);
+    UtilitiesClass.Static.RModLog("Player validation succeeded for" @ PlayerLogString);
+
+    if(R_RunePlayer(P) != None)
+    {
+        if(R_RunePlayer(P).RunePlayerSubClass == SpectatorMarkerClass)
+        {
+            MakePlayerSpectate(R_RunePlayer(P));
+        }
+        else
+        {
+            RestartPlayer(P);
+        }
+    }
+}
+
+function ReportValidationFailed(PlayerPawn P, String ReasonString)
+{
+    local String PlayerLogString;
+
+    PlayerLogString = UtilitiesClass.Static.GetPlayerIdentityLogString(P);
+    UtilitiesClass.Static.RModLog("Player validation failed for" @ PlayerLogString @ "Reason:" @ ReasonString);
+
+    TempBan(P, 300.0);
 }
 
 event Logout(Pawn P)
@@ -619,6 +726,12 @@ event Logout(Pawn P)
 	{
 		return;
 	}
+
+    // Update persistent score info when player leaves
+    if(PersistentScoreManager != None)
+    {
+        PersistentScoreManager.SavePersistentScore(P);
+    }
 	
 	Super.Logout(P);
 }
@@ -702,6 +815,7 @@ function AddDefaultInventory(Pawn PlayerPawn)
             newWeapon = Spawn(SpawnWeaponClass,,,PlayerPawn.Location);
             if(newWeapon != None)
             {
+                newWeapon.RespawnTime = 0.0;
                 newWeapon.bTossedOut = true;
                 newWeapon.Instigator = PlayerPawn;
                 newWeapon.BecomeItem();
@@ -729,6 +843,7 @@ function AddDefaultInventory(Pawn PlayerPawn)
             newShield = Spawn(SpawnShieldClass,,,PlayerPawn.Location);
             if(newShield != None)
             {
+                newShield.RespawnTime = 0.0;
                 newShield.bTossedOut = true;
                 newShield.Instigator = PlayerPawn;
                 newShield.BecomeItem();
@@ -947,17 +1062,19 @@ defaultproperties
     RunePlayerClass=Class'RMod.R_RunePlayer'
     SpectatorMarkerClass=Class'RMod.R_ASpectatorMarker'
     PlayerReplicationInfoClass=Class'RMod.R_PlayerReplicationInfo'
-    GamePresetsClass=Class'RMod.R_GamePresets'
     UtilitiesClass=Class'RMod.R_AUtilities'
     ActorSubstitutionClass=Class'RMod.R_AActorSubstitution'
+    ColorsClass=Class'RMod.R_AColors'
     GameOptionsClass=Class'RMod.R_GameOptions'
     LoadoutOptionReplicationInfoClass=Class'RMod.R_LoadoutOptionReplicationInfo'
     bMarkSpawnedActorsAsNativeToLevel=True
-    bRModEnabled=True
     ScoreBoardType=Class'RMod.R_Scoreboard'
     HUDType=Class'RMod.R_RunePlayerHUD'
     HUDTypeSpectator=Class'RMod.R_RunePlayerHUDSpectator'
     GameReplicationInfoClass=Class'RMod.R_GameReplicationInfo'
+    TempBanManagerClass=Class'RMod.R_TempBanManager'
+    PersistentScoreManagerClass=Class'RMod.R_PersistentScoreManager'
+    bEnablePersistentScoreTracking=true
     bAllowSpectatorBroadcastMessage=false
     AutoAim=0.0
     DefaultPlayerHealth=100

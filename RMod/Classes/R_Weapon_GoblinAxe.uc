@@ -139,4 +139,5 @@ defaultproperties
      Skeletal=SkelModel'weapons.goblinaxe'
      SkelGroupSkins(0)=Texture'weapons.goblinaxegoblin_axe'
      SkelGroupSkins(1)=Texture'weapons.goblinaxegoblin_axe'
+     WeaponTier=2
 }

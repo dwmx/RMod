@@ -155,4 +155,5 @@ defaultproperties
      Skeletal=SkelModel'weapons.RustyMace'
      SkelGroupSkins(0)=Texture'weapons.RustyMacerusty_mace'
      SkelGroupSkins(1)=Texture'weapons.RustyMacerusty_mace'
+     WeaponTier=1
 }

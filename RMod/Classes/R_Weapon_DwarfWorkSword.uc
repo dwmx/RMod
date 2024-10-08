@@ -162,4 +162,5 @@ defaultproperties
      Skeletal=SkelModel'weapons.worksword'
      SkelGroupSkins(0)=Texture'weapons.workswordDwarf_work_sword'
      SkelGroupSkins(1)=Texture'weapons.workswordDwarf_work_sword'
+     WeaponTier=4
 }

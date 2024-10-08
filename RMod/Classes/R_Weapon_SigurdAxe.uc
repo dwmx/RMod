@@ -172,4 +172,5 @@ defaultproperties
      Skeletal=SkelModel'weapons.sigurdaxe'
      SkelGroupSkins(0)=Texture'weapons.sigurdaxesigurds_axe'
      SkelGroupSkins(1)=Texture'weapons.sigurdaxesigurds_axe'
+     WeaponTier=3
 }

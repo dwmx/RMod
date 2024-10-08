@@ -153,4 +153,5 @@ defaultproperties
      Skeletal=SkelModel'weapons.romansword'
      SkelGroupSkins(0)=Texture'weapons.romanswordroman_sword'
      SkelGroupSkins(1)=Texture'weapons.romanswordroman_sword'
+     WeaponTier=2
 }

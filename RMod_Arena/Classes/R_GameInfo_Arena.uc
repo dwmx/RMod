@@ -9,7 +9,7 @@
 // (D) upgrade to 8 on 8 fights
 // (E) increase queue length to 32
 //=============================================================================
-class R_GameInfo_Arena extends RMod.R_GameInfo;
+class R_GameInfo_Arena extends RMod.R_GameInfo config(RMod);
 
 var() config int TimeBetweenMatch;
 var() config int MaxTeamSupport;
@@ -2537,7 +2537,7 @@ function updateArenaTeamSize(int newTeamSize){
 
 defaultproperties
 {
-	RunePlayerClass=Class'RMod_Arena.R_RunePlayer_Arena'
+    RunePlayerClass=Class'RMod_Arena.R_RunePlayer_Arena'
     TimeBetweenMatch=5
     MaxTeamSupport=1
     bAutoArenaTeamSizeEnabled=True
@@ -2547,6 +2547,20 @@ defaultproperties
     maxArenaTeam=1
     MaxArenaPlayers=8
     TeamCurrentColor(1)=1
+    CountDownSound(0)=Sound'AddOn.Arena.countdown01'
+    CountDownSound(1)=Sound'AddOn.Arena.countdown02'
+    CountDownSound(2)=Sound'AddOn.Arena.countdown03'
+    ArenaLeadInSound(0)=Sound'AddOn.Arena.lead01'
+    ArenaLeadInSound(1)=Sound'AddOn.Arena.lead02'
+    ArenaLeadInSound(2)=Sound'AddOn.Arena.lead03'
+    ArenaLeadInSound(3)=Sound'AddOn.Arena.lead04'
+    MatchStartSound(0)=Sound'AddOn.Arena.start01'
+    MatchStartSound(1)=Sound'AddOn.Arena.start02'
+    MatchStartSound(2)=Sound'AddOn.Arena.start03'
+    MatchStartSound(3)=Sound'AddOn.Arena.start04'
+    MatchEndSound(0)=Sound'AddOn.Arena.end01'
+    MatchEndSound(1)=Sound'AddOn.Arena.end02'
+    MatchEndSound(2)=Sound'AddOn.Arena.end03'
     GetReadyMessage="Its Your Turn to fight! Get Ready!"
     FightMessage="THE BATTLE BEGINS!!"
     SuicideDeathMessage=" suicided!!"
@@ -2571,4 +2585,5 @@ defaultproperties
     bAllowLimbSever=False
     DefaultPlayerMaxHealth=200
     DefaultPlayerHealth=200
+    GameOptionsClass=Class'RMod.R_GameOptions_Arena'
 }

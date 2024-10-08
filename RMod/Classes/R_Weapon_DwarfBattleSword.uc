@@ -191,4 +191,5 @@ defaultproperties
      SkelGroupSkins(0)=Texture'weapons.battleswordsword'
      SkelGroupSkins(1)=Texture'weapons.battleswordChrome'
      SkelGroupSkins(2)=Texture'weapons.battleswordsword'
+     WeaponTier=5
 }
