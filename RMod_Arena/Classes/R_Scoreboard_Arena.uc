@@ -93,7 +93,7 @@ function DrawTableHeadings(canvas Canvas)
 	Canvas.DrawColor = WhiteColor;
 	Canvas.SetPos(Canvas.ClipX*0.1, YOffset);
 	Canvas.DrawTile(Seperator, Canvas.ClipX*0.8, YL*0.5, 0, 0, Seperator.USize, Seperator.VSize);
-	//YOffset += YL*0.75;
+	YOffset += YL*0.25;
 	Canvas.SetPos(Canvas.ClipX*0.1, YOffset);
 
 }
