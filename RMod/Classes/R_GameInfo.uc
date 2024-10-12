@@ -627,7 +627,15 @@ event PlayerPawn Login(
 	
 	IncomingClass = SpawnClass;
 	
-	SpawnClass = RunePlayerClass;
+	if(RunePlayerClass == None)
+    {
+        UtilitiesClass.Static.RModLog("Game's configured RunePlayerClass is None. Using RMod.R_RunePlayer");
+        SpawnClass = Class'RMod.R_RunePlayer';
+    }
+    else
+    {
+        SpawnClass = RunePlayerClass;
+    }
 
 	P = Super.Login(
 		Portal,
