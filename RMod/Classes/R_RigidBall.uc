@@ -37,6 +37,7 @@ const CONTACT_SURFACE_NORMAL_COINCIDENCE = 0.995;
 const CONTACT_SURFACE_SEPARATION_EPSILON = 8.0;
 
 var float Restitution;
+var float GravityScale;
 
 // For debug drawing purposes
 var Vector LastImpulseVector;
@@ -196,7 +197,7 @@ simulated function FCalcAccelerationResult CalcAcceleration()
 	// Accumulate forces
 	NewAngularAcceleration = Vect(0.0, 0.0, 0.0);
 	NewAcceleration = Vect(0.0, 0.0, 0.0);
-	NewAcceleration += Region.Zone.ZoneGravity;
+	NewAcceleration += Region.Zone.ZoneGravity * GravityScale;
 	
 	// Calculate the contact normal based on touching surfaces
 	if(ContactNormalCount == 1)
@@ -586,6 +587,7 @@ defaultproperties
 {
      UtilitiesClass=Class'RMod.R_AUtilities'
      Restitution=0.800000
+     GravityScale=1.0
      RemoteRole=ROLE_SimulatedProxy
      DrawType=DT_SkeletalMesh
      bCollideWhenPlacing=True
