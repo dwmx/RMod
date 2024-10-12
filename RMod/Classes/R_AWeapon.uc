@@ -373,6 +373,21 @@ function InitializeStateRotation()
 {
 
 }
+
+function bool DoWeaponSwipe(Actor A, int LowMask, int HighMask, vector HitLoc, vector HitNorm, vector Momentum)
+{
+    local float Damage;
+
+    // Handle special actor functionality
+    if(R_RigidBall(A) != None)
+    {
+        Damage = CalculateDamage(A);
+        A.JointDamaged(Damage, Pawn(Owner), HitLoc, Momentum, DamageType, 0);
+        return false;
+    }
+
+    return Super.DoWeaponSwipe(A, LowMask, HighMask, HitLoc, HitNorm, Momentum);
+}
     
 state Drop
 {

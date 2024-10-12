@@ -557,6 +557,10 @@ state Swinging
         {
             HandleSweepCollision_Weapon(Weapon(A), LowMask, HighMask, HitLoc, HitNorm);
         }
+        else if(R_RigidBall(A) != None)
+        {
+            HandleSweepCollision_Ball(R_RigidBall(A), LowMask, HighMask, HitLoc, HitNorm);
+        }
         
         // Play hit effects (sound and vfx)
         PlayHitEffect(A, HitLoc, HitNorm, LowMask, HighMask);
@@ -565,6 +569,18 @@ state Swinging
     function HandleSweepCollision_Weapon(Weapon W, int LowMask, int HighMask, Vector HitLoc, Vector HitNorm)
     {
         // Inversion of weapon throw occurs in R_AWeapon.Throw.Touch
+    }
+
+    function HandleSweepCollision_Ball(R_RigidBall Ball, int LowMask, int HighMask, Vector HitLoc, Vector HitNorm)
+    {
+        local Vector Delta2D;
+        local Vector Momentum;
+
+        Delta2D = Ball.Location - Owner.Location;
+        Delta2D.Z = 0.0;
+        Momentum = Normal(Delta2D) * Mass;
+
+        Ball.JointDamaged(0, Pawn(Owner), HitLoc, Momentum, ShieldDamageType, 0);
     }
 }
 
