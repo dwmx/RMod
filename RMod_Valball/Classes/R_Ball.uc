@@ -1,92 +1,119 @@
-class R_Ball extends Head;
+class R_Ball extends R_RigidBall;
 
-var R_BallState BallState;
-var R_BallEffects BallEffects;
-
-replication
+simulated event Spawned()
 {
-	reliable if(Role == ROLE_Authority)
-		BallState;
-}
-
-simulated event PostBeginPlay()
-{
-	Super.PostBeginPlay();
-
-	// Ball state child actor
-	if(Role == ROLE_Authority)
+	local int i;
+	
+	Super.Spawned();
+	
+	//for(i = 0; i < 16; ++i)
+	//{
+	//	SkelGroupSkins[i] = Texture'RMod_ValBall.R_Ball_Base_Color';
+	//}
+	
+	// Spawn client-side effects
+	if(Role < ROLE_Authority)
 	{
-		BallState = Spawn(Class'RMod_Valball.R_BallState', self);
-	}
-
-	// Client-side ball effects actor
-	if(Role < ROLE_Authority || Level.NetMode == NM_StandAlone)
-	{
-		BallEffects = Spawn(Class'RMod_Valball.R_BallEffects', Self);
+		Spawn(class'RMod.R_ShadowActor', Self);
+		Spawn(class'RMod_ValBall.R_BallEffects', Self);
 	}
 }
 
-event Destroyed()
+event event bool JointDamaged(int Damage, Pawn EventInstigator, vector HitLoc, vector Momentum, name DamageType, int joint)
 {
-	if(BallState != None)
-	{
-		BallState.Destroy();
-	}
-
-	if(BallEffects != None)
-	{
-		BallEffects.Destroy();
-	}
+	local Vector ContactNormal;
+	local Vector Impulse;
+	
+	//if(EventInstigator != None)
+	//{
+	//	ContactNormal = Normal(Location - EventInstigator.Location);
+	//	Impulse = -1.0 * (ContactNormal * (ContactNormal Dot Velocity));
+	//	Impulse += ContactNormal * 1024.0;
+	//	
+	//	ApplyImpulse(Impulse);
+	//}
+	ApplyImpulse(Momentum);
 }
 
-simulated function Name GetCurrentBallStateName()
+function EMatterType MatterForJoint(int JointID)
 {
-	if(BallState == None)
-	{
-		return GetStateName();
-	}
-
-	return BallState.CurrentBallState;
+    return MATTER_WOOD;
 }
 
-simulated function float GetBallPreSpawnTimeRemainingSeconds()
+simulated function ContactSurface(Vector ContactNormal, Actor ContactActor)
 {
-	return 2.0;
-}
-
-auto state Pickup
-{
-	function bool CanBeUsed(Actor Other)
+	local Vector VelocityCoincident;
+	local Vector ContactLocation;
+	local Rotator ContactRotation;
+	local ParticleSystem ContactEffect;
+	local float t;
+	
+	if(ContactNormalCount == 0)
 	{
-		if(BallState.CurrentBallState != 'Active')
+		VelocityCoincident = ContactNormal * (ContactNormal Dot Velocity);
+		if((VelocityCoincident Dot ContactNormal) < 0.0
+		&& VSize(VelocityCoincident) >= 256.0)
 		{
-			return false;
+			t = VSize(VelocityCoincident) / 1024.0;
+				t = t * t;
+				t = FMin(t, 1.0);
+			
+			PlaySound(
+				Sound'WeaponsSnd.ImpEarth.impactearth07',,
+				(1.0 - t) * 0.25 + t * 1.0);
+			
+			ContactLocation = Location + (-1.0 * ContactNormal * CollisionRadius);
+			ContactRotation = Rotator(ContactNormal);
+			ContactEffect = Spawn(class'RuneI.GroundDust',,,ContactLocation, ContactRotation);
+			if(ContactEffect != None)
+			{
+				ContactEffect.ScaleMin = ((1.0 - t) * 0.4 + t * 0.8);
+				ContactEffect.ScaleMax = ((1.0 - t) * 0.6 + t * 1.2);
+				ContactEffect.VelocityMin =
+					((1.0 - t) * Vect(-1.0, -1.0, 2.0) +
+					(t * Vect(-2.0, -2.0, 4.0)));
+				ContactEffect.VelocityMax =
+					((1.0 - t) * Vect(-3.0, -3.0, 4.0) +
+					(t * Vect(-6.0, -6.0, 8.0)));
+			}
 		}
-		return Super.CanBeUsed(Other);
 	}
+	
+	Super.ContactSurface(ContactNormal, ContactActor);
 }
 
-state Active
+event Bump(Actor Other)
 {
-	event BeginState()
+	local Vector CumulativeVelocity;
+	local float t;
+	local float DamageDealt;
+	
+	if(Pawn(Other) != None)
 	{
-		Super.BeginState();
-
-		if(Pawn(Owner) != None)
+		CumulativeVelocity = Other.Velocity - Velocity;
+		if(VSize(CumulativeVelocity) > 768.0)
 		{
-			BroadcastMessage(Pawn(Owner).PlayerReplicationInfo.PlayerName @ "has the ball");
+			t = VSize(CumulativeVelocity) / 2048.0;
+			if(t <= 1.0 && t >= 0.0)
+			{
+				DamageDealt = (1.0 - t) * 10.0 + t * 100.0;
+			}
+			else
+			{
+				// Make player explode at high velocity
+				DamageDealt = 10000.0;
+			}
+			Other.JointDamaged(DamageDealt, None, Vect(0.0, 0.0, 0.0), CumulativeVelocity * Mass, 'Blunt', 0);
 		}
 	}
 }
 
 defaultproperties
 {
-	bAlwaysRelevant=True
-	bExpireWhenTossed=False
-	bNeverExpire=True
-	LifeSpan=0
-	Damage=1000
-	DrawScale=3.0
-	CollisionHeight=32.0
-	CollisionRadius=32.0
+     Restitution=0.600000
+     DrawScale=0.600000
+     CollisionRadius=18.000000
+     CollisionHeight=18.000000
+     Mass=100.000000
+     Skeletal=SkelModel'RMod_ValBall.R_Ball'
 }
