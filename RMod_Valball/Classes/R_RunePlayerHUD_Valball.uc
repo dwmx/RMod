@@ -1,0 +1,1 @@
+class R_RunePlayerHUD_Valball extends R_RunePlayerHUD;
