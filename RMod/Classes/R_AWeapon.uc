@@ -37,6 +37,10 @@ var Class<Actor> HitIceEffectClass;
 var Class<Actor> HitWaterEffectClass;
 //==============================================================================
 
+// Levelinfo, Movers and Polyobjs are all considered environment
+// This flag ensures that only one environment hit effect plays per swing
+var bool bPlayedEnvironmentStruckEffects;
+
 //==============================================================================
 //  Client-side simulation variables
 //==============================================================================
@@ -247,8 +251,32 @@ function NotifySubstitutedForInstance(Actor InActor)
 }
 
 /**
+*   ClearSwipeArray (override)
+*   Overridden to clear the bPlayedEnvironmentStruckEffects flag
+*   This flag is here because additional logic was added for playing hit effects when striking Polyobjs and Movers
+*   Movers, Polyobjs and Levelinfo are all considered environment in this case
+*   This flag tells the GetMatterTypeForHitActor function to return None when the environment has already been struck
+*/
+function ClearSwipeArray()
+{
+    Super.ClearSwipeArray();
+    bPlayedEnvironmentStruckEffects = false;
+}
+
+/**
 *   GetMatterTypeForHitActor
-*   Returns the matter type for the specified Actor, used during collisions
+*   Returns the matter type for the specified Actor, used during collisions.
+*   Adds additional logic for hitting Polyobjs and Movers in multiplayer games:
+*
+*   NOTE ON MOVERS AND POLYOBJS:
+*
+*   MatterTrace function gets the matter type for a struck surface via the TraceTexture native function on Actor
+*   When Level.NetMode==NM_DedicatedServer, TraceTexture will return None for passed in Polyobjs and Movers
+*
+*   To add hit effects to Polyobjs and Movers, you can set a texture under SkelGroupSkins[0] for the Mover or Polyobj, and this
+*   code will use the matter type associated with that texture
+*
+*   If you do not set a texture under SkelGroupSkins[0], matter type will be default
 */
 function EMatterType GetMatterTypeForHitActor(Actor HitActor, Vector HitLoc, int LowMask, int HighMask)
 {
@@ -270,6 +298,21 @@ function EMatterType GetMatterTypeForHitActor(Actor HitActor, Vector HitLoc, int
             }
         }   
     }
+    // Polyobj and Movers
+    else if(HitActor.IsA('Mover') || HitActor.IsA('Polyobj'))
+    {
+        if(HitActor.SkelGroupSkins[0] != None)
+        {
+            // Return material type at index 0
+            return HitActor.SkelGroupSkins[0].TextureMaterial;
+        }
+        else
+        {
+            // Return a default
+            return MATTER_STONE;
+        }
+    }
+    // Level
     else if(HitActor.IsA('LevelInfo'))
     {
         return HitActor.MatterTrace(HitLoc, Owner.Location, WeaponSweepExtent);
@@ -349,6 +392,20 @@ function SpawnHitEffect(Vector HitLoc, Vector HitNorm, int LowMask, int HighMask
 {
     local EMatterType MatterType;
     local Class<Actor> HitEffectClass;
+    
+    // Only struke the environment once per swing
+    // The bPlayedEnvironmentStruckEffects is reset in ClearSwipeArray
+    if(HitActor.IsA('Levelinfo') || HitActor.IsA('Mover') || HitActor.IsA('Polyobj'))
+    {
+        if(bPlayedEnvironmentStruckEffects)
+        {
+            return;
+        }
+        else
+        {
+            bPlayedEnvironmentStruckEffects = true;
+        }
+    }
     
     MatterType = GetMatterTypeForHitActor(HitActor, HitLoc, LowMask, HighMask);
     
@@ -535,4 +592,5 @@ defaultproperties
     HitIceEffectClass=Class'RMod.R_Effect_HitIce'
     HitWaterEffectClass=None
     WeaponTier=WT_TierNone
+    bPlayedEnvironmentStruckEffects=false
 }
