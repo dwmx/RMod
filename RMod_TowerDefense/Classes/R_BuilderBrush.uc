@@ -8,10 +8,26 @@ var Class<R_AGrid> GridClass;
 var float BrushPlacementOffset; // How far in front of the player to place the brush
 var int BrushGridUnitSnapping;  // Grid unit size
 
+// The buildable class that this builder brush is currently representing
+var private Class<R_ABuildableActor> BuildableActorClass;
+
+/**
+*   PostBeginPlay (override)
+*   Overridden for styling
+*/
+event PostBeginPlay()
+{
+    Super.PostBeginPlay();
+    
+    Style = STY_Translucent;
+    ScaleGlow = 100.0;
+    AmbientGlow = 100.0;
+}
+
 /**
 *   Tick (override)
 *   BuilderBrush will self-update, snapping itself to the world grid depending on where the
-*   player is looking
+*   owning player is looking
 */
 event Tick(float DeltaSeconds)
 {
@@ -54,7 +70,7 @@ function BuilderBrushPostRender(Canvas C)
     
     SnappedLocation = GridClass.Static.SnapLocationToGrid(BrushGridUnitSnapping, Location);
     
-    NumRowsAndColsToDraw = 6;
+    NumRowsAndColsToDraw = 20;
     
     for(i = 1; i < NumRowsAndColsToDraw; ++i)
     {
@@ -68,7 +84,7 @@ function BuilderBrushPostRender(Canvas C)
         LineEnd.Y = LineStart.Y;
         LineEnd.Z = LineStart.Z;
         
-        C.DrawLine3D(LineStart, LineEnd, 1.0, 1.0, 1.0);
+        C.DrawLine3D(LineStart, LineEnd, 0.5, 0.5, 0.5);
         
         // Draw Cols
         LineStart = SnappedLocation;
@@ -80,16 +96,47 @@ function BuilderBrushPostRender(Canvas C)
         LineEnd.X = LineStart.X;
         LineEnd.Z = LineStart.Z;
         
-        C.DrawLine3D(LineStart, LineEnd, 1.0, 1.0, 1.0);
+        C.DrawLine3D(LineStart, LineEnd, 0.5, 0.5, 0.5);
+    }
+}
+
+/**
+*   SetBuildableActorClass
+*   Sets the current buildable actor class represented by this builder brush and updates
+*   appearance
+*/
+function SetBuildableActorClass(Class<R_ABuildableActor> NewBuildableActorClass)
+{
+    if(BuildableActorClass == NewBuildableActorClass)
+    {
+        return;
     }
     
-    
+    BuildableActorClass = NewBuildableActorClass;
+    if(BuildableActorClass == None)
+    {
+        Skeletal = None;
+    }
+    else
+    {
+        Skeletal = BuildableActorClass.Default.Skeletal;
+        DrawScale = BuildableActorClass.Default.DrawScale;
+    }
+}
+
+/**
+*   GetBuildableActorClass
+*   Returns the current BuildableActorClass, called locally by the owning R_RunePlayer_TD
+*/
+function Class<R_ABuildableActor> GetBuildableActorClass()
+{
+    return BuildableActorClass;
 }
 
 defaultproperties
 {
     DrawType=DT_SkeletalMesh
-    Skeletal=SkelModel'objects.Barrel'
+    Skeletal=None
     bCollideActors=False
     bCollideWorld=False
     bBlockActors=False

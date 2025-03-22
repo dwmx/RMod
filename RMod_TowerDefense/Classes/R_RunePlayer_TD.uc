@@ -3,6 +3,13 @@ class R_RunePlayer_TD extends R_RunePlayer;
 var Class<R_BuilderBrush> BuilderBrushClass;
 var R_BuilderBrush BuilderBrush;
 
+replication
+{
+    // Client --> Server functions
+    reliable if(Role < ROLE_Authority)
+        ServerTryExecuteBuild;
+}
+
 /**
 *   PostRender (override)
 *   Overridden to send PostRender calls to the BuilderBrush when it's active
@@ -52,11 +59,87 @@ function SpawnBuilderBrush()
     }
 }
 
+/**
+*   ServerTryExecuteBuild
+*   Client --> Server
+*   Tells the current game info that this player wants to build the specified class at the specified location
+*   Owning R_GameInfo_TD will perform the transaction, spawn the building and notify the player
+*/
+function ServerTryExecuteBuild(Class<R_ABuildableActor> BuildableClass, Vector BuildLocation)
+{
+    local R_GameInfo_TD GameInfoTD;
+    
+    GameInfoTD = R_GameInfo_TD(Level.Game);
+    if(GameInfoTD != None)
+    {
+        if(BuildableClass != None)
+        {
+            GameInfoTD.PlayerRequestBuild(Self, BuildableClass, BuildLocation);
+        }
+        else
+        {
+            UtilitiesClass.Static.RModWarn("R_RunePlayer_TD.ServerTryExecuteBuild called with BuildableClass == None");
+            return;
+        }
+    }
+}
+
+/**
+*   TryExecuteBuilderBrush
+*   Called locally
+*   Verifies builder brush location and class locally, and then sends RPC to server
+*/
+function TryExecuteBuilderBrush()
+{
+    local Class<R_ABuildableActor> BuildableClass;
+    
+    if(BuilderBrush != None)
+    {
+        BuildableClass = BuilderBrush.GetBuildableActorClass();
+        if(BuildableClass != None)
+        {
+            ServerTryExecuteBuild(BuildableClass, BuilderBrush.Location);
+        }
+    }
+}
+
+//==============================================================================
+// Test exec functions
+exec function TestExecuteBuilderBrush()
+{
+    UtilitiesClass.Static.RModLog("TestExecuteBuilderBrush called");
+    if(BuilderBrush != None)
+    {
+        TryExecuteBuilderBrush();
+    }
+}
+
 exec function TestBuilderBrush()
 {
     UtilitiesClass.Static.RModLog("Builder Brush called");
     SpawnBuilderBrush();
 }
+
+exec function TestBuildableIndex(int BuildableIndex)
+{
+    local Class<R_ABuildableActor> BuildableClass;
+    
+    UtilitiesClass.Static.RModLog("TestBuildableIndex called");
+    
+    if(BuilderBrush != None)
+    {
+        switch(BuildableIndex)
+        {
+            case 0: BuildableClass = Class'R_Buildable_Skin'; break;
+            case 1: BuildableClass = Class'R_Buildable_Table'; break;
+            case 2: BuildableClass = Class'R_Buildable_Keg'; break;
+            default: BuildableClass = None;
+        }
+        
+        BuilderBrush.SetBuildableActorClass(BuildableClass);
+    }
+}
+//==============================================================================
 
 defaultproperties
 {
