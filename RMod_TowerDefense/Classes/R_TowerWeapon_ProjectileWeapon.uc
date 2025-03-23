@@ -6,8 +6,35 @@
 class R_TowerWeapon_ProjectileWeapon extends R_ATowerWeapon;
 
 // Projectile class to spawn each time this weapon is fired
-var Class<R_AProjectile> ProjectileClass;
+//var Class<R_AProjectile> ProjectileClass;
+var Class<Projectile> ProjectileClass;
 
-function TickComponent(float DeltaSeconds)
+/**
+*   ExecuteWeaponFire (override)
+*   Overridden to fire a projectile at the target
+*/
+function ExecuteWeaponFire()
 {
+    local Vector DeltaVector;
+    local Rotator ProjectileRotation;
+    local Actor LocalWeaponTarget;
+    local Actor SpawnedProjectile;
+    
+    if(ProjectileClass == None)
+    {
+        UtilitiesClass.Static.RModWarn("Attempted to fire projectile weapon but ProjectileClass has not been configured");
+        return;
+    }
+    
+    LocalWeaponTarget = GetWeaponTarget();
+    if(LocalWeaponTarget != None && OwningTower != None)
+    {
+        DeltaVector = LocalWeaponTarget.Location - OwningTower.Location;
+        ProjectileRotation = Rotator(DeltaVector);
+        SpawnedProjectile = OwningTower.Spawn(ProjectileClass, OwningTower, /*Spawn Tag*/, OwningTower.Location, ProjectileRotation);
+        if(SpawnedProjectile != None)
+        {
+            SpawnedProjectile.Velocity = Normal(DeltaVector) * 1000.0;
+        }
+    }
 }

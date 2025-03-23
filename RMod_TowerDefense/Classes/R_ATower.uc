@@ -54,6 +54,8 @@ function R_ATowerComponent CreateTowerComponent(Class<R_ATowerComponent> Compone
     {
         RootComponent.AddComponentToLinkedList(ComponentInstance);
     }
+    
+    return ComponentInstance;
 }
 
 /**
@@ -122,4 +124,6 @@ function CE_GenericEvent(R_ATowerComponent CallerComponent, Name ComponentEvent,
 *   when their target has changed
 */
 function CE_TargetChanged(R_ATowerComponent CallerComponent, Actor NewTarget)
-{}
+{
+    //UtilitiesClass.Static.RModLog("Tower just got a target update!" @ "TOWER" @ "{" $ Self $ "}" @ "TARGET" @ "{" $ NewTarget $ "}");
+}
