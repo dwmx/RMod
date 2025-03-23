@@ -44,8 +44,6 @@ function Actor GetWeaponTarget()
 */
 function UpdateWeaponTarget()
 {
-    // this is just a test, not final target selection code
-    //local Pawn P;
     local R_Mob MobActor;
     local Vector DeltaVector;
     local float CurrentDistance;
@@ -55,12 +53,12 @@ function UpdateWeaponTarget()
     if(OwningTower != None)
     {
         // Find the Mob actor nearest to this tower
-        // This is an extremely inefficient way to do this
-        // Will need to come up with some caching system in GameInfo that holds reference to all mob actors
+        // This may be an inefficient way of doing this, especially if this function is being called rapidly
+        // Consider some caching system in GameInfo to hold a list of mobs that this can quickly iterate
         BestDistance = AttackRange + 256.0; // Initialize to some value outside of the attack range
         BestTarget = None;
         
-        foreach OwningTower.AllActors(Class'R_Mob', MobActor)
+        foreach OwningTower.RadiusActors(Class'R_Mob', MobActor, AttackRange)
         {
             DeltaVector = MobActor.Location - OwningTower.Location;
             CurrentDistance = VSize(DeltaVector);
