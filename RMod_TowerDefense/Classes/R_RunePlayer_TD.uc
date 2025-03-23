@@ -130,9 +130,7 @@ exec function TestBuildableIndex(int BuildableIndex)
     {
         switch(BuildableIndex)
         {
-            case 0: BuildableClass = Class'R_Buildable_Skin'; break;
-            case 1: BuildableClass = Class'R_Buildable_Table'; break;
-            case 2: BuildableClass = Class'R_Buildable_Keg'; break;
+            case 0: BuildableClass = Class'R_Tower_DwarfMech'; break;
             default: BuildableClass = None;
         }
         

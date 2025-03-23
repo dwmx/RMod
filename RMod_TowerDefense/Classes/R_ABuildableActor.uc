@@ -5,7 +5,11 @@
 //==============================================================================
 class R_ABuildableActor extends Actor abstract;
 
+// Static utilities
+var Class<R_AUtilities> UtilitiesClass;
+
 defaultproperties
 {
     DrawType=DT_SkeletalMesh
+    UtilitiesClass=Class'RMod.R_AUtilities'
 }
