@@ -131,6 +131,7 @@ exec function TestBuildableIndex(int BuildableIndex)
         switch(BuildableIndex)
         {
             case 0: BuildableClass = Class'R_Tower_DwarfMech'; break;
+            case 1: BuildableClass = Class'R_Tower_TreeOneLauncher'; break;
             default: BuildableClass = None;
         }
         

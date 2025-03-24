@@ -30,6 +30,20 @@ enum EProjectileBehavior
 };
 var EProjectileBehavior ProjectileBehavior;
 
+//
+// Projectile orientation axis enumerator
+//
+// Tells this projectile what axis it should align itself with when aiming
+// at a target
+//
+enum EProjectileOrientationAxis
+{
+    PA_AxisX,
+    PA_AxisY,
+    PA_AxisZ
+};
+var EProjectileOrientationAxis ProjectileOrientationAxis;
+
 replication
 {
     reliable if(Role == ROLE_Authority)
@@ -41,6 +55,9 @@ simulated event PostBeginPlay()
     Super.PostBeginPlay();
     
     Velocity = Vector(Rotation) * Speed;
+    
+    // This allows projectiles to initially orient themselves
+    OrientProjectileTowards(Location + Vector(Rotation));
 }
 
 function SetProjectileTarget(Actor NewProjectileTarget)
@@ -48,10 +65,37 @@ function SetProjectileTarget(Actor NewProjectileTarget)
     ProjectileTarget = NewProjectileTarget;
 }
 
-simulated event Tick(float DeltaSeconds)
+/**
+*   OrientProjectileTowards
+*   Called by Tick when this projectile needs to re-orient itself towards a point
+*   This allows different projectiles to orient themselves in unique ways if desired
+*/
+simulated function OrientProjectileTowards(Vector TargetLocation)
 {
     local Vector TargetDeltaVector;
     local Rotator NewRotation;
+    local Vector RX, RY, RZ;
+    
+    TargetDeltaVector = TargetLocation - Location;
+    NewRotation = Rotator(TargetDeltaVector);
+    
+    GetAxes(NewRotation, RX, RY, RZ);
+    switch(ProjectileOrientationAxis)
+    {
+        case PA_AxisX:  NewRotation = Rotator(RX);  break;
+        case PA_AxisY:  NewRotation = Rotator(RY);  break;
+        case PA_AxisZ:  NewRotation = Rotator(RZ);  break;
+    }
+    
+    SetRotation(NewRotation);
+}
+
+/**
+*   Tick (override)
+*   Overridden to implement the different projectile behaviors
+*/
+simulated event Tick(float DeltaSeconds)
+{
     local float CurrentSpeed;
     
     Super.Tick(DeltaSeconds);
@@ -61,12 +105,11 @@ simulated event Tick(float DeltaSeconds)
     // Account for VelocityTowardsTarget behavior
     if(ProjectileBehavior == PB_VelocityTowardsTarget && ProjectileTarget != None)
     {
-        TargetDeltaVector = ProjectileTarget.Location - Location;
-        NewRotation = Rotator(TargetDeltaVector);
         CurrentSpeed = VSize(Velocity);
         
-        SetRotation(NewRotation);
-        Velocity = Vector(NewRotation) * CurrentSpeed;
+        OrientProjectileTowards(ProjectileTarget.Location);
+        
+        Velocity = Normal(ProjectileTarget.Location - Location) * CurrentSpeed;
     }
 }
 
@@ -75,4 +118,5 @@ defaultproperties
     RemoteRole=ROLE_SimulatedProxy
     bNetTemporary=True
     ProjectileBehavior=PB_FireAndForget
+    ProjectileOrientationAxis=PA_AxisX
 }
