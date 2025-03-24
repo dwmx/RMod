@@ -68,6 +68,12 @@ function BuilderBrushPostRender(Canvas C)
     local int i;
     local Vector LineStart, LineEnd;
     
+    // Don't draw grid when no class is selected
+    if(BuildableActorClass == None)
+    {
+        return;
+    }
+    
     SnappedLocation = GridClass.Static.SnapLocationToGrid(BrushGridUnitSnapping, Location);
     
     NumRowsAndColsToDraw = 20;
