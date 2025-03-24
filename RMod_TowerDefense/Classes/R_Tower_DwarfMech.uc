@@ -28,8 +28,7 @@ function InitializeTowerComponents()
     }
     else
     {
-        //ProjectileWeapon.ProjectileClass = Class'R_Projectile_DwarfMechRocket';
-        ProjectileWeapon.ProjectileClass = Class'RuneI.MechRocket';
+        ProjectileWeapon.ProjectileClass = Class'R_Projectile_DwarfMechRocket';
         PrimaryWeapon = ProjectileWeapon;
     }
 }
