@@ -20,7 +20,13 @@ static function float Floor(float InFloat)
 */
 static function Vector SnapLocationToGrid(int GridUnitSize, Vector InLocation)
 {
+    local int HalfGridUnitSize;
     local Vector OutLocation;
+    
+    HalfGridUnitSize = GridUnitSize >> 1;
+    InLocation.X += HalfGridUnitSize;
+    InLocation.Y += HalfGridUnitSize;
+    InLocation.Z += HalfGridUnitSize;
     
     OutLocation.X = Floor(InLocation.X / GridUnitSize) * GridUnitSize;
     OutLocation.Y = Floor(InLocation.Y / GridUnitSize) * GridUnitSize;
