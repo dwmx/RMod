@@ -11,12 +11,16 @@ var int BrushGridUnitSnapping;  // Grid unit size
 // The buildable class that this builder brush is currently representing
 var private Class<R_ABuildableActor> BuildableActorClass;
 
+var Vector DesiredBrushLocation;
+
 /**
 *   PostBeginPlay (override)
 *   Overridden for styling
 */
 event PostBeginPlay()
 {
+    local Player LocalPlayer;
+    
     Super.PostBeginPlay();
     
     Style = STY_Translucent;
@@ -33,7 +37,7 @@ event Tick(float DeltaSeconds)
 {
     local Rotator ViewRotation;
     local Vector PawnOrigin;
-    local Vector DesiredLocation;
+    //local Vector DesiredLocation;
     local Vector SnappedLocation;
     local R_RunePlayer RPOwner;
     
@@ -49,11 +53,16 @@ event Tick(float DeltaSeconds)
     
     ViewRotation = RPOwner.ViewRotation;
     PawnOrigin = RPOwner.Location;
-    DesiredLocation = PawnOrigin + Vector(ViewRotation) * BrushPlacementOffset;
+    //DesiredLocation = PawnOrigin + Vector(ViewRotation) * BrushPlacementOffset;
     
-    SnappedLocation = GridClass.Static.SnapLocationToGrid(BrushGridUnitSnapping, DesiredLocation);
+    SnappedLocation = GridClass.Static.SnapLocationToGrid(BrushGridUnitSnapping, DesiredBrushLocation);
     
     SetLocation(SnappedLocation);
+}
+
+function SetDesiredBrushLocation(Vector NewDesiredLocation)
+{
+    DesiredBrushLocation = NewDesiredLocation;
 }
 
 /**
@@ -74,9 +83,10 @@ function BuilderBrushPostRender(Canvas C)
         return;
     }
     
-    SnappedLocation = GridClass.Static.SnapLocationToGrid(BrushGridUnitSnapping, Location);
-    
-    NumRowsAndColsToDraw = 20;
+    //SnappedLocation = GridClass.Static.SnapLocationToGrid(BrushGridUnitSnapping, Location);
+    SnappedLocation = GridClass.Static.SnapLocationToGrid(BrushGridUnitSnapping, Owner.Location);
+
+    NumRowsAndColsToDraw = 60;
     
     for(i = 1; i < NumRowsAndColsToDraw; ++i)
     {
@@ -90,7 +100,7 @@ function BuilderBrushPostRender(Canvas C)
         LineEnd.Y = LineStart.Y;
         LineEnd.Z = LineStart.Z;
         
-        C.DrawLine3D(LineStart, LineEnd, 0.5, 0.5, 0.5);
+        C.DrawLine3D(LineStart, LineEnd, 0.0, 0.0, 0.0);
         
         // Draw Cols
         LineStart = SnappedLocation;
@@ -102,7 +112,7 @@ function BuilderBrushPostRender(Canvas C)
         LineEnd.X = LineStart.X;
         LineEnd.Z = LineStart.Z;
         
-        C.DrawLine3D(LineStart, LineEnd, 0.5, 0.5, 0.5);
+        C.DrawLine3D(LineStart, LineEnd, 0.0, 0.0, 0.0);
     }
 }
 

@@ -1,13 +1,97 @@
 class R_RunePlayer_TD extends R_RunePlayer;
 
+var R_GameCursor GameCursor;
+
 var Class<R_BuilderBrush> BuilderBrushClass;
 var R_BuilderBrush BuilderBrush;
+
+var Vector SavedCameraLocation;
+var Rotator SavedCameraRotation;
 
 replication
 {
     // Client --> Server functions
     reliable if(Role < ROLE_Authority)
         ServerTryExecuteBuild;
+}
+
+/**
+*   PlayerCalcView (override)
+*   Overridden to test overhead view
+*/
+event PlayerCalcView(
+    out Actor ViewActor,
+    out vector CameraLocation,
+    out rotator CameraRotation)
+{
+    local float CamDistance;
+    local Vector OffsetVector;
+    
+    CamDistance = 1024.0;
+    OffsetVector.X = 1.0;
+    OffsetVector.Y = 1.0;
+    OffsetVector.Z = 2.0;
+    OffsetVector = Normal(OffsetVector) * CamDistance;
+    
+    CameraLocation = Location + OffsetVector;
+    
+    CameraRotation = Rotator(Location - CameraLocation);
+    ViewActor = Self;
+    
+    
+    //Super.PlayerCalcView(ViewActor, CameraLocation, CameraRotation);
+    
+    // Cursor needs these when selecting objects in world
+    SavedCameraLocation = CameraLocation;
+    SavedCameraRotation = CameraRotation;
+}
+
+/**
+*   PlayerInput (override)
+*   Overridden to pass mouse move to game cursor when it's enabled
+*/
+event PlayerInput(float DeltaSeconds)
+{
+    if(GameCursor != None)
+    {
+        GameCursor.PlayerInputMouseMove(aMouseX, aMouseY, DeltaSeconds);
+        // Game cursor should consume player mouse input
+        aMouseX = 0.0;
+        aMouseY = 0.0;
+    }
+    
+    Super.PlayerInput(DeltaSeconds);
+}
+
+/**
+*   Tick (override)
+*   Overridden to update the position of the BuilderBrush when active
+*/
+event Tick(float DeltaSeconds)
+{
+    Super.Tick(DeltaSeconds);
+    
+    TickBuilderBrushDesiredLocation(DeltaSeconds);
+}
+
+function TickBuilderBrushDesiredLocation(float DeltaSeconds)
+{
+    local Vector HitLocation, HitNormal;
+    
+    if(BuilderBrush == None)
+    {
+        return;
+    }
+    
+    if(GameCursor != None)
+    {
+        GameCursor.TraceUnderCursor(
+            10000.0,
+            HitLocation,
+            HitNormal);
+        
+        BuilderBrush.SetDesiredBrushLocation(HitLocation);
+    }
 }
 
 /**
@@ -21,7 +105,19 @@ event PostRender(Canvas C)
     {
         BuilderBrush.BuilderBrushPostRender(C);
     }
+    
+    if(GameCursor != None)
+    {
+        GameCursor.DrawGameCursor(C);
+    }
 }
+
+exec function Fire(optional float F)
+{
+    TryExecuteBuilderBrush();
+    
+    Super.Fire(F);
+} 
 
 /**
 *   SpawnBuilderBrush
@@ -118,6 +214,27 @@ exec function TestBuilderBrush()
 {
     UtilitiesClass.Static.RModLog("Builder Brush called");
     SpawnBuilderBrush();
+    //TestRTSStyleStuff();
+    ShowGameCursor();
+}
+
+function TestRTSStyleStuff()
+{
+    local String WindowResResult;
+    
+    WindowResResult = ConsoleCommand("GetCurrentRes");
+    Log("GET CURRENT RES RETURNED:" @ WindowResResult);
+}
+
+function ShowGameCursor()
+{
+    Log("SHOW GAME CURSOR CALLED");
+    GameCursor = New(None) Class'R_GameCursor';
+    if(GameCursor != None)
+    {
+        GameCursor.NotifyEnabled(Self);
+    }
+   
 }
 
 exec function TestBuildableIndex(int BuildableIndex)
