@@ -42,6 +42,11 @@ var FSkelGroupSkinArray PainSkinArrays[16];
 var FSkelGroupSkinArray GoreCapArrays[16];
 //==============================================================================
 
+// RMod Game Cursor, which can be enabled and disabled by calling
+// EnableGameCursor and DisableGameCursor
+var Class<R_GameCursor> GameCursorClass;
+var R_GameCursor GameCursor;
+
 //==============================================================================
 //  Networked movement vars adopted from 469b
 var R_SavedMove SavedMoves;
@@ -900,15 +905,23 @@ function ServerValidatePlayer(FPlayerValidationParameters ValidationParams)
 
 /**
 *   PostRender (override)
-*   Overridden to render the RMod client debug actor when enabled
+*   Overridden to render the RMod client debug actor when enabled and to draw the
+*   game cursor when enabled
 */
 event PostRender(Canvas C)
 {
     Super.PostRender(C);
     
+    // Draw client debug
     if(bShowRmodDebug && ClientDebugActor != None)
     {
         ClientDebugActor.PostRender(C);
+    }
+    
+    // Draw game cursor
+    if(GameCursor != None)
+    {
+        GameCursor.DrawGameCursor(C);
     }
 }
 
@@ -1366,6 +1379,49 @@ function ApplyRunePlayerSubClass_ExtractMenuName(Class<RunePlayer> SubClass)
 //==============================================================================
 //  End Sub-Class Functions
 //==============================================================================
+
+
+/**
+*   EnableGameCursor
+*   Enables the game cursor
+*/
+function EnableGameCursor()
+{
+    // Create cursor if it doesn't exist yet
+    if(GameCursor == None)
+    {
+        if(GameCursorClass != None)
+        {
+            GameCursor = New(None) GameCursorClass;
+            if(GameCursor != None)
+            {
+                UtilitiesClass.Static.RModLog("Game cursor enabled");
+            }
+        }
+    }
+
+    if(GameCursor != None)
+    {
+        GameCursor.NotifyEnabled(Self);
+    }
+    else
+    {
+        UtilitiesClass.Static.RModWarn(
+            "Failed to enable game cursor using class" @ GameCursorClass);
+    }
+}
+
+/**
+*   DisableGameCursor
+*   Disables the game cursor
+*/
+function DisableGameCursor()
+{
+    if(GameCursor != None)
+    {
+        GameCursor.NotifyDisabled();
+    }
+}
 
 
 //==============================================================================
@@ -2611,6 +2667,25 @@ event PlayerTick( float Time )
 //  End 469b movement adaptation for Rune
 //==============================================================================
 
+/**
+*   PlayerInput (override)
+*   Overridden to pass input to game cursor when enabled
+*/
+event PlayerInput(float DeltaSeconds)
+{
+    if(GameCursor != None && GameCursor.IsEnabled())
+    {
+        GameCursor.PlayerInputMouseMove(aMouseX, aMouseY, DeltaSeconds);
+        if(GameCursor.IsConsumingMouseInputWhenEnabled())
+        {
+            aMouseX = 0.0;
+            aMouseY = 0.0;
+        }
+    }
+    
+    Super.PlayerInput(DeltaSeconds);
+}
+
 function SendServerClientRepVars()
 {
     local Class<Console> ConsoleClass;
@@ -3406,10 +3481,26 @@ state PlayerSpectating
         {
             Self.Camera.PostRender(C);
         }
+        
+        // Draw game cursor
+        if(GameCursor != None)
+        {
+            GameCursor.DrawGameCursor(C);
+        }
     }
     
     event PlayerInput(float DeltaSeconds)
     {
+        if(GameCursor != None && GameCursor.IsEnabled())
+        {
+            GameCursor.PlayerInputMouseMove(aMouseX, aMouseY, DeltaSeconds);
+            if(GameCursor.IsConsumingMouseInputWhenEnabled())
+            {
+                aMouseX = 0.0;
+                aMouseY = 0.0;
+            }
+        }
+        
         Super.PlayerInput(DeltaSeconds);
         if(Self.Camera != None)
         {
@@ -3982,6 +4073,7 @@ defaultproperties
     SpawnableSeveredLimbClass=Class'RMod.R_Weapon_BodyPart_Limb'
     SpectatorCameraClass=Class'RMod.R_Camera_Spectator'
     LoadoutReplicationInfoClass='RMod.R_LoadoutReplicationInfo'
+    GameCursorClass=Class'RMod.R_GameCursor'
     bMessageBeep=True
     WeaponSwipeTexture=None
     WeaponSwipeBloodlustTexture=Texture'RuneFX.swipe_red'

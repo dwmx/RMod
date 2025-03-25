@@ -311,6 +311,70 @@ static function String GetMenuNameForInventoryClass(Class<Inventory> InventoryCl
     return String(InventoryClass);
 }
 
+/////////////////////////////////////////////////////////////////////////////////
+//  Screen / World Utilities
+/////////////////////////////////////////////////////////////////////////////////
+
+/**
+*   GetScreenResolutionFromPlayerPawnInPixels
+*   Returns the resolution of the player's viewport in pixels
+*   Returns true if resolution successfully retrieved
+*/
+static function bool GetScreenResolutionFromPlayerPawnInPixels(PlayerPawn InPlayerPawn, out float OutScreenWidth, out float OutScreenHeight)
+{
+    local String ConsoleCommandResult;
+    local String LeftSplit, RightSplit;
+    local int SplitIndex;
+    
+    if(InPlayerPawn == None)
+    {
+        OutScreenWidth = 0.0;
+        OutScreenHeight = 0.0;
+        return false;
+    }
+    
+    ConsoleCommandResult = InPlayerPawn.ConsoleCommand("GetCurrentRes");
+    SplitIndex = InStr(ConsoleCommandResult, "x");
+    
+    LeftSplit = Mid(ConsoleCommandResult, 0, SplitIndex);
+    RightSplit = Mid(ConsoleCommandResult, SplitIndex + 1);
+    
+    OutScreenWidth = float(LeftSplit);
+    OutScreenHeight = float(RightSplit);
+    
+    return true;
+}
+
+/**
+*   GetWorldRayFromScreen
+*   Given some screen space location, returns a ray that can be used to trace for world collisions
+*/
+static function Vector GetWorldRayFromScreen(Vector ScreenPos, float ScreenWidth, float ScreenHeight, float FOV, Vector CameraLocation, Rotator CameraRotation)
+{
+   local float HalfWidth, HalfHeight, TanFOV, AspectRatio;
+   local Vector ScreenRay, WorldDirection, AxisX, AxisY, AxisZ, WorldRay;
+   
+   // Calculate half-dimensions and aspect ratio
+   HalfWidth = ScreenWidth / 2.0;
+   HalfHeight = ScreenHeight / 2.0;
+   TanFOV = Tan((FOV * 3.141593) / 360.0);
+   AspectRatio = TanFOV / HalfWidth;
+   
+   // Compute ray direction in screen space
+   ScreenRay.Y = ((ScreenPos.X - HalfWidth) * AspectRatio);
+   ScreenRay.Z = ((HalfHeight - ScreenPos.Y) * AspectRatio);
+   ScreenRay.X = 1.0;
+   
+   // Convert screen space ray to world space
+   GetAxes(CameraRotation, AxisX, AxisY, AxisZ);
+   WorldDirection = ((ScreenRay.X * AxisX) + (ScreenRay.Y * AxisY)) + (ScreenRay.Z * AxisZ);
+   WorldDirection = Normal(WorldDirection);
+   
+   // Compute world-space ray endpoint
+   WorldRay = WorldDirection / AspectRatio;
+   return WorldRay;
+}
+
 defaultproperties
 {
 }
