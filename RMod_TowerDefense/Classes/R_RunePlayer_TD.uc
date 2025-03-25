@@ -1,12 +1,7 @@
 class R_RunePlayer_TD extends R_RunePlayer;
 
-var R_GameCursor GameCursor;
-
 var Class<R_BuilderBrush> BuilderBrushClass;
 var R_BuilderBrush BuilderBrush;
-
-var Vector SavedCameraLocation;
-var Rotator SavedCameraRotation;
 
 replication
 {
@@ -38,29 +33,9 @@ event PlayerCalcView(
     CameraRotation = Rotator(Location - CameraLocation);
     ViewActor = Self;
     
-    
-    //Super.PlayerCalcView(ViewActor, CameraLocation, CameraRotation);
-    
     // Cursor needs these when selecting objects in world
-    SavedCameraLocation = CameraLocation;
-    SavedCameraRotation = CameraRotation;
-}
-
-/**
-*   PlayerInput (override)
-*   Overridden to pass mouse move to game cursor when it's enabled
-*/
-event PlayerInput(float DeltaSeconds)
-{
-    if(GameCursor != None)
-    {
-        GameCursor.PlayerInputMouseMove(aMouseX, aMouseY, DeltaSeconds);
-        // Game cursor should consume player mouse input
-        aMouseX = 0.0;
-        aMouseY = 0.0;
-    }
-    
-    Super.PlayerInput(DeltaSeconds);
+    SavedCameraLoc = CameraLocation;
+    SavedCameraRot = CameraRotation;
 }
 
 /**
@@ -104,11 +79,6 @@ event PostRender(Canvas C)
     if(BuilderBrush != None)
     {
         BuilderBrush.BuilderBrushPostRender(C);
-    }
-    
-    if(GameCursor != None)
-    {
-        GameCursor.DrawGameCursor(C);
     }
 }
 
@@ -215,7 +185,8 @@ exec function TestBuilderBrush()
     UtilitiesClass.Static.RModLog("Builder Brush called");
     SpawnBuilderBrush();
     //TestRTSStyleStuff();
-    ShowGameCursor();
+    //ShowGameCursor();
+    EnableGameCursor();
 }
 
 function TestRTSStyleStuff()
@@ -224,17 +195,6 @@ function TestRTSStyleStuff()
     
     WindowResResult = ConsoleCommand("GetCurrentRes");
     Log("GET CURRENT RES RETURNED:" @ WindowResResult);
-}
-
-function ShowGameCursor()
-{
-    Log("SHOW GAME CURSOR CALLED");
-    GameCursor = New(None) Class'R_GameCursor';
-    if(GameCursor != None)
-    {
-        GameCursor.NotifyEnabled(Self);
-    }
-   
 }
 
 exec function TestBuildableIndex(int BuildableIndex)
@@ -253,6 +213,15 @@ exec function TestBuildableIndex(int BuildableIndex)
         }
         
         BuilderBrush.SetBuildableActorClass(BuildableClass);
+        
+        if(BuildableClass == None)
+        {
+            DisableGameCursor();
+        }
+        else
+        {
+            EnableGameCursor();
+        }
     }
 }
 //==============================================================================

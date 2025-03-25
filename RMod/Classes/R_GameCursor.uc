@@ -14,6 +14,9 @@ var Texture CursorTexture;
 
 var bool bRecenterMouse;
 
+var bool bCursorEnabled;
+var bool bConsumeMouseInput;
+
 /**
 *   PlayerInputMouseMove
 *   Input X and Y mouse movement
@@ -35,6 +38,23 @@ function NotifyEnabled(R_RunePlayer Caller)
     bRecenterMouse = true;
     
     CursorOwner = Caller;
+    
+    bCursorEnabled = true;
+}
+
+function NotifyDisabled()
+{
+    bCursorEnabled = false;
+}
+
+function bool IsEnabled()
+{
+    return bCursorEnabled;
+}
+
+function bool IsConsumingMouseInputWhenEnabled()
+{
+    return bConsumeMouseInput;
 }
 
 /**
@@ -51,11 +71,9 @@ function Actor TraceUnderCursor(
     local float ScreenWidth, ScreenHeight;
     local Vector WorldRay;
     local Vector ScreenPosition;
-    local R_RunePlayer_TD TDCursorOwner;
     local Actor HitActor;
     
-    TDCursorOwner = R_RunePlayer_TD(CursorOwner);
-    if(TDCursorOwner == None)
+    if(CursorOwner == None)
     {
         return None;
     }
@@ -68,16 +86,16 @@ function Actor TraceUnderCursor(
     WorldRay = UtilitiesClass.Static.GetWorldRayFromScreen(
         ScreenPosition,
         ScreenWidth, ScreenHeight,
-        TDCursorOwner.FOVAngle,
-        TDCursorOwner.SavedCameraLocation,
-        TDCursorOwner.SavedCameraRotation);
+        CursorOwner.FOVAngle,
+        CursorOwner.SavedCameraLoc,
+        CursorOwner.SavedCameraRot);
     
     // Trace from the screen space -> world space ray
     HitActor = CursorOwner.Trace(
         HitLocation,
         HitNormal,
         WorldRay * TraceDistance,
-        TDCursorOwner.SavedCameraLocation);
+        CursorOwner.SavedCameraLoc);
 
     return HitActor;
 }
@@ -89,6 +107,11 @@ function Actor TraceUnderCursor(
 */
 function DrawGameCursor(Canvas C)
 {
+    if(!bCursorEnabled)
+    {
+        return;
+    }
+    
     if(bRecenterMouse)
     {
         CursorX = C.ClipX * 0.5;
@@ -111,4 +134,5 @@ defaultproperties
 {
     UtilitiesClass=Class'R_AUtilities'
     CursorTexture=Texture'UWindow.Icons.MouseCursor'
+    bConsumeMouseInput=True
 }
