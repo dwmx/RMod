@@ -1,13 +1,18 @@
 //==============================================================================
 // R_Mob
-// Abstract base class for all mob pawns
+// Abstract base class for all mob actors
+//
+// For simplicity, this class does not extend from Pawn
 //==============================================================================
-class R_Mob extends Actor;
+class R_Mob extends Pawn;
 
 var Class<R_AMobAppearance> MobAppearanceClass;
 
 // Animations
 var Name A_MoveForward; // Move forward animation
+
+// Test target
+var Actor TargetActor;
 
 // Overall speed scale for this mob
 // i.e. When this mob is slowed, it will animate slower and run slower
@@ -89,8 +94,9 @@ simulated event Tick(float DeltaSeconds)
 {
     Super.Tick(DeltaSeconds);
     
-    Velocity.X = 32.0;
-    AutonomousPhysics(DeltaSeconds);
+    //Velocity.X = 32.0;
+    //SetPhysics(PHYS_Walking);
+    //AutonomousPhysics(DeltaSeconds);
     
     PlayMoving();
 }
@@ -99,7 +105,7 @@ simulated event Tick(float DeltaSeconds)
 *   PlayMoving
 *   Play this Mob's moving animations
 */
-simulated function PlayMoving()
+simulated function PlayMoving(optional float Tween)
 {
     LoopAnim(A_MoveForward, MobSpeedScale, 0.1);
 }
@@ -110,11 +116,66 @@ auto state Neutral
     {
         SetPhysics(PHYS_Walking);
     }
+    
+Begin:
+    //Sleep(3.0);
+    GotoState('Pathing');
+}
+
+state Pathing
+{
+    //event BeginState()
+    //{
+    //    local Pawn P;
+    //    
+    //    SetPhysics(PHYS_Walking);
+    //    
+    //    P = Level.PawnList;
+    //    while(P != None)
+    //    {
+    //        if(PlayerPawn(P) != None)
+    //        {
+    //            TargetActor = P;
+    //            break;
+    //        }
+    //        P = P.NextPawn;
+    //    }
+    //}
+    
+    function UpdateTargetToNextPathNode()
+    {
+        local R_MobPathNode PathNode;
+        
+        PathNode = R_MobPathNode(TargetActor);
+        if(PathNode != None)
+        {
+            if(PathNode.NextPathNode != None)
+            {
+                TargetActor = PathNode.NextPathNode;
+                return;
+            }
+        }
+        
+        TargetActor = None;
+    }
+    
+Begin:
+FollowPath:
+    MoveTo(TargetActor.Location, MovementSpeed * MobSpeedScale);
+    Sleep(0.01);
+    UpdateTargetToNextPathNode();
+    if(TargetActor != None)
+        GoTo('FollowPath');
+    
+    //GotoState('Neutral');
 }
 
 defaultproperties
 {
     RemoteRole=ROLE_SimulatedProxy
     DrawType=DT_SkeletalMesh
+    CollisionRadius=24.000000
+    CollisionHeight=46.000000
     MobSpeedScale=1.0
+    MovementSpeed=220.0
 }

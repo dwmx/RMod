@@ -11,6 +11,17 @@ class R_GameInfo_TD extends R_GameInfo;
 // Initialized at startup, each level should contain one and only one
 var R_LevelDescription_TD LevelDescriptionActor;
 
+// The following properties are initialized from LevelDescriptionActor
+var R_MobPathNode InitialMobPathNode; // The first path node mobs run to
+
+// The current game round
+var Class<R_GameRound_TD> GameRoundClass;
+var R_GameRound_TD GameRoundInstance;
+
+/**
+*   PreBeginPlay (override)
+*   Overridden to initialize level-specific game configuration
+*/
 event PreBeginPlay()
 {
     Super.PreBeginPlay();
@@ -50,6 +61,63 @@ function InitializeLevelDescriptionActor()
     }
     
     UtilitiesClass.Static.RModLog("R_GameInfo_TD initialized LevelDescriptionActor using" @ LevelDescriptionActor);
+    
+    // Resolve the initial path node
+    InitialMobPathNode = Class'R_MobPathNode'.Static.ResolveNodeFromTag(LevelDescriptionActor.InitialPathNodeTag, Self);
+    if(InitialMobPathNode == None)
+    {
+        UtilitiesClass.Static.RModWarn(
+            "R_GameInfo_TD failed to resolve InitialMobPathNode from tag" @ LevelDescriptionActor.InitialPathNodeTag);
+    }
+    else
+    {
+        UtilitiesClass.Static.RModLog(
+            "R_GameInfo_TD initialized InitialMobPathNode from tag"
+            @ LevelDescriptionActor.InitialPathNodeTag
+            @ "Actor: {" $ InitialMobPathNode $ "}");
+    }
+}
+
+/**
+*   PostBeginPlay (override)
+*   Overridden to test game rounds
+*/
+event PostBeginPlay()
+{
+    Super.PostBeginPlay();
+    StartGameRound();
+}
+
+function StartGameRound()
+{
+    if(GameRoundClass == None)
+    {
+        UtilitiesClass.Static.RModWarn("StartGameRound failed due to improperly configured GameRoundClass" @ GameRoundClass);
+        return;
+    }
+    
+    GameRoundInstance = new(None) GameRoundClass;
+    if(GameRoundInstance == None)
+    {
+        UtilitiesClass.Static.RModWarn("StartGameRound failed to spawn GameRound from class" @ GameRoundClass);
+        return;
+    }
+    
+    GameRoundInstance.InitializeGameRound(Self);
+}
+
+/**
+*   Tick (override)
+*   Overridden to pass tick to GameRound when it's active
+*/
+event Tick(float DeltaSeconds)
+{
+    Super.Tick(DeltaSeconds);
+    
+    if(GameRoundInstance != None)
+    {
+        GameRoundInstance.TickGameRound(DeltaSeconds);
+    }
 }
 
 /**
@@ -84,4 +152,5 @@ function PlayerRequestBuild(R_RunePlayer_TD RunePlayerTD, Class<R_ABuildableActo
 defaultproperties
 {
     RunePlayerClass=Class'RMod_TowerDefense.R_RunePlayer_TD'
+    GameRoundClass=Class'RMod_TowerDefense.R_GameRound_TD'
 }

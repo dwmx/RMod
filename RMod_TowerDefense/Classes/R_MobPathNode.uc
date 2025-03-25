@@ -22,6 +22,31 @@ var R_MobPathNode NextPathNode;
 var R_MobPathNode PrevPathNode;
 
 /**
+*   ResolveNodeFromTag
+*   Given a node tag (corresponding to some node's ThisNodeTag var), find it in
+*   the level and return it
+*/
+static function R_MobPathNode ResolveNodeFromTag(Name InNodeTag, Actor Caller)
+{
+    local R_MobPathNode NodeIt;
+    
+    if(InNodeTag == '' || Caller == None)
+    {
+        return None;
+    }
+    
+    foreach Caller.AllActors(Class'R_MobPathNode', NodeIt)
+    {
+        if(NodeIt.ThisNodeTag == InNodeTag)
+        {
+            return NodeIt;
+        }
+    }
+    
+    return None;
+}
+
+/**
 *   PostBeginPlay (override)
 *   Overridden to call ResolvePathReferences
 */
