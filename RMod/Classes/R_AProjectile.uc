@@ -9,6 +9,9 @@
 //==============================================================================
 class R_AProjectile extends Projectile abstract;
 
+// Static utilities
+var Class<R_AUtilities> UtilitiesClass;
+
 // Target actor for this projectile
 var Actor ProjectileTarget;
 
@@ -44,6 +47,13 @@ enum EProjectileOrientationAxis
 };
 var EProjectileOrientationAxis ProjectileOrientationAxis;
 
+// Projectile tracer
+// If true, this projectile will spawn a ProjectileTracer particle
+// system locally (non-replicated)
+var bool bUseProjectileTracer;
+var Class<R_ProjectileTracer> ProjectileTracerClass;
+var R_ProjectileTracer ProjectileTracer;
+
 replication
 {
     reliable if(Role == ROLE_Authority)
@@ -58,6 +68,78 @@ simulated event PostBeginPlay()
     
     // This allows projectiles to initially orient themselves
     OrientProjectileTowards(Location + Vector(Rotation));
+    
+    if(ShouldSpawnProjectileTracer())
+    {
+        SpawnProjectileTracer();
+    }
+}
+
+/**
+*   ShouldSpawnProjectileTracer
+*   Returns whether or not projectile tracer should be spawned
+*   Accounts for net mode and role
+*/
+simulated function bool ShouldSpawnProjectileTracer()
+{
+    // Setting must be enabled
+    if(!bUseProjectileTracer)
+    {
+        return false;
+    }
+    
+    // No reason for this to spawn on dedicated server authority
+    if(Level.NetMode == NM_DedicatedServer && Role == ROLE_Authority)
+    {
+        return false;
+    }
+    
+    return true;
+}
+
+/**
+*   SpawnProjectileTracer
+*   Spawns and initializes a tracer projectile
+*   Important to note that projectiles are simulated proxies, but tracer
+*   effects have no role -- you must spawn them on the local machine
+*/
+simulated function SpawnProjectileTracer()
+{
+    if(ProjectileTracer != None)
+    {
+        ProjectileTracer.Destroy();
+    }
+    
+    if(ProjectileTracerClass == None)
+    {
+        UtilitiesClass.Static.RModWarn(
+            "Tried to spawn projectile tracer but ProjectileTracerClass is improperly configured");
+        return;
+    }
+    
+    ProjectileTracer = Spawn(ProjectileTracerClass, Self, /*Tag*/, /*Location*/, /*Rotation*/);
+    if(ProjectileTracer == None)
+    {
+        UtilitiesClass.Static.RModWarn(
+            "Failed to spawn projectile tracer from class" @ ProjectileTracerClass);
+    }
+}
+
+/**
+*   GetProjectileEffectBaseOffset
+*   Spawned projectile effects call this so they know where they should play their
+*   effects from
+*   i.e. this would be where the tracer creates its particles from
+*/
+simulated function Vector GetProjectileEffectBaseOffset()
+{
+    local Vector Result;
+    
+    Result.X = 0.0;
+    Result.Y = 0.0;
+    Result.Z = 0.0;
+    
+    return Result;
 }
 
 function SetProjectileTarget(Actor NewProjectileTarget)
@@ -113,10 +195,26 @@ simulated event Tick(float DeltaSeconds)
     }
 }
 
+/**
+*   Destroyed (override)
+*   Overridden to destroy effects
+*/
+simulated event Destroyed()
+{
+    if(ProjectileTracer != None)
+    {
+        ProjectileTracer.Destroy();
+    }
+    
+    Super.Destroyed();
+}
+
 defaultproperties
 {
     RemoteRole=ROLE_SimulatedProxy
     bNetTemporary=True
     ProjectileBehavior=PB_FireAndForget
     ProjectileOrientationAxis=PA_AxisX
+    bUseProjectileTracer=True
+    ProjectileTracerClass=Class'R_ProjectileTracer'
 }
