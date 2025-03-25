@@ -5,17 +5,17 @@
 //==============================================================================
 class R_GameCursor extends Object;
 
+// Static utilities
 var Class<R_AUtilities> UtilitiesClass;
 
 var R_RunePlayer CursorOwner;
 
-var float CursorX, CursorY;
+var private float CursorX, CursorY;
 var Texture CursorTexture;
 
-var bool bRecenterMouse;
-
-var bool bCursorEnabled;
-var bool bConsumeMouseInput;
+var private bool bRecenterGameCursor;
+var private bool bCursorEnabled;
+var private bool bConsumeMouseInput;
 
 /**
 *   PlayerInputMouseMove
@@ -34,27 +34,48 @@ function PlayerInputMouseMove(float MoveX, float MoveY, float DeltaSeconds)
 */
 function NotifyEnabled(R_RunePlayer Caller)
 {
-    // Tells cursor to recenter itself
-    bRecenterMouse = true;
-    
     CursorOwner = Caller;
-    
     bCursorEnabled = true;
 }
 
+/**
+*   NotifyDisabled
+*   Called by owner when disabling the game cursor
+*   Note that this does not delete the cursor, only hides it and stops
+*   passing input to it
+*/
 function NotifyDisabled()
 {
     bCursorEnabled = false;
 }
 
+/**
+*   IsEnabled
+*   Called by owner
+*/
 function bool IsEnabled()
 {
     return bCursorEnabled;
 }
 
+/**
+*   IsConsumingMouseInputWhenEnabled
+*   Called by owner
+*   Modify bConsumeMouseInput bool instead of overriding this function
+*/
 function bool IsConsumingMouseInputWhenEnabled()
 {
     return bConsumeMouseInput;
+}
+
+/**
+*   RecenterGameCursor
+*   Calling this will recenter the cursor
+*   Canvas is required for re-centering, so the actual recentering occurs in Draw
+*/
+function RecenterGameCursor()
+{
+    bRecenterGameCursor = true;
 }
 
 /**
@@ -112,11 +133,11 @@ function DrawGameCursor(Canvas C)
         return;
     }
     
-    if(bRecenterMouse)
+    if(bRecenterGameCursor)
     {
         CursorX = C.ClipX * 0.5;
         CursorY = C.ClipY * 0.5;
-        bRecenterMouse = false;
+        bRecenterGameCursor = false;
     }
     
     CursorX = FClamp(CursorX, 0.0, C.ClipX);
@@ -135,4 +156,5 @@ defaultproperties
     UtilitiesClass=Class'R_AUtilities'
     CursorTexture=Texture'UWindow.Icons.MouseCursor'
     bConsumeMouseInput=True
+    bRecenterGameCursor=True
 }
