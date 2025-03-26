@@ -89,3 +89,42 @@ static function DrawBoxOutline(
     C.SetPos(MinX, MinY);
     C.DrawRect(WhiteTexture, Thickness, MaxY - MinY);
 }
+
+/**
+*   GetScreenSpaceBoundingBoxForActor
+*   Given an actor, returns a screen-space AABB based on the actor's
+*   collision radius and collision height
+*/
+static function GetScreenSpaceBoundingBoxForActor(
+    Canvas C,
+    Actor InActor, Rotator ViewRotation,
+    out Vector Extent1, out Vector Extent2)
+{
+    local Vector ViewX, ViewY, ViewZ;
+    local Vector WorldUp;
+    local Vector WorldLeft, WorldRight, WorldTop, WorldBottom;
+    local int ScreenLeftX, ScreenLeftY;
+    local int ScreenRightX, ScreenRightY;
+    local int ScreenTopX, ScreenTopY;
+    local int ScreenBottomX, ScreenBottomY;
+    
+    GetAxes(ViewRotation, ViewX, ViewY, ViewZ);
+    WorldUp.X = 0.0;
+    WorldUp.Y = 0.0;
+    WorldUp.Z = 1.0;
+    
+    WorldLeft = InActor.Location + (ViewY * InActor.CollisionRadius);
+    WorldRight = InActor.Location + (ViewY * InActor.CollisionRadius * -1.0);
+    WorldTop = InActor.Location + (WorldUp * InActor.CollisionHeight);
+    WorldBottom = InActor.Location + (WorldUp * InActor.CollisionHeight * -1.0);
+    
+    C.TransformPoint(WorldLeft, ScreenLeftX, ScreenLeftY);
+    C.TransformPoint(WorldRight, ScreenRightX, ScreenRightY);
+    C.TransformPoint(WorldTop, ScreenTopX, ScreenTopY);
+    C.TransformPoint(WorldBottom, ScreenBottomX, ScreenBottomY);
+    
+    Extent1.X = FMin(float(ScreenLeftX), FMin(float(ScreenRightX), FMin(ScreenTopX, ScreenBottomX)));
+    Extent1.Y = FMin(float(ScreenLeftY), FMin(float(ScreenRightY), FMin(ScreenTopY, ScreenBottomY)));
+    Extent2.X = FMax(float(ScreenLeftX), FMax(float(ScreenRightX), FMax(ScreenTopX, ScreenBottomX)));
+    Extent2.Y = FMax(float(ScreenLeftY), FMax(float(ScreenRightY), FMax(ScreenTopY, ScreenBottomY)));
+}
