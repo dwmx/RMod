@@ -9,7 +9,10 @@ class R_Mob extends Pawn;
 var Class<R_AMobAppearance> MobAppearanceClass;
 
 // Animations
-var Name A_MoveForward; // Move forward animation
+var Name A_Idle;            // Idle animation
+var Name A_MoveForward;     // Move forward animation
+var Name A_Dying[5];        // Dying animations
+var int NumDyingAnimations; // Up to 5
 
 // Test target
 var Actor TargetActor;
@@ -17,6 +20,9 @@ var Actor TargetActor;
 // Overall speed scale for this mob
 // i.e. When this mob is slowed, it will animate slower and run slower
 var float MobSpeedScale;
+
+// Whether or not towers should target this mob
+var bool bTargetable;
 
 replication
 {
@@ -44,8 +50,19 @@ simulated function ApplyMobAppearance(Class<R_AMobAppearance> NewMobAppearanceCl
         SkelGroupFlags[i] = NewMobAppearanceClass.Default.SkelGroupFlags[i];
     }
     
-    // Animation
+    // Animations
+    A_Idle = NewMobAppearanceClass.Default.A_Idle;
     A_MoveForward = NewMobAppearanceClass.Default.A_MoveForward;
+    
+    NumDyingAnimations = 0;
+    for(i = 0; i < 5; ++i)
+    {
+        if(NewMobAppearanceClass.Default.A_Dying[i] != '')
+        {
+            A_Dying[NumDyingAnimations] = NewMobAppearanceClass.Default.A_Dying[i];
+            ++NumDyingAnimations;
+        }
+    }
     
     // Update mob appearance which will replicated to clients
     MobAppearanceClass = NewMobAppearanceClass;
@@ -53,19 +70,23 @@ simulated function ApplyMobAppearance(Class<R_AMobAppearance> NewMobAppearanceCl
 
 /**
 *   PreBeginPlay (override)
-*   Overridden to apply replicated initialization variables
-*   Client picks up these changes in PostNetBeginPlay, so only perform initialization
-*   in this function for the server
+*   Overridden for testing
 */
 simulated event PreBeginPlay()
 {
     Super.PreBeginPlay();
+}
+
+/**
+*   PostBeginPlay (override)
+*   Game initialization
+*/
+simulated event PostBeginPlay()
+{
+    Super.PostBeginPlay();
     
-    // Test mob appearance
-    if(Role == ROLE_Authority)
-    {
-        ApplyMobAppearance(Class'R_AMobAppearance_Viking_Elder');
-    }
+    // Always targetable at initialization
+    bTargetable = true;
 }
 
 /**
@@ -88,26 +109,70 @@ simulated event PostNetBeginPlay()
 
 /**
 *   Tick (override)
-*   Overridden to play animations and update behaviors
 */
 simulated event Tick(float DeltaSeconds)
 {
     Super.Tick(DeltaSeconds);
-    
-    //Velocity.X = 32.0;
-    //SetPhysics(PHYS_Walking);
-    //AutonomousPhysics(DeltaSeconds);
-    
-    PlayMoving();
 }
 
 /**
 *   PlayMoving
 *   Play this Mob's moving animations
 */
-simulated function PlayMoving(optional float Tween)
+function PlayMoving(optional float Tween)
 {
     LoopAnim(A_MoveForward, MobSpeedScale, 0.1);
+}
+
+/**
+*   JointDamaged (override)
+*   Pawn's JointDamaged function normally passes through DamageBodyPart which deals
+*   with body part severing, gibs, etc
+*   Mobs aren't that complicated, so this implements simpler damage functionality
+*/
+function bool JointDamaged(
+    int Damage,
+    Pawn EventInstigator,
+    Vector HitLocation,
+    Vector Momentum,
+    Name DamageType,
+    int Joint)
+{
+    Health = Max(Health - Damage, 0);
+    if(Health == 0)
+    {
+        Died(Instigator, DamageType, HitLocation);
+    }
+}
+
+/**
+*   Died (override)
+*/
+function Died(Pawn Killer, Name DamageType, Vector HitLocation)
+{
+    local int i;
+    local R_GameInfo_TD GI;
+    
+    Health = 0;
+    
+    if(Level.Game != None)
+    {
+        Level.Game.Killed(Killer, Self, DamageType);
+    }
+
+    i = Rand(NumDyingAnimations);
+    PlayAnim(A_Dying[i], MobSpeedScale * 1.0, 0.1);
+    
+    GotoState('Dying');
+}
+
+/**
+*   IsMobTargetable
+*   Called by towers to see if this mob is a valid target
+*/
+function bool IsMobTargetable()
+{
+    return bTargetable;
 }
 
 auto state Neutral
@@ -118,29 +183,51 @@ auto state Neutral
     }
     
 Begin:
-    //Sleep(3.0);
     GotoState('Pathing');
+}
+
+state Dying
+{
+    event BeginState()
+    {
+        // Not targetable when dead or dying
+        bTargetable = false;
+        
+        Velocity.X = 0.0;
+        Velocity.Y = 0.0;
+        
+        PlayRandomDeathAnimation();
+    }
+    
+    function PlayRandomDeathAnimation()
+    {
+        local int i;
+        
+        i = Rand(NumDyingAnimations);
+        PlayAnim(A_Dying[i], MobSpeedScale * 1.0, 0.1);
+    }
+    
+    event Tick(float DeltaSeconds)
+    {
+        Velocity.X = 0.0;
+        Velocity.Y = 0.0;
+    }
+    
+Begin:
+    SetCollision(false, false, false);
+    SetPhysics(PHYS_Falling);
+    WaitForLanding();
+    FinishAnim();
+    Sleep(5.0);
+    Destroy();
 }
 
 state Pathing
 {
-    //event BeginState()
-    //{
-    //    local Pawn P;
-    //    
-    //    SetPhysics(PHYS_Walking);
-    //    
-    //    P = Level.PawnList;
-    //    while(P != None)
-    //    {
-    //        if(PlayerPawn(P) != None)
-    //        {
-    //            TargetActor = P;
-    //            break;
-    //        }
-    //        P = P.NextPawn;
-    //    }
-    //}
+    event Tick(float DeltaSeconds)
+    {
+        PlayMoving();
+    }
     
     function UpdateTargetToNextPathNode()
     {
@@ -166,8 +253,6 @@ FollowPath:
     UpdateTargetToNextPathNode();
     if(TargetActor != None)
         GoTo('FollowPath');
-    
-    //GotoState('Neutral');
 }
 
 defaultproperties

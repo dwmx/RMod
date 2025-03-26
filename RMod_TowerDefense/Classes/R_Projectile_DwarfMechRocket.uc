@@ -13,10 +13,8 @@ defaultproperties
 {
     DrawType=DT_SkeletalMesh
     Skeletal=SkelModel'objects.Barrel'
-    MaxSpeed=300.0
-    Speed=300.0
+    MaxSpeed=500.0
+    Speed=500.0
     DrawScale=0.5
     ProjectileBehavior=PB_VelocityTowardsTarget
-    //CollisionRadius=20.000000
-    //CollisionHeight=20.000000
 }

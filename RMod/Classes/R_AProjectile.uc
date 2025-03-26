@@ -15,6 +15,10 @@ var Class<R_AUtilities> UtilitiesClass;
 // Target actor for this projectile
 var Actor ProjectileTarget;
 
+// Damage vars
+var Name DamageType;
+var int Damage;
+
 //
 // Projectile behavior enumerator
 //
@@ -178,9 +182,20 @@ simulated function OrientProjectileTowards(Vector TargetLocation)
 */
 simulated event Tick(float DeltaSeconds)
 {
+    local Vector TargetDelta;
     local float CurrentSpeed;
     
     Super.Tick(DeltaSeconds);
+    
+    // If close enough to target, then hit
+    if(ProjectileTarget != None)
+    {
+        TargetDelta = ProjectileTarget.Location - Location;
+        if(VSize(TargetDelta) <= CollisionRadius)
+        {
+            HandleProjectileHitActor(ProjectileTarget);
+        }
+    }
     
     // FireAndForget is a projectile's default behavior, so no special handling required
     
@@ -193,6 +208,23 @@ simulated event Tick(float DeltaSeconds)
         
         Velocity = Normal(ProjectileTarget.Location - Location) * CurrentSpeed;
     }
+}
+
+simulated function HandleProjectileHitActor(Actor HitActor)
+{
+    local Vector DeltaVector;
+    local Vector HitLocation;
+    local Vector Momentum;
+    
+    if(Role == ROLE_Authority)
+    {
+        DeltaVector = Location - HitActor.Location;
+        HitLocation = HitActor.Location + Normal(DeltaVector) * CollisionRadius;
+    
+        HitActor.JointDamaged(Damage, Instigator, HitLocation, Momentum, DamageType, 0);
+    }
+    
+    Destroy();
 }
 
 /**
@@ -213,8 +245,11 @@ defaultproperties
 {
     RemoteRole=ROLE_SimulatedProxy
     bNetTemporary=True
+    CollisionRadius=8.0
     ProjectileBehavior=PB_FireAndForget
     ProjectileOrientationAxis=PA_AxisX
     bUseProjectileTracer=True
     ProjectileTracerClass=Class'R_ProjectileTracer'
+    DamageType='Physical'
+    Damage=50
 }

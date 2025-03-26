@@ -60,6 +60,11 @@ function UpdateWeaponTarget()
         
         foreach OwningTower.RadiusActors(Class'R_Mob', MobActor, AttackRange)
         {
+            if(!MobActor.IsMobTargetable())
+            {
+                continue;
+            }
+            
             DeltaVector = MobActor.Location - OwningTower.Location;
             CurrentDistance = VSize(DeltaVector);
             

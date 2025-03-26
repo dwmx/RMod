@@ -16,7 +16,9 @@ var byte        SkelMeshIndex;      // Applied to R_AMob.SkelMesh
 var Texture     SkelGroupSkins[16]; // Applied to R_AMob.SkelGroupSkins
 var int         SkelGroupFlags[16]; // Applied to R_AMob.SkelGroupFlags;
 
+var Name        A_Idle;             // Idle animation
 var Name        A_MoveForward;      // Move forward animation
+var Name        A_Dying[5];         // Dying animation
 
 defaultproperties
 {

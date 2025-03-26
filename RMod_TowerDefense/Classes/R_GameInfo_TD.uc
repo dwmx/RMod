@@ -121,6 +121,22 @@ event Tick(float DeltaSeconds)
 }
 
 /**
+*   Killed (override)
+*/
+function Killed(Pawn Killer, Pawn Victim, Name DamageType)
+{
+    if(Victim.IsA('R_Mob'))
+    {
+        // Nothing for now
+        return;
+    }
+    else
+    {
+        Super.Killed(Killer, Victim, DamageType);
+    }
+}
+
+/**
 *   PlayerRequestBuild
 *   Called server-side by R_RunePlayer_TD when the owning player wants to build something with the specified class
 *   at the specified location

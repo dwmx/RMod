@@ -34,6 +34,7 @@ function ExecuteWeaponFire()
         SpawnedProjectile = OwningTower.Spawn(ProjectileClass, OwningTower, /*Spawn Tag*/, OwningTower.Location, ProjectileRotation);
         if(SpawnedProjectile != None)
         {
+            SpawnedProjectile.Instigator = Pawn(OwningTower.Owner); // The owning tower's owner is the player that built it
             SpawnedProjectile.SetProjectileTarget(LocalWeaponTarget);
             //SpawnedProjectile.Velocity = Normal(DeltaVector) * 1000.0;
         }
