@@ -77,6 +77,11 @@ simulated event PostBeginPlay()
     {
         SpawnProjectileTracer();
     }
+    
+    // These projectiles collide based on distance from target
+    SetCollision(false, false, false);
+    bCollideWorld = false;
+    
 }
 
 /**

@@ -246,6 +246,17 @@ state Pathing
         TargetActor = None;
     }
     
+    function MobEscaped()
+    {
+        local R_GameInfo_TD GI;
+        
+        GI = R_GameInfo_TD(Level.Game);
+        if(GI != None)
+        {
+            GI.NotifyMobEscaped(Self);
+        }
+    }
+    
 Begin:
 FollowPath:
     MoveTo(TargetActor.Location, MovementSpeed * MobSpeedScale);
@@ -253,6 +264,8 @@ FollowPath:
     UpdateTargetToNextPathNode();
     if(TargetActor != None)
         GoTo('FollowPath');
+    else
+        MobEscaped();
 }
 
 defaultproperties

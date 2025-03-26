@@ -51,13 +51,12 @@ function SpawnMob()
                 SpawnedMob.ApplyMobAppearance(Class'R_AMobAppearance_Dwarf_Black');
                 SpawnedMob.TargetActor = InitialMobPathNode;
                 
-                NumMobsToSpawn--;
+                // Just spawn forever for now
+                //NumMobsToSpawn--;
                 return;
             }
         }
     }
-    
-    Log("SpawnMob Failed");
 }
 
 //Spawn(BuildableClass, RunePlayerTD, /*SpawnTag*/, BuildLocation, SpawnRotation);

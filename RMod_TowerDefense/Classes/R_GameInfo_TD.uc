@@ -137,6 +137,16 @@ function Killed(Pawn Killer, Pawn Victim, Name DamageType)
 }
 
 /**
+*   NotifyMobEscaped
+*   Called by an R_Mob when it has reached the end of its path while pathing
+*/
+function NotifyMobEscaped(R_Mob Mob)
+{
+    Mob.Destroy();
+    BroadcastMessage("Mob Escaped! -1 Life");
+}
+
+/**
 *   PlayerRequestBuild
 *   Called server-side by R_RunePlayer_TD when the owning player wants to build something with the specified class
 *   at the specified location
