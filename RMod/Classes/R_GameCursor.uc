@@ -17,6 +17,10 @@ var private bool bRecenterGameCursor;
 var private bool bCursorEnabled;
 var private bool bConsumeMouseInput;
 
+var private bool bIsDragSelecting;
+var private Vector DragSelectionStart;
+var private Vector DragSelectionEnd;
+
 /**
 *   PlayerInputMouseMove
 *   Input X and Y mouse movement
@@ -26,6 +30,12 @@ function PlayerInputMouseMove(float MoveX, float MoveY, float DeltaSeconds)
 {
     CursorX += MoveX * DeltaSeconds;
     CursorY += MoveY * DeltaSeconds * -1.0;
+    
+    if(bIsDragSelecting)
+    {
+        DragSelectionEnd.X = CursorX;
+        DragSelectionEnd.Y = CursorY;
+    }
 }
 
 /**
@@ -138,6 +148,18 @@ function Actor TraceUnderCursor(
     return HitActor;
 }
 
+function BeginDragSelection()
+{
+    bIsDragSelecting = true;
+    DragSelectionStart.X = CursorX;
+    DragSelectionStart.Y = CursorY;
+}
+
+function EndDragSelection()
+{
+    bIsDragSelecting = false;
+}
+
 /**
 *   DrawGameCursor
 *   Draws this game cursor
@@ -150,6 +172,9 @@ function DrawGameCursor(Canvas C)
         return;
     }
     
+    
+    
+    // Recenter here because Canvas is needed
     if(bRecenterGameCursor)
     {
         CursorX = C.ClipX * 0.5;
@@ -157,9 +182,18 @@ function DrawGameCursor(Canvas C)
         bRecenterGameCursor = false;
     }
     
+    // Don't let cursor leave viewport extents
     CursorX = FClamp(CursorX, 0.0, C.ClipX);
     CursorY = FClamp(CursorY, 0.0, C.ClipY);
     
+    // If drag selecting, draw selection box
+    if(bIsDragSelecting)
+    {
+        Class'R_ACanvasUtilities'.Static.DrawBoxOutline(
+            C, DragSelectionStart, DragSelectionEnd, 2.0, 1.0, 1.0, 1.0, 0.5);
+    }
+    
+    // Draw cursor
     C.SetPos(CursorX, CursorY);
     C.DrawTile(
         CursorTexture,
@@ -174,4 +208,5 @@ defaultproperties
     CursorTexture=Texture'UWindow.Icons.MouseCursor'
     bConsumeMouseInput=True
     bRecenterGameCursor=True
+    bIsDragSelecting=False
 }
