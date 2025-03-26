@@ -116,7 +116,24 @@ function Actor TraceUnderCursor(
         HitLocation,
         HitNormal,
         WorldRay * TraceDistance,
-        CursorOwner.SavedCameraLoc);
+        CursorOwner.SavedCameraLoc,
+        /*bTraceActors*/,
+        Extent);
+        
+    // If looking for actors, trace again from camera loc to last hit point
+    // Note: For some reason the first trace always collides with LevelInfo, even
+    // if it passes through an Actor
+    // So this is more of a hack to perform the trace without hitting environment
+    if(bTraceActors && HitActor != None && LevelInfo(HitActor) != None)
+    {
+        return CursorOwner.Trace(
+            HitLocation,
+            HitNormal,
+            HitLocation,
+            CursorOwner.SavedCameraLoc,
+            true,
+            Extent);
+    }
 
     return HitActor;
 }
