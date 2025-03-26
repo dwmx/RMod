@@ -375,6 +375,24 @@ static function Vector GetWorldRayFromScreen(Vector ScreenPos, float ScreenWidth
    return WorldRay;
 }
 
+///////////////////////////////////////////////////////////////////////////////////
+////  Network Related
+///////////////////////////////////////////////////////////////////////////////////
+
+/**
+*   LogNetworkStateForActor
+*   Logs all network related information about the specified actor
+*/
+static function LogNetworkStateForActor(Actor InActor)
+{
+    RModLog("Logging network state for Actor:" @ InActor);
+    RModLog("Net Mode:" @ GetEnum(Enum'ENetMode', InActor.Level.NetMode));
+    RModLog("Role:" @ GetEnum(Enum'ENetRole', InActor.Role));
+    RModLog("Remote Role:" @ GetEnum(Enum'ENetRole', InActor.RemoteRole));
+    RModLog("Net Tag:" @ InActor.NetTag);
+    RModLog("Net Owner?:" @ InActor.bNetOwner);
+}
+
 defaultproperties
 {
 }
