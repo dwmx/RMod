@@ -1,13 +1,98 @@
 class R_RunePlayer_TD extends R_RunePlayer;
 
+// The class used to build things in the world
 var Class<R_BuilderBrush> BuilderBrushClass;
 var R_BuilderBrush BuilderBrush;
+
+// The class used to manage actor selection
+var Class<R_ActorSelector> ActorSelectorClass;
+var R_ActorSelector ActorSelector;
 
 replication
 {
     // Client --> Server functions
     reliable if(Role < ROLE_Authority)
         ServerTryExecuteBuild;
+}
+
+/**
+*   PostBeginPlay (override)
+*   Overridden to perform server initialization
+*   This is only called server-side
+*/
+event PostBeginPlay()
+{
+    Super.PostBeginPlay();
+    
+    InitializePlayer();
+}
+
+/**
+*   PostNetBeginPlay (override)
+*   Overridden to perform client initialization
+*   This is only called client-side
+*/
+event PostNetBeginPlay()
+{
+    Super.PostNetBeginPlay();
+    
+    InitializePlayer();
+}
+
+/**
+*   InitializePlayer
+*   Called for both server and clients, but some initialization should
+*   only occur for the controlling instance
+*/
+function InitializePlayer()
+{
+    // For local player only
+    if(IsLocallyControlled())
+    {
+        SpawnBuilderBrush();
+        SpawnActorSelector();
+        EnableGameCursor();
+    }
+}
+
+/**
+*   IsLocallyControlled
+*   Returns true if this actor is controlled locally, false
+*   otherwise
+*/
+function bool IsLocallyControlled()
+{
+    if(Level.NetMode == NM_Standalone)
+    {
+        // Standalone is always locally controlled
+        return true;
+    }
+    
+    if(Level.NetMode == NM_DedicatedServer)
+    {
+        // Dedicated servers never control
+        return false;
+    }
+    
+    if(Level.NetMode == NM_ListenServer)
+    {
+        // not sure about this one yet
+    }
+    
+    if(Level.NetMode == NM_Client)
+    {
+        // Autonomous proxy is controlled by clients but owned by server
+        if(Role == ROLE_AutonomousProxy)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    
+    return false;
 }
 
 /**
@@ -80,6 +165,36 @@ event PostRender(Canvas C)
     {
         BuilderBrush.BuilderBrushPostRender(C);
     }
+    
+    // Draw a circle around whatever cursor is over
+    DrawSelection(C);
+}
+
+function DrawSelection(Canvas C)
+{
+    local Vector HitLocation, HitNormal;
+    local Actor HitActor;
+    local Vector CircleNormal;
+    
+    if(GameCursor != None && GameCursor.IsEnabled())
+    {
+        HitActor = GameCursor.TraceUnderCursor(
+            10000.0,
+            HitLocation,
+            HitNormal,
+            true);
+        
+        if(HitActor != None)
+        {
+            CircleNormal.X = 0.0;
+            CircleNormal.Y = 0.0;
+            CircleNormal.Z = 1.0;
+            Class'R_ACanvasUtilities'.Static.DrawCircle3D(
+                C, HitActor.Location, CircleNormal,
+                64.0, 32,
+                0.0, 1.0, 0.0);
+        }
+    }
 }
 
 exec function Fire(optional float F)
@@ -87,7 +202,29 @@ exec function Fire(optional float F)
     TryExecuteBuilderBrush();
     
     Super.Fire(F);
-} 
+    
+    //LogUnderMouseCursor();
+    if(GameCursor != None && GameCursor.IsEnabled())
+    {
+        GameCursor.BeginDragSelection();
+    }
+}
+
+function LogUnderMouseCursor()
+{
+    local Vector HitLocation, HitNormal;
+    local Actor HitActor;
+    
+    if(GameCursor != None && GameCursor.IsEnabled())
+    {
+        HitActor = GameCursor.TraceUnderCursor(
+            10000.0,
+            HitLocation,
+            HitNormal,
+            true);
+        Log("Mouse click hit actor" @ HitActor);
+    }
+}
 
 /**
 *   SpawnBuilderBrush
@@ -169,6 +306,42 @@ function TryExecuteBuilderBrush()
     }
 }
 
+function SpawnActorSelector()
+{
+    local Class<R_ActorSelector> LocalActorSelectorClass;
+    
+    // If there's already an ActorSelector, notify it that it's being released
+    if(ActorSelector != None)
+    {
+        ActorSelector.NotifyReleasedByOwningPlayer();
+        ActorSelector = None;
+    }
+    
+    LocalActorSelectorClass = ActorSelectorClass;
+    if(LocalActorSelectorClass == None)
+    {
+        LocalActorSelectorClass = Class'RMod_TowerDefense.R_ActorSelector';
+        UtilitiesClass.Static.RModLog(
+            "ActorSelectorClass not configured, defaulting to" @ LocalActorSelectorClass);
+    }
+    
+    if(LocalActorSelectorClass != None)
+    {
+        ActorSelector = New(None) LocalActorSelectorClass;
+    }
+    
+    if(ActorSelector == None)
+    {
+        UtilitiesClass.Static.RModWarn("Failed to create ActorSelector from class" @ LocalActorSelectorClass);
+    }
+    else
+    {
+        ActorSelector.InitializeActorSelector(Self);
+        UtilitiesClass.Static.RModLog(
+            "ActorSelector created and initialized from class" @ LocalActorSelectorClass);
+    }
+}
+
 //==============================================================================
 // Test exec functions
 exec function TestExecuteBuilderBrush()
@@ -178,15 +351,6 @@ exec function TestExecuteBuilderBrush()
     {
         TryExecuteBuilderBrush();
     }
-}
-
-exec function TestBuilderBrush()
-{
-    UtilitiesClass.Static.RModLog("Builder Brush called");
-    SpawnBuilderBrush();
-    //TestRTSStyleStuff();
-    //ShowGameCursor();
-    EnableGameCursor();
 }
 
 function TestRTSStyleStuff()
@@ -213,15 +377,6 @@ exec function TestBuildableIndex(int BuildableIndex)
         }
         
         BuilderBrush.SetBuildableActorClass(BuildableClass);
-        
-        if(BuildableClass == None)
-        {
-            DisableGameCursor();
-        }
-        else
-        {
-            EnableGameCursor();
-        }
     }
 }
 //==============================================================================
@@ -229,4 +384,5 @@ exec function TestBuildableIndex(int BuildableIndex)
 defaultproperties
 {
     BuilderBrushClass=Class'RMod_TowerDefense.R_BuilderBrush'
+    ActorSelectorClass=Class'RMod_TowerDefense.R_ActorSelector'
 }
