@@ -16,83 +16,21 @@ replication
 }
 
 /**
-*   PostBeginPlay (override)
-*   Overridden to perform server initialization
-*   This is only called server-side
-*/
-event PostBeginPlay()
-{
-    Super.PostBeginPlay();
-    
-    InitializePlayer();
-}
-
-/**
-*   PostNetBeginPlay (override)
-*   Overridden to perform client initialization
-*   This is only called client-side
-*/
-event PostNetBeginPlay()
-{
-    Super.PostNetBeginPlay();
-    
-    InitializePlayer();
-}
-
-/**
-*   InitializePlayer
+*   InitializePlayerAfterPossess (override)
 *   Called for both server and clients, but some initialization should
 *   only occur for the controlling instance
 */
-function InitializePlayer()
+function InitializePlayerAfterPossess(bool bIsLocallyControlled)
 {
+    Super.InitializePlayerAfterPossess(bIsLocallyControlled);
+    
     // For local player only
-    if(IsLocallyControlled())
+    if(bIsLocallyControlled)
     {
         SpawnBuilderBrush();
         SpawnActorSelector();
         EnableGameCursor();
     }
-}
-
-/**
-*   IsLocallyControlled
-*   Returns true if this actor is controlled locally, false
-*   otherwise
-*/
-function bool IsLocallyControlled()
-{
-    if(Level.NetMode == NM_Standalone)
-    {
-        // Standalone is always locally controlled
-        return true;
-    }
-    
-    if(Level.NetMode == NM_DedicatedServer)
-    {
-        // Dedicated servers never control
-        return false;
-    }
-    
-    if(Level.NetMode == NM_ListenServer)
-    {
-        // not sure about this one yet
-    }
-    
-    if(Level.NetMode == NM_Client)
-    {
-        // Autonomous proxy is controlled by clients but owned by server
-        if(Role == ROLE_AutonomousProxy)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-    
-    return false;
 }
 
 /**
@@ -335,6 +273,11 @@ function TestRTSStyleStuff()
     Log("GET CURRENT RES RETURNED:" @ WindowResResult);
 }
 
+exec function LogNetState()
+{
+    UtilitiesClass.Static.LogNetworkStateForActor(Self);
+}
+
 exec function TestBuildableIndex(int BuildableIndex)
 {
     local Class<R_ABuildableActor> BuildableClass;
@@ -359,4 +302,5 @@ defaultproperties
 {
     BuilderBrushClass=Class'RMod_TowerDefense.R_BuilderBrush'
     ActorSelectorClass=Class'RMod_TowerDefense.R_ActorSelector'
+    RootWidgetClass=Class'RMod_TowerDefense.R_UIPrimaryLayout'
 }
