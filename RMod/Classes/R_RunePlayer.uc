@@ -8,6 +8,7 @@ class R_RunePlayer extends RunePlayer config(RMod);
 
 // Libraries
 const PlayerLibrary = Class'RBase.R_APlayerLibrary';
+const UILibrary = Class'RGameUI.R_AUILibrary';
 
 //==============================================================================
 //  Statics
@@ -952,17 +953,16 @@ function InitializeGameUserInterface()
 
     if(RootWidgetClass != None)
     {
-        UtilitiesClass.Static.RModLog("Creating RootWidget from class" @ RootWidgetClass);
-        RootWidget = New(None) RootWidgetClass;
-        if(RootWidget != None)
-        {
-            RootWidget.InitializeWidget(Self);
-            UtilitiesClass.Static.RModLog("RootWidget created and initialized from class" @ RootWidgetClass);
-        }
-        else
+        UtilitiesClass.Static.RModLog("Creating RootWidget from class" @ RootWidgetClass @ "for" @ Self);
+        RootWidget = UILibrary.Static.CreateWidget(RootWidgetClass, Self);
+        if(RootWidget == None)
         {
             UtilitiesClass.Static.RModWarn("Failed to create RootWidget from class" @ RootWidgetClass);
             return;
+        }
+        else
+        {
+            UtilitiesClass.Static.RModLog("Initialized Game User Interface for" @ Self);
         }
     }
 }

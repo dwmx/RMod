@@ -5,3 +5,10 @@
 // for all Game UI Widgets in the Tower Defense game mode
 //==============================================================================
 class R_UIPrimaryLayout extends R_UIWidget;
+
+function BuildWidget()
+{
+    Super.BuildWidget();
+    
+    UILibrary.Static.CreateWidget(Class'RGameUI.R_UIWidget', OwningPlayer);
+}

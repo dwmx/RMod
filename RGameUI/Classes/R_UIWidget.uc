@@ -5,20 +5,42 @@
 class R_UIWidget extends Object;
 
 // Libraries
-const UILibrary = Class'R_AUILibrary';
+const CanvasLibrary = Class'RBase.R_ACanvasLibrary';
+const UILibrary = Class'RGameUI.R_AUILibrary';
 
 // The owning PlayerPawn
 var PlayerPawn OwningPlayer;
+
+// Anchor testing
 
 /**
 *   InitializeWidget
 *   Called immediately after the owning player has created this widget
 *   OwningPlayer is valid by the time this function is called
 */
-function InitializeWidget(PlayerPawn NewOwningPlayer)
+final function bool InitializeWidget(PlayerPawn NewOwningPlayer)
 {
+    if(NewOwningPlayer == None)
+    {
+        Warn(Class @ "InitializeWidget failed, NewOwningPlayer = None");
+        return false;
+    }
+    
     OwningPlayer = NewOwningPlayer;
-    Log("Widget initialized", UILibrary.Static.LogCategory());
+    Log("Widget initialized for class" @ Class, UILibrary.Static.LogCategory());
+    Log("Building widget" @ Self, UILibrary.Static.LogCategory());
+    BuildWidget();
+    
+    return true;
+}
+
+/**
+*   BuildWidget
+*   This function should construct your widget
+*/
+function BuildWidget()
+{
+    Log("Building widget" @ Class, UILibrary.Static.LogCategory());
 }
 
 /**
@@ -27,26 +49,36 @@ function InitializeWidget(PlayerPawn NewOwningPlayer)
 */
 function DrawWidget(Canvas C)
 {
-    C.Font = C.SmallFont;
-    DrawTestString(C, -300.0);
+    local Vector BoxExtent1, BoxExtent2;
     
-    C.Font = C.MedFont;
-    DrawTestString(C, -200.0);
+    BoxExtent1.X = C.ClipX * 0.25;
+    BoxExtent2.X = C.ClipX * 0.75;
     
-    C.Font = C.BigFont;
-    DrawTestString(C, -100.0);
+    BoxExtent1.Y = C.ClipY * 0.25;
+    BoxExtent2.Y = C.ClipY * 0.75;
     
-    C.Font = C.LargeFont;
-    DrawTestString(C, 0.0);
+    CanvasLibrary.Static.DrawBoxSolid(C, BoxExtent1, BoxExtent2, 1.0, 1.0, 0.0, 1.0);
     
-    C.Font = C.RuneMedFont;
-    DrawTestString(C, 100.0);
-    
-    C.Font = C.CredsFont;
-    DrawTestString(C, 200.0);
-    
-    C.Font = C.ButtonFont;
-    DrawTestString(C, 300.0);
+    //C.Font = C.SmallFont;
+    //DrawTestString(C, -300.0);
+    //
+    //C.Font = C.MedFont;
+    //DrawTestString(C, -200.0);
+    //
+    //C.Font = C.BigFont;
+    //DrawTestString(C, -100.0);
+    //
+    //C.Font = C.LargeFont;
+    //DrawTestString(C, 0.0);
+    //
+    //C.Font = C.RuneMedFont;
+    //DrawTestString(C, 100.0);
+    //
+    //C.Font = C.CredsFont;
+    //DrawTestString(C, 200.0);
+    //
+    //C.Font = C.ButtonFont;
+    //DrawTestString(C, 300.0);
     
 }
 
