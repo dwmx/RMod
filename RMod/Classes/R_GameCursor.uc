@@ -160,6 +160,17 @@ function EndDragSelection()
     bIsDragSelecting = false;
 }
 
+function bool IsDragSelecting()
+{
+    return bIsDragSelecting;
+}
+
+function GetDragSelectionExtents(out Vector Extent1, out Vector Extent2)
+{
+    Extent1 = DragSelectionStart;
+    Extent2 = DragSelectionEnd;
+}
+
 /**
 *   DrawGameCursor
 *   Draws this game cursor

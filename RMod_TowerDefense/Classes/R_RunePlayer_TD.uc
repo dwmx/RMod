@@ -166,34 +166,9 @@ event PostRender(Canvas C)
         BuilderBrush.BuilderBrushPostRender(C);
     }
     
-    // Draw a circle around whatever cursor is over
-    DrawSelection(C);
-}
-
-function DrawSelection(Canvas C)
-{
-    local Vector HitLocation, HitNormal;
-    local Actor HitActor;
-    local Vector CircleNormal;
-    
-    if(GameCursor != None && GameCursor.IsEnabled())
+    if(ActorSelector != None)
     {
-        HitActor = GameCursor.TraceUnderCursor(
-            10000.0,
-            HitLocation,
-            HitNormal,
-            true);
-        
-        if(HitActor != None)
-        {
-            CircleNormal.X = 0.0;
-            CircleNormal.Y = 0.0;
-            CircleNormal.Z = 1.0;
-            Class'R_ACanvasUtilities'.Static.DrawCircle3D(
-                C, HitActor.Location, CircleNormal,
-                64.0, 32,
-                0.0, 1.0, 0.0);
-        }
+        ActorSelector.ActorSelectorPostRender(C);
     }
 }
 
@@ -203,7 +178,6 @@ exec function Fire(optional float F)
     
     Super.Fire(F);
     
-    //LogUnderMouseCursor();
     if(GameCursor != None && GameCursor.IsEnabled())
     {
         GameCursor.BeginDragSelection();
