@@ -38,3 +38,37 @@ static function bool GetScreenResolutionFromPlayerPawnInPixels(
     
     return true;
 }
+
+/**
+*   IsPlayerLocallyControlled
+*   Returns true if InPlayerPawn is locally controlled in the context of
+*   the game instance this was called from
+*
+*   Note:
+*   - This function should only be called after initial Possess events have occurred
+*   - Some scenarios will return false negatives otheriwise (i.e. Listen server as host)
+*/
+static function bool IsPlayerLocallyControlled(PlayerPawn InPlayerPawn)
+{
+    local int InNetMode;
+    
+    if(InPlayerPawn == None)
+    {
+        return false;
+    }
+    
+    InNetMode = InPlayerPawn.Level.NetMode;
+    
+    switch(InNetMode)
+    {
+        case 0: // NM_Standalone
+        case 2: // NM_ListenServer
+            return InPlayerPawn.Player != None && Viewport(InPlayerPawn.Player) != None;
+        
+        case 1: // NM_DedicatedServer
+            return false;
+        
+        case 3: // NM_Client
+            return InPlayerPawn.Role == ROLE_AutonomousProxy;
+    }
+}
