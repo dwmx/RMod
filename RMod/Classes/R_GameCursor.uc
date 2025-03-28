@@ -5,8 +5,10 @@
 //==============================================================================
 class R_GameCursor extends Object;
 
-// Static utilities
-var Class<R_AUtilities> UtilitiesClass;
+// Libraries
+const MathLibrary = Class'RBase.R_AMathLibrary';
+const CanvasLibrary = Class'RBase.R_ACanvasLibrary';
+const PlayerLibrary = Class'RBase.R_APlayerLibrary';
 
 var R_RunePlayer CursorOwner;
 
@@ -109,12 +111,12 @@ function Actor TraceUnderCursor(
         return None;
     }
     
-    UtilitiesClass.Static.GetScreenResolutionFromPlayerPawnInPixels(CursorOwner, ScreenWidth, ScreenHeight);
+    PlayerLibrary.Static.GetScreenResolutionFromPlayerPawnInPixels(CursorOwner, ScreenWidth, ScreenHeight);
     
     // Get screen space -> world space ray
     ScreenPosition.X = CursorX;
     ScreenPosition.Y = CursorY;
-    WorldRay = UtilitiesClass.Static.GetWorldRayFromScreen(
+    WorldRay = MathLibrary.Static.GetWorldRayFromScreen(
         ScreenPosition,
         ScreenWidth, ScreenHeight,
         CursorOwner.FOVAngle,
@@ -200,7 +202,7 @@ function DrawGameCursor(Canvas C)
     // If drag selecting, draw selection box
     if(bIsDragSelecting)
     {
-        Class'R_ACanvasUtilities'.Static.DrawBoxOutline(
+        CanvasLibrary.Static.DrawBoxOutline(
             C, DragSelectionStart, DragSelectionEnd, 2.0, 1.0, 1.0, 1.0, 0.5);
     }
     
@@ -215,7 +217,6 @@ function DrawGameCursor(Canvas C)
 
 defaultproperties
 {
-    UtilitiesClass=Class'R_AUtilities'
     CursorTexture=Texture'UWindow.Icons.MouseCursor'
     bConsumeMouseInput=True
     bRecenterGameCursor=True

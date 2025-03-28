@@ -4,7 +4,10 @@
 //==============================================================================
 class R_ActorSelector extends Object;
 
-var Class<R_AUtilities> UtilitiesClass;
+// Libraries
+const MathLibrary = Class'RBase.R_AMathLibrary';
+const CanvasLibrary = Class'RBase.R_ACanvasLibrary';
+const TowerDefenseLibrary = Class'RMod_TowerDefense.R_ATowerDefenseLibrary';
 
 var R_RunePlayer OwningPlayer;
 var Actor SelectedActor;
@@ -17,12 +20,10 @@ function InitializeActorSelector(R_RunePlayer NewOwningPlayer)
 {
     if(NewOwningPlayer == None)
     {
-        UtilitiesClass.Static.RModWarn(
-            "R_ActorSelector failed to initialize, OwningPlayer is None");
+        Warn(Class @ "failed to initialize, NewOwningPlayer == None");
     }
     OwningPlayer = NewOwningPlayer;
-    UtilitiesClass.Static.RModLog(
-        "R_ActorSelector initialized with owner" @ OwningPlayer);
+    Log(Class @ "initialized with OwningPlayer ==" @ OwningPlayer, TowerDefenseLibrary.Static.LogCategory());
 }
 
 /**
@@ -32,17 +33,15 @@ function InitializeActorSelector(R_RunePlayer NewOwningPlayer)
 */
 function NotifyReleasedByOwningPlayer()
 {
-    if(OwningPlayer != None)
+    if(OwningPlayer == None)
     {
-        UtilitiesClass.Static.RModWarn(
-            "R_ActorSelector received NotifyReleasedByOwningPlayer call when OwningPlayer was None"
-            @ "This indicates improper initialization or multiple calls to release");
+        Warn(Class @ "received NotifyReleasedByOwningPlayer call when OwningPlayer ==" @ None);
         return;
     }
     
     OwningPlayer = None;
     
-    UtilitiesClass.Static.Log("R_ActorSelector released by owning player");
+    Log(Class @ "released by owning player", TowerDefenseLibrary.Static.LogCategory());
 }
 
 /**
@@ -58,11 +57,11 @@ function ActorSelectorPostRender(Canvas C)
     if(OwningPlayer != None)
     {
         DrawScreenSpaceBoundingBoxForActor(C, OwningPlayer);
-    }
-    
-    foreach OwningPlayer.AllActors(Class'R_Mob', MobIterator)
-    {
-        DrawScreenSpaceBoundingBoxForActor(C, MobIterator);
+        
+        foreach OwningPlayer.AllActors(Class'R_Mob', MobIterator)
+        {
+            DrawScreenSpaceBoundingBoxForActor(C, MobIterator);
+        }
     }
 }
 
@@ -76,21 +75,13 @@ function DrawScreenSpaceBoundingBoxForActor(Canvas C, Actor InActor)
 {
     local Vector Extent1, Extent2;
     
-    class'R_ACanvasUtilities'.Static.GetScreenSpaceBoundingBoxForActor(
+    CanvasLibrary.Static.GetScreenSpaceBoundingBoxForActor(
         C, InActor, OwningPlayer.SavedCameraRot,
         Extent1, Extent2);
-    
-    //Class'R_ACanvasUtilities'.Static.DrawBoxOutline(
-    //    C, Extent1, Extent2, 4.0,
-    //    1.0, 0.0, 0.0, 1.0);
     
     DrawAllSelectedActors(C);
 }
 
-// NOTE:
-// This is slow as fuck
-// Do your best to minimize the number of actor checks as much as possible,
-// and definitely do not call this every frame
 function DrawAllSelectedActors(Canvas C)
 {
     local Vector SelectionExtent1, SelectionExtent2;
@@ -114,7 +105,7 @@ function DrawAllSelectedActors(Canvas C)
             return;
         }
         
-        //Class'R_ACanvasUtilities'.Static.DrawBoxOutline(
+        //Class'R_ACanvasLibrary'.Static.DrawBoxOutline(
         //    C, SelectionExtent1, SelectionExtent2, 4.0,
         //    1.0, 0.0, 0.0, 1.0);
         
@@ -123,17 +114,20 @@ function DrawAllSelectedActors(Canvas C)
         i = 0;
         foreach OwningPlayer.AllActors(Class'R_Mob', MobIterator)
         {
-            Class'R_ACanvasUtilities'.Static.GetScreenSpaceBoundingBoxForActor(
+            CanvasLibrary.Static.GetScreenSpaceBoundingBoxForActor(
                 C, MobIterator, OwningPlayer.SavedCameraRot,
                 ActorExtent1, ActorExtent2);
             
-            //Class'R_ACanvasUtilities'.Static.DrawBoxOutline(
+            //Class'R_ACanvasLibrary'.Static.DrawBoxOutline(
             //    C, ActorExtent1, ActorExtent2, 4.0,
             //    1.0, 0.0, 0.0, 1.0);
             
-            if(CheckBoundingBoxCollision(SelectionExtent1, SelectionExtent2, ActorExtent1, ActorExtent2))
+            //if(CheckBoundingBoxCollision(SelectionExtent1, SelectionExtent2, ActorExtent1, ActorExtent2))
+             if(MathLibrary.Static.CheckBoundingBoxCollisionMidPointBased(
+                SelectionExtent1, SelectionExtent2,
+                ActorExtent1, ActorExtent2))
             {
-                Class'R_ACanvasUtilities'.Static.DrawCircle3D(
+                CanvasLibrary.Static.DrawCircle3D(
                     C,
                     MobIterator.Location, WorldUp,
                     32.0, 32,
@@ -145,80 +139,4 @@ function DrawAllSelectedActors(Canvas C)
         
         //Log(i @ "actors in selection");
     }
-}
-
-// Returns true if one box is at least half way inside the other
-function bool CheckBoundingBoxCollision(
-    Vector ExtentA1, Vector ExtentA2,
-    Vector ExtentB1, Vector ExtentB2)
-{
-    local Vector MinA, MaxA, MidA;
-    local Vector MinB, MaxB, MidB;
-    
-    MinA.X = FMin(ExtentA1.X, ExtentA2.X);
-    MinA.Y = FMin(ExtentA1.Y, ExtentA2.Y);
-    MaxA.X = FMax(ExtentA1.X, ExtentA2.X);
-    MaxA.Y = FMax(ExtentA1.Y, ExtentA2.Y);
-    MidA.X = (MinA.X + MaxA.X) / 2.0;
-    MidA.Y = (MinA.Y + MaxA.Y) / 2.0;
-    
-    MinB.X = FMin(ExtentB1.X, ExtentB2.X);
-    MinB.Y = FMin(ExtentB1.Y, ExtentB2.Y);
-    MaxB.X = FMax(ExtentB1.X, ExtentB2.X);
-    MaxB.Y = FMax(ExtentB1.Y, ExtentB2.Y);
-    MidB.X = (MinB.X + MaxB.X) / 2.0;
-    MidB.Y = (MinB.Y + MaxB.Y) / 2.0;
-    
-    if(MidA.X >= MinB.X && MidA.X <= MaxB.X)
-    {
-        if(MidA.Y >= MinB.Y && MidA.Y <= MaxB.Y)
-        {
-            return true;
-        }
-    }
-    
-    if(MidB.X >= MinA.X && MidB.X <= MaxA.X)
-    {
-        if(MidB.Y >= MinA.Y && MidB.Y <= MaxA.Y)
-        {
-            return true;
-        }
-    }
-    
-    return false;
-}
-
-//function bool CheckBoundingBoxCollision(
-//    Vector ExtentA1, Vector ExtentA2,
-//    Vector ExtentB1, Vector ExtentB2)
-//{
-//    local float widthA, heightA, widthB, heightB;
-//    local float overlapX, overlapY;
-//    
-//    // Calculate the width and height of both boxes
-//    widthA = ExtentA2.X - ExtentA1.X;
-//    heightA = ExtentA2.Y - ExtentA1.Y;
-//    widthB = ExtentB2.X - ExtentB1.X;
-//    heightB = ExtentB2.Y - ExtentB1.Y;
-//
-//    // Check for overlap along the X axis
-//    overlapX = FMin(ExtentA2.X, ExtentB2.X) - FMax(ExtentA1.X, ExtentB1.X);
-//    if (overlapX >= widthA / 2 || overlapX >= widthB / 2)
-//    {
-//        // Check for overlap along the Y axis
-//        overlapY = FMin(ExtentA2.Y, ExtentB2.Y) - FMax(ExtentA1.Y, ExtentB1.Y);
-//        if (overlapY >= heightA / 2 || overlapY >= heightB / 2)
-//        {
-//            return true; // At least halfway inside the other box
-//        }
-//    }
-//
-//    return false; // No collision or not halfway inside
-//}
-
-
-
-defaultproperties
-{
-    UtilitiesClass=Class'R_AUtilities'
 }
