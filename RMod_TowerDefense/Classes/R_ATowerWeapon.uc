@@ -50,6 +50,11 @@ function UpdateWeaponTarget()
     local float BestDistance;
     local Actor BestTarget;
     
+    if(!IsWeaponTargetUpdateRequired())
+    {
+        return;
+    }
+    
     if(OwningTower != None)
     {
         // Find the Mob actor nearest to this tower
@@ -80,6 +85,49 @@ function UpdateWeaponTarget()
         
         SetWeaponTarget(BestTarget);
     }
+}
+
+/**
+*   IsWeaponTargetUpdateRequired
+*   Returns true or false depending on whether this weapon should find a new target
+*/
+function bool IsWeaponTargetUpdateRequired()
+{
+    local Vector DeltaVector;
+    local float Distance;
+    local R_Mob MobWeaponTarget;
+    
+    if(OwningTower == None)
+    {
+        return false;
+    }
+    
+    if(WeaponTarget == None)
+    {
+        return true;
+    }
+    else // Make sure current target is still valid
+    {
+        // If current target became untargetable (died maybe) then update is required
+        MobWeaponTarget = R_Mob(WeaponTarget);
+        if(MobWeaponTarget != None)
+        {
+            if(!MobWeaponTarget.IsMobTargetable())
+            {
+                return true;
+            }
+        }
+        
+        // If the weapon target is no longer in range, find a new target
+        DeltaVector = WeaponTarget.Location - OwningTower.Location;
+        if(VSize(DeltaVector) > AttackRange)
+        {
+            return true;
+        }
+    }
+    
+    // Target is still valid
+    return false;
 }
 
 /**
