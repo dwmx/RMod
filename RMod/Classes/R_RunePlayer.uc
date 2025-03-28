@@ -6,6 +6,9 @@
 //==============================================================================
 class R_RunePlayer extends RunePlayer config(RMod);
 
+// Libraries
+const PlayerLibrary = Class'RBase.R_APlayerLibrary';
+
 //==============================================================================
 //  Statics
 var Class<R_AUtilities> UtilitiesClass;
@@ -42,10 +45,24 @@ var FSkelGroupSkinArray PainSkinArrays[16];
 var FSkelGroupSkinArray GoreCapArrays[16];
 //==============================================================================
 
+//==============================================================================
+//  RMod Game User Interface
+//
+// RMod Root UI Widget
+// When a game mode is using a UI from the RModUI package, the root widget
+// will be stored here
+//
+// Setting RootWidgetClass in defaultproperties will cause the widget to be
+// created
+//
+var Class<R_UIWidget> RootWidgetClass;
+var R_UIWidget RootWidget;
+
 // RMod Game Cursor, which can be enabled and disabled by calling
 // EnableGameCursor and DisableGameCursor
 var Class<R_GameCursor> GameCursorClass;
 var R_GameCursor GameCursor;
+//==============================================================================
 
 //==============================================================================
 //  Networked movement vars adopted from 469b
@@ -864,13 +881,89 @@ event PostBeginPlay()
     }
 }
 
+/**
+*   PostNetBeginPlay (override)
+*   Only runs on clients, send validation params to server
+*/
 event PostNetBeginPlay()
 {
-    Super.PostNetBeginPlay();
-
     if(Role < ROLE_Authority)
     {
         ValidatePlayer();
+    }
+}
+
+/**
+*   Possess (override)
+*   Overridden to perform initialization that should occur after possession
+*
+*   This is why Possess is used as the entry point for this initialization:
+*   -   For newly spawned PlayerPawns (i.e. summon command), player-specific
+*       initialization will never occur, regardless of netmode
+*
+*   -   PlayerPawn.Player variable is required to distinguish between
+*       controlled players and remote players on servers (listen server)
+*
+*   -   PlayerPawn.Player variable does not get set by engine until this event
+*/
+event Possess()
+{
+    local bool bIsLocallyControlled;
+    
+    Super.Possess();
+
+    // Initialize player for clients
+    bIsLocallyControlled = PlayerLibrary.Static.IsPlayerLocallyControlled(Self);
+    UtilitiesClass.Static.RModLog(
+        Class @ "performing Possess initialization"
+        @ "{IsLocallyControlled:" @ bIsLocallyControlled $ "}");
+    InitializePlayerAfterPossess(bIsLocallyControlled);
+}
+
+/**
+*   InitializePlayerAfterPossess
+*   Perform any initialization that must occur after player possession
+*   This is where player-only initialization can occur, like client-side actors
+*/
+function InitializePlayerAfterPossess(bool bIsLocallyControlled)
+{
+    if(bIsLocallyControlled)
+    {
+        InitializeGameUserInterface();
+    }
+}
+
+/**
+*   InitializeGameUserInterface
+*   If RooWidgetClass is configured, then this function will create, initialize and save reference
+*   to that Widget in the RootWidget class
+*   R_RunePlayer.RootWidget is the entry point to the entire Game UI
+*
+*   Note: It is caller's responsibility to ensure that this only gets called on the appropriate
+*   instances of the game (i.e. you should probably always use IsLocallyControlled)
+*/
+function InitializeGameUserInterface()
+{
+    if(RootWidget != None)
+    {
+        UtilitiesClass.Static.RModWarn("Attempted to reinitialize RootWidget via InitializeGameUserInterface");
+        return;
+    }
+
+    if(RootWidgetClass != None)
+    {
+        UtilitiesClass.Static.RModLog("Creating RootWidget from class" @ RootWidgetClass);
+        RootWidget = New(None) RootWidgetClass;
+        if(RootWidget != None)
+        {
+            RootWidget.InitializeWidget(Self);
+            UtilitiesClass.Static.RModLog("RootWidget created and initialized from class" @ RootWidgetClass);
+        }
+        else
+        {
+            UtilitiesClass.Static.RModWarn("Failed to create RootWidget from class" @ RootWidgetClass);
+            return;
+        }
     }
 }
 
@@ -922,6 +1015,12 @@ event PostRender(Canvas C)
     if(GameCursor != None)
     {
         GameCursor.DrawGameCursor(C);
+    }
+    
+    // Draw Game UI
+    if(RootWidget != None)
+    {
+        RootWidget.DrawWidget(C);
     }
 }
 

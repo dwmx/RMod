@@ -4,6 +4,9 @@
 //==============================================================================
 class R_GameInfo extends RuneI.RuneMultiPlayer config(RMod);
 
+// Libraries
+const PlayerLibrary = Class'RBase.R_APlayerLibrary';
+
 var config Class<RunePlayer> RunePlayerClass;
 var Class<RunePlayer> SpectatorMarkerClass;
 var config Class<PlayerReplicationInfo> PlayerReplicationInfoClass;
@@ -662,17 +665,27 @@ event PlayerPawn Login(
 	return P;
 }
 
+/**
+*   PostLogin (override)
+*   Post-login player initialization
+*   - Applys persistent scores if player is reconnecting
+*   - Puts incoming clients into validation state (awaits call to Validate)
+*/
 event PostLogin(PlayerPawn NewPlayer)
 {
     local String IPString;
 
 	Super.PostLogin(NewPlayer);
 
-	// All players initially enter into player validation state
-	if(R_RunePlayer(NewPlayer) != None)
-	{
-        R_RunePlayer(NewPlayer).GotoState('PlayerValidation');
-	}
+    // Connecting clients enter validation state,
+    // But hosts (standalone or listen server) go straight in
+    if(R_RunePlayer(NewPlayer) != None)
+    {
+        if(!PlayerLibrary.Static.IsPlayerLocallyControlled(NewPlayer))
+        {
+            R_RunePlayer(NewPlayer).GotoState('PlayerValidation');
+        }
+    }
 
     // Save player IP to PRI
     if(NewPlayer != None && R_PlayerReplicationInfo(NewPlayer.PlayerReplicationInfo) != None)
