@@ -10,13 +10,43 @@
 //==============================================================================
 class R_ACanvasLibrary extends R_ALibrary abstract;
 
+const WhiteTexture = Texture'UWindow.WhiteTexture';
+
 //==============================================================================
 // Screen space functions
 //==============================================================================
 
 /**
+*   ConstrainExtentsInPlace
+*   Given two extents in any order, this function will clamp them to the
+*   current Canvas region and output as Min and Max
+*/
+static function ConstrainExtentsInPlace(
+    Canvas C,
+    out Vector MinimumExtent, out Vector MaximumExtent)
+{
+    local Vector TempVector;
+    
+    MinimumExtent.X = FClamp(MinimumExtent.X, 0.0, C.CLipX);
+    MinimumExtent.Y = FClamp(MinimumExtent.Y, 0.0, C.ClipY);
+    MinimumExtent.Z = 0.0;
+    
+    MaximumExtent.X = FClamp(MaximumExtent.X, 0.0, C.CLipX);
+    MaximumExtent.Y = FClamp(MaximumExtent.Y, 0.0, C.ClipY);
+    MaximumExtent.Z = 0.0;
+    
+    TempVector.X = FMin(MinimumExtent.X, MaximumExtent.X);
+    TempVector.Y = FMin(MinimumExtent.Y, MaximumExtent.Y);
+    TempVector.Z = 0.0;
+    
+    MaximumExtent.X = FMax(MinimumExtent.X, MaximumExtent.X);
+    MaximumExtent.Y = FMax(MinimumExtent.Y, MaximumExtent.Y);
+    MinimumExtent = TempVector;
+}
+
+/**
 *   DrawBoxOutline
-*   Draws a a box with the specified thickness and color on the screen
+*   Draws a box with the specified thickness and color on the screen
 *   Extents mark the opposite corners of the box in pixels, in range [0,C.Clip] (Z ignored)
 *   RGBA colors should be in range [0,1]
 */
@@ -26,18 +56,9 @@ static function DrawBoxOutline(
     float Thickness,
     float R, float G, float B, float A)
 {
-    local Texture WhiteTexture;
     local float MinX, MinY, MaxX, MaxY;
     
-    WhiteTexture = Texture'UWindow.WhiteTexture';
-    
-    Extent1.X = FClamp(Extent1.X, 0.0, C.CLipX);
-    Extent1.Y = FClamp(Extent1.Y, 0.0, C.ClipY);
-    Extent1.Z = 0.0;
-    
-    Extent2.X = FClamp(Extent2.X, 0.0, C.CLipX);
-    Extent2.Y = FClamp(Extent2.Y, 0.0, C.ClipY);
-    Extent2.Z = 0.0;
+    ConstrainExtentsInPlace(C, Extent1, Extent2);
     
     MinX = FMin(Extent1.X, Extent2.X);
     MaxX = FMax(Extent1.X, Extent2.X);
@@ -47,6 +68,7 @@ static function DrawBoxOutline(
     R = FClamp(R, 0.0, 1.0);
     G = FClamp(G, 0.0, 1.0);
     B = FClamp(B, 0.0, 1.0);
+    A = FClamp(A, 0.0, 1.0);
     
     C.Style = 3; // STY_Translucent
     C.AlphaScale = A;
@@ -67,6 +89,33 @@ static function DrawBoxOutline(
     // Left edge
     C.SetPos(MinX, MinY);
     C.DrawRect(WhiteTexture, Thickness, MaxY - MinY);
+}
+
+/**
+*   DrawBoxSolid
+*   Draws a box with the specified extents and color on the screen
+*   Extents mark the opposite corners of the box in pixels, in range [0,C.Clip] (Z ignored)
+*   RGBA colors should be in range [0,1]
+*/
+static function DrawBoxSolid(
+    Canvas C,
+    Vector Extent1, Vector Extent2,
+    float R, float G, float B, float A)
+{
+    ConstrainExtentsInPlace(C, Extent1, Extent2);
+    
+    R = FClamp(R, 0.0, 1.0);
+    G = FClamp(G, 0.0, 1.0);
+    B = FClamp(B, 0.0, 1.0);
+    A = FClamp(A, 0.0, 1.0);
+    
+    C.Style = 3; // STY_Translucent
+    C.AlphaScale = A;
+    C.SetColor(R * 255.0, G * 255.0, B * 255.0);
+    
+    // Solid rect
+    C.SetPos(Extent1.X, Extent1.Y);
+    C.DrawRect(WhiteTexture, Extent2.X - Extent1.X, Extent2.Y - Extent1.Y);
 }
 
 /**
