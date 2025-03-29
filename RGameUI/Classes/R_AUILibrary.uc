@@ -9,6 +9,19 @@ class R_AUILibrary extends R_ALibrary abstract;
 static function Name LogCategory() { return 'RGameUI'; }
 
 /**
+*   CreateWidget
+*   The main function for creating Game UI Widgets
+*
+*   Users should not instantiate widgets directly via New, they should instead
+*   use this function
+*
+*   The initialization steps are important for widgets to work properly
+*
+*   Widget creation flow looks like this:
+*   - R_AUILibrary.CreateWidget
+*   - Call to New()
+*   - R_UIWidget.InitializeWidget
+*   - R_UIWidget.BuildWidget <--- This is the function your widgets should override
 */
 static function R_UIWidget CreateWidget(
     Class<R_UIWidget> WidgetClass,
