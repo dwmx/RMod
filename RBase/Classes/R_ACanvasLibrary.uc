@@ -109,7 +109,7 @@ static function DrawBoxSolid(
     B = FClamp(B, 0.0, 1.0);
     A = FClamp(A, 0.0, 1.0);
     
-    C.Style = 3; // STY_Translucent
+    C.Style = 1; // STY_Translucent
     C.AlphaScale = A;
     C.SetColor(R * 255.0, G * 255.0, B * 255.0);
     
@@ -191,4 +191,38 @@ static function DrawCircle3D(
         
         C.DrawLine3D(WorldOrigin + SegmentStart, WorldOrigin + SegmentEnd, R, G, B);
     }
+}
+
+/**
+*	GetScreenSpaceLocationAboveActor
+*	Given some Actor, this function will determine a screen-space location
+*	above that actor based on its world position and collision height
+*
+*	ZOffset is additional offset on the Z axis above the actor
+*/
+static function GetScreenSpaceLocationAboveActor(
+	Canvas C,
+	Actor InActor,
+	out Vector OutScreenLocation,
+	optional float ZOffset)
+{
+	local Vector WorldUp;
+	local Vector WorldSpaceLocation;
+	local int ScreenX, ScreenY;
+
+	if(InActor == None)
+	{
+		OutScreenLocation.X = 0.0;
+		OutScreenLocation.Y = 0.0;
+		OutScreenLocation.Z = 0.0;
+		return;
+	}
+
+	WorldUp.Z = 1.0;
+	WorldSpaceLocation = InActor.Location + WorldUp * (InActor.CollisionHeight + ZOffset);
+
+	C.TransformPoint(WorldSpaceLocation, ScreenX, ScreenY);
+	OutScreenLocation.X = float(ScreenX);
+	OutScreenLocation.Y = float(ScreenY);
+	OutScreenLocation.Z = 0.0;
 }
