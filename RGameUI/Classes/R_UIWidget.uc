@@ -16,7 +16,7 @@ var Vector AnchorMin;
 var Vector AnchorMax;
 
 // Test child widget
-var R_UIWidget ChildWidget;
+var private R_UIWidget ChildWidget;
 
 var float ColorR, ColorG, ColorB, ColorA;
 
@@ -48,6 +48,15 @@ final function bool InitializeWidget(PlayerPawn NewOwningPlayer)
 function BuildWidget()
 {
     Log("Building widget" @ Class, UILibrary.Static.LogCategory());
+}
+
+/**
+*   AddChild
+*   Add child node
+*/
+function AddChild(R_UIWidget NewChildWidget)
+{
+    ChildWidget = NewChildWidget;
 }
 
 /**
