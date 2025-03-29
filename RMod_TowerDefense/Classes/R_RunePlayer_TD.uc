@@ -1,5 +1,11 @@
 class R_RunePlayer_TD extends R_RunePlayer;
 
+const LogCategory = 'RModPlayer';
+
+// The class used for drawing the in-world HUD elements
+var Class<R_InWorldHUD> InWorldHUDClass;
+var R_InWorldHUD InWorldHUD;
+
 // The class used to build things in the world
 var Class<R_BuilderBrush> BuilderBrushClass;
 var R_BuilderBrush BuilderBrush;
@@ -27,6 +33,7 @@ function InitializePlayerAfterPossess(bool bIsLocallyControlled)
     // For local player only
     if(bIsLocallyControlled)
     {
+		SpawnInWorldHUD();
         SpawnBuilderBrush();
         SpawnActorSelector();
         EnableGameCursor();
@@ -99,6 +106,12 @@ function TickBuilderBrushDesiredLocation(float DeltaSeconds)
 event PostRender(Canvas C)
 {
     Super.PostRender(C);
+
+	if(InWorldHUD != None)
+	{
+		InWorldHUD.InWorldHUDPostRender(C);
+	}
+
     if(BuilderBrush != None)
     {
         BuilderBrush.BuilderBrushPostRender(C);
@@ -136,6 +149,37 @@ function LogUnderMouseCursor()
             true);
         Log("Mouse click hit actor" @ HitActor);
     }
+}
+
+function SpawnInWorldHUD()
+{
+	local Class<R_InWorldHUD> LocalInWorldHUDClass;
+
+	LocalInWorldHUDClass = InWorldHUDClass;
+	if(LocalInWorldHUDClass == None)
+	{
+		LocalInWorldHUDClass = Class'RMod_TowerDefense.R_InWorldHUD';
+	}
+
+	if(LocalInWorldHUDClass == None)
+	{
+		Warn("Failed to spawn InWorldHUD, Class=" $ InWorldHUDClass);
+		return;
+	}
+
+	Log("Spawning InWorldHUD from class" @ LocalInWorldHUDClass, LogCategory);
+	InWorldHUD = New(None) LocalInWorldHUDClass;
+
+	if(InWorldHUD != None)
+	{
+		InWorldHUD.InitializeInWorldHUD(Self);
+		Log("InWorldHUD created and initialized from class" @ LocalInWorldHUDClass, LogCategory);
+	}
+	else
+	{
+		Warn("Failed to spawn InWorldHUD from class" @ LocalInWorldHUDClass);
+		return;
+	}
 }
 
 /**
@@ -300,6 +344,7 @@ exec function TestBuildableIndex(int BuildableIndex)
 
 defaultproperties
 {
+	InWorldHUDClass=Class'RMod_TowerDefense.R_InWorldHUD'
     BuilderBrushClass=Class'RMod_TowerDefense.R_BuilderBrush'
     ActorSelectorClass=Class'RMod_TowerDefense.R_ActorSelector'
     RootWidgetClass=Class'RMod_TowerDefense.R_UIPrimaryLayout'

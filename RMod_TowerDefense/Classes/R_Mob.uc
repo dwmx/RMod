@@ -6,6 +6,9 @@
 //==============================================================================
 class R_Mob extends Pawn;
 
+// Libraries
+const CanvasLibrary = Class'RBase.R_ACanvasLibrary';
+
 var Class<R_AMobAppearance> MobAppearanceClass;
 
 // Animations
@@ -24,12 +27,18 @@ var float MobSpeedScale;
 // Whether or not towers should target this mob
 var bool bTargetable;
 
+// Clients need a replicated variable to know whether or not this mob is dead
+// for in world HUD drawing purposes
+// Health is not reliable and is frequently dropped, so this is used
+var bool bIsDead;
+
 replication
 {
     // Server --> Client Variables
     reliable if(Role == ROLE_Authority)
         MobAppearanceClass,
-        MobSpeedScale;
+        MobSpeedScale,
+		bIsDead;
 }
 
 /**
@@ -87,6 +96,7 @@ simulated event PostBeginPlay()
     
     // Always targetable at initialization
     bTargetable = true;
+	bIsDead = false;
 }
 
 /**
@@ -163,7 +173,19 @@ function Died(Pawn Killer, Name DamageType, Vector HitLocation)
     i = Rand(NumDyingAnimations);
     PlayAnim(A_Dying[i], MobSpeedScale * 1.0, 0.1);
     
+	bIsDead = true;
     GotoState('Dying');
+}
+
+/**
+*	IsMobDead
+*	Returns whether or not this mob is considered dead
+*	Note, this needs to work on client and server, so Health is used
+*	rather than state check
+*/
+simulated function bool IsMobDead()
+{
+	return bIsDead;
 }
 
 /**
@@ -172,7 +194,65 @@ function Died(Pawn Killer, Name DamageType, Vector HitLocation)
 */
 function bool IsMobTargetable()
 {
-    return bTargetable;
+	return bTargetable;
+}
+
+/**
+*	DrawInWorldHUD
+*	Draw the in-world HUD for this Mob actor, like monster name, health bar,
+*	or animations that can be played via Canvas
+*	This is called from local player's InWorldHUD
+*/
+simulated function DrawInWorldHUD(Canvas C)
+{
+	DrawHealthBar(C);
+}
+
+/**
+*	DrawHealthBar
+*	Draws this Mob's health bar above its head
+*
+*	Health bar scales with the current canvas clipping region (which is usually
+*	the same as screen resolution, but can be manually changed)
+*
+*	It may be better to scale with the actual screen resolution
+*/
+simulated function DrawHealthBar(Canvas C)
+{
+	local Vector ScreenSpaceLocation;
+	local Vector Extent1, Extent2;
+	local float Width, Height;
+	local float HealthRatio;
+
+	if(IsMobDead())
+	{
+		return;
+	}
+
+	// This is the height and width at desired resolution 1920x1080
+	// Bar size will scale linearly as resolution increases or decreases
+	Width = 64.0 * (C.ClipX / 1920.0);
+	Height = 4.0 * (C.ClipY / 1080.0);
+
+	HealthRatio = float(Health) / float(MaxHealth);
+
+	C.Reset();
+	CanvasLibrary.Static.GetScreenSpaceLocationAboveActor(C, Self, ScreenSpaceLocation, 16.0);
+
+	Extent1 = ScreenSpaceLocation;
+	Extent2 = ScreenSpaceLocation;
+
+	Extent1.X -= Width / 2.0;
+	Extent1.Y -= Height / 2.0;
+	Extent2.Y += Height / 2.0;
+
+	// Backdrop
+	Extent2.X = Extent1.X + Width;
+	CanvasLibrary.Static.DrawBoxSolid(C, Extent1, Extent2, 0.0, 0.0, 0.0, 1.0);
+
+	// Health
+	Extent2.X = Extent1.X + Width * HealthRatio;
+	CanvasLibrary.Static.DrawBoxSolid(C, Extent1, Extent2, 1.0, 0.0, 0.0, 1.0);
 }
 
 auto state Neutral
