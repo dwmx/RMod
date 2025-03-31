@@ -78,37 +78,6 @@ function int Length()
 }
 
 /**
-*	GetAtIndex
-*	Returns the referenced object at the specified index
-*	If index is invalid, returns None
-*/
-function Object GetAtIndex(int Index)
-{
-	local R_ObjectList Node;
-	local int CurrentIndex;
-
-	if(Next == None || Index < 0)
-	{
-		return None;
-	}
-
-	Node = Next;
-	CurrentIndex = 0;
-	while(Node != None && CurrentIndex < Index)
-	{
-		Node = Node.Next;
-		++CurrentIndex;
-	}
-
-	if(Node != None && CurrentIndex == Index)
-	{
-		return Node.ObjectReference;
-	}
-
-	return None;
-}
-
-/**
 *	Add
 *	Add the given object to the end of the list
 */
@@ -221,5 +190,69 @@ function bool Contains(Object InObjectReference)
 		Node = Node.Next;
 	}
 
+	return false;
+}
+
+/**
+*	GetAtIndex
+*	Returns the referenced object at the specified index
+*	If index is invalid, returns None
+*/
+function Object GetAtIndex(int Index)
+{
+	local R_ObjectList Node;
+	local int CurrentIndex;
+
+	if(Next == None || Index < 0)
+	{
+		return None;
+	}
+
+	Node = Next;
+	CurrentIndex = 0;
+	while(Node != None && CurrentIndex < Index)
+	{
+		Node = Node.Next;
+		++CurrentIndex;
+	}
+
+	if(Node != None && CurrentIndex == Index)
+	{
+		return Node.ObjectReference;
+	}
+
+	return None;
+}
+
+/**
+*	Find
+*	Searches the list and sets OutIndex to the index of InObjectReference
+*	if it is contained
+*	Returns true if object found, false otherwise
+*/
+function bool Find(Object InObjectReference, out int OutIndex)
+{
+	local R_ObjectList Node;
+	local int Index;
+
+	if(InObjectReference == None)
+	{
+		return false;
+	}
+
+	Node = Self;
+	Index = 0;
+	while(Node.Next != None)
+	{
+		if(Node.Next.ObjectReference == InObjectReference)
+		{
+			OutIndex = Index;
+			return true;
+		}
+		Node = Node.Next;
+		++Index;
+	}
+
+	OutIndex = -1;
 	return false;
 }
