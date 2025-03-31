@@ -137,6 +137,54 @@ function AddUnique(Object InObjectReference)
 }
 
 /**
+*	Insert
+*	Inserts the specified object at the desired index, pushing all other
+*	list entries forward by one index after
+*	Index must be in range [0,Length], or insertion will not happen
+*	Returns true or false for success or failure
+*/
+function bool Insert(Object InObjectReference, int Index)
+{
+	local R_ObjectList Node;
+	local R_ObjectList Temp;
+	local int CurrentIndex;
+
+	if(InObjectReference == None || Index < 0)
+	{
+		return false;
+	}
+
+	Node = Self;
+	CurrentIndex = 0;
+
+	while(Node.Next != None && CurrentIndex < Index)
+	{
+		Node = Node.Next;
+		++CurrentIndex;
+	}
+
+	if(CurrentIndex == Index)
+	{
+		if(Node.Next != None)
+		{
+			Temp = Node.Next;
+			Node.Next = New(None) Class;
+			Node.Next.ObjectReference = InObjectReference;
+			Node.Next.Next = Temp;
+		}
+		else
+		{
+			// New tail
+			Node.Next = New(None) Class;
+			Node.Next.ObjectReference = InObjectReference;
+		}
+		return true;
+	}
+
+	return false;
+}
+
+/**
 *	Remove
 *	Removes the first occurrence of InObjectReference from the list
 *	If the list contains multiple references at multiple indices, only

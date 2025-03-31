@@ -7,7 +7,7 @@ static function String GetTestCollectionNameString()
 
 static function int GetNumTests()
 {
-	return 14;
+	return 18;
 }
 
 static function Class<R_ATest> GetTestAtIndex(int TestIndex)
@@ -28,6 +28,10 @@ static function Class<R_ATest> GetTestAtIndex(int TestIndex)
 		case 11: return Class'RBaseTests.R_ATest_List_Iteration';
 		case 12: return Class'RBaseTests.R_ATest_List_Contains';
 		case 13: return Class'RBaseTests.R_ATest_List_Find';
+		case 14: return Class'RBaseTests.R_ATest_List_InsertBadIndex';
+		case 15: return Class'RBaseTests.R_ATest_List_InsertHead';
+		case 16: return Class'RBaseTests.R_ATest_List_InsertMiddle';
+		case 17: return Class'RBaseTests.R_ATest_List_InsertTail';
 	}
 
 	return None;
