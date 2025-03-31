@@ -5,7 +5,7 @@ static function String GetTestNameString()
 	return "Simple Math";
 }
 
-static function bool RunTest()
+static function bool RunTest(out String FailedResonString)
 {
 	local int SimpleMathResult;
 

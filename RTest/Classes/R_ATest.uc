@@ -19,7 +19,7 @@ static function String GetTestNameString()
 *	RunTest
 *	Runs the test defined by this class and returns true for pass, false for fail
 */
-static function bool RunTest()
+static function bool RunTest(out String FailedResonString)
 {
 	return true;
 }

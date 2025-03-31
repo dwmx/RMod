@@ -13,91 +13,47 @@ class R_TestCommandlet extends Commandlet;
 
 const LogCategory = 'RTest';
 
+const RET_AllPassed = 0;
+const RET_SomeFailed = 1;
+const RET_FailedToExecuteTests = 2;
+
 function int Main(String Args)
 {
+	local Class<R_ATestCollection> TestListClass;
 	local int NumPassed, NumFailed;
 
-	Log("Hello World from the Test commandlet", LogCategory);
-	Log("This is what your Args string looks like:" @ Args);
+	TestListClass = Class<R_ATestCollection>(DynamicLoadObject(Args, Class'Class'));
+	if(TestListClass == None)
+	{
+		Log("Failed to load test list from argument" @ Args);
+		LogReturnValue(RET_FailedToExecuteTests);
+		return RET_FailedToExecuteTests;
+	}
 
-	RunAllTests(NumPassed, NumFailed);
+	//Log("Hello World from the Test commandlet", LogCategory);
+	//Log("This is what your Args string looks like:" @ Args);
+
+	//Class'RTest.R_ATestSet'.Static.RunAllTests(NumPassed, NumFailed);
+	TestListClass.Static.RunAllTests(NumPassed, NumFailed);
 
 	if(NumFailed > 0)
 	{
-		return 1;
+		LogReturnValue(RET_SomeFailed);
+		return RET_SomeFailed;
 	}
 	else
 	{
-		return 0;
+		LogReturnValue(RET_AllPassed);
+		return RET_AllPassed;
 	}
 }
 
-function RunAllTests(out int OutNumPassed, out int OutNumFailed)
+function LogReturnValue(int ReturnValue)
 {
-	local int NumPassed, NumFailed;
-	local Class<R_ATest> Tests[16];
-	local int TestIndex;
-
-	Tests[0] = Class'RTest.R_ATest';
-	Tests[1] = Class'RTest.R_ATest_SimpleMath';
-	Tests[2] = Class'RTest.R_ATest_SuperHardMath';
-
-	NumPassed = 0;
-	NumFailed = 0;
-
-	// This is an example of how to run tests
-	Log("========================================", LogCategory);
-	Log("Running all tests", LogCategory);
-	Log("========================================", LogCategory);
-
-	for(TestIndex = 0; TestIndex < 16; ++TestIndex)
+	switch(ReturnValue)
 	{
-		if(Tests[TestIndex] != None)
-		{
-			if(RunTest(Tests[TestIndex]))
-			{
-				++NumPassed;
-			}
-			else
-			{
-				++NumFailed;
-			}
-		}
+	case RET_AllPassed:				Log("All tests passed");		return;
+	case RET_SomeFailed:			Log("Some tests failed");		return;
+	case RET_FailedToExecuteTests:	Log("Tests failed to execute");	return;
 	}
-
-	Log("========================================", LogCategory);
-	Log(NumPassed @ "passed," @ NumFailed @ "failed");
-	Log("========================================", LogCategory);
-
-	OutNumPassed = NumPassed;
-	OutNumFailed = NumFailed;
-}
-
-function bool RunTest(Class<R_ATest> TestClass)
-{
-	local bool bResult;
-	local String TestNameString;
-	local String ResultString;
-
-	if(TestClass == None)
-	{
-		Warn("Invalid TestClass");
-		return false;
-	}
-
-	TestNameString = TestClass.Static.GetTestNameString();
-
-	bResult = TestClass.Static.RunTest();
-
-	if(bResult)
-	{
-		ResultString = "[Test Passed]:" @ TestNameString;
-	}
-	else
-	{
-		ResultString = "[Test Failed]:" @ TestNameString;
-	}
-
-	Log(ResultString @ "{Class:" @ TestClass $ "}");
-	return bResult;
 }
