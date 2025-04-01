@@ -7,6 +7,32 @@
 class R_AMathLibrary extends R_ALibrary abstract;
 
 /**
+*	CheckBoundingBoxCollisionWithPoint
+*	Returns true if Point is inside of the bounding box defined by
+*	Extent1 and Extent2
+*/
+static function bool CheckBoundingBoxCollisionWithPoint(
+	Vector Extent1,
+	Vector Extent2,
+	Vector Point)
+{
+	local Vector MinExtent, MaxExtent;
+
+	MinExtent.X = FMin(Extent1.X, Extent2.X);
+	MinExtent.Y = FMin(Extent1.Y, Extent2.Y);
+	MaxExtent.X = FMax(Extent1.X, Extent2.X);
+	MaxExtent.Y = FMax(Extent1.Y, Extent2.Y);
+
+	if(Point.X >= MinExtent.X && Point.X <= MaxExtent.X
+	&& Point.Y >= MinExtent.Y && Point.Y <= MaxExtent.Y)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+/**
 *   CheckBoundingBoxCollisionMidPointBased
 *   Returns true if the mid point of either bounding box is inside of the
 *   other bounding box
