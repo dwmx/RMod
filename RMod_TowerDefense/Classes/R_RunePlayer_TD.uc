@@ -135,6 +135,77 @@ exec function Fire(optional float F)
     }
 }
 
+exec function PlayerMouseDown()
+{
+	local Vector UIEventPayload;
+
+	// Try to pass mouse down event to UI first
+	if(RootWidget != None)
+	{
+		if(GameCursor != None)
+		{
+			GameCursor.GetCursorPosition(UIEventPayload.X, UIEventPayload.Y);
+		}
+
+		if(RootWidget.NotifyInputEvent('MouseDown', UIEventPayload))
+		{
+			return;
+		}
+	}
+
+	TryExecuteBuilderBrush();
+	if(GameCursor != None && GameCursor.IsEnabled())
+    {
+        GameCursor.BeginDragSelection();
+    }
+}
+
+exec function PlayerMouseUp()
+{
+	local Vector UIEventPayload;
+
+	// Try to pass mouse up event to UI first
+	if(RootWidget != None)
+	{
+		if(GameCursor != None)
+		{
+			GameCursor.GetCursorPosition(UIEventPayload.X, UIEventPayload.Y);
+		}
+
+		if(RootWidget.NotifyInputEvent('MouseUp', UIEventPayload))
+		{
+			return;
+		}
+	}
+
+	// Otherwise pass it to game cursor
+	if(GameCursor != None && GameCursor.IsEnabled())
+    {
+        GameCursor.EndDragSelection();
+    }
+}
+
+event PlayerInput(float DeltaSeconds)
+{
+	local Vector UIEventPayload;
+
+	Super.PlayerInput(DeltaSeconds);
+
+	// Try to pass mouse up event to UI first
+	if(RootWidget != None)
+	{
+		if(GameCursor != None)
+		{
+			GameCursor.GetCursorPosition(UIEventPayload.X, UIEventPayload.Y);
+		}
+
+		if(RootWidget.NotifyInputEvent('CursorPosition', UIEventPayload))
+		{
+			return;
+		}
+	}
+}
+
 function LogUnderMouseCursor()
 {
     local Vector HitLocation, HitNormal;
@@ -258,6 +329,7 @@ function TryExecuteBuilderBrush()
         if(BuildableClass != None)
         {
             ServerTryExecuteBuild(BuildableClass, BuilderBrush.Location);
+			BuilderBrush.SetBuildableActorClass(None);
         }
     }
 }

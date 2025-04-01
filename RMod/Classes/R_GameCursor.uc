@@ -41,6 +41,16 @@ function PlayerInputMouseMove(float MoveX, float MoveY, float DeltaSeconds)
 }
 
 /**
+*	GetCursorPosition
+*	Get the current screen space position of the cursor
+*/
+function GetCursorPosition(out float OutCursorX, out float OutCursorY)
+{
+	OutCursorX = CursorX;
+	OutCursorY = CursorY;
+}
+
+/**
 *   NotifyEnabled
 *   Called by owner when this cursor has been enabled
 */
@@ -208,6 +218,7 @@ function DrawGameCursor(Canvas C)
     
     // Draw cursor
     C.SetPos(CursorX, CursorY);
+	C.Z = 1.0;
     C.DrawTile(
         CursorTexture,
         16.0, 16.0,
