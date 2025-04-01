@@ -24,8 +24,9 @@ static function Name LogCategory() { return 'RGameUI'; }
 *   - R_UIWidget.BuildWidget <--- This is the function your widgets should override
 */
 static function R_UIWidget CreateWidget(
-    Class<R_UIWidget> WidgetClass,
-    PlayerPawn OwningPlayer)
+    Class<R_UIWidget> WidgetClass,	// Widget class to create
+    PlayerPawn OwningPlayer,		// The local owning player
+	optional Name WidgetTag)		// Personal widget identifier - useful when receiving events
 {
     local R_UIWidget Widget;
     
@@ -48,7 +49,7 @@ static function R_UIWidget CreateWidget(
         return None;
     }
     
-    if(!Widget.InitializeWidget(OwningPlayer))
+    if(!Widget.InitializeWidget(OwningPlayer, WidgetTag))
     {
         Warn("CreateWidget failed, widget initialization failed -- returning None");
     }
