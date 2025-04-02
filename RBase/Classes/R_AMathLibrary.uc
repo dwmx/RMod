@@ -7,6 +7,31 @@
 class R_AMathLibrary extends R_ALibrary abstract;
 
 /**
+*	Floor
+*	Drop fractional portion
+*/
+static function float Floor(float InFloat)
+{
+    return InFloat - (InFloat % 1.0);
+}
+
+/**
+*	Round
+*	Return nearest whole number
+*/
+static function float Round(float InFloat)
+{
+	if(InFloat % 1.0 < 0.5)
+	{
+		return InFloat - (InFloat % 1.0);
+	}
+	else
+	{
+		return InFloat + (1.0 - (InFloat % 1.0));
+	}
+}
+
+/**
 *	CheckBoundingBoxCollisionWithPoint
 *	Returns true if Point is inside of the bounding box defined by
 *	Extent1 and Extent2
