@@ -157,10 +157,23 @@ static function GetScreenSpaceBoundingBoxForActor(
     Extent2.Y = FMax(float(ScreenLeftY), FMax(float(ScreenRightY), FMax(ScreenTopY, ScreenBottomY)));
 }
 
-
 //==============================================================================
 // World space functions
 //==============================================================================
+
+static function DrawRay3D(
+	Canvas C,
+	Vector WorldOrigin, Vector Direction, float Length,
+	float R, float G, float B)
+{
+	local Vector LineStart, LineStop;
+
+	Direction = Normal(Direction);
+	LineStart = WorldOrigin;
+	LineStop = WorldOrigin + Direction * Length;
+
+	C.DrawLine3D(LineStart, LineStop, R, G, B);
+}
 
 /**
 *   DrawCircle3D
@@ -191,6 +204,101 @@ static function DrawCircle3D(
         
         C.DrawLine3D(WorldOrigin + SegmentStart, WorldOrigin + SegmentEnd, R, G, B);
     }
+}
+
+/**
+*	DrawSquareAxisAligned3D
+*	Draws a square aligned with the world X and Y axes
+*/
+static function DrawSquareAxisAligned3D(
+	Canvas C,
+	Vector WorldOrigin, Vector Alignment, float SideLength,
+	float R, float G, float B)
+{
+	local Vector LineStart;
+	local Vector LineEnd;
+
+	Alignment.X = FClamp(Alignment.X, 0.0, 1.0);
+	Alignment.Y = FClamp(Alignment.Y, 0.0, 1.0);
+
+	LineStart = WorldOrigin;
+	LineStart -= Vect(1,0,0) * Alignment.X * SideLength;
+	LineStart -= Vect(0,1,0) * Alignment.Y * SideLength;
+
+	LineEnd = LineStart + Vect(1,0,0) * SideLength;
+	C.DrawLine3D(LineStart, LineEnd, R, G, B);
+
+	LineEnd = LineStart + Vect(0,1,0) * SideLength;
+	C.DrawLine3D(LineStart, LineEnd, R, G, B);
+
+	LineStart = WorldOrigin;
+	LineStart += Vect(1,0,0) * (1.0 - Alignment.X) * SideLength;
+	LineStart += Vect(0,1,0) * (1.0 - Alignment.Y) * SideLength;
+
+	LineEnd = LineStart + Vect(-1,0,0) * SideLength;
+	C.DrawLine3D(LineStart, LineEnd, R, G, B);
+
+	LineEnd = LineStart + Vect(0,-1,0) * SideLength;
+	C.DrawLine3D(LineStart, LineEnd, R, G, B);
+}
+
+/**
+*	DrawRectAxisAligned3D
+*	Draws a rectangle aligned with the world X and Y axes
+*/
+static function DrawRectAxisAligned3D(
+	Canvas C,
+	Vector WorldOrigin, Vector Alignment, float SideLengthX, float SideLengthY,
+	float R, float G, float B)
+{
+	local Vector LineStart;
+	local Vector LineEnd;
+
+	Alignment.X = FClamp(Alignment.X, 0.0, 1.0);
+	Alignment.Y = FClamp(Alignment.Y, 0.0, 1.0);
+
+	LineStart = WorldOrigin;
+	LineStart -= Vect(1,0,0) * Alignment.X * SideLengthX;
+	LineStart -= Vect(0,1,0) * Alignment.Y * SideLengthY;
+
+	LineEnd = LineStart + Vect(1,0,0) * SideLengthX;
+	C.DrawLine3D(LineStart, LineEnd, R, G, B);
+
+	LineEnd = LineStart + Vect(0,1,0) * SideLengthY;
+	C.DrawLine3D(LineStart, LineEnd, R, G, B);
+
+	LineStart = WorldOrigin;
+	LineStart += Vect(1,0,0) * (1.0 - Alignment.X) * SideLengthX;
+	LineStart += Vect(0,1,0) * (1.0 - Alignment.Y) * SideLengthY;
+
+	LineEnd = LineStart + Vect(-1,0,0) * SideLengthX;
+	C.DrawLine3D(LineStart, LineEnd, R, G, B);
+
+	LineEnd = LineStart + Vect(0,-1,0) * SideLengthY;
+	C.DrawLine3D(LineStart, LineEnd, R, G, B);
+}
+
+/**
+*	DrawAxes3D
+*	Draws a 3-line cross for X Y and Z axes at the specified location
+*/
+static function DrawAxes3D(
+	Canvas C, Vector WorldOrigin, float LineLength,
+	float R, float G, float B)
+{
+	local Vector LineStart, LineStop;
+
+	LineStart = WorldOrigin + Vect(-1,0,0) * LineLength * 0.5;
+	LineStop = LineStart + Vect(1,0,0) * LineLength;
+	C.DrawLine3D(LineStart, LineStop, R, G, B);
+
+	LineStart = WorldOrigin + Vect(0,-1,0) * LineLength * 0.5;
+	LineStop = LineStart + Vect(0,1,0) * LineLength;
+	C.DrawLine3D(LineStart, LineStop, R, G, B);
+
+	LineStart = WorldOrigin + Vect(0,0,-1) * LineLength * 0.5;
+	LineStop = LineStart + Vect(0,0,1) * LineLength;
+	C.DrawLine3D(LineStart, LineStop, R, G, B);
 }
 
 /**
