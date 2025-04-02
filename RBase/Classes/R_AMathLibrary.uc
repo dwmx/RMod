@@ -8,11 +8,24 @@ class R_AMathLibrary extends R_ALibrary abstract;
 
 /**
 *	Floor
-*	Drop fractional portion
+*	Rounds any fractional down to the nearest whole
 */
 static function float Floor(float InFloat)
 {
     return InFloat - (InFloat % 1.0);
+}
+
+/**
+*	Ceil
+*	Rounds any fractional up to the nearest whole
+*/
+static function float Ceil(float InFloat)
+{
+	if(InFloat % 1.0 == 0.0)
+	{
+		return InFloat;
+	}
+	return InFloat + (1.0 - (InFloat % 1.0));
 }
 
 /**
