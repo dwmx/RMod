@@ -14,6 +14,9 @@ var R_BuilderBrush BuilderBrush;
 var Class<R_ActorSelector> ActorSelectorClass;
 var R_ActorSelector ActorSelector;
 
+var UWindowRootWindow MyRootWindow;
+var UWindowWindow MyTestWindow;
+
 replication
 {
     // Client --> Server functions
@@ -105,7 +108,7 @@ function TickBuilderBrushDesiredLocation(float DeltaSeconds)
 */
 event PostRender(Canvas C)
 {
-    Super.PostRender(C);
+    //Super.PostRender(C);
 
 	if(InWorldHUD != None)
 	{
@@ -121,6 +124,16 @@ event PostRender(Canvas C)
     {
         ActorSelector.ActorSelectorPostRender(C);
     }
+
+	if(MyRootWindow != None)
+	{
+		MyRootWindow.WindowEvent(WM_Paint, C, 0.0, 0.0, 0);
+		//MyRootWindow.Paint(C, 0.0, 0.0);
+		//MyRootWindow.PainClients(C, X, Y);
+	}
+
+	// Super draws cursor, render it on top
+	Super.PostRender(C);
 }
 
 exec function Fire(optional float F)
@@ -128,7 +141,7 @@ exec function Fire(optional float F)
     TryExecuteBuilderBrush();
     
     Super.Fire(F);
-    
+
     if(GameCursor != None && GameCursor.IsEnabled())
     {
         GameCursor.BeginDragSelection();
@@ -138,6 +151,13 @@ exec function Fire(optional float F)
 exec function PlayerMouseDown()
 {
 	local Vector UIEventPayload;
+
+	if(MyRootWindow != None && GameCursor != None && GameCursor.IsEnabled())
+	{
+		GameCursor.GetCursorPosition(UIEventPayload.X, UIEventPayload.Y);
+		MyRootWindow.WindowEvent(WM_LMouseDown, None, UIEventPayload.X, UIEventPayload.Y, 0);
+		//return;
+	}
 
 	// Try to pass mouse down event to UI first
 	if(RootWidget != None)
@@ -164,6 +184,13 @@ exec function PlayerMouseUp()
 {
 	local Vector UIEventPayload;
 
+	if(MyRootWindow != None && GameCursor != None && GameCursor.IsEnabled())
+	{
+		GameCursor.GetCursorPosition(UIEventPayload.X, UIEventPayload.Y);
+		MyRootWindow.WindowEvent(WM_LMouseUp, None, UIEventPayload.X, UIEventPayload.Y, 0);
+		//return;
+	}
+
 	// Try to pass mouse up event to UI first
 	if(RootWidget != None)
 	{
@@ -188,8 +215,16 @@ exec function PlayerMouseUp()
 event PlayerInput(float DeltaSeconds)
 {
 	local Vector UIEventPayload;
+	local Vector GameCursorPosition;
 
 	Super.PlayerInput(DeltaSeconds);
+
+	// Pass game cursor info to root window
+	if(MyRootWindow != None && GameCursor != None)
+	{
+		GameCursor.GetCursorPosition(GameCursorPosition.X, GameCursorPosition.Y);
+		MyRootWindow.MoveMouse(GameCursorPosition.X, GameCursorPosition.Y);
+	}
 
 	// Try to pass mouse up event to UI first
 	if(RootWidget != None)
@@ -409,8 +444,82 @@ exec function TestBuildableIndex(int BuildableIndex)
             default: BuildableClass = None;
         }
         
+		R_TowerDefenseRootWindow(MyRootWindow).bHiddenWindow = true;
         BuilderBrush.SetBuildableActorClass(BuildableClass);
     }
+}
+
+exec function IncrementRowsCols(int Rows, int Cols)
+{
+	BuilderBrush.GridActor.TestRows += Rows;
+	BuilderBrush.GridActor.TestCols += Cols;
+}
+
+exec function CreateTowerDefenseTestWindow()
+{
+	local Class<UWindowRootWindow> RootWindowClass;
+
+	if(MyTestWindow != None)
+	{
+		return;
+	}
+
+	Log("Creating test root window and client window");
+
+	// Create Root window
+	RootWindowClass = Class'RMod_TowerDefense.R_TowerDefenseRootWindow';
+	MyRootWindow = New(None) RootWindowClass;//Class<UWindowRootWindow>//(DynamicLoadObject(RootWindowClass, Class'Class'));
+	MyRootWindow.BeginPlay();
+	MyRootWindow.WinTop = 0;
+	MyRootWindow.WinLeft = 0;
+	MyRootWindow.WinWidth = 512;
+	MyRootWindow.WinHeight = 512;
+	MyRootWindow.RealWidth = 512;
+	MyRootWindow.RealHeight = 512;
+
+	MyRootWindow.ClippingRegion.X = 0;
+	MyRootWindow.ClippingRegion.Y = 0;
+	MyRootWindow.ClippingRegion.H = 512;
+	MyRootWindow.ClippingRegion.W = 512;
+
+	MyRootWindow.Console = WindowConsole(Player.Console);
+	MyRootWindow.bUWindowActive = true;
+	MyRootWindow.Created();
+	//MyRootWindow.ShowWindow();
+
+	// Now create a test window on that root
+	// AND set it to the first child!!
+	MyTestWindow = MyRootWindow.CreateWindow(Class'RMod_TowerDefense.R_MyTestWindow', 100, 100, 200, 200);
+	//MyTestWindow.bWindowVisible = false;
+
+	//MyRootWindow.ShowChildWindow(MyTestWindow);
+	Log("First child window:" @ MyRootWindow.FirstChildWindow);
+
+	////
+	//// Example of how to create UWindow instances outside of Root
+	//// See UWindowWindow.Create for an example of what you need to manually
+	//// call when creating windows
+	////
+	//Log("Creating test window", 'TEST');
+	//MyTestWindow = New(None) Class'RMod_TowerDefense.R_MyTestWindow';
+	//MyTestWindow.BeginPlay();
+//
+	//// Maybe can connect root to consoles root?
+	//// MyTestWindow.Root = Player.Console.Root??
+//
+	//// UWindow also defines a Cursor struct and gives every child a reference to it
+	//// Could grab MyTestWindow.Cursor = Player.Console.Cursor
+	//// Maybe thats enough to receive events from owning
+//
+	//MyTestWindow.BeforeCreate();
+	//MyTestWindow.Created();
+	////ShowChildWindow() might be important
+	//MyTestWindow.AfterCreate();
+}
+
+exec function BuildTower()
+{
+	R_TowerDefenseRootWindow(MyRootWindow).bHiddenWindow = !R_TowerDefenseRootWindow(MyRootWindow).bHiddenWindow;
 }
 //==============================================================================
 
@@ -419,5 +528,5 @@ defaultproperties
 	InWorldHUDClass=Class'RMod_TowerDefense.R_InWorldHUD'
     BuilderBrushClass=Class'RMod_TowerDefense.R_BuilderBrush'
     ActorSelectorClass=Class'RMod_TowerDefense.R_ActorSelector'
-    RootWidgetClass=Class'RMod_TowerDefense.R_UIPrimaryLayout'
+    //RootWidgetClass=Class'RMod_TowerDefense.R_UIPrimaryLayout'
 }

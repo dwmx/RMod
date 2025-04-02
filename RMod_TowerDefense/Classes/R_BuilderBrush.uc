@@ -1,17 +1,24 @@
+//==============================================================================
+//	R_BuilderBrush
+//	The builder brush is an actor class used for placing buildable actors in
+//	the level
+//==============================================================================
 class R_BuilderBrush extends Actor;
 
-// Static utility classes
-var Class<R_AUtilities> UtilitiesClass;
-var Class<R_AGrid> GridClass;
+const LogCategory = 'RModTowerDefense';
+
+// Libraries
+const GridLibrary = Class'RMod_TowerDefense.R_AGridLibrary';
 
 // Grid snapping vars
-var float BrushPlacementOffset; // How far in front of the player to place the brush
 var int BrushGridUnitSnapping;  // Grid unit size
 
 // The buildable class that this builder brush is currently representing
 var private Class<R_ABuildableActor> BuildableActorClass;
 
 var Vector DesiredBrushLocation;
+
+var R_GridActor GridActor;
 
 /**
 *   PostBeginPlay (override)
@@ -26,6 +33,8 @@ event PostBeginPlay()
     Style = STY_Translucent;
     ScaleGlow = 100.0;
     AmbientGlow = 100.0;
+
+	GridActor = Spawn(Class'R_GridActor', Self);
 }
 
 /**
@@ -37,26 +46,39 @@ event Tick(float DeltaSeconds)
 {
     local Rotator ViewRotation;
     local Vector PawnOrigin;
-    //local Vector DesiredLocation;
     local Vector SnappedLocation;
     local R_RunePlayer RPOwner;
+	local int GridCellXCount, GridCellYCount;
     
     RPOwner = R_RunePlayer(Owner);
     
     // Self-destroy if the owner was somehow lost
     if(RPOwner == None)
     {
-        UtilitiesClass.Static.RModWarn("BuilderBrush has no R_RunePlayer owner, self-destroying");
+        Warn("BuilderBrush has no R_RunePlayer owner, self-destroying");
         Destroy();
         return;
     }
     
     ViewRotation = RPOwner.ViewRotation;
     PawnOrigin = RPOwner.Location;
-    //DesiredLocation = PawnOrigin + Vector(ViewRotation) * BrushPlacementOffset;
     
-    SnappedLocation = GridClass.Static.SnapLocationToGrid(BrushGridUnitSnapping, DesiredBrushLocation);
-    
+	if(BuildableActorClass != None)
+	{
+		GridCellXCount = BuildableActorClass.Default.GridCellsX;
+		GridCellYCount = BuildableActorClass.Default.GridCellsY;
+		SnappedLocation = GridLibrary.Static.SnapAreaLocationToGrid(
+			BrushGridUnitSnapping, DesiredBrushLocation,
+			GridCellXCount, GridCellYCount);
+	}
+	
+	// Update grid actor
+	if(GridActor != None)
+	{
+		GridActor.EmphasisLocation = DesiredBrushLocation;
+		GridActor.ConstrainedLocation = SnappedLocation;
+	}
+
     SetLocation(SnappedLocation);
 }
 
@@ -72,48 +94,10 @@ function SetDesiredBrushLocation(Vector NewDesiredLocation)
 */
 function BuilderBrushPostRender(Canvas C)
 {
-    local Vector SnappedLocation;
-    local int NumRowsAndColsToDraw;
-    local int i;
-    local Vector LineStart, LineEnd;
-    
-    // Don't draw grid when no class is selected
-    if(BuildableActorClass == None)
-    {
-        return;
-    }
-    
-    //SnappedLocation = GridClass.Static.SnapLocationToGrid(BrushGridUnitSnapping, Location);
-    SnappedLocation = GridClass.Static.SnapLocationToGrid(BrushGridUnitSnapping, Owner.Location);
-
-    NumRowsAndColsToDraw = 60;
-    
-    for(i = 1; i < NumRowsAndColsToDraw; ++i)
-    {
-        // Draw Rows
-        LineStart = SnappedLocation;
-        LineStart.X -= (NumRowsAndColsToDraw >> 1) * BrushGridUnitSnapping;
-        LineStart.Y -= (NumRowsAndColsToDraw >> 1) * BrushGridUnitSnapping;
-        LineStart.Y += i * BrushGridUnitSnapping;
-        
-        LineEnd.X = LineStart.X + NumRowsAndColsToDraw * BrushGridUnitSnapping;
-        LineEnd.Y = LineStart.Y;
-        LineEnd.Z = LineStart.Z;
-        
-        C.DrawLine3D(LineStart, LineEnd, 0.0, 0.0, 0.0);
-        
-        // Draw Cols
-        LineStart = SnappedLocation;
-        LineStart.Y -= (NumRowsAndColsToDraw >> 1) * BrushGridUnitSnapping;
-        LineStart.X -= (NumRowsAndColsToDraw >> 1) * BrushGridUnitSnapping;
-        LineStart.X += i * BrushGridUnitSnapping;
-        
-        LineEnd.Y = LineStart.Y + NumRowsAndColsToDraw * BrushGridUnitSnapping;
-        LineEnd.X = LineStart.X;
-        LineEnd.Z = LineStart.Z;
-        
-        C.DrawLine3D(LineStart, LineEnd, 0.0, 0.0, 0.0);
-    }
+	if(GridActor != None)
+	{
+		GridActor.GridActorPostRender(C);
+	}
 }
 
 /**
@@ -157,8 +141,5 @@ defaultproperties
     bCollideWorld=False
     bBlockActors=False
     bBlockPlayers=False
-    UtilitiesClass=Class'RMod.R_AUtilities'
-    GridClass=Class'RMod_TowerDefense.R_AGrid'
-    BrushPlacementOffset=64.0
     BrushGridUnitSnapping=64
 }
