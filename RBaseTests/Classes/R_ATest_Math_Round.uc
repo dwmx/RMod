@@ -34,6 +34,36 @@ static function bool RunTest(out String FailedResonString)
 		return false;
 	}
 
+	// Negative unchanged condition
+	if(!DoRoundTest(-1.0, -1.0, FailedResonString))
+	{
+		return false;
+	}
+
+	// Negative round up condition
+	if(!DoRoundTest(-1.3, -1.0, FailedResonString))
+	{
+		return false;
+	}
+
+	// Negative round down condition
+	if(!DoRoundTest(-1.8, -2.0, FailedResonString))
+	{
+		return false;
+	}
+
+	// Negative x.5 condition, should round down
+	if(!DoRoundTest(-1.5, -2.0, FailedResonString))
+	{
+		return false;
+	}
+
+	// Zero condition
+	if(!DoRoundTest(0.0, 0.0, FailedResonString))
+	{
+		return false;
+	}
+
 	return true;
 }
 

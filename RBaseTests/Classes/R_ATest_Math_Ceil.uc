@@ -34,6 +34,36 @@ static function bool RunTest(out String FailedResonString)
 		return false;
 	}
 
+	// Negative no fractional condition
+	if(!DoCeilTest(-1.0, -1.0, FailedResonString))
+	{
+		return false;
+	}
+
+	// Negative fractional greater than -0.5 condition
+	if(!DoCeilTest(-1.3, -1.0, FailedResonString))
+	{
+		return false;
+	}
+
+	// Negative fractional less than -0.5 condition
+	if(!DoCeilTest(-1.8, -1.0, FailedResonString))
+	{
+		return false;
+	}
+
+	// Very near negative whole condition
+	if(!DoCeilTest(-1.99999, -1.0, FailedResonString))
+	{
+		return false;
+	}
+
+	// Zero condition
+	if(!DoCeilTest(0.0, 0.0, FailedResonString))
+	{
+		return false;
+	}
+
 	return true;
 }
 

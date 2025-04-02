@@ -12,7 +12,15 @@ class R_AMathLibrary extends R_ALibrary abstract;
 */
 static function float Floor(float InFloat)
 {
-    return InFloat - (InFloat % 1.0);
+    local int IntValue;
+    
+    IntValue = int(InFloat);
+    
+    if (InFloat < 0 && float(IntValue) > InFloat) 
+    {
+        return IntValue - 1;
+    }
+    return IntValue;
 }
 
 /**
@@ -21,11 +29,15 @@ static function float Floor(float InFloat)
 */
 static function float Ceil(float InFloat)
 {
-	if(InFloat % 1.0 == 0.0)
-	{
-		return InFloat;
-	}
-	return InFloat + (1.0 - (InFloat % 1.0));
+	local int IntValue;
+
+    IntValue = int(InFloat);
+    
+    if (InFloat > 0 && float(IntValue) < InFloat) 
+    {
+        return float(IntValue + 1);
+    }
+    return float(IntValue);
 }
 
 /**
@@ -34,14 +46,21 @@ static function float Ceil(float InFloat)
 */
 static function float Round(float InFloat)
 {
-	if(InFloat % 1.0 < 0.5)
-	{
-		return InFloat - (InFloat % 1.0);
-	}
-	else
-	{
-		return InFloat + (1.0 - (InFloat % 1.0));
-	}
+ 	local int IntValue;
+    local float DecimalPart;
+    
+    IntValue = int(InFloat);
+    DecimalPart = InFloat - float(IntValue);
+    
+    if (DecimalPart >= 0.5)
+    {
+        return IntValue + 1;
+    }
+    else if (DecimalPart <= -0.5)
+    {
+        return IntValue - 1;
+    }
+    return IntValue;
 }
 
 /**
