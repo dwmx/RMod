@@ -7,7 +7,7 @@ static function String GetTestCollectionNameString()
 
 static function int GetNumTests()
 {
-	return 21;
+	return 27;
 }
 
 static function Class<R_ATest> GetTestAtIndex(int TestIndex)
@@ -38,6 +38,16 @@ static function Class<R_ATest> GetTestAtIndex(int TestIndex)
 		case 18: return Class'RBaseTests.R_ATest_Math_Floor';
 		case 19: return Class'RBaseTests.R_ATest_Math_Ceil';
 		case 20: return Class'RBaseTests.R_ATest_Math_Round';
+
+		// Grid tests
+		case 21: return Class'RBaseTests.R_ATest_Grid_LocationToIndex';
+		case 22: return Class'RBaseTests.R_ATest_Grid_IndexToLocation';
+
+		// Utility library tests
+		case 23: return Class'RBaseTests.R_ATest_Utilities_BinaryString';
+		case 24: return Class'RBaseTests.R_ATest_Utilities_CompressTwoInts';
+		case 25: return Class'RBaseTests.R_ATest_Utilities_DecompressTwoInts';
+		case 26: return Class'RBaseTests.R_ATest_Utilities_CompressTwoIntsDuplex';
 	}
 
 	return None;
