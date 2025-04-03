@@ -28,3 +28,29 @@ static function String GetIntAsBinaryString(int Data)
 
 	return BinaryString;
 }
+
+/**
+*	CompressTwoInts
+*	Pack two integers into a single integer, using the number of HighBits specified
+*	for packing HighData, and the remaining to pack LowData
+*/
+static function int CompressTwoInts(int HighBits, int LowData, int HighData)
+{
+	local int HighMask;
+
+	// Boundaries
+	if(HighBits <= 0)
+	{
+		return LowData;
+	}
+	if(HighBits >= 32)
+	{
+		return HighData;
+	}
+
+	HighMask = 0xFFFFFFFF << HighBits;
+	HighData = (HighData << (32 - HighBits)) & HighMask;
+	LowData = LowData & ~HighMask;
+
+	return HighData | LowData;
+}
