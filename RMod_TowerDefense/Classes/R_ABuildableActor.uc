@@ -12,10 +12,17 @@ var Class<R_AUtilities> UtilitiesClass;
 var int GridCellsX;
 var int GridCellsY;
 
+// Cost associated with this tower
+// If the player doesn't have enough Gold, then main game info will reject
+// requests to build this actor
+var int GoldCost;
+
 defaultproperties
 {
     DrawType=DT_SkeletalMesh
+    CollisionHeight=80.0
     UtilitiesClass=Class'RMod.R_AUtilities'
 	GridCellsX=1
 	GridCellsY=1
+	GoldCost=0
 }
