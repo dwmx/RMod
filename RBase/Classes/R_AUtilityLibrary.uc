@@ -9,7 +9,7 @@ class R_AUtilityLibrary extends R_ALibrary;
 /**
 *	GetIntAsBinaryString
 *	Returns the binary representation of an integer as string
-*	e.g. 256 returns "0000 0001 0000 0000"
+*	e.g. 256 returns "0000 0000 0000 0000 0000 0001 0000 0000"
 */
 static function String GetIntAsBinaryString(int Data)
 {
