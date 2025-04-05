@@ -32,6 +32,9 @@ var bool bTargetable;
 // Health is not reliable and is frequently dropped, so this is used
 var bool bIsDead;
 
+// How much gold this mob awards to the player who kills it
+var int GoldValue;
+
 replication
 {
     // Server --> Client Variables
@@ -148,6 +151,8 @@ function bool JointDamaged(
     Name DamageType,
     int Joint)
 {
+	Instigator = EventInstigator;
+
     Health = Max(Health - Damage, 0);
     if(Health == 0)
     {
@@ -164,7 +169,7 @@ function Died(Pawn Killer, Name DamageType, Vector HitLocation)
     local R_GameInfo_TD GI;
     
     Health = 0;
-    
+
     if(Level.Game != None)
     {
         Level.Game.Killed(Killer, Self, DamageType);
@@ -356,4 +361,5 @@ defaultproperties
     CollisionHeight=46.000000
     MobSpeedScale=1.0
     MovementSpeed=220.0
+	GoldValue=1
 }
