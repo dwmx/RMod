@@ -19,6 +19,10 @@ var UWindowWindow MyTestWindow;
 
 replication
 {
+	// Server --> Client functions
+	reliable if(Role == ROLE_Authority)
+		ClientReceiveInWorldMessage;
+
     // Client --> Server functions
     reliable if(Role < ROLE_Authority)
         ServerTryExecuteBuild;
@@ -134,6 +138,27 @@ event PostRender(Canvas C)
 
 	// Super draws cursor, render it on top
 	Super.PostRender(C);
+}
+
+/**
+*	ClientReceiveInWorldMessage
+*	Received an In-World message from the owning Game Info, along with type of message
+*	Should be forwarded to the InWorldHUD
+*/
+function ClientReceiveInWorldMessage(String MessageString, Vector Location, Name MessageType)
+{
+	local Color DrawColor;
+
+	if(InWorldHUD != None)
+	{
+		if(MessageType == 'Gold')
+		{
+			DrawColor.R = 255;
+			DrawColor.G = 255;
+			DrawColor.B = 0;
+			InWorldHUD.ReceiveInWorldMessage(MessageString, Location, DrawColor);
+		}
+	}
 }
 
 exec function Fire(optional float F)

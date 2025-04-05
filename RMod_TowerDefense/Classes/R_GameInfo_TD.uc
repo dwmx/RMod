@@ -125,10 +125,30 @@ event Tick(float DeltaSeconds)
 */
 function Killed(Pawn Killer, Pawn Victim, Name DamageType)
 {
-    if(Victim.IsA('R_Mob'))
+	local R_Mob VictimMob;
+	local R_RunePlayer_TD RP;
+	local R_PlayerReplicationInfo_TD PRI;
+
+	VictimMob = R_Mob(Victim);
+
+    if(VictimMob != None)
     {
-        // Nothing for now
-        return;
+		if(Killer != None)
+		{
+			PRI = R_PlayerReplicationInfo_TD(Killer.PlayerReplicationInfo);
+			if(PRI != None)
+			{
+				PRI.IncrementGold(VictimMob.GoldValue);
+				PRI.IncrementScore(1.0);
+
+				// Send gold amount as in-world message
+				RP = R_RunePlayer_TD(Killer);
+				if(RP != None)
+				{
+					RP.ClientReceiveInWorldMessage("+" $ VictimMob.GoldValue, VictimMob.Location, 'Gold');
+				}
+			}
+		}
     }
     else
     {
@@ -156,7 +176,8 @@ function PlayerRequestBuild(R_RunePlayer_TD RunePlayerTD, Class<R_ABuildableActo
 {
     local String PlayerLogString;
     local Rotator SpawnRotation;
-    
+	local R_PlayerReplicationInfo_TD PRI;
+
     if(RunePlayerTD == None)
     {
         return;
@@ -165,18 +186,38 @@ function PlayerRequestBuild(R_RunePlayer_TD RunePlayerTD, Class<R_ABuildableActo
     PlayerLogString = UtilitiesClass.Static.GetPlayerIdentityLogString(RunePlayerTD);
     UtilitiesClass.Static.RModLog("PlayerRequestBuild called from player {" $ PlayerLogString $ "} CLASS: {" $ BuildableClass $ "} LOCATION: {" $ BuildLocation $ "}");
     
-    // For now, just perform the spawn
-    if(BuildableClass != None)
-    {
-        SpawnRotation.Yaw = 0;
-        SpawnRotation.Pitch = 0;
-        SpawnRotation.Roll = 0;
-        Spawn(BuildableClass, RunePlayerTD, /*SpawnTag*/, BuildLocation, SpawnRotation);
-    }
+	if(BuildableClass == None)
+	{
+		return;
+	}
+
+	// Check if player has the associated cost
+	PRI = R_PlayerReplicationInfo_TD(RunePlayerTD.PlayerReplicationInfo);
+	if(PRI == None)
+	{
+		return;
+	}
+
+	if(PRI.GetGold() >= BuildableClass.Default.GoldCost)
+	{
+		// Player has enough gold, perform transaction
+		PRI.IncrementGold(-1 * BuildableClass.Default.GoldCost);
+
+		SpawnRotation.Yaw = 0;
+		SpawnRotation.Pitch = 0;
+		SpawnRotation.Roll = 0;
+		Spawn(BuildableClass, RunePlayerTD, /*SpawnTag*/, BuildLocation, SpawnRotation);
+	}
+	else
+	{
+		RunePlayerTD.ClientMessage("You don't have enough gold");
+	}
 }
 
 defaultproperties
 {
     RunePlayerClass=Class'RMod_TowerDefense.R_RunePlayer_TD'
+	PlayerReplicationInfoClass=Class'RMod_TowerDefense.R_PlayerReplicationInfo_TD'
+	HUDType=Class'RMod_TowerDefense.R_RunePlayerHUD_TD'
     GameRoundClass=Class'RMod_TowerDefense.R_GameRound_TD'
 }
