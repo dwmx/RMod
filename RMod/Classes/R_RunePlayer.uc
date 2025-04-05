@@ -835,6 +835,7 @@ event PreBeginPlay()
     if(R_GameInfo(Level.Game) != None)
     {
         PlayerReplicationInfoClass = R_GameInfo(Level.Game).PlayerReplicationInfoClass;
+        UtilitiesClass.Static.RModLog("R_RunePlayer using Game Mode's Player Replication Info class:" @ PlayerReplicationInfoClass);
     }
 
     // Bypass RunePlayer's PreBeginPlay, because it will respawn anim proxy
