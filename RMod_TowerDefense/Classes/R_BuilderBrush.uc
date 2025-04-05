@@ -8,7 +8,7 @@ class R_BuilderBrush extends Actor;
 const LogCategory = 'RModTowerDefense';
 
 // Libraries
-const GridLibrary = Class'RMod_TowerDefense.R_AGridLibrary';
+const GridLibrary = Class'RBase.R_AGridLibrary';
 
 // Grid snapping vars
 var int BrushGridUnitSnapping;  // Grid unit size
@@ -46,7 +46,7 @@ event Tick(float DeltaSeconds)
 {
     local Rotator ViewRotation;
     local Vector PawnOrigin;
-    local Vector SnappedLocation;
+    local Vector SnappedLocation, LocationOffset;
     local R_RunePlayer RPOwner;
 	local int GridCellXCount, GridCellYCount;
     
@@ -70,6 +70,8 @@ event Tick(float DeltaSeconds)
 		SnappedLocation = GridLibrary.Static.SnapAreaLocationToGrid(
 			BrushGridUnitSnapping, DesiredBrushLocation,
 			GridCellXCount, GridCellYCount);
+		LocationOffset = Vect(0,0,1) * BuildableActorClass.Default.CollisionHeight;
+        //SnappedLocation.Z += BuildableActorClass.Default.CollisionHeight;
 	}
 	
 	// Update grid actor
@@ -77,9 +79,10 @@ event Tick(float DeltaSeconds)
 	{
 		GridActor.EmphasisLocation = DesiredBrushLocation;
 		GridActor.ConstrainedLocation = SnappedLocation;
+		GridActor.GridUnitSize = BrushGridUnitSnapping;
 	}
 
-    SetLocation(SnappedLocation);
+    SetLocation(SnappedLocation + LocationOffset);
 }
 
 function SetDesiredBrushLocation(Vector NewDesiredLocation)
@@ -116,11 +119,19 @@ function SetBuildableActorClass(Class<R_ABuildableActor> NewBuildableActorClass)
     if(BuildableActorClass == None)
     {
         Skeletal = None;
+		if(GridActor != None)
+		{
+			GridActor.bHidden = true;
+		}
     }
     else
     {
         Skeletal = BuildableActorClass.Default.Skeletal;
         DrawScale = BuildableActorClass.Default.DrawScale;
+		if(GridActor != None)
+		{
+			GridActor.bHidden = false;
+		}
     }
 }
 
