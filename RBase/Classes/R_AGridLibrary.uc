@@ -1,5 +1,5 @@
 //==============================================================================
-// R_AGrid
+// R_AGridLibrary
 // Abstract class which contains package-wide utility functions for snapping
 // objects to a grid
 //==============================================================================
@@ -62,6 +62,47 @@ static function Vector SnapAreaLocationToGrid(
 	Result.Y += offset.Y * AlignmentY;
 	Result.Z = InLocation.Z;
 
+	return Result;
+}
+
+/**
+*	CalcGridIndexFromLocation
+*	Given some world location, returns the X, Y index of the grid cell
+*	containing that location
+*/
+static function CalcGridIndexFromLocation(
+	int GridUnitSize, Vector InLocation,
+	out int OutIndexX, out int OutIndexY)
+{
+	if(GridUnitSize <= 0)
+	{
+		OutIndexX = 0;
+		OutIndexY = 0;
+		return;
+	}
+
+	OutIndexX = int(MathLibrary.Static.Floor(InLocation.X / GridUnitSize));
+	OutIndexY = int(MathLibrary.Static.Floor(InLocation.Y / GridUnitSize));
+}
+
+/**
+*	CalcLocationFromGridIndex
+*	Given grid X,Y index, returns the minimum X and Y world coordinates for that
+*	cell (top left corner of the grid cell)
+*/
+static function Vector CalcLocationFromGridIndex(
+	int GridUnitSize, int IndexX, int IndexY)
+{
+	local Vector Result;
+	
+	if(GridUnitSize == 0)
+	{
+		return Vect(0,0,0);
+	}
+
+	Result.X = IndexX * GridUnitSize;
+	Result.Y = IndexY * GridUnitSize;
+	Result.Z = 0.0;
 	return Result;
 }
 
