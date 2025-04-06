@@ -1,4 +1,4 @@
-class R_CreaturePlayer_Goblin extends R_RunePlayer_Creature;
+class R_CreaturePlayer_Goblin extends R_CreaturePlayer;
 
 const SKELGROUP_GOBLIN_HEAD = 1;
 const SKELGROUP_GOBLIN_ARM_L = 2;

@@ -48,26 +48,6 @@ event BeginPlay()
     SkelMesh = Owner.SkelMesh;
 }
 
-simulated event Tick(float DeltaSeconds)
-{
-    LockSelfMeshToOwnerMesh();
-}
-
-simulated function LockSelfMeshToOwnerMesh()
-{
-    local Vector OwnerMeshOffset;
-    local Vector ProxyMeshOffset;
-    local Vector ProxyMeshLocation;
-
-    OwnerMeshOffset = Owner.GetJointPos(JointNamed('pelvis')) - Owner.Location;
-    ProxyMeshOffset = Self.GetJointPos(JointNamed('pelvis')) - Self.Location;
-
-    ProxyMeshLocation = Owner.Location + (OwnerMeshOffset - ProxyMeshOffset);
-
-    SetLocation(ProxyMeshLocation);
-    SetRotation(Owner.Rotation);
-}
-
 /**
 *   AcquireInventory (override)
 *   This is overridden to attach Inventory actors to the AnimProxy instead of to the
@@ -174,13 +154,13 @@ function AcquireRunes(Runes RunesActor)
 */
 function ProxyPickup()
 {
-    local R_RunePlayer_Creature RPOwner;
+    local R_CreaturePlayer RPOwner;
     local Name AnimToPlay;
     local float AnimRate;
 
     bDoStowExecuted = false;
 
-    RPOwner = R_RunePlayer_Creature(Owner);
+    RPOwner = R_CreaturePlayer(Owner);
     if(RPOwner != None)
     {
         RPOwner.SelectPickupAnim(AnimToPlay, AnimRate);
@@ -258,14 +238,14 @@ function bool WantsToPickup(Inventory InventoryActor)
 */
 function bool CanUseWeaponWithShield(Weapon WeaponActor)
 {
-    local R_RunePlayer_Creature RPOwner;
+    local R_CreaturePlayer RPOwner;
 
     if(WeaponActor == None)
     {
         return true;
     }
 
-    RPOwner = R_RunePlayer_Creature(Owner);
+    RPOwner = R_CreaturePlayer(Owner);
     if(RPOwner != None)
     {
         if(RPOwner.bCanHoldShieldWithTwoHandedWeapons)
@@ -524,9 +504,9 @@ state PickingUp
 {
     function bool ShouldDropShield()
     {
-        local R_RunePlayer_Creature RPOwner;
+        local R_CreaturePlayer RPOwner;
 
-        RPOwner = R_RunePlayer_Creature(Owner);
+        RPOwner = R_CreaturePlayer(Owner);
         if(RPOwner != None)
         {
             return !CanUseWeaponWithShield(RPOwner.Weapon);
@@ -603,9 +583,9 @@ state Switching
 {
     function bool ShouldDropShield()
     {
-        local R_RunePlayer_Creature RPOwner;
+        local R_CreaturePlayer RPOwner;
 
-        RPOwner = R_RunePlayer_Creature(Owner);
+        RPOwner = R_CreaturePlayer(Owner);
         if(RPOwner != None)
         {
             return !CanUseWeaponWithShield(RPOwner.Weapon);
@@ -703,10 +683,10 @@ state Throwing
 
     function PlayThrowAnim()
     {
-        local R_RunePlayer_Creature RPOwner;
+        local R_CreaturePlayer RPOwner;
         local Name AnimToPlay;
 
-        RPOwner = R_RunePlayer_Creature(Owner);
+        RPOwner = R_CreaturePlayer(Owner);
         if(RPOwner != None)
         {
             AnimToPlay = RPOwner.SelectThrowAnim();
@@ -734,7 +714,7 @@ Begin:
 
 defaultproperties
 {
-    DrawType=DT_SkeletalMesh
-    Skeletal=SkelModel'creatures.Dwarf'
-    bHidden=False
+    //DrawType=DT_SkeletalMesh
+    //Skeletal=SkelModel'creatures.Dwarf'
+    //bHidden=False
 }

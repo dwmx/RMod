@@ -1,7 +1,7 @@
 //==============================================================================
-//  R_RunePlayer_Creature
+//  R_CreaturePlayer
 //==============================================================================
-class R_RunePlayer_Creature extends R_RunePlayer config(RMod);
+class R_CreaturePlayer extends R_RunePlayer config;
 
 // These are for dwarf skel
 const SKELGROUP_TORSO = 1;
@@ -72,17 +72,17 @@ function ApplyOwnerAndProxySkelGroupFlags()
         LowerBodyGroups[0] = SKELGROUP_LEG_R;
         LowerBodyGroups[1] = SKELGROUP_LEG_L;
 
-        // Hide self's upper body
-        for(i = 0; i < 10; ++i)
-        {
-            SkelGroupFlags[UpperBodyGroups[i]] = POLYFLAG_INVISIBLE;
-        }
-
-        // Hide proxy's lower body
-        for(i = 0; i < 2; ++i)
-        {
-            AnimProxy.SkelGroupFlags[LowerBodyGroups[i]] = POLYFLAG_INVISIBLE;
-        }
+        //// Hide self's upper body
+        //for(i = 0; i < 10; ++i)
+        //{
+        //    SkelGroupFlags[UpperBodyGroups[i]] = POLYFLAG_INVISIBLE;
+        //}
+//
+        //// Hide proxy's lower body
+        //for(i = 0; i < 2; ++i)
+        //{
+        //    AnimProxy.SkelGroupFlags[LowerBodyGroups[i]] = POLYFLAG_INVISIBLE;
+        //}
     }
 }
 
@@ -430,11 +430,11 @@ function PlayDrowning   (optional float tweentime)
 */
 function Actor GetAttachmentParentActor()
 {
-    if(AnimProxy != None)
-    {
-        // Should always return the AnimProxy for creatures
-        return AnimProxy;
-    }
+    //if(AnimProxy != None)
+    //{
+    //    // Should always return the AnimProxy for creatures
+    //    return AnimProxy;
+    //}
     return Self;
 }
 
