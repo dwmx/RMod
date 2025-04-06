@@ -81,6 +81,10 @@ var bool bLoadoutMenuDoNotShow;
 //==============================================================================
 //  Spectator related variables
 var Class<HUD> HUDTypeSpectator;
+
+// The camera class to use when in Spectator mode
+// R_GameReplicationInfo.SpectatorCameraClass will override this whenever it
+// is set (None by default)
 var Class<R_ACamera> SpectatorCameraClass;
 
 var R_ACamera Camera;
@@ -3450,11 +3454,18 @@ state PlayerValidation
 //  This state spawns a new R_ACamera actor and routes most view-related
 //  functionality through it. For custom view functionality, extend the
 //  R_ACamera class and set the R_RunePlayer.SpectatorCameraClass variable.
+//
+//	R_GameReplicationInfo.SpectatorCameraClass will override the configured
+//	R_RunePlayer.SpectatorCameraClass whenever a GameMode-specific camera
+//	class has been specified (None by default)
 //==============================================================================
 state PlayerSpectating
 {
     event BeginState()
     {
+        local R_GameReplicationInfo GRI;
+        local Class<R_ACamera> EffectiveCameraClass;
+
         Self.SetCollision(false, false, false);
         Self.bCollideWorld = false;
         Self.DrawType = DT_None;
@@ -3467,11 +3478,31 @@ state PlayerSpectating
         {
             Level.Game.DiscardInventory(Self);
             
+            // First, attempt to grab camera class from GRI
+            EffectiveCameraClass = None;
+            GRI = R_GameReplicationInfo(GameReplicationInfo);
+            if(GRI != None)
+            {
+                EffectiveCameraClass = GRI.SpectatorCameraClass;
+            }
+
+            // Second try to grab the player configured camera class
+            if(EffectiveCameraClass == None)
+            {
+                EffectiveCameraClass = SpectatorCameraClass;
+            }
+
+            // Last, default fall-back
+            if(EffectiveCameraClass == None)
+            {
+                EffectiveCameraClass = Class'R_Camera_Spectator';
+            }
+
             if(Camera != None)
             {
                 Camera.Destroy();
             }
-            Camera = Spawn(Self.SpectatorCameraClass, Self);
+            Camera = Spawn(EffectiveCameraClass, Self);
         }
     }
 
@@ -3574,6 +3605,20 @@ state PlayerSpectating
     // Fire cycles view targets
     exec function Fire(optional float F)
     {
+        local R_GameReplicationInfo GRI;
+
+        // Attempt to respawn out of spectator mode
+        GRI = R_GameReplicationInfo(GameReplicationInfo);
+        if(GRI != None)
+        {
+            if(GRI.CheckShouldPlayerRespawn(Self, 'PlayerSpectating'))
+            {
+                ServerReStartPlayer();
+                return;
+            }
+        }
+
+        // Otherwise cycle view target
         if(Self.Camera != None)
         {
             Self.Camera.Input_Fire();

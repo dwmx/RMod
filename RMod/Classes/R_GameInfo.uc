@@ -100,6 +100,22 @@ function PlayerSetTimeLimit(PlayerPawn P, int DurationMinutes)
     BroadcastMessage("TimeLimit has been set to " $ DurationMinutes $ " minutes.");
 }
 
+/**
+*	PreBeginPlay (override)
+*	Overridden to spawn GRI via SpawnGameReplicationInfo and add logging
+*/
+function PreBeginPlay()
+{
+    StartTime = 0;
+    SetGameSpeed(GameSpeed);
+    Level.bNoCheating = bNoCheating;
+    Level.bAllowFOV = bAllowFOV;
+    
+    // Spawn and init GRI
+    SpawnGameReplicationInfo();
+    InitGameReplicationInfo();
+}
+
 event BeginPlay()
 {
     Super.BeginPlay();
@@ -133,6 +149,58 @@ event PostBeginPlay()
     if(RGRI != None)
     {
         RGRI.bLoadoutsEnabled = bLoadoutsEnabled;
+    }
+}
+
+/**
+*	SpawnGameReplicationInfo
+*	Spawn the game's configured GRI class and log
+*/
+function SpawnGameReplicationInfo()
+{
+    local Class<GameReplicationInfo> GRIClass;
+
+    if(GameReplicationInfoClass != None)
+    {
+        GRIClass = GameReplicationInfoClass;
+    }
+    else
+    {
+        UtilitiesClass.Static.RModLog("GameReplicationInfoClass not configured for R_GameInfo class" @ Class @ "using default");
+        GRIClass = Class'Engine.GameReplicationInfo';
+    }
+
+    if(GRIClass != None)
+    {
+        UtilitiesClass.Static.RModLog("Spawning GameReplicationInfo from class" @ GRIClass);
+        GameReplicationInfo = Spawn(GRIClass);
+    }
+
+    if(GameReplicationInfo == None)
+    {
+        UtilitiesClass.Static.RModWarn("Failed to spawn GameReplicationInfo from class" @ GRIClass);
+        return;
+    }
+}
+
+/**
+*	InitGameReplicationInfo (override)
+*	Overridden from GameInfo for logging
+*/
+function InitGameReplicationInfo()
+{
+    // Init GRI
+    if(GameReplicationInfo != None)
+    {
+        UtilitiesClass.Static.RModLog("Initializing GameReplicationInfo");
+        GameReplicationInfo.bTeamGame = bTeamGame;
+        GameReplicationInfo.GameName = GameName;
+        GameReplicationInfo.GameClass = String(Class);
+        GameReplicationInfo.bClassicDeathMessages = bClassicDeathMessages;
+    }
+    else
+    {
+        UtilitiesClass.Static.RModWarn("R_GameInfo.InitGameReplicationInfo failed, GameReplicationInfo ==" @ GameReplicationInfo);
     }
 }
 
@@ -337,17 +405,9 @@ function ResetGameReplicationInfo()
             Level.Game.GameReplicationInfo.Destroy();
         }
         
-        if(Level.Game.GameReplicationInfoClass != None)
-        {
-            Level.Game.GameReplicationInfo = Spawn(Level.Game.GameReplicationInfoClass);
-        }
-        else
-        {
-            Level.Game.GameReplicationInfo = Spawn(class'Engine.GameReplicationInfo');
-        }
-        
+        SpawnGameReplicationInfo();
+        InitGameReplicationInfo();
         Level.Game.GameReplicationInfo.RemainingTime = RMP.RemainingTime;
-        Level.Game.InitGameReplicationInfo();
         
         foreach AllActors(class'Engine.PlayerPawn', P)
         {
