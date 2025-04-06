@@ -19,6 +19,7 @@ var config bool bOptionWeaponThrowBlockTier2;           // Tier 2 weapons are th
 var config bool bOptionWeaponThrowBlockTier3;           // Tier 3 weapons are throw-blockable
 var config bool bOptionWeaponThrowBlockTier4;           // Tier 4 weapons are throw-blockable
 var config bool bOptionWeaponThrowBlockTier5;           // Tier 5 weapons are throw-blockable
+var config bool bAllowValidPlayerSubclasses;			// Allows subclasses of R_Runeplayer to join
 
 replication
 {
@@ -30,7 +31,8 @@ replication
         bOptionWeaponThrowBlockTier2,
         bOptionWeaponThrowBlockTier3,
         bOptionWeaponThrowBlockTier4,
-        bOptionWeaponThrowBlockTier5;
+        bOptionWeaponThrowBlockTier5,
+		bAllowValidPlayerSubclasses;
 }
 
 /**
@@ -75,6 +77,7 @@ function LogAllGameOptions()
     LogGameOption("WeaponThrowBlockTier3", String(bOptionWeaponThrowBlockTier3));
     LogGameOption("WeaponThrowBlockTier4", String(bOptionWeaponThrowBlockTier4));
     LogGameOption("WeaponThrowBlockTier5", String(bOptionWeaponThrowBlockTier5));
+	LogGameOption("AllowValidPlayerSubclasses", String(bAllowValidPlayerSubclasses));
 }
 
 function LogGameOption(String GameOptionNameString, String GameOptionValueString)
@@ -103,4 +106,5 @@ defaultproperties
     bOptionWeaponThrowBlockTier3=True
     bOptionWeaponThrowBlockTier4=True
     bOptionWeaponThrowBlockTier5=True
+	bAllowValidPlayerSubclasses=True
 }

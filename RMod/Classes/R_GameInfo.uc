@@ -4,6 +4,8 @@
 //==============================================================================
 class R_GameInfo extends RuneI.RuneMultiPlayer config(RMod);
 
+const GameOptionsChecker = Class'R_AGameOptionsChecker';
+
 var config Class<RunePlayer> RunePlayerClass;
 var Class<RunePlayer> SpectatorMarkerClass;
 var config Class<PlayerReplicationInfo> PlayerReplicationInfoClass;
@@ -622,20 +624,41 @@ event PlayerPawn Login(
 	out String Error,
 	Class<PlayerPawn> SpawnClass)
 {
+	local Class<PlayerPawn> EffectivePlayerClass;
 	local Class<PlayerPawn> IncomingClass;
 	local PlayerPawn P;
 	
-	IncomingClass = SpawnClass;
-	
+	// Game's effective spawning class -- all players must be this class or extend from it in the following check
 	if(RunePlayerClass == None)
-    {
-        UtilitiesClass.Static.RModLog("Game's configured RunePlayerClass is None. Using RMod.R_RunePlayer");
-        SpawnClass = Class'RMod.R_RunePlayer';
-    }
-    else
-    {
-        SpawnClass = RunePlayerClass;
-    }
+	{
+		UtilitiesClass.Static.RModLog("Games configured RunePlayerClass is None, defaulting to RMod.R_RunePlayer");
+		EffectivePlayerClass = class'RMod.R_RunePlayer';
+	}
+	else
+	{
+		EffectivePlayerClass = RunePlayerClass;
+	}
+
+	IncomingClass = SpawnClass;
+	SpawnClass = None;
+
+	// Check for subclasses
+	if(IncomingClass != EffectivePlayerClass && ClassIsChildOf(IncomingClass, EffectivePlayerClass))
+	{
+		if(GameOptionsChecker.Static.GetGameOption_AllowValidPlayerSubclasses(Self))
+		{
+			SpawnClass = IncomingClass;
+		}
+		else
+		{
+			UtilitiesClass.Static.RModLog("Player joined with a valid player subclass but AllowValidPlayerSubclasses game option is disabled, using default");
+		}
+	}
+
+	if(SpawnClass == None)
+	{
+		SpawnClass = EffectivePlayerClass;
+	}
 
 	P = Super.Login(
 		Portal,

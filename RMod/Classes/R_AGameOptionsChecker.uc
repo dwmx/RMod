@@ -94,6 +94,17 @@ static function bool GetGameOption_WeaponTierBlockable(Actor WorldContextActor, 
     }
     return false;
 }
+
+static function bool GetGameOption_AllowValidPlayerSubclasses(Actor WorldContextActor)
+{
+	local R_GameOptions RGO;
+    RGO = GetGameOptionsFromWorldContextActor(WorldContextActor);
+    if(RGO != None)
+    {
+        return RGO.bAllowValidPlayerSubclasses;
+    }
+    return false;
+}
 //==============================================================================
 //  End Game Options
 //==============================================================================
