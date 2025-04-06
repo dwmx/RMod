@@ -32,7 +32,7 @@ replication
         bOptionWeaponThrowBlockTier3,
         bOptionWeaponThrowBlockTier4,
         bOptionWeaponThrowBlockTier5,
-		bAllowValidPlayerSubclasses;
+        bAllowValidPlayerSubclasses;
 }
 
 /**
@@ -77,7 +77,7 @@ function LogAllGameOptions()
     LogGameOption("WeaponThrowBlockTier3", String(bOptionWeaponThrowBlockTier3));
     LogGameOption("WeaponThrowBlockTier4", String(bOptionWeaponThrowBlockTier4));
     LogGameOption("WeaponThrowBlockTier5", String(bOptionWeaponThrowBlockTier5));
-	LogGameOption("AllowValidPlayerSubclasses", String(bAllowValidPlayerSubclasses));
+    LogGameOption("AllowValidPlayerSubclasses", String(bAllowValidPlayerSubclasses));
 }
 
 function LogGameOption(String GameOptionNameString, String GameOptionValueString)
@@ -106,5 +106,5 @@ defaultproperties
     bOptionWeaponThrowBlockTier3=True
     bOptionWeaponThrowBlockTier4=True
     bOptionWeaponThrowBlockTier5=True
-	bAllowValidPlayerSubclasses=True
+    bAllowValidPlayerSubclasses=True
 }

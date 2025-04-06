@@ -97,7 +97,7 @@ static function bool GetGameOption_WeaponTierBlockable(Actor WorldContextActor, 
 
 static function bool GetGameOption_AllowValidPlayerSubclasses(Actor WorldContextActor)
 {
-	local R_GameOptions RGO;
+    local R_GameOptions RGO;
     RGO = GetGameOptionsFromWorldContextActor(WorldContextActor);
     if(RGO != None)
     {
