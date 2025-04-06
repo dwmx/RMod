@@ -25,7 +25,7 @@ simulated function bool CheckShouldPlayerRespawn(R_RunePlayer RP, Name RelevantS
     {
         if(RP.PlayerReplicationInfo != None)
         {
-            if(RP.PlayerReplicationInfo.Team == 255 && RP.PlayerReplicationInfo.bIsSpectator)
+            if(RP.PlayerReplicationInfo.Team == 255 && !RP.PlayerReplicationInfo.bIsSpectator)
             {
                 return true;
             }
