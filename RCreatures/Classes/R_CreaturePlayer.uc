@@ -1,21 +1,22 @@
 //==============================================================================
 //  R_CreaturePlayer
+//	Base class for all playable creatures
+//	The bulk of the creature functionality is split between this class and
+//	R_CreaturePlayerProxy
+//
+//	If you are not familiar with original RunePlayer/RunePlayerProxy setup:
+//
+//	RunePlayerProxy is an invisible actor which controls the upper body
+//	animations along with functionality associated with those animations
+//		i.e. Use, Attack, Throw, Defend
+//
+//	RunePlayer is the actual controlled Pawn class, plays looping animations
+//	(like Run, Falling, Crouch) on the lower body and tells the AnimProxy
+//	what animations to play
+//
+//	CreaturePlayer/CreaturePlayerProxy is set up the same way
 //==============================================================================
 class R_CreaturePlayer extends R_RunePlayer config;
-
-// These are for dwarf skel
-const SKELGROUP_TORSO = 1;
-const SKELGROUP_HEAD = 2;
-const SKELGROUP_NECK_CAP = 8;
-const SKELGROUP_ARM_R = 3;
-const SKELGROUP_SHOULDER_R = 4;
-const SKELGROOP_ARM_CAP_R = 5;
-const SKELGROUP_ARM_CAP_L = 6;
-const SKELGROUP_SHOULDER_L = 7;
-const SKELGROUP_LEG_R = 9;
-const SKELGROUP_LEG_L = 10;
-const SKELGROUP_ARM_L = 11;
-const SKELGROUP_EARS_FACE = 12;
 
 var float ThrowStrengthMultiplier;
 
@@ -27,77 +28,12 @@ var Name AttachHammerJoint;
 // If true, this creature can hold shields with 2 handers
 var bool bCanHoldShieldWithTwoHandedWeapons;
 
-function SpawnAnimProxy()
-{
-    AnimProxy = Spawn(Class'RMod.R_CreaturePlayerProxy', Self);
-    ApplyOwnerAndProxySkelGroupFlags();
-}
-
 function PlayerRestart()
 {
     Super.PlayerRestart();
-    ApplyOwnerAndProxySkelGroupFlags();
     AnimProxy.DesiredColorAdjust = DesiredColorAdjust;
     AnimProxy.bHidden = false;
 }
-
-/**
-*   ApplyOwnerAndProxySkelGroupFlags
-*   Hides the upper skelgroups of Self, and hides the lower skelgroups
-*   of the AnimProxy
-*/
-function ApplyOwnerAndProxySkelGroupFlags()
-{
-    local int LowerBodyGroups[2];
-    local int UpperBodyGroups[10];
-    local int i;
-
-    // Only works with creature proxy
-    if(R_CreaturePlayerProxy(AnimProxy) != None)
-    {
-        // These skelgroups are just for Dwarf at the moment
-        // Upper body groups
-        UpperBodyGroups[0] = SKELGROUP_TORSO;
-        UpperBodyGroups[1] = SKELGROUP_HEAD;
-        UpperBodyGroups[2] = SKELGROUP_NECK_CAP;
-        UpperBodyGroups[3] = SKELGROUP_ARM_R;
-        UpperBodyGroups[4] = SKELGROOP_ARM_CAP_R;
-        UpperBodyGroups[5] = SKELGROUP_SHOULDER_R;
-        UpperBodyGroups[6] = SKELGROUP_SHOULDER_L;
-        UpperBodyGroups[7] = SKELGROUP_ARM_L;
-        UpperBodyGroups[8] = SKELGROUP_ARM_CAP_L;
-        UpperBodyGroups[9] = SKELGROUP_EARS_FACE;
-
-        // Lower body groups
-        LowerBodyGroups[0] = SKELGROUP_LEG_R;
-        LowerBodyGroups[1] = SKELGROUP_LEG_L;
-
-        //// Hide self's upper body
-        //for(i = 0; i < 10; ++i)
-        //{
-        //    SkelGroupFlags[UpperBodyGroups[i]] = POLYFLAG_INVISIBLE;
-        //}
-//
-        //// Hide proxy's lower body
-        //for(i = 0; i < 2; ++i)
-        //{
-        //    AnimProxy.SkelGroupFlags[LowerBodyGroups[i]] = POLYFLAG_INVISIBLE;
-        //}
-    }
-}
-
-function RevertOwnerAndProxySkelGroupFlags()
-{
-    local int i;
-
-    for(i = 0; i < 16; ++i)
-    {
-        SkelGroupFlags[i] = Default.SkelGroupFlags[i];
-        AnimProxy.SkelGroupFlags[i] = AnimProxy.Default.SkelGroupFlags[i];
-    }
-}
-
-
 
 state EdgeHanging
 {
@@ -130,13 +66,6 @@ state EdgeHanging
     }
 }
 
-
-
-event Tick(float DeltaSeconds)
-{
-    Super.Tick(DeltaSeconds);
-}
-
 exec function AltFire( optional float F )
 {
     PlayAltFiring();
@@ -155,6 +84,10 @@ function PlayThrow()
     // TODO: Optionally play animation here
 }
 
+/**
+*	CalcThrowMagnitudeForWeapon
+*	Called from ThrowWeapon to determine how far this creature can throw a given weapon
+*/
 function CalcThrowMagnitudeForWeapon(Weapon ThrownWeapon, out float ThrowXMagnitude, out float ThrowZMagnitude)
 {
     ThrowXMagnitude = ThrowStrengthMultiplier * 7500.0 / ThrownWeapon.Mass;
@@ -166,8 +99,7 @@ function CalcThrowMagnitudeForWeapon(Weapon ThrownWeapon, out float ThrowXMagnit
 
 /**
 *   ThrowWeapon (override)
-*   Overridden to detach weapons from AnimProxy instead of Self
-*   Also allows creatures to throw farther than other Players
+*   Allows creatures to throw farther than other Players via CalcThrowMagnitudeForWeapon
 */
 function ThrowWeapon()
 {
@@ -214,6 +146,14 @@ function ThrowWeapon()
     ThrownWeapon.GoToState('Throw');
 }
 
+//==============================================================================
+//	Animation related functions
+//==============================================================================
+/**
+*	LoopAnimWithProxy
+*	Loop an animation on CreaturePlayer and attempt to loop that same animation
+*	on the CreaturePlayerProxy
+*/
 function LoopAnimWithProxy(Name AnimName, float Rate, float Tween)
 {
     LoopAnim(AnimName, Rate, Tween);
@@ -223,6 +163,11 @@ function LoopAnimWithProxy(Name AnimName, float Rate, float Tween)
     }
 }
 
+/**
+*	PlayAnimWithProxy
+*	Play an animation on CreaturePlayer and attempt to play that same animation
+*	on the CreaturePlayerProxy
+*/
 function PlayAnimWithProxy(Name AnimName, float Rate, float Tween)
 {
     PlayAnim(AnimName, Rate, Tween);
@@ -232,119 +177,45 @@ function PlayAnimWithProxy(Name AnimName, float Rate, float Tween)
     }
 }
 
-function PlayWaiting(optional float tween)
-{
-    LoopAnimWithProxy('idleA', RandRange(0.8, 1.2), tween);
-}
-
-function PlayMoving(optional float tween)
-{
-    local MovementDir_e dir;
-    local Name anim;
-
-    dir = GetAnimationMovementDirection();
-
-    switch(dir)
-    {
-    case MD_FORWARD:
-        anim = 'runA';
-        break;
-    case MD_FORWARDRIGHT:
-        anim = 'straferight';
-        break;
-    case MD_FORWARDLEFT:
-        anim = 'strafeleft';
-        break;
-    case MD_BACKWARD:
-        anim = 'backupA';
-        break;
-    case MD_BACKWARDRIGHT:
-        anim = 'straferight';
-        break;
-    case MD_BACKWARDLEFT:
-        anim = 'strafeleft';
-        break;
-    case MD_RIGHT:
-        anim = 'straferight';
-        break;
-    case MD_LEFT:
-        anim = 'strafeleft';
-        break;
-    default:
-        break;
-    }
-
-    LoopAnimWithProxy(anim, 1.0, 0.1);
-}
-
-function PlayJump()
-{
-    PlayAnimWithProxy('fallingA', 1.0, 0.1);
-}
-
-function PlayDuck(optional float tween)
-{
-    LoopAnimWithProxy('duck', 1.0, 0.1);
-}
-
-function PlayInAir(optional float tween)
-{
-    LoopAnimWithProxy  ('fallingA',  1.0, tween);
-}
-function PlayFalling(optional float tween)
-{
-    if(Velocity.Z < -1000)
-    {
-        LoopAnimWithProxy  ('fallingC',  1.0, tween);
-    }
-}
+/**
+*	Falling (override)
+*	Overridden to correctly route animation calls to PlayInAir and PlayFalling
+*
+*	- PlayInAir: Plays when the Creature is falling and the ground is near
+*	- PlayFalling: Plays when the Creature is falling with no ground in sight
+*/
 function Falling()
 {
-    local vector end;
+    local Vector TraceStart,TraceEnd;
 
-    end = Location;
-    end.Z -= CollisionHeight * 2.5;
+    TraceStart = Location;
+    TraceEnd = TraceStart + Vect(0,0,-1) * CollisionHeight * 2.5;
 
-    if(FastTrace(end, Location))
+    if(FastTrace(TraceEnd, TraceStart))
+    {
         PlayInAir(0.1);
+    }
     else
+    {
         PlayFalling(0.1);
+    }
 }
-function LongFall()
-{
-    if (AnimSequence != 'fallingC')
-        LoopAnimWithProxy  ('fallingC',  1.0, 0.1);
-}
-function PlayLanding(optional float tween)
-{
-    if (AnimSequence == 'fallingC')
-        PlayAnimWithProxy('landingC', 1.0, 0.1);
-    else if (AnimSequence == 'fallingB')
-        PlayAnimWithProxy('landingB', 1.0, 0.1);
-    else
-        PlayAnimWithProxy('landingA', 1.0, 0.1);
-}
-
-
 
 /**
-*   Died (Override)
-*   Overridden to hide the anim proxy on death and play death anim only on Self.
+*	LongFall (override)
+*	Overridden to route call to new function PlayLongFalling
+*	Original game code doesn't appear to implement this in any of the main player classes,
+*	so it's probably not very useful, but still copied from some creature class scripts
 */
-function Died(Pawn Killer, Name DamageType, Vector HitLocation)
+function LongFall()
 {
-    RevertOwnerAndProxySkelGroupFlags();
-    if(AnimProxy != None)
-    {
-        AnimProxy.bHidden = true;
-    }
-
-    Super.Died(Killer, DamageType, HitLocation);
+	PlayLongFalling(0.1);
 }
 
 /**
 *   PlayDying (override)
 *   Overridden to catch DamageTypes 'fell' and 'fire' and pass animation control to appropriate functions
+*	Super.PlayDying routes PlayAnimation call to the rest of the dying functions
 */
 function PlayDying(Name DamageType, vector HitLoc)
 {
@@ -362,67 +233,64 @@ function PlayDying(Name DamageType, vector HitLoc)
     }
 }
 
-function PlayFellDeath(Name DamageType)
-{
-    local Name AnimToPlay;
-
-    if(AnimSequence == 'fallingB')
-    {
-        AnimToPlay = 'landingB';
-    }
-    else
-    {
-        AnimToPlay = 'landingC';
-    }
-
-    PlayAnimWithProxy(AnimToPlay, 1.0, 0.1);
-}
+/**
+*   SelectTauntAnim (Override)
+*   Select the taunt animation to play when triggered
+*/
+function Name SelectTauntAnim()	{ return 'None'; }
 
 /**
-*   Death animations
+*   SelectThrowAnim
+*   Called by CreaturePlayerProxy to select the throw animation to play
+*   when throwing the current weapon.
 */
-function PlayDeath(Name DamageType)
-{
-    local Name AnimToPlay;
-    local int RandIndex;
-
-    RandIndex = RandRange(0, 5);
-    switch(RandIndex)
-    {
-    case 0: AnimToPlay = 'Deaths'; break;
-    case 1: AnimToPlay = 'DeathF'; break;
-    case 2: AnimToPlay = 'deathA'; break;
-    case 3: AnimToPlay = 'DeathR'; break;
-    case 4: AnimToPlay = 'deathL'; break;
-    }
-
-    PlayAnimWithProxy(AnimToPlay, 1.0, 0.1);
-}
-
-function PlayBackDeath(name DamageType)     { PlayDeath(DamageType); }
-function PlayLeftDeath(name DamageType)     { PlayDeath(DamageType); }
-function PlayRightDeath(name DamageType)    { PlayDeath(DamageType); }
-function PlayHeadDeath(name DamageType)     { PlayDeath(DamageType); }
-function PlaySkewerDeath(name DamageType)   { PlayDeath(DamageType); }
-function PlayFireDeath(Name DamageType)     { PlayDeath(DamageType); }
-function PlayDrownDeath(name DamageType)    { PlayAnimWithProxy('drown_death', 1.0, 0.1);}
+function Name SelectThrowAnim()	{ return 'None'; }
 
 /**
-*   Pain animations
+*	SelectPickupAnim
+*	Called by CreaturePlayerProxy to select the pickup animation to play
+*	when grabbing Inventorys
 */
-function PlayFrontHit   (optional float tweentime)
-{
-    PlayAnimWithProxy('Damage', 1.0, 0.1);
-}
-function PlayBackHit    (optional float tweentime)  { PlayFrontHit(tweentime);  }
-function PlayLeftHit    (optional float tweentime)  { PlayFrontHit(tweentime);  }
-function PlayRightHit   (optional float tweentime)  { PlayFrontHit(tweentime);  }
-function PlayHeadHit    (optional float tweentime)  { PlayFrontHit(tweentime);  }
+function SelectPickupAnim(out Name OutAnimToPlay, out float OutAnimRate) {}
 
-function PlayDrowning   (optional float tweentime)
-{
-    PlayAnimWithProxy('drown', 1.0, 0.1);
-}
+//==============================================================================
+//	PlayAnimation functions
+//	All of these are overridden to avoid playing R_RunePlayer animation
+//
+//	All creatures are different enough that there's no base code for these here,
+//	they should be implemented individually per creature
+//
+//	These are most likely the only animation functions you will need to override
+//==============================================================================
+// Movement animations
+function PlayWaiting(optional float Tween)		{}
+function PlayMoving(optional float Tween)		{}
+function PlayJump()								{}
+function PlayDuck(optional float Tween)			{}
+function PlayInAir(optional float Tween)		{}	// In air
+function PlayFalling(optional float Tween)		{}	// In air, ground is near
+function PlayLongFalling(optional float Tween)	{}	// In air for a long time
+function PlayLanding(optional float Tween)		{}
+
+// Pain animations
+function PlayFrontHit(optional float Tween)		{}
+function PlayBackHit(optional float Tween)  	{ PlayFrontHit(Tween);  }
+function PlayLeftHit(optional float Tween)  	{ PlayFrontHit(Tween);  }
+function PlayRightHit(optional float Tween)		{ PlayFrontHit(Tween);  }
+function PlayHeadHit(optional float Tween)  	{ PlayFrontHit(Tween);  }
+function PlayDrowning(optional float Tween)		{}
+
+// Death animations
+function PlayFellDeath(Name DamageType)			{}
+function PlayDeath(Name DamageType)				{}
+function PlayBackDeath(name DamageType)     	{ PlayDeath(DamageType); }
+function PlayLeftDeath(name DamageType)     	{ PlayDeath(DamageType); }
+function PlayRightDeath(name DamageType)    	{ PlayDeath(DamageType); }
+function PlayHeadDeath(name DamageType)     	{ PlayDeath(DamageType); }
+function PlaySkewerDeath(name DamageType)   	{ PlayDeath(DamageType); }
+function PlayFireDeath(Name DamageType)     	{ PlayDeath(DamageType); }
+function PlayDrownDeath(name DamageType)    	{}
+//==============================================================================
 
 /**
 *   GetAttachmentParentActor
@@ -430,11 +298,6 @@ function PlayDrowning   (optional float tweentime)
 */
 function Actor GetAttachmentParentActor()
 {
-    //if(AnimProxy != None)
-    //{
-    //    // Should always return the AnimProxy for creatures
-    //    return AnimProxy;
-    //}
     return Self;
 }
 
@@ -675,65 +538,6 @@ function SwapStowToNext(int StowIndex)
     }
 }
 
-/**
-*   SelectTauntAnim (Override)
-*   Select the taunt animation to play when triggered
-*/
-function Name SelectTauntAnim()
-{
-    local Name AnimToPlay;
-    local int RandIndex;
-
-    RandIndex = RandRange(0, 3);
-    switch(RandIndex)
-    {
-    case 0:
-        AnimToPlay = 'talkB';
-        break;
-    case 1:
-        AnimToPlay = 'talkA';
-        break;
-    case 2:
-        AnimToPlay = 'dd_idleB';
-        break;
-    }
-
-    return AnimToPlay;
-}
-
-/**
-*   SelectThrowAnim
-*   Called by anim proxy to select the throw animation to play
-*   when throwing the current weapon.
-*/
-function Name SelectThrowAnim()
-{
-    if(Weapon != None && Shield == None)
-    {
-        if(Weapon.A_Defend == 'None')
-        {
-            return 'ThrowB';
-        }
-    }
-    return 'Throw';
-}
-
-function SelectPickupAnim(out Name OutAnimToPlay, out float OutAnimRate)
-{
-    if(UseActor != None)
-    {
-        if(Shield(UseActor) != None || Runes(UseActor) != None)
-        {
-            OutAnimToPlay = 'TOblock';
-            OutAnimRate = 1.0;
-            return;
-        }
-    }
-
-    OutAnimToPlay = 'GetWeapon';
-    OutAnimRate = 1.5;
-}
-
 defaultproperties
 {
     GroundSpeed=240.000000
@@ -771,7 +575,7 @@ defaultproperties
     CollisionHeight=33.000000
     Skeletal=SkelModel'creatures.Dwarf'
     SkelMesh=0
-    SpawnableAnimationProxyClass=None
+    SpawnableAnimationProxyClass=Class'RCreatures.R_CreaturePlayerProxy'
     bFrameNotifies=true
     AttachAxeJoint=attach_axe
     AttachSwordJoint=attatch_sword

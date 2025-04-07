@@ -9,20 +9,14 @@
 //  Rune's SCM model format includes "JointGroup" data which the original
 //  AnimationProxy class uses to separate upper and lower body animations.
 //
-//  The meshes created for creatures, like goblin and dwarf, were never set up
-//  with this JointGroup data. Since there does not appear to be a way to
-//  set the JointGroups from UnrealScript, those meshes will not work with the
-//  original AnimationProxy.
+//	The original player model, Ragnar, was set up with this JointGroup data,
+//	but the original creature meshes, like goblin and dwarf, were NOT set up
+//	with this data.
 //
-//  However, a significant portion of game code is still routed to the
-//  AnimationProxy (Use, Attack, Defend, Taunt, etc), so in order to avoid
-//  rewriting all of that, this class is still used.
-//
-//  It's very important to note that the animation proxy attaches all actors
-//  to itself, and NOT to the ownining RunePlayer the way AnimationProxy
-//  normally does.
+//	To get AnimProxy to work with creature meshes, you can use the custom
+//	HTK editor engine to export meshes as SCM, and then reimport with modified
+//	jointgroup data. Thanks to "nah" for creating the HTK editor tools.
 //==============================================================================
-//class R_CreaturePlayerProxy extends AnimationProxy;
 class R_CreaturePlayerProxy extends R_RunePlayerProxy;
 
 // Enumerator for the different directional attacks
@@ -714,7 +708,4 @@ Begin:
 
 defaultproperties
 {
-    //DrawType=DT_SkeletalMesh
-    //Skeletal=SkelModel'creatures.Dwarf'
-    //bHidden=False
 }
