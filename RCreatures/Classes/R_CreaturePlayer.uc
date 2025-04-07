@@ -18,6 +18,14 @@
 //==============================================================================
 class R_CreaturePlayer extends R_RunePlayer config;
 
+// Attack directions -- These need to match those in R_CreaturePlayerProxy
+const AD_Neutral 	= 0;
+const AD_Forward 	= 1;
+const AD_Backward 	= 2;
+const AD_Left 		= 3;
+const AD_Right 		= 4;
+const AD_Invalid 	= -1;
+
 var float ThrowStrengthMultiplier;
 
 // Relevant skeletal joints
@@ -27,13 +35,6 @@ var Name AttachHammerJoint;
 
 // If true, this creature can hold shields with 2 handers
 var bool bCanHoldShieldWithTwoHandedWeapons;
-
-function PlayerRestart()
-{
-    Super.PlayerRestart();
-    AnimProxy.DesiredColorAdjust = DesiredColorAdjust;
-    AnimProxy.bHidden = false;
-}
 
 state EdgeHanging
 {
@@ -234,17 +235,33 @@ function PlayDying(Name DamageType, vector HitLoc)
 }
 
 /**
+*	SelectDirectionalAttackAnimation
+*	Called from CreaturePlayerProxy when determining what attack to play
+*/
+function Name SelectDirectionalAttackAnimation(int AttackDirection, int AttackChainIndex)
+{ return 'None'; }
+
+/**
+*	SelectDefendAnimation
+*	Called from CreaturePlayerProxy when determining what defend animation to play
+*/
+function Name SelectDefendAnimation()
+{ return 'None'; }
+
+/**
 *   SelectTauntAnim (Override)
 *   Select the taunt animation to play when triggered
 */
-function Name SelectTauntAnim()	{ return 'None'; }
+function Name SelectTauntAnim()
+{ return 'None'; }
 
 /**
 *   SelectThrowAnim
 *   Called by CreaturePlayerProxy to select the throw animation to play
 *   when throwing the current weapon.
 */
-function Name SelectThrowAnim()	{ return 'None'; }
+function Name SelectThrowAnim()
+{ return 'None'; }
 
 /**
 *	SelectPickupAnim

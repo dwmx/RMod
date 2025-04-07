@@ -19,15 +19,13 @@
 //==============================================================================
 class R_CreaturePlayerProxy extends R_RunePlayerProxy;
 
-// Enumerator for the different directional attacks
-enum EAttackDirection
-{
-    AD_Forward,
-    AD_Backward,
-    AD_Left,
-    AD_Right,
-    AD_Neutral
-};
+// Attack directions -- These need to match those in R_CreaturePlayer
+const AD_Neutral 	= 0;
+const AD_Forward 	= 1;
+const AD_Backward 	= 2;
+const AD_Left 		= 3;
+const AD_Right 		= 4;
+const AD_Invalid 	= -1;
 
 var Name TorsoAnim;
 var Actor PendingPickupActor;
@@ -367,7 +365,7 @@ auto state Idle
         return true;
     }
 
-    function EAttackDirection DetermineInitialAttackDirection()
+	function int DetermineInitialAttackDirection()
     {
         local Vector X, Y, Z;
         local Vector AccelNormalized;
@@ -408,28 +406,30 @@ auto state Idle
 
     function bool Attack()
     {
-        local EAttackDirection AttackDirection;
+		local int AttackDirection;
         local Name InitialAttackAnim;
+		local R_CreaturePlayer CreatureOwner;
 
-        AttackDirection = DetermineInitialAttackDirection();
-        switch(AttackDirection)
-        {
-        case AD_Forward:
-        case AD_Backward:
-        case AD_Neutral:
-            InitialAttackAnim = 'AttackA';
-            break;
-        case AD_Left:
-            InitialAttackAnim = 'AttackB';
-            break;
-        case AD_Right:
-            InitialAttackAnim = 'AttackC';
-            break;
-        }
+		InitialAttackAnim = 'None';
+		CreatureOwner = R_CreaturePlayer(Owner);
+		if(CreatureOwner != None)
+		{
+			AttackDirection = DetermineInitialAttackDirection();
+			InitialAttackAnim = CreatureOwner.SelectDirectionalAttackAnimation(AttackDirection, 0);
+		}
 
-        TorsoAnim = InitialAttackAnim;
-        GotoState('Attacking');
-
+		if(InitialAttackAnim != 'None')
+		{
+			TorsoAnim = InitialAttackAnim;
+        	GotoState('Attacking');
+			return true;
+		}
+		else
+		{
+			TorsoAnim = 'None';
+			return false;
+		}
+        
         return true;
     }
 }
@@ -481,7 +481,25 @@ state Defending
 
     function PlayDefend()
     {
-        PlayAnim('block', 1.0, 0.1);
+		local R_CreaturePlayer CreatureOwner;
+		local Name AnimToPlay;
+
+		AnimToPlay = 'None';
+		CreatureOwner = R_CreaturePlayer(Owner);
+		if(CreatureOwner != None)
+		{
+			AnimToPlay = CreatureOwner.SelectDefendAnimation();
+		}
+
+		if(AnimToPlay != 'None')
+		{
+			PlayAnim(AnimToPlay, 1.0, 0.1);
+			TorsoAnim = AnimToPlay;
+		}
+		else
+		{
+			TorsoAnim = 'None';
+		}
     }
 
 Begin:

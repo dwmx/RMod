@@ -34,10 +34,17 @@ const A_DrownDeath 	= 'drown_death';
 const A_TalkA 		= 'talkA';
 const A_TalkB 		= 'talkB';
 const A_GetWeapon 	= 'GetWeapon';
-const A_ToBlock 	= 'TOblock';
 const A_Throw 		= 'Throw';
 const A_ThrowB 		= 'ThrowB';
+const A_AttackA		= 'AttackA';
+const A_AttackB		= 'AttackB';
+const A_AttackC		= 'AttackC';
+const A_Block		= 'block';
+const A_ToBlock 	= 'TOblock';
 
+//==============================================================================
+//	Animation related functions
+//==============================================================================
 /**
 *	GetDwarfAnimationForMovementDirection
 *	Returns a Dwarf animation for the associated movement direction enum
@@ -63,9 +70,6 @@ function Name GetDwarfAnimationForMovementDirection(MovementDir_e MovementDir)
     return A_IdleA;
 }
 
-//==============================================================================
-//	Animation related functions
-//==============================================================================
 /**
 *   SelectTauntAnim (override)
 *   Select a random Dwarf animation to play when the player wants to taunt
@@ -126,6 +130,35 @@ function SelectPickupAnim(out Name OutAnimToPlay, out float OutAnimRate)
 
     OutAnimToPlay = A_GetWeapon;
     OutAnimRate = 1.5;
+}
+
+/**
+*	SelectDirectionalAttackAnimation (override)
+*	Select Dwarf-specific attack animations
+*/
+function Name SelectDirectionalAttackAnimation(int AttackDirection, int AttackChainIndex)
+{
+	switch(AttackDirection)
+	{
+		case AD_Forward:
+		case AD_Backward:
+		case AD_Neutral:
+			return A_AttackA;
+		case AD_Left:
+			return A_AttackB;
+		case AD_Right:
+			return A_AttackC;
+	}
+	return 'None';
+}
+
+/**
+*	SelectDefendAnimation (override)
+*	Select Dwarf-specific defend animation
+*/
+function Name SelectDefendAnimation()
+{
+	return A_Block;
 }
 
 //==============================================================================
