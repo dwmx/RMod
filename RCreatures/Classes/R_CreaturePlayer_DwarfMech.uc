@@ -99,6 +99,36 @@ function PlayDuck(optional float tween)
 	LoopAnimWithProxy(A_SawCycle, 1.0, 0.1);
 }
 
+exec function Throw()
+{
+	if(AnimProxy.GetStateName() == 'Aiming')
+	{
+		AnimProxy.GotoState('UnAiming');
+		return;
+	}
+	AnimProxy.GotoState('Aiming');
+}
+
+/**
+*	SelectDirectionalAttackAnimation (override)
+*	Select DwarfMesh-specific attack animations
+*/
+function Name SelectDirectionalAttackAnimation(int AttackDirection, int AttackChainIndex)
+{
+	switch(AttackDirection)
+	{
+		case AD_Forward:
+		case AD_Backward:
+		case AD_Neutral:
+			return A_AttackA;
+		case AD_Left:
+			return A_AttackB;
+		case AD_Right:
+			return A_AttackB;
+	}
+	return 'None';
+}
+
 defaultproperties
 {
 	Skeletal=SkelModel'RCreatures.RDwarfMech'

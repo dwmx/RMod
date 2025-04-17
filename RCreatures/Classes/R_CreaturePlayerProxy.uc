@@ -457,7 +457,8 @@ state Attacking
     }
 
 Begin:
-    PlayAnim(TorsoAnim, 1.5, 0.1);
+    //PlayAnim(TorsoAnim, 1.5, 0.1);
+	PlayAnim(TorsoAnim, 1.0, 0.1);
     TorsoAnim = 'None';
     //Sleep(0.1);
     //WeaponActivate(); // Weapon activate gets called from animation events
@@ -722,6 +723,30 @@ Begin:
     RunePlayer(Owner).SetMovementMode();
     SyncAnimation(0.15);
     GoToState('Idle');
+}
+
+state Aiming
+{
+	ignores TryPlayAnim, TryLoopAnim;
+
+Begin:
+	PlayAnim('fire_windup', 1.0, 0.1);
+	FinishAnim();
+}
+
+state UnAiming
+{
+	ignores TryPlayAnim, TryLoopAnim;
+
+Begin:
+	//AnimFrame = 1.0;
+	//PlayAnim('fire_windup', -1.0, 0.1);
+	//AnimFrame = 1.0;
+	//PlayAnim('high_tran', 1.0, 0.1);
+	TweenAnim('high_tran', 3.0);
+	Sleep(0.5);
+	//FinishAnim();
+	GotoState('idle');
 }
 
 defaultproperties

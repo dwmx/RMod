@@ -80,6 +80,20 @@ function PlayAltFiring()
     }
 }
 
+/**
+*	Fire (override)
+*	Overridden to call PlayFiring even when there is no Weapon
+*/
+exec function Fire( optional float F )
+{
+	bJustFired = true;
+	if( bShowMenu || (Level.Pauser!="") || (Role < ROLE_Authority) )
+		return;
+
+	//if(Weapon != None)
+		PlayFiring();
+}
+
 function PlayThrow()
 {
     // TODO: Optionally play animation here
