@@ -34,7 +34,7 @@ function DrawWidgetPostSetup(Canvas C)
 	local Color DrawColor;
 
 	// Super draws self as box
-	Super.DrawWidgetPostSetup(C);
+	//Super.DrawWidgetPostSetup(C);
 
 	DrawColor.R = 255;
 	DrawColor.G = 255;
