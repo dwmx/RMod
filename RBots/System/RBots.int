@@ -1,1 +1,2 @@
 [Public]
+Object=(Name=RBots.R_MapData_Hildir,Class=Class,MetaClass=RBots.R_DynamicMapData,Description="RBots Map Data for DM-Hildir")
