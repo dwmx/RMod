@@ -28,9 +28,9 @@ var private AdjacencyList AdjacencyListArray[1024]; // Must match TRIANGLE_ARRAY
 const INVALID_VERTEX_INDEX = -1;
 const INVALID_TRIANGLE_INDEX = -1;
 
-event PostBeginPlay()
+event PreBeginPlay()
 {
-	Super.PostBeginPlay();
+	Super.PreBeginPlay();
 	Clear();
 }
 
@@ -205,4 +205,9 @@ function MarkTrianglesAdjacent(int TriangleIndexA, int TriangleIndexB)
 	{
 		Utilities.Static.RLog("Bad adjacent triangles in NavMesh -- attempted to double-add adjacents");
 	}
+}
+
+defaultproperties
+{
+	RemoteRole=ROLE_None
 }
