@@ -50,7 +50,9 @@ simulated function RegisterHUDMutator()
 	}
 
 	// Register
-	if((Level.NetMode == NM_Client && Owner != None && Owner.Role == ROLE_AutonomousProxy) || Level.NetMode == NM_Standalone)
+	if((Level.NetMode == NM_Client && Owner != None && Owner.Role == ROLE_AutonomousProxy)
+	|| 	Level.NetMode == NM_Standalone
+	||	Level.NetMode == NM_ListenServer)
 	{
 		if(PlayerPawn(Owner) != None)
         {

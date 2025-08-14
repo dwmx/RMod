@@ -207,6 +207,28 @@ function MarkTrianglesAdjacent(int TriangleIndexA, int TriangleIndexB)
 	}
 }
 
+function int GetVertexCount()
+{
+	return VertexCount;
+}
+
+function GetVertexUnchecked(int Index, out Vector OutVertex)
+{
+	OutVertex = VertexArray[Index];
+}
+
+function int GetTriangleCount()
+{
+	return TriangleCount;
+}
+
+function GetTriangleUnchecked(int Index, out int OutIndexA, out int OutIndexB, out int OutIndexC)
+{
+	OutIndexA = TriangleArray[Index].IndexA;
+	OutIndexB = TriangleArray[Index].IndexB;
+	OutIndexC = TriangleArray[Index].IndexC;
+}
+
 defaultproperties
 {
 	RemoteRole=ROLE_None
