@@ -28,10 +28,39 @@ var private AdjacencyList AdjacencyListArray[1024]; // Must match TRIANGLE_ARRAY
 const INVALID_VERTEX_INDEX = -1;
 const INVALID_TRIANGLE_INDEX = -1;
 
+// Class and instance for path finding
+var Class<R_PathFinder> PathFinderClass;
+var R_PathFinder PathFinder;
+
 event PreBeginPlay()
 {
 	Super.PreBeginPlay();
 	Clear();
+	InitPathFinder();
+}
+
+function InitPathFinder()
+{
+	if(PathFinder != None)
+	{
+		PathFinder = None;
+	}
+
+	if(PathFinderClass != None)
+	{
+		Utilities.Static.RLog("NavMesh initializing PathFinder from class" @ PathFinderClass);
+		PathFinder = new(None) PathFinderClass;
+
+		if(PathFinder == None)
+		{
+			Utilities.Static.RLog("Initialization of PathFinder for NavMesh failed -- failed to instantiate");
+		}
+	}
+	else
+	{
+		Utilities.Static.RLog("Initialization of PathFinder for NavMesh failed -- PathFinderClass == None");
+	}
+	
 }
 
 function Clear()
@@ -332,7 +361,35 @@ function bool DoesTriangleContainLocationUnchecked(int Index, Vector WorldLocati
 	return false;
 }
 
+// Finds a path from StartLocation to EndLocation as an array of path points
+// Returns true if a path was successfully found
+function bool FindPath(Vector StartLocation, Vector EndLocation, out Vector PathPoints[32], out int NumPathPoints)
+{
+	local int StartIndex, EndIndex;
+	local bool bResult;
+
+	if(PathFinder == None)
+	{
+		Utilities.Static.RLog("NavMesh FindPath failed -- PathFinder is not initialized");
+		return false;
+	}
+
+	if(!FindContainingNode(StartLocation, StartIndex))
+	{
+		return false;
+	}
+
+	if(!FindContainingNode(EndLocation, EndIndex))
+	{
+		return false;
+	}
+
+	bResult = PathFinder.FindPath(StartIndex, EndIndex, PathPoints, NumPathPoints);
+	return bResult;
+}
+
 defaultproperties
 {
 	RemoteRole=ROLE_None
+	PathFinderClass=Class'RBots.R_PathFinder_Dijkstras'
 }
