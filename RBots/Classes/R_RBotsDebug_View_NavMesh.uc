@@ -39,6 +39,7 @@ simulated function DrawNavMesh(Canvas C, R_BotNavMesh NavMesh)
 {
 	DrawNavMeshVertices(C, NavMesh);
 	DrawNavMeshTriangles(C, NavMesh);
+	DrawPlayerContainedNavMeshTriangle(C, NavMesh);
 }
 
 simulated function DrawNavMeshVertices(Canvas C, R_BotNavMesh NavMesh)
@@ -98,6 +99,24 @@ simulated function DrawNavMeshTriangles(Canvas C, R_BotNavMesh NavMesh)
 		// Draw normal
 		NavMesh.GetTriangleNormalAndCenterUnchecked(i, TriangleNormal, TriangleCenter);
 		C.DrawLine3D(TriangleCenter, TriangleCenter + TriangleNormal * 32.0, NR, NG, NB);
+	}
+}
+
+simulated function DrawPlayerContainedNavMeshTriangle(Canvas C, R_BotNavMesh NavMesh)
+{
+	local int ContainingIndex;
+	local Vector TriangleNormal, TriangleCenter;
+	local Vector PlayerLocation;
+
+	if(Owner != None && Owner.Owner != None)
+	{
+		PlayerLocation = Owner.Owner.Location;
+
+		if(NavMesh.FindContainingNode(PlayerLocation, ContainingIndex))
+		{
+			NavMesh.GetTriangleNormalAndCenterUnchecked(ContainingIndex, TriangleNormal, TriangleCenter);
+			C.DrawBox3D(TriangleCenter, Vect(64,64,64), 1, 1, 0);
+		}
 	}
 }
 

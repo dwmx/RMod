@@ -229,6 +229,16 @@ function GetTriangleUnchecked(int Index, out int OutIndexA, out int OutIndexB, o
 	OutIndexC = TriangleArray[Index].IndexC;
 }
 
+function GetTriangleVerticesUnchecked(int Index, out Vector OutVertexA, out Vector OutVertexB, out Vector OutVertexC)
+{
+	local int IndexA, IndexB, IndexC;
+
+	GetTriangleUnchecked(Index, IndexA, IndexB, IndexC);
+	GetVertexUnchecked(IndexA, OutVertexA);
+	GetVertexUnchecked(IndexB, OutVertexB);
+	GetVertexUnchecked(IndexC, OutVertexC);
+}
+
 // Returns the normal for the specified triangle index
 function GetTriangleNormalUnchecked(int Index, out Vector OutNormal)
 {
@@ -261,16 +271,65 @@ function GetTriangleNormalAndCenterUnchecked(int Index, out Vector OutNormal, ou
 }
 
 // Finds the node (polygon) which contains the given location and returns index
-// If no containing node found, returns false
+// If no containing node found, returns false and -1 index
 function bool FindContainingNode(Vector WorldLocation, out int OutIndex)
 {
-	local Vector TriangleNormal, TriangleCenter;
 	local int i;
 
 	for(i = 0; i < TriangleCount; ++i)
 	{
-		GetTriangleNormalUnchecked(i, TriangleNormal);
+		if(DoesTriangleContainLocationUnchecked(i, WorldLocation))
+		{
+			OutIndex = i;
+			return true;
+		}
 	}
+
+	OutIndex = -1;
+	return false;
+}
+
+// Returns true if the specified WorldLocation is contained within the given triangle within
+// some tolerance
+function bool DoesTriangleContainLocationUnchecked(int Index, Vector WorldLocation)
+{
+	local Vector TriangleNormal, TriangleCenter;
+	local Vector VertexA, VertexB, VertexC;
+	local Vector v0, v1, v2;
+	local float d00, d01, d11, d20, d21;
+	local float Alpha, Beta, Gamma;
+	local float Denominator;
+
+	// Location must be on positive side of triangle
+	GetTriangleNormalAndCenterUnchecked(Index, TriangleNormal, TriangleCenter);
+	if((WorldLocation - TriangleCenter) Dot TriangleNormal < 0.0)
+	{
+		return false;
+	}
+
+	GetTriangleVerticesUnchecked(Index, VertexA, VertexB, VertexC);
+
+	v0 = VertexB - VertexA;
+	v1 = VertexC - VertexA;
+	v2 = WorldLocation - VertexA;
+
+	d00 = v0 Dot v0;
+	d01 = v0 Dot v1;
+	d11 = v1 Dot v1;
+	d20 = v2 Dot v0;
+	d21 = v2 Dot v1;
+	Denominator = d00 * d11 - d01 * d01;
+
+	Beta = (d11 * d20 - d01 * d21) / Denominator;
+	Gamma = (d00 * d21 - d01 * d20) / Denominator;
+	Alpha = 1.0 - Beta - Gamma;
+
+	if(Alpha >= 0.0 && Beta >= 0.0 && Gamma >= 0.0)
+	{
+		return true;
+	}
+
+	return false;
 }
 
 defaultproperties

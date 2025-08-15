@@ -101,7 +101,7 @@ simulated function EnableDebugView(Class<R_RBotsDebug_View> DebugViewClass)
 		return;
 	}
 
-	DebugViews[i] = Spawn(DebugViewClass);
+	DebugViews[i] = Spawn(DebugViewClass, Self);
 	Utilities.Static.RLog("Enabled RBots Debug View for class" @ DebugViewClass);
 }
 
