@@ -13,6 +13,7 @@ var float VertexSize;
 
 // Triangle display
 var Color TriangleColor;
+var Color NormalColor;
 
 simulated event PostRender(Canvas C)
 {
@@ -64,14 +65,23 @@ simulated function DrawNavMeshTriangles(Canvas C, R_BotNavMesh NavMesh)
 {
 	local int IndexA, IndexB, IndexC;
 	local Vector VertexA, VertexB, VertexC;
-	local float R, G, B;
+	local float TR, TG, TB;
+	local float NR, NG, NB;
+	local Vector TriangleCenter, TriangleNormal;
 	local int TriangleCount;
 	local int i;
 
 	TriangleCount = NavMesh.GetTriangleCount();
-	R = float(TriangleColor.R);
-	G = float(TriangleColor.G);
-	B = float(TriangleColor.B);
+
+	// Triangle color
+	TR = float(TriangleColor.R) / 255.0;
+	TG = float(TriangleColor.G) / 255.0;
+	TB = float(TriangleColor.B) / 255.0;
+
+	// Normal color
+	NR = float(NormalColor.R) / 255.0;
+	NG = float(NormalColor.G) / 255.0;
+	NB = float(NormalColor.B) / 255.0;
 
 	for(i = 0; i < TriangleCount; ++i)
 	{
@@ -79,9 +89,15 @@ simulated function DrawNavMeshTriangles(Canvas C, R_BotNavMesh NavMesh)
 		NavMesh.GetVertexUnchecked(IndexA, VertexA);
 		NavMesh.GetVertexUnchecked(IndexB, VertexB);
 		NavMesh.GetVertexUnchecked(IndexC, VertexC);
-		C.DrawLine3D(VertexA, VertexB, R, G, B);
-		C.DrawLine3D(VertexB, VertexC, R, G, B);
-		C.DrawLine3D(VertexC, VertexA, R, G, B);
+
+		// Draw triangle
+		C.DrawLine3D(VertexA, VertexB, TR, TG, TB);
+		C.DrawLine3D(VertexB, VertexC, TR, TG, TB);
+		C.DrawLine3D(VertexC, VertexA, TR, TG, TB);
+
+		// Draw normal
+		NavMesh.GetTriangleNormalAndCenterUnchecked(i, TriangleNormal, TriangleCenter);
+		C.DrawLine3D(TriangleCenter, TriangleCenter + TriangleNormal * 32.0, NR, NG, NB);
 	}
 }
 
@@ -89,5 +105,6 @@ defaultproperties
 {
 	VertexColor=(R=252,G=207,B=91)
 	VertexSize=16.0
-	TriangleColor=(R=0,G=1,B=0)
+	TriangleColor=(R=11,G=247,B=11)
+	NormalColor=(R=255,0,0)
 }

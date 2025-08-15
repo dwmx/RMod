@@ -229,6 +229,50 @@ function GetTriangleUnchecked(int Index, out int OutIndexA, out int OutIndexB, o
 	OutIndexC = TriangleArray[Index].IndexC;
 }
 
+// Returns the normal for the specified triangle index
+function GetTriangleNormalUnchecked(int Index, out Vector OutNormal)
+{
+	local int IndexA, IndexB, IndexC;
+	local Vector VertexA, VertexB, VertexC;
+
+	GetTriangleUnchecked(Index, IndexA, IndexB, IndexC);
+	GetVertexUnchecked(IndexA, VertexA);
+	GetVertexUnchecked(IndexB, VertexB);
+	GetVertexUnchecked(IndexC, VertexC);
+
+	OutNormal = Normal((VertexB - VertexA) Cross (VertexC - VertexA));
+}
+
+// Returns both the normal and the center for the specified triangle index
+function GetTriangleNormalAndCenterUnchecked(int Index, out Vector OutNormal, out Vector OutCenter)
+{
+	local int IndexA, IndexB, IndexC;
+	local Vector VertexA, VertexB, VertexC;
+
+	GetTriangleUnchecked(Index, IndexA, IndexB, IndexC);
+	GetVertexUnchecked(IndexA, VertexA);
+	GetVertexUnchecked(IndexB, VertexB);
+	GetVertexUnchecked(IndexC, VertexC);
+
+	OutNormal = Normal((VertexB - VertexA) Cross (VertexC - VertexA));
+	OutCenter.X = (VertexA.X + VertexB.X + VertexC.X) / 3.0;
+	OutCenter.Y = (VertexA.Y + VertexB.Y + VertexC.Y) / 3.0;
+	OutCenter.Z = (VertexA.Z + VertexB.Z + VertexC.Z) / 3.0;
+}
+
+// Finds the node (polygon) which contains the given location and returns index
+// If no containing node found, returns false
+function bool FindContainingNode(Vector WorldLocation, out int OutIndex)
+{
+	local Vector TriangleNormal, TriangleCenter;
+	local int i;
+
+	for(i = 0; i < TriangleCount; ++i)
+	{
+		GetTriangleNormalUnchecked(i, TriangleNormal);
+	}
+}
+
 defaultproperties
 {
 	RemoteRole=ROLE_None
