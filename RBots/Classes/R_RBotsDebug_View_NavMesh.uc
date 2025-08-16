@@ -114,6 +114,9 @@ simulated function DrawPlayerContainedNavMeshTriangle(Canvas C, R_BotNavMesh Nav
 	local int ContainingIndex;
 	local Vector TriangleNormal, TriangleCenter;
 	local Vector PlayerLocation;
+	//local int AdjacentIndexA, AdjacentIndexB, AdjacentIndexC;
+	local int Adjacents[3];
+	local int i;
 
 	if(Owner != None && Owner.Owner != None)
 	{
@@ -123,6 +126,17 @@ simulated function DrawPlayerContainedNavMeshTriangle(Canvas C, R_BotNavMesh Nav
 		{
 			NavMesh.GetTriangleNormalAndCenterUnchecked(ContainingIndex, TriangleNormal, TriangleCenter);
 			C.DrawBox3D(TriangleCenter, Vect(64,64,64), 1, 1, 0);
+
+			// Draw adjacents
+			NavMesh.GetTriangleAdjacentsUnchecked(ContainingIndex, Adjacents[0], Adjacents[1], Adjacents[2]);
+			for(i = 0; i < 3; ++i)
+			{
+				if(Adjacents[i] != -1)
+				{
+					NavMesh.GetTriangleNormalAndCenterUnchecked(Adjacents[i], TriangleNormal, TriangleCenter);
+					C.DrawBox3D(TriangleCenter, Vect(64,64,64), 0, 0, 1);
+				}
+			}
 		}
 	}
 }

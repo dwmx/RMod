@@ -28,7 +28,7 @@ const MAX_DEBUG_VIEWS = 16;
 var R_RBotsDebug_View DebugViews[16]; // Must match MAX_DEBUG_VIEWS
 
 // Debug targeting
-const BotClass = Class'RBots.R_Bot';
+const PathBotClass = Class'RBots.R_RBotsDebug_PathBot';
 var R_Bot DebugTarget;
 
 simulated event PreBeginPlay()
@@ -267,7 +267,7 @@ function Mutate(string MutateString, PlayerPawn Sender)
 	if(Caps(MutateString) == "RBOTS.DEBUG.PATHBOT")
 	{
 		Utilities.Static.RLog("Spawning a test pathing bot");
-		NewBot = Spawn(BotClass);
+		NewBot = Spawn(PathBotClass);
 		SetDebugTarget(NewBot);
 	}
 	else if(Caps(MutateString) == "RBOTS.DEBUG.VIEW")

@@ -4,18 +4,43 @@
 //==============================================================================
 class R_Bot extends Actor;
 
+const Utilities = Class'RBots.R_BotUtilities';
+
 const PATH_POINT_ARRAY_SIZE = 32;
 var private Vector PathPoints[32];
 var private int NumPathPoints;
 
-event BeginPlay()
+var R_BotNavMesh CachedNavMesh;
+
+function R_BotNavMesh GetNavMesh()
 {
-	// Test points
-	PathPoints[0] = Vect(0.0, 0.0, 0.0);
-	PathPoints[1] = Vect(256.0, 0.0, 32.0);
-	PathPoints[2] = Vect(256.0, 256.0, 0.0);
-	PathPoints[3] = Vect(0.0, 384.0, 0.0);
-	NumPathPoints = 4;
+	local R_BotNavMesh LocalNavMesh;
+
+	if(CachedNavMesh == None)
+	{
+		foreach AllActors(Class'RBots.R_BotNavMesh', LocalNavMesh)
+		{
+			break;
+		}
+		CachedNavMesh = LocalNavMesh;
+	}
+	
+	return CachedNavMesh;
+}
+
+// Attempts to find a path between Start and End, and if successful, updates the Bot's path vars
+// Returns true if path was found and updated
+function bool TryUpdatePath(Vector Start, Vector End)
+{
+	local R_BotNavMesh LocalNavmesh;
+
+	LocalNavMesh = GetNavMesh();
+	if(LocalNavMesh != None)
+	{
+		return LocalNavMesh.FindPath(Start, End, PathPoints, NumPathPoints);
+	}
+
+	return false;
 }
 
 function bool GetPathPoint(int Index, out Vector PathPoint)

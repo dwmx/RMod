@@ -56,6 +56,10 @@ function InitPathFinder()
 		{
 			Utilities.Static.RLog("Initialization of PathFinder for NavMesh failed -- failed to instantiate");
 		}
+		else
+		{
+			PathFinder.NavMesh = Self;
+		}
 	}
 	else
 	{
@@ -307,6 +311,15 @@ function GetTriangleNormalAndCenterUnchecked(int Index, out Vector OutNormal, ou
 	OutCenter.X = (VertexA.X + VertexB.X + VertexC.X) / 3.0;
 	OutCenter.Y = (VertexA.Y + VertexB.Y + VertexC.Y) / 3.0;
 	OutCenter.Z = (VertexA.Z + VertexB.Z + VertexC.Z) / 3.0;
+}
+
+// Returns the three adjacent indices for the specified triangle index
+// Out indices will be -1 to indicate no adjacency
+function GetTriangleAdjacentsUnchecked(int Index, out int OutIndexA, out int OutIndexB, out int OutIndexC)
+{
+	OutIndexA = AdjacencyListArray[Index].IndexA;
+	OutIndexB = AdjacencyListArray[Index].IndexB;
+	OutIndexC = AdjacencyListArray[Index].IndexC;
 }
 
 // Finds the node (polygon) which contains the given location and returns index
