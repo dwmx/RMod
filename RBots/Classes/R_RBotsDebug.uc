@@ -16,6 +16,7 @@ class R_RBotsDebug extends Mutator;
 const Utilities = Class'RBots.R_BotUtilities';
 const DebugRBotsCategory = 'RBots';
 
+var bool bDrawDebugVisualization;
 var bool bRegisteredHUDMutator;
 
 // String manager
@@ -201,6 +202,16 @@ simulated function ToggleDebugView(Class<R_RbotsDebug_View> DebugViewClass)
 	}
 }
 
+function SetTopLevelDebugVisualization(bool bNewTopLevelDebugVisualization)
+{
+	bDrawDebugVisualization = bNewTopLevelDebugVisualization;
+}
+
+function ToggleTopLevelDebugVisualization()
+{
+	SetTopLevelDebugVisualization(!bDrawDebugVisualization);
+}
+
 simulated event Tick(float DeltaSeconds)
 {
 	RegisterHUDMutator();
@@ -209,6 +220,11 @@ simulated event Tick(float DeltaSeconds)
 simulated event PostRender(Canvas C)
 {
 	local int i;
+
+	if(!bDrawDebugVisualization)
+	{
+		return;
+	}
 
 	// Setup string manager
 	StringManager.Clear();
@@ -254,6 +270,10 @@ function Mutate(string MutateString, PlayerPawn Sender)
 		NewBot = Spawn(BotClass);
 		SetDebugTarget(NewBot);
 	}
+	else if(Caps(MutateString) == "RBOTS.DEBUG.VIEW")
+	{
+		ToggleTopLevelDebugVisualization();
+	}
 	else if(Caps(MutateString) == "RBOTS.DEBUG.VIEW.NAVMESH")
 	{
 		ToggleDebugView(Class'RBots.R_RBotsDebug_View_NavMesh');
@@ -271,6 +291,7 @@ function Mutate(string MutateString, PlayerPawn Sender)
 function SendCommandList(PlayerPawn Sender)
 {
 	Sender.ClientMessage("mutate rbots.debug.pathbot -- Summons and auto-targets a bot to test path finding");
+	Sender.ClientMessage("mutate rbots.debug.view -- Toggle all debug visualization");
 	Sender.ClientMessage("mutate rbots.debug.view.navmesh -- Toggle nav mesh debug view");
 	Sender.ClientMessage("mutate rbots.debug.view.pathfinding -- Toggle path finding debug view");
 }
@@ -284,4 +305,9 @@ function SetDebugTarget(R_Bot NewDebugTarget)
 
 	DebugTarget = NewDebugTarget;
 	Utilities.Static.RLog("RBotsDebug DebugTarget updated to" @ DebugTarget);
+}
+
+defaultproperties
+{
+	bDrawDebugVisualization=true
 }
