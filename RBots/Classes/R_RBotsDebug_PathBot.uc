@@ -6,6 +6,8 @@ class R_RBotsDebug_PathBot extends R_Bot;
 
 var float TimeAccumulator;
 
+var Inventory CurrentPathingTarget;
+
 event Tick(float DeltaSeconds)
 {
 	super.Tick(DeltaSeconds);
@@ -20,31 +22,52 @@ event Tick(float DeltaSeconds)
 
 function FindNewDebugPath()
 {
+	local Weapon NewTargetWeapon;
 	local Vector StartLocation;
 	local Vector EndLocation;
 	local R_BotNavMesh LocalNavmesh;
 
-	StartLocation = GetRandomWeaponLocation();
-	EndLocation = GetRandomWeaponLocation();
+	NewTargetWeapon = GetRandomWeapon();
+	if(NewTargetWeapon != None)
+	{
+		StartLocation = NewTargetWeapon.Location;
+	}
+
+	NewTargetWeapon = GetRandomWeapon();
+	if(NewTargetWeapon != None)
+	{
+		CurrentPathingTarget = NewTargetWeapon;
+		EndLocation = CurrentPathingTarget.Location;
+	}
 
 	TryUpdatePath(StartLocation, EndLocation);
 }
 
-function Vector GetRandomWeaponLocation()
+// Returns a random non-owned weapon somewhere in the level
+function Weapon GetRandomWeapon()
 {
-	local Weapon W[24];
+	local Weapon WeaponArray[24];
 	local int i;
-	local Weapon WTemp;
+	local Weapon W;
 
-	foreach AllActors(Class'Weapon', WTemp)
+	i = 0;
+	foreach AllActors(Class'Weapon', W)
 	{
-		W[i] = WTemp;
-		++i;
-		if(i >= 24)
+		if(W.Owner == None)
 		{
-			break;
+			WeaponArray[i] = W;
+			++i;
+			if(i >= 24)
+			{
+				break;
+			}
 		}
 	}
 
-	return W[Rand(i)].Location;
+	return WeaponArray[Rand(i)];
+}
+
+function Actor GetCurrentPathingTarget()
+{
+	return CurrentPathingTarget;
 }

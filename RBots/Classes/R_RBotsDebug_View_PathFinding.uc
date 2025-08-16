@@ -10,7 +10,7 @@ const DebugPathFindingCategory = 'PathFinding';
 var Color PathPointColor;
 var Color PathEdgeColor;
 
-simulated function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
+simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringManager)
 {
 	local float PathPointR, PathPointG, PathPointB;
 	local R_RBotsDebug DebugMutator;
