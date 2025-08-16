@@ -247,6 +247,7 @@ function Mutate(string MutateString, PlayerPawn Sender)
 		return;
 	}
 
+	// Command handling
 	if(Caps(MutateString) == "RBOTS.DEBUG.PATHBOT")
 	{
 		Utilities.Static.RLog("Spawning a test pathing bot");
@@ -269,6 +270,7 @@ function Mutate(string MutateString, PlayerPawn Sender)
 
 function SendCommandList(PlayerPawn Sender)
 {
+	Sender.ClientMessage("mutate rbots.debug.pathbot -- Summons and auto-targets a bot to test path finding");
 	Sender.ClientMessage("mutate rbots.debug.view.navmesh -- Toggle nav mesh debug view");
 	Sender.ClientMessage("mutate rbots.debug.view.pathfinding -- Toggle path finding debug view");
 }
