@@ -67,19 +67,27 @@ function DrawStringManager(Canvas C)
 	local int i, j;
 
 	C.Font = C.MedFont;
-	C.DrawColor.R = 255;
-	C.DrawColor.G = 255;
-	C.DrawColor.B = 255;
+	
 
 	XPos = 16.0;
 	YPos = 16.0;
 
 	for(i = 0; i < NumDebugCategories; ++i)
 	{
+		// Category color
+		C.DrawColor.R = 80;
+		C.DrawColor.G = 255;
+		C.DrawColor.B = 80;
+
 		// Print category
 		C.SetPos(XPos, YPos);
 		C.DrawText("" $ DebugCategoriesArray[i]);
 		YPos += 14.0;
+
+		// Strings color
+		C.DrawColor.R = 255;
+		C.DrawColor.G = 255;
+		C.DrawColor.B = 255;
 
 		for(j = 0; j < NumDebugStrings; ++j)
 		{

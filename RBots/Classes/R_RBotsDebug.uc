@@ -1,6 +1,15 @@
 //==============================================================================
 //	R_RBotsDebug
 //	Mutator which provides debug view information
+//
+//	Use mutate commands for debug testing:
+//
+//	mutate rbots.debug.pathbot
+//		- Summons and auto-targets a bot to test path finding
+//
+//	Toggle the visibility of debug views with the following:
+//	mutate rbots.debug.view.navmesh
+//	mutate rbots.debug.view.pathfinding
 //==============================================================================
 class R_RBotsDebug extends Mutator;
 
@@ -16,6 +25,10 @@ var R_RBotsDebug_StringManager StringManager;
 // Debug views
 const MAX_DEBUG_VIEWS = 16;
 var R_RBotsDebug_View DebugViews[16]; // Must match MAX_DEBUG_VIEWS
+
+// Debug targeting
+const BotClass = Class'RBots.R_Bot';
+var R_Bot DebugTarget;
 
 simulated event PreBeginPlay()
 {
@@ -161,6 +174,33 @@ simulated function EnableDefaultViews()
 	EnableDebugView(Class'RBots.R_RBotsDebug_View_Bots');
 }
 
+simulated function bool IsViewEnabled(Class<R_RbotsDebug_View> DebugViewClass)
+{
+	local int i;
+
+	for(i = 0; i < MAX_DEBUG_VIEWS; ++i)
+	{
+		if(DebugViews[i] != None && DebugViews[i].Class == DebugViewClass)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+simulated function ToggleDebugView(Class<R_RbotsDebug_View> DebugViewClass)
+{
+	if(IsViewEnabled(DebugViewClass))
+	{
+		DisableDebugView(DebugViewClass);
+	}
+	else
+	{
+		EnableDebugView(DebugViewClass);
+	}
+}
+
 simulated event Tick(float DeltaSeconds)
 {
 	RegisterHUDMutator();
@@ -174,8 +214,7 @@ simulated event PostRender(Canvas C)
 	StringManager.Clear();
 
 	// Add debug strings
-	StringManager.AddString(DebugRBotsCategory, "This is my first string from RBots");
-	StringManager.AddString(DebugRBotsCategory, "Viewing debug for bot:" @ "example bot 01");
+	StringManager.AddString(DebugRBotsCategory, "DebugTarget:" @ DebugTarget);
 
 	for(i = 0; i < MAX_DEBUG_VIEWS; ++i)
 	{
@@ -186,4 +225,61 @@ simulated event PostRender(Canvas C)
 	}
 
 	StringManager.DrawStringManager(C);
+}
+
+function Mutate(string MutateString, PlayerPawn Sender)
+{
+	local R_Bot NewBot;
+
+	Log(MutateString);
+
+	// Welcome string
+	if(Caps(MutateString) == "RBOTS")
+	{
+		Sender.ClientMessage("RBots Debug Mutator -- Type 'mutate rbots.debug' for a list of available commands");
+		return;
+	}
+
+	// Debug commands
+	if(Caps(MutateString) == "RBOTS.DEBUG")
+	{
+		SendCommandList(Sender);
+		return;
+	}
+
+	if(Caps(MutateString) == "RBOTS.DEBUG.PATHBOT")
+	{
+		Utilities.Static.RLog("Spawning a test pathing bot");
+		NewBot = Spawn(BotClass);
+		SetDebugTarget(NewBot);
+	}
+	else if(Caps(MutateString) == "RBOTS.DEBUG.VIEW.NAVMESH")
+	{
+		ToggleDebugView(Class'RBots.R_RBotsDebug_View_NavMesh');
+	}
+	else if(Caps(MutateString) == "RBOTS.DEBUG.VIEW.PATHFINDING")
+	{
+		ToggleDebugView(Class'RBots.R_RBotsDebug_View_PathFinding');
+	}
+	else
+	{
+		Super.Mutate(MutateString, Sender);
+	}
+}
+
+function SendCommandList(PlayerPawn Sender)
+{
+	Sender.ClientMessage("mutate rbots.debug.view.navmesh -- Toggle nav mesh debug view");
+	Sender.ClientMessage("mutate rbots.debug.view.pathfinding -- Toggle path finding debug view");
+}
+
+function SetDebugTarget(R_Bot NewDebugTarget)
+{
+	if(DebugTarget != None)
+	{
+		// Forget about old debug target here
+	}
+
+	DebugTarget = NewDebugTarget;
+	Utilities.Static.RLog("RBotsDebug DebugTarget updated to" @ DebugTarget);
 }
