@@ -22,9 +22,9 @@ simulated function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringMana
 	local R_BotNavMesh NavMesh;
 
 	// Add debug strings
-	StringManager.AddString(DebugNavMeshCategory, "NumVertices:" @ CachedNavMesh.GetVertexCount());
-	StringManager.AddString(DebugNavMeshCategory, "NumTriangles:" @ CachedNavMesh.GetTriangleCount());
-	StringManager.AddString(DebugNavMeshCategory, "HasBadAdjacents:" @ CachedNavMesh.HasBadAdjacents());
+	StringManager.AddInt(DebugNavMeshCategory, "NumVertices", CachedNavMesh.GetVertexCount());
+	StringManager.AddInt(DebugNavMeshCategory, "NumTriangles", CachedNavMesh.GetTriangleCount());
+	StringManager.AddBool(DebugNavMeshCategory, "HasBadAdjacents", CachedNavMesh.HasBadAdjacents());
 
 	// Update the NavMesh if necessary
 	if(CachedNavMesh == None)

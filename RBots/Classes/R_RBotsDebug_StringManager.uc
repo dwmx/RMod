@@ -7,10 +7,18 @@ class R_RBotsDebug_StringManager extends Object;
 
 const Utilities = Class'RBots.R_BotUtilities';
 
+const StringType_String = 'StringType_String';
+const StringType_Bool = 'StringType_Bool';
+const StringType_Int = 'StringType_Int';
+const StringType_Actor = 'StringType_Actor';
+
 struct DebugString
 {
 	var Name DebugCategory;
 	var String DebugString;
+	var String Label;
+	var Name StringType;
+	var int MetaData;
 };
 var private DebugString DebugStringArray[1024];
 var private int NumDebugStrings;
@@ -20,12 +28,21 @@ var Name DebugCategoriesArray[1024];
 var int NumDebugCategories;
 const DEBUG_CATEGORIES_ARRAY_SIZE = 1024;
 
+var Color CategoryColor;
+var Color LabelColor;
+var Color StringColor;
+var Color BoolColorTrue;
+var Color BoolColorFalse;
+var Color IntColor;
+var Color ActorColor;
+var Color ActorColorNone;
+
 function Initialize()
 {
 
 }
 
-function AddString(Name Category, String DebugString)
+function AddString(Name Category, String DebugString, optional String Label, optional Name StringType, optional int MetaData)
 {
 	local int i;
 
@@ -52,7 +69,59 @@ function AddString(Name Category, String DebugString)
 	// Add string
 	DebugStringArray[NumDebugStrings].DebugCategory = Category;
 	DebugStringArray[NumDebugStrings].DebugString = DebugString;
+	DebugStringArray[NumDebugStrings].Label = Label;
+	DebugStringArray[NumDebugStrings].StringType = StringType;
+	DebugStringArray[NumDebugStrings].MetaData = MetaData;
 	++NumDebugStrings;
+}
+
+function AddBool(Name Category, String Label, bool bBoolValue)
+{
+	local int MetaData;
+	local String BoolString;
+
+	if(!bBoolValue)
+	{
+		MetaData = 0;
+		BoolString = "false";
+	}
+	else
+	{
+		MetaData = 1;
+		BoolString = "true";
+	}
+
+	AddString(Category, BoolString, Label, StringType_Bool, MetaData);
+}
+
+function AddInt(Name Category, String Label, int IntValue)
+{
+	local int MetaData;
+	local String IntString;
+
+	MetaData = IntValue;
+	IntString = String(IntValue);
+
+	AddString(Category, IntString, Label, StringType_Int, MetaData);
+}
+
+function AddActor(Name Category, String Label, Actor ActorRef)
+{
+	local int MetaData;
+	local String ActorString;
+
+	if(ActorRef == None)
+	{
+		MetaData = 0;
+		ActorString = "None";
+	}
+	else
+	{
+		MetaData = 1;
+		ActorString = String(ActorRef);
+	}
+
+	AddString(Category, ActorString, Label, StringType_Actor, MetaData);
 }
 
 function Clear()
@@ -93,12 +162,77 @@ function DrawStringManager(Canvas C)
 		{
 			if(DebugStringArray[j].DebugCategory == DebugCategoriesArray[i])
 			{
-				C.SetPos(XPos, YPos);
-				C.DrawText(DebugStringArray[j].DebugString);
+				DrawDebugString(C, XPos, YPos, DebugStringArray[j]);
 				YPos += 10.0;
 			}
 		}
 
 		YPos += 12.0;
 	}
+}
+
+function DrawDebugString(Canvas C, float XPos, float YPos, out DebugString DebugString)
+{
+	local float StrW, StrH;
+	local String LabelString;
+
+	StrW = 0.0;
+	StrH = 0.0;
+
+	if(DebugString.Label != "")
+	{
+		LabelString = DebugString.Label $ ": ";
+		C.StrLen(LabelString, StrW, StrH);
+		
+		C.DrawColor = LabelColor;
+		C.SetPos(XPos, YPos);
+		C.DrawText(LabelString);
+	}
+
+	// Select draw color based on string type
+	if(DebugString.StringType == StringType_Bool)
+	{	// Bool
+		if(DebugString.MetaData == 0)
+		{
+			C.DrawColor = BoolColorFalse;
+		}
+		else
+		{
+			C.DrawColor = BoolColorTrue;
+		}
+	}
+	else if(DebugString.StringType == StringType_Int)
+	{	// Int
+		C.DrawColor = IntColor;
+	}
+	else if(DebugString.StringType == StringType_Actor)
+	{	// Actor
+		if(DebugString.MetaData == 0)
+		{
+			C.DrawColor = ActorColorNone;
+		}
+		else
+		{
+			C.DrawColor = ActorColor;
+		}
+	}
+	else
+	{	// Default -- goes back to StringType_String
+		C.DrawColor = StringColor;
+	}
+
+	C.SetPos(XPos + StrW, YPos);
+	C.DrawText(DebugString.DebugString);
+}
+
+defaultproperties
+{
+	CategoryColor=(R=80,G=255,B=80)
+	LabelColor=(R=255,G=255,B=255)
+	StringColor=(R=120,G=180,B=180)
+	BoolColorTrue=(R=80,G=255,B=80)
+	BoolColorFalse=(R=255,G=80,B=80)
+	IntColor=(R=255,G=255,B=80)
+	ActorColor=(R=80,G=80,B=255)
+	ActorColorNone=(R=255,G=80,B=80)
 }

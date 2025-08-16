@@ -214,7 +214,7 @@ simulated event PostRender(Canvas C)
 	StringManager.Clear();
 
 	// Add debug strings
-	StringManager.AddString(DebugRBotsCategory, "DebugTarget:" @ DebugTarget);
+	StringManager.AddActor(DebugRBotsCategory, "DebugTarget", DebugTarget);
 
 	for(i = 0; i < MAX_DEBUG_VIEWS; ++i)
 	{

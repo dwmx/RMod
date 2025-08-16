@@ -28,10 +28,8 @@ simulated function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringMana
 		NumPathPoints = DebugTarget.GetNumPathPoints();
 	}
 
-	StringManager.AddString(DebugPathFindingCategory, "Showing path finding for:" @ DebugTarget);
-	StringManager.AddString(DebugPathFindingCategory, "NumPathPoints:" @ NumPathPoints);
-
-	//Utilities.Static.ColorToFloats(PathPointColor, PathPointR, PathPointG, PathPointB);
+	StringManager.AddActor(DebugPathFindingCategory, "DebugTarget", DebugTarget);
+	StringManager.AddInt(DebugPathFindingCategory, "NumPathPoints", NumPathPoints);
 
 	DrawPathPoints(C, DebugTarget);
 }
