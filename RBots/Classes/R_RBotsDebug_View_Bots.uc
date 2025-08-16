@@ -4,6 +4,6 @@
 //==============================================================================
 class R_RbotsDebug_View_Bots extends R_RbotsDebug_View;
 
-simulated event PostRender(Canvas C)
+simulated function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
 {
 }

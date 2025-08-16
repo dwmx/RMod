@@ -5,11 +5,40 @@
 class R_RBotsDebug extends Mutator;
 
 const Utilities = Class'RBots.R_BotUtilities';
+const DebugRBotsCategory = 'RBots';
+
 var bool bRegisteredHUDMutator;
+
+// String manager
+const StringManagerClass = Class'RBots.R_RBotsDebug_StringManager';
+var R_RBotsDebug_StringManager StringManager;
 
 // Debug views
 const MAX_DEBUG_VIEWS = 16;
 var R_RBotsDebug_View DebugViews[16]; // Must match MAX_DEBUG_VIEWS
+
+simulated event PreBeginPlay()
+{
+	InitializeStringManager();
+}
+
+simulated function InitializeStringManager()
+{
+	if(StringManager != None)
+	{
+		StringManager = None;
+	}
+
+	StringManager = new(None) StringManagerClass;
+	if(StringManager != None)
+	{
+		Utilities.Static.RLog("Initialized debug string manager from class" @ StringManagerClass);
+	}
+	else
+	{
+		Utilities.Static.RLog("Failed to initialized debug string manager from class" @ StringManagerClass);
+	}
+}
 
 simulated event BeginPlay()
 {
@@ -128,6 +157,7 @@ simulated event DisableDebugView(Class<R_RBotsDebug_View> DebugViewClass)
 simulated function EnableDefaultViews()
 {
 	EnableDebugView(Class'RBots.R_RBotsDebug_View_NavMesh');
+	EnableDebugView(Class'RBots.R_RbotsDebug_View_PathFinding');
 	EnableDebugView(Class'RBots.R_RBotsDebug_View_Bots');
 }
 
@@ -140,11 +170,20 @@ simulated event PostRender(Canvas C)
 {
 	local int i;
 
+	// Setup string manager
+	StringManager.Clear();
+
+	// Add debug strings
+	StringManager.AddString(DebugRBotsCategory, "This is my first string from RBots");
+	StringManager.AddString(DebugRBotsCategory, "Viewing debug for bot:" @ "example bot 01");
+
 	for(i = 0; i < MAX_DEBUG_VIEWS; ++i)
 	{
 		if(DebugViews[i] != None)
 		{
-			DebugViews[i].PostRender(C);
+			DebugViews[i].DrawDebugView(C, StringManager);
 		}
 	}
+
+	StringManager.DrawStringManager(C);
 }

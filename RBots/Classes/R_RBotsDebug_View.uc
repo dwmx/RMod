@@ -8,6 +8,9 @@ class R_RBotsDebug_View extends Actor abstract;
 
 simulated event PostRender(Canvas C) {} // To be implemented in subclasses
 
+// Implement in subclasses
+simulated function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager) {}
+
 defaultproperties
 {
 	RemoteRole=ROLE_None

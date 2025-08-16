@@ -5,6 +5,8 @@
 class R_RbotsDebug_View_NavMesh extends R_RbotsDebug_View;
 
 const Utilities = Class'RBots.R_BotUtilities';
+const DebugNavMeshCategory = 'NavMesh';
+
 var R_BotNavMesh CachedNavMesh;
 
 // Vertex display
@@ -15,9 +17,14 @@ var float VertexSize;
 var Color TriangleColor;
 var Color NormalColor;
 
-simulated event PostRender(Canvas C)
+simulated function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
 {
 	local R_BotNavMesh NavMesh;
+
+	// Add debug strings
+	StringManager.AddString(DebugNavMeshCategory, "NumVertices:" @ CachedNavMesh.GetVertexCount());
+	StringManager.AddString(DebugNavMeshCategory, "NumTriangles:" @ CachedNavMesh.GetTriangleCount());
+	StringManager.AddString(DebugNavMeshCategory, "HasBadAdjacents:" @ CachedNavMesh.HasBadAdjacents());
 
 	// Update the NavMesh if necessary
 	if(CachedNavMesh == None)

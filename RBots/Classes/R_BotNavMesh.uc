@@ -24,6 +24,7 @@ struct AdjacencyList
 	var int IndexA, IndexB, IndexC;
 };
 var private AdjacencyList AdjacencyListArray[1024]; // Must match TRIANGLE_ARRAY_SIZE
+var private bool bBadAdjacents; // If true, there are bad graph adjacencies
 
 const INVALID_VERTEX_INDEX = -1;
 const INVALID_TRIANGLE_INDEX = -1;
@@ -196,6 +197,8 @@ function MarkTrianglesAdjacent(int TriangleIndexA, int TriangleIndexB)
 {
 	local int i, j;
 
+	bBadAdjacents = false;
+
 	// Check that triangles are not already marked adjacent
 	if(	AdjacencyListArray[TriangleIndexA].IndexA != TriangleIndexB
 	&&	AdjacencyListArray[TriangleIndexA].IndexB != TriangleIndexB
@@ -217,6 +220,7 @@ function MarkTrianglesAdjacent(int TriangleIndexA, int TriangleIndexB)
 		if(i == INVALID_TRIANGLE_INDEX || j == INVALID_TRIANGLE_INDEX)
 		{
 			Utilities.Static.RLog("Bad adjacent triangles in NavMesh");
+			bBadAdjacents = true;
 			return;
 		}
 		else
@@ -233,7 +237,13 @@ function MarkTrianglesAdjacent(int TriangleIndexA, int TriangleIndexB)
 	else
 	{
 		Utilities.Static.RLog("Bad adjacent triangles in NavMesh -- attempted to double-add adjacents");
+		bBadAdjacents = true;
 	}
+}
+
+function bool HasBadAdjacents()
+{
+	return bBadAdjacents;
 }
 
 function int GetVertexCount()
