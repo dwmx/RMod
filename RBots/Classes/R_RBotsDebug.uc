@@ -19,8 +19,9 @@ const DebugRBotsCategory = 'RBots';
 var bool bDrawDebugVisualization;
 var bool bRegisteredHUDMutator;
 
-// Main RBot system class
+// Cached RBot system classes
 var R_BotManager BotManager;
+var R_BotNavMesh NavMesh;
 
 // String manager
 const StringManagerClass = Class'RBots.R_RBotsDebug_StringManager';
@@ -133,6 +134,26 @@ simulated function R_BotManager GetBotManager()
 	}
 
 	return BotManager;
+}
+
+simulated function R_BotNavMesh GetNavMesh()
+{
+	local R_BotNavMesh LocalNavMesh;
+
+	if(NavMesh == None)
+	{
+		foreach AllActors(Class'RBots.R_BotNavMesh', LocalNavMesh)
+		{
+			break;
+		}
+	}
+
+	if(LocalNavMesh != None)
+	{
+		NavMesh = LocalNavMesh;
+	}
+
+	return NavMesh;
 }
 
 simulated function EnableDebugView(Class<R_RBotsDebug_View> DebugViewClass)

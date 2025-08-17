@@ -7,8 +7,6 @@ class R_RbotsDebug_View_NavMesh extends R_RbotsDebug_View;
 const Utilities = Class'RBots.R_BotUtilities';
 const DebugNavMeshCategory = 'NavMesh';
 
-var R_BotNavMesh CachedNavMesh;
-
 // Vertex display
 var Color VertexColor;
 var float VertexSize;
@@ -21,34 +19,23 @@ simulated function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringMana
 {
 	local R_BotNavMesh NavMesh;
 
+	NavMesh = GetNavMesh();
+
 	// Add debug strings
-	if(CachedNavMesh != None)
+	if(NavMesh != None)
 	{
-		StringManager.AddInt(DebugNavMeshCategory, "NumVertices", CachedNavMesh.GetVertexCount());
-		StringManager.AddInt(DebugNavMeshCategory, "NumTriangles", CachedNavMesh.GetTriangleCount());
-		StringManager.AddBool(DebugNavMeshCategory, "HasBadAdjacents", CachedNavMesh.HasBadAdjacents());
-		StringManager.AddClass(DebugNavMeshCategory, "PathFinderClass", CachedNavMesh.PathFinderClass);
-		StringManager.AddClass(DebugNavMeshCategory, "PathPostProcessorClass", CachedNavMesh.PathPostProcessorClass);
+		StringManager.AddInt(DebugNavMeshCategory, "NumVertices", NavMesh.GetVertexCount());
+		StringManager.AddInt(DebugNavMeshCategory, "NumTriangles", NavMesh.GetTriangleCount());
+		StringManager.AddBool(DebugNavMeshCategory, "HasBadAdjacents", NavMesh.HasBadAdjacents());
 	}
 	else
 	{
 		StringManager.AddWarning(DebugNavMeshCategory, "Invalid NavMesh");
 	}
-	
 
-	// Update the NavMesh if necessary
-	if(CachedNavMesh == None)
+	if(NavMesh != None)
 	{
-		foreach AllActors(Class'RBots.R_BotNavMesh', NavMesh)
-		{
-			break;
-		}
-		CachedNavMesh = NavMesh;
-	}
-	
-	if(CachedNavMesh != None)
-	{
-		DrawNavMesh(C, CachedNavMesh);
+		DrawNavMesh(C, NavMesh);
 	}
 }
 

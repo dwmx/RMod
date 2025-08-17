@@ -342,146 +342,67 @@ function GetTriangleAdjacentsUnchecked(int Index, out int OutIndexA, out int Out
 	OutIndexC = AdjacencyListArray[Index].IndexC;
 }
 
-/*
-function GetSharedEdgeUnchecked(int IndexA, int IndexB, out Vector Left, out Vector Right)
+// Returns the locations of the two vertices in the edge shared by the specified triangles
+// Left and Right are in reference to travel direction when going from IndexA to IndexB
+function bool GetSharedEdgePointsUnchecked(int IndexA, int IndexB, out Vector OutLeft, out Vector OutRight)
 {
 	local int VerticesA[3], VerticesB[3];
-	local Vector LocationsA[3], LocationsB[3];
-	local int i, j, Shared[2], Count;
-	local Vector Edge0, Edge1, TravelDir;
+	local int Shared[3], SharedCount;
+	local Vector EdgePoints[2];
 	local Vector NormalA, CenterA;
 	local Vector NormalB, CenterB;
-	local float Cross;
+	local Vector TravelDirection, EdgeDirection;
+	local Vector CrossDirections;
+	local float NormalDotCross;
+	local int i, j;
 
 	GetTriangleUnchecked(IndexA, VerticesA[0], VerticesA[1], VerticesA[2]);
 	GetTriangleUnchecked(IndexB, VerticesB[0], VerticesB[1], VerticesB[2]);
 
+	SharedCount = 0;
 	for(i = 0; i < 3; ++i)
 	{
-		GetVertexUnchecked(VerticesA[i], LocationsA[i]);
-		GetVertexUnchecked(VerticesB[i], LocationsB[i]);
+		for(j = 0; j < 3; ++j)
+		{
+			if(VerticesA[i] == VerticesB[j])
+			{
+				Shared[SharedCount] = VerticesA[i];
+				++SharedCount;
+			}
+		}
 	}
 
-	// Find shared verts
-    Count = 0;
-    for (i = 0; i < 3; i++)
-    {
-        for (j = 0; j < 3; j++)
-        {
-            if (VerticesA[i] == VerticesB[j] && Count < 2)
-            {
-                Shared[Count] = VerticesA[i];
-                Count++;
-            }
-        }
-    }
+	if(SharedCount != 2)
+	{
+		OutLeft = Vect(0,0,0);
+		OutRight = Vect(0,0,0);
+		return false;
+	}
 
-	if (Count < 2)
-    {
-        // No shared edge -- invalid input
-        Left = vect(0,0,0);
-        Right = vect(0,0,0);
-        return;
-    }
+	GetVertexUnchecked(Shared[0], EdgePoints[0]);
+	GetVertexUnchecked(Shared[1], EdgePoints[1]);
 
-	// Get world positions of shared edge
-	GetVertexUnchecked(Shared[0], Edge0);
-	GetVertexUnchecked(Shared[1], Edge1);
+	GetTriangleNormalAndCenterUnchecked(IndexA, NormalA, CenterA);
+	GetTriangleNormalAndCenterUnchecked(IndexB, NormalB, CenterB);
 
-	// Get triangle centers
-    GetTriangleNormalAndCenterUnchecked(IndexA, NormalA, CenterA);
-    GetTriangleNormalAndCenterUnchecked(IndexB, NormalB, CenterB);
+	TravelDirection = CenterB - CenterA;
+	EdgeDirection = EdgePoints[1] - EdgePoints[0];
+	CrossDirections = TravelDirection Cross EdgeDirection;
+	NormalDotCross = NormalA Dot CrossDirections;
 
-	TravelDir = CenterB - CenterA;
+	if(NormalDotCross > 0)
+	{
+		OutLeft = EdgePoints[0];
+		OutRight = EdgePoints[1];
+	}
+	else
+	{
+		OutLeft = EdgePoints[1];
+		OutRight = EdgePoints[0];
+	}
 
-	Cross = (TravelDir.X) * (Edge1.Y - Edge0.Y) - (TravelDir.Y) * (Edge1.X - Edge0.X);
-
-    if (Cross > 0)
-    {
-        // Edge0 is to the left of travel direction
-        Left = Edge0;
-        Right = Edge1;
-    }
-    else
-    {
-        Left = Edge1;
-        Right = Edge0;
-    }
+	return true;
 }
-	*/
-function GetSharedEdgeUnchecked(int IndexA, int IndexB, out Vector Left, out Vector Right)
-{
-    local int VerticesA[3], VerticesB[3];
-    local Vector LocationsA[3], LocationsB[3];
-    local int i, j, Shared[2], Count;
-    local Vector Edge0, Edge1, EdgeDir, TravelDir;
-    local Vector NormalA, CenterA;
-    local Vector NormalB, CenterB;
-    local Vector Cross;
-    local float Dot;
-
-    GetTriangleUnchecked(IndexA, VerticesA[0], VerticesA[1], VerticesA[2]);
-    GetTriangleUnchecked(IndexB, VerticesB[0], VerticesB[1], VerticesB[2]);
-
-    for (i = 0; i < 3; i++)
-        GetVertexUnchecked(VerticesA[i], LocationsA[i]);
-
-    for (i = 0; i < 3; i++)
-        GetVertexUnchecked(VerticesB[i], LocationsB[i]);
-
-    // Find shared verts
-    Count = 0;
-    for (i = 0; i < 3; i++)
-    {
-        for (j = 0; j < 3; j++)
-        {
-            if (VerticesA[i] == VerticesB[j] && Count < 2)
-            {
-                Shared[Count] = VerticesA[i];
-                Count++;
-            }
-        }
-    }
-
-    if (Count < 2)
-    {
-        // No shared edge
-        Left = vect(0,0,0);
-        Right = vect(0,0,0);
-        return;
-    }
-
-    // Get world positions of shared edge
-    GetVertexUnchecked(Shared[0], Edge0);
-    GetVertexUnchecked(Shared[1], Edge1);
-
-    // Triangle centers + normal
-    GetTriangleNormalAndCenterUnchecked(IndexA, NormalA, CenterA);
-    GetTriangleNormalAndCenterUnchecked(IndexB, NormalB, CenterB);
-
-    TravelDir = CenterB - CenterA;
-    EdgeDir   = Edge1 - Edge0;
-
-    // 3D cross product
-	Cross.X = TravelDir.Y * EdgeDir.Z - TravelDir.Z * EdgeDir.Y;
-	Cross.Y = TravelDir.Z * EdgeDir.X - TravelDir.X * EdgeDir.Z;
-	Cross.Z = TravelDir.X * EdgeDir.Y - TravelDir.Y * EdgeDir.X;
-
-    // Compare with the triangle normal
-    Dot = NormalA.X * Cross.X + NormalA.Y * Cross.Y + NormalA.Z * Cross.Z;
-
-    if (Dot > 0)
-    {
-        Left  = Edge0;
-        Right = Edge1;
-    }
-    else
-    {
-        Left  = Edge1;
-        Right = Edge0;
-    }
-}
-
 
 // Finds the node (polygon) which contains the given location and returns index
 // If no containing node found, returns false and -1 index

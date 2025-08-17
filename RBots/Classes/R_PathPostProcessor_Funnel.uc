@@ -37,7 +37,7 @@ function bool PostProcessPath(
 
     for (i = 0; i < PathIndexCount - 1; i++)
     {
-        NavMesh.GetSharedEdgeUnchecked(
+        NavMesh.GetSharedEdgePointsUnchecked(
             InPathIndices[i], InPathIndices[i+1],
             PortalLeft[PortalCount], PortalRight[PortalCount]);
         PortalCount++;

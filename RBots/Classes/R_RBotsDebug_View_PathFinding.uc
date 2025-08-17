@@ -14,6 +14,7 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 {
 	local float PathPointR, PathPointG, PathPointB;
 	local R_RBotsDebug DebugMutator;
+	local R_BotNavMesh NavMesh;
 	local R_Bot DebugTarget;
 	local int NumPathPoints;
 
@@ -28,9 +29,19 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 		NumPathPoints = DebugTarget.GetNumPathPoints();
 	}
 
+	// Add Debug strings
 	StringManager.AddActor(DebugPathFindingCategory, "DebugTarget", DebugTarget);
+
+	NavMesh = GetNavMesh();
+	if(NavMesh != None)
+	{
+		StringManager.AddClass(DebugPathFindingCategory, "PathFinderClass", NavMesh.PathFinderClass);
+		StringManager.AddClass(DebugPathFindingCategory, "PathPostProcessorClass", NavMesh.PathPostProcessorClass);
+	}
+
 	StringManager.AddInt(DebugPathFindingCategory, "NumPathPoints", NumPathPoints);
 
+	// Draw visuals
 	DrawPathPoints(C, DebugTarget);
 }
 
