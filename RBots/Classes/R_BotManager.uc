@@ -15,6 +15,8 @@ struct MapData
 };
 var config MapData MapDataArray[128];
 
+var Class<R_DynamicMapData> LoadedMapDataClass;
+
 event BeginPlay()
 {
 	local String CurrentMapName;
@@ -45,6 +47,7 @@ event BeginPlay()
 		{
 			Utilities.Static.RLog("Spawning MapData from class" @ DynamicMapDataClass);
 			Spawn(DynamicMapDataClass);
+			LoadedMapDataClass = DynamicMapDataClass;
 		}
 	}
 }
@@ -126,4 +129,5 @@ defaultproperties
 	MapDataArray(1)=(MapName="DM-Hildir",DataClass="RBots.R_MapData_Hildir")
 	MapDataArray(2)=(MapName="DM-Hudson",DataClass="RBots.R_MapData_Hudson")
 	MapDataArray(3)=(MapName="DM-Wonderland",DataClass="RBots.R_MapData_Wonderland")
+	MapDataArray(4)=(MapName="AR-8on8-ChampionsER",DataClass="RBots.R_MapData_Champions8on8ER");
 }

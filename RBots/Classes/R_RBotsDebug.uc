@@ -19,6 +19,9 @@ const DebugRBotsCategory = 'RBots';
 var bool bDrawDebugVisualization;
 var bool bRegisteredHUDMutator;
 
+// Main RBot system class
+var R_BotManager BotManager;
+
 // String manager
 const StringManagerClass = Class'RBots.R_RBotsDebug_StringManager';
 var R_RBotsDebug_StringManager StringManager;
@@ -110,6 +113,26 @@ simulated function RegisterHUDMutator()
             }
         }
 	}
+}
+
+simulated function R_BotManager GetBotManager()
+{
+	local R_BotManager LocalBotManager;
+
+	if(BotManager == None)
+	{
+		foreach AllActors(Class'RBots.R_BotManager', LocalBotManager)
+		{
+			break;
+		}
+	}
+
+	if(LocalBotManager != None)
+	{
+		BotManager = LocalBotManager;
+	}
+
+	return BotManager;
 }
 
 simulated function EnableDebugView(Class<R_RBotsDebug_View> DebugViewClass)
@@ -220,6 +243,7 @@ simulated event Tick(float DeltaSeconds)
 simulated event PostRender(Canvas C)
 {
 	local int i;
+	local R_BotManager LocalBotManager;
 
 	if(!bDrawDebugVisualization)
 	{
@@ -230,6 +254,16 @@ simulated event PostRender(Canvas C)
 	StringManager.Clear();
 
 	// Add debug strings
+	LocalBotManager = GetBotManager();
+	if(LocalBotManager != None)
+	{
+		StringManager.AddClass(DebugRBotsCategory, "LoadedMapDataClass", LocalBotManager.LoadedMapDataClass);
+	}
+	else
+	{
+		StringManager.AddWarning(DebugRBotsCategory, "Invalid BotManager reference");
+	}
+
 	StringManager.AddActor(DebugRBotsCategory, "DebugTarget", DebugTarget);
 
 	for(i = 0; i < MAX_DEBUG_VIEWS; ++i)

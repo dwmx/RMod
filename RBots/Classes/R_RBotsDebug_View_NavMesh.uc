@@ -22,11 +22,19 @@ simulated function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringMana
 	local R_BotNavMesh NavMesh;
 
 	// Add debug strings
-	StringManager.AddInt(DebugNavMeshCategory, "NumVertices", CachedNavMesh.GetVertexCount());
-	StringManager.AddInt(DebugNavMeshCategory, "NumTriangles", CachedNavMesh.GetTriangleCount());
-	StringManager.AddBool(DebugNavMeshCategory, "HasBadAdjacents", CachedNavMesh.HasBadAdjacents());
-	StringManager.AddClass(DebugNavMeshCategory, "PathFinderClass", CachedNavMesh.PathFinderClass);
-	StringManager.AddClass(DebugNavMeshCategory, "PathPostProcessorClass", CachedNavMesh.PathPostProcessorClass);
+	if(CachedNavMesh != None)
+	{
+		StringManager.AddInt(DebugNavMeshCategory, "NumVertices", CachedNavMesh.GetVertexCount());
+		StringManager.AddInt(DebugNavMeshCategory, "NumTriangles", CachedNavMesh.GetTriangleCount());
+		StringManager.AddBool(DebugNavMeshCategory, "HasBadAdjacents", CachedNavMesh.HasBadAdjacents());
+		StringManager.AddClass(DebugNavMeshCategory, "PathFinderClass", CachedNavMesh.PathFinderClass);
+		StringManager.AddClass(DebugNavMeshCategory, "PathPostProcessorClass", CachedNavMesh.PathPostProcessorClass);
+	}
+	else
+	{
+		StringManager.AddWarning(DebugNavMeshCategory, "Invalid NavMesh");
+	}
+	
 
 	// Update the NavMesh if necessary
 	if(CachedNavMesh == None)

@@ -13,7 +13,7 @@ event Tick(float DeltaSeconds)
 	super.Tick(DeltaSeconds);
 
 	TimeAccumulator += DeltaSeconds;
-	if(TimeAccumulator >= 10.0)
+	if(TimeAccumulator >= 6.0)
 	{
 		TimeAccumulator = 0.0;
 		FindNewDebugPath();
