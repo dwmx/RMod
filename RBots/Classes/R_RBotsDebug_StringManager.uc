@@ -11,6 +11,7 @@ const StringType_String = 'StringType_String';
 const StringType_Bool = 'StringType_Bool';
 const StringType_Int = 'StringType_Int';
 const StringType_Actor = 'StringType_Actor';
+const StringType_Class = 'StringType_Class';
 
 struct DebugString
 {
@@ -36,6 +37,8 @@ var Color BoolColorFalse;
 var Color IntColor;
 var Color ActorColor;
 var Color ActorColorNone;
+var Color ClassColor;
+var Color ClassColorNone;
 
 function Initialize()
 {
@@ -122,6 +125,25 @@ function AddActor(Name Category, String Label, Actor ActorRef)
 	}
 
 	AddString(Category, ActorString, Label, StringType_Actor, MetaData);
+}
+
+function AddClass(Name Category, String Label, Class ClassRef)
+{
+	local int MetaData;
+	local String ClassString;
+
+	if(ClassRef == None)
+	{
+		MetaData = 0;
+		ClassString = "None";
+	}
+	else
+	{
+		MetaData = 1;
+		ClassString = String(ClassRef);
+	}
+
+	AddString(Category, ClassString, Label, StringType_Class, MetaData);
 }
 
 function Clear()
@@ -216,6 +238,17 @@ function DrawDebugString(Canvas C, float XPos, float YPos, out DebugString Debug
 			C.DrawColor = ActorColor;
 		}
 	}
+	else if(DebugString.StringType == StringType_Class)
+	{	// Class
+		if(DebugString.MetaData == 0)
+		{
+			C.DrawColor = ClassColorNone;
+		}
+		else
+		{
+			C.DrawColor = ClassColor;
+		}
+	}
 	else
 	{	// Default -- goes back to StringType_String
 		C.DrawColor = StringColor;
@@ -235,4 +268,6 @@ defaultproperties
 	IntColor=(R=255,G=255,B=80)
 	ActorColor=(R=80,G=80,B=255)
 	ActorColorNone=(R=255,G=80,B=80)
+	ClassColor=(R=153,G=5,B=86)
+	ClassColorNone=(R=255,G=80,B=80)
 }
