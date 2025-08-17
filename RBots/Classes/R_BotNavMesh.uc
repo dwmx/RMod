@@ -33,6 +33,9 @@ const INVALID_TRIANGLE_INDEX = -1;
 var Class<R_PathFinder> PathFinderClass;
 var R_PathFinder PathFinder;
 
+var Class<R_PathPostProcessor> PathPostProcessorClass;
+var R_PathPostProcessor PathPostProcessor;
+
 event PreBeginPlay()
 {
 	Super.PreBeginPlay();
@@ -42,6 +45,7 @@ event PreBeginPlay()
 
 function InitPathFinder()
 {
+	// Instantiate PathFinder
 	if(PathFinder != None)
 	{
 		PathFinder = None;
@@ -56,16 +60,32 @@ function InitPathFinder()
 		{
 			Utilities.Static.RLog("Initialization of PathFinder for NavMesh failed -- failed to instantiate");
 		}
-		else
-		{
-			PathFinder.NavMesh = Self;
-		}
 	}
 	else
 	{
 		Utilities.Static.RLog("Initialization of PathFinder for NavMesh failed -- PathFinderClass == None");
 	}
 	
+	// Instantiate PathPostProcessor
+	if(PathPostProcessor != None)
+	{
+		PathPostProcessor = None;
+	}
+
+	if(PathPostProcessorClass != None)
+	{
+		Utilities.Static.RLog("NavMesh initializing PathPostProcessor from class" @ PathPostProcessorClass);
+		PathPostProcessor = new(None) PathPostProcessorClass;
+
+		if(PathPostProcessor == None)
+		{
+			Utilities.Static.RLog("Initialization of PathPostProcessor for NavMesh failed -- failed to instantiate");
+		}
+	}
+	else
+	{
+		Utilities.Static.RLog("Initialization of PathPostProcess for NavMesh failed -- PathPostProcessClass == None");
+	}
 }
 
 function Clear()
@@ -322,6 +342,72 @@ function GetTriangleAdjacentsUnchecked(int Index, out int OutIndexA, out int Out
 	OutIndexC = AdjacencyListArray[Index].IndexC;
 }
 
+function GetSharedEdgeUnchecked(int IndexA, int IndexB, out Vector Left, out Vector Right)
+{
+	local int VerticesA[3], VerticesB[3];
+	local Vector LocationsA[3], LocationsB[3];
+	local int i, j, Shared[2], Count;
+	local Vector Edge0, Edge1, TravelDir;
+	local Vector NormalA, CenterA;
+	local Vector NormalB, CenterB;
+	local float Cross;
+
+	GetTriangleUnchecked(IndexA, VerticesA[0], VerticesA[1], VerticesA[2]);
+	GetTriangleUnchecked(IndexB, VerticesB[0], VerticesB[1], VerticesB[2]);
+
+	for(i = 0; i < 3; ++i)
+	{
+		GetVertexUnchecked(VerticesA[i], LocationsA[i]);
+		GetVertexUnchecked(VerticesB[i], LocationsB[i]);
+	}
+
+	// Find shared verts
+    Count = 0;
+    for (i = 0; i < 3; i++)
+    {
+        for (j = 0; j < 3; j++)
+        {
+            if (VerticesA[i] == VerticesB[j] && Count < 2)
+            {
+                Shared[Count] = VerticesA[i];
+                Count++;
+            }
+        }
+    }
+
+	if (Count < 2)
+    {
+        // No shared edge -- invalid input
+        Left = vect(0,0,0);
+        Right = vect(0,0,0);
+        return;
+    }
+
+	// Get world positions of shared edge
+	GetVertexUnchecked(Shared[0], Edge0);
+	GetVertexUnchecked(Shared[1], Edge1);
+
+	// Get triangle centers
+    GetTriangleNormalAndCenterUnchecked(IndexA, NormalA, CenterA);
+    GetTriangleNormalAndCenterUnchecked(IndexB, NormalB, CenterB);
+
+	TravelDir = CenterB - CenterA;
+
+	Cross = (TravelDir.X) * (Edge1.Y - Edge0.Y) - (TravelDir.Y) * (Edge1.X - Edge0.X);
+
+    if (Cross > 0)
+    {
+        // Edge0 is to the left of travel direction
+        Left = Edge0;
+        Right = Edge1;
+    }
+    else
+    {
+        Left = Edge1;
+        Right = Edge0;
+    }
+}
+
 // Finds the node (polygon) which contains the given location and returns index
 // If no containing node found, returns false and -1 index
 function bool FindContainingNode(Vector WorldLocation, out int OutIndex)
@@ -386,33 +472,53 @@ function bool DoesTriangleContainLocationUnchecked(int Index, Vector WorldLocati
 
 // Finds a path from StartLocation to EndLocation as an array of path points
 // Returns true if a path was successfully found
-function bool FindPath(Vector StartLocation, Vector EndLocation, out Vector PathPoints[32], out int NumPathPoints)
+//	PathFinder -- Performs index-based search on NavMesh nodes
+//	PathPostProcessor -- Translates indices to a list of world-space path points
+function bool FindPath(Vector StartLocation, Vector EndLocation, out Vector OutPathPoints[32], out int OutPathPointCount)
 {
 	local int StartIndex, EndIndex;
-	local bool bResult;
+	local int PathIndices[32];
+	local int PathIndexCount;
+	//local Vector PathPoints[32];
+	//local int PathPointCount;
 
+	// Must have a PathFinder and a PathPostProcessor
 	if(PathFinder == None)
 	{
 		Utilities.Static.RLog("NavMesh FindPath failed -- PathFinder is not initialized");
 		return false;
 	}
-
-	if(!FindContainingNode(StartLocation, StartIndex))
+	if(PathPostProcessor == None)
 	{
+		Utilities.Static.RLog("NavMesh FindPath failed -- PathPostProcessor is not initialized");
 		return false;
 	}
 
-	if(!FindContainingNode(EndLocation, EndIndex))
+	// Find path indices
+	if(!FindContainingNode(StartLocation, StartIndex) || !FindContainingNode(EndLocation, EndIndex))
 	{
+		Utilities.Static.RLog("NavMesh FindPath failed --  Failed to find StartIndex or EndIndex");
+		return false;
+	}
+	if(!PathFinder.FindPath(Self, StartIndex, EndIndex, PathIndices, PathIndexCount))
+	{
+		Utilities.Static.RLog("NavMesh FindPath failed -- Failed to find path indices");
 		return false;
 	}
 
-	bResult = PathFinder.FindPath(StartIndex, EndIndex, PathPoints, NumPathPoints);
-	return bResult;
+	// Post-process to get path points
+	if(!PathPostProcessor.PostProcessPath(Self, StartLocation, EndLocation, PathIndices, PathIndexCount, OutPathPoints, OutPathPointCount))
+	{
+		Utilities.Static.RLog("NavMesh FindPath failed -- Failed to post-process path indices");
+		return false;
+	}
+
+	return true;
 }
 
 defaultproperties
 {
 	RemoteRole=ROLE_None
 	PathFinderClass=Class'RBots.R_PathFinder_Dijkstras'
+	PathPostProcessorClass=Class'RBots.R_PathPostProcessor_NodeCenter'
 }

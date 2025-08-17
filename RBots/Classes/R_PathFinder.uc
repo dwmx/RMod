@@ -6,15 +6,18 @@
 //==============================================================================
 class R_PathFinder extends Object abstract;
 
-var R_BotNavMesh NavMesh;
+const Utilities = Class'RBots.R_BotUtilities';
 
 /**
 	FindPath
 	Finds a path from StartIndex to EndIndex and returns in the out arguments
 	Returns whether or not a path was found
 */
-function bool FindPath(int StartIndex, int EndIndex, out Vector PathPoints[32], out int NumPathPoints)
+function bool FindPath(
+	R_BotNavMesh NavMesh,
+	int StartIndex, int EndIndex,
+	out int OutPathIndices[32], out int OutPathIndexCount)
 {
-	// Implement in child class
+	// To be implemented in subclass
 	return false;
 }

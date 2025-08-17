@@ -25,6 +25,8 @@ simulated function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringMana
 	StringManager.AddInt(DebugNavMeshCategory, "NumVertices", CachedNavMesh.GetVertexCount());
 	StringManager.AddInt(DebugNavMeshCategory, "NumTriangles", CachedNavMesh.GetTriangleCount());
 	StringManager.AddBool(DebugNavMeshCategory, "HasBadAdjacents", CachedNavMesh.HasBadAdjacents());
+	StringManager.AddClass(DebugNavMeshCategory, "PathFinderClass", CachedNavMesh.PathFinderClass);
+	StringManager.AddClass(DebugNavMeshCategory, "PathPostProcessorClass", CachedNavMesh.PathPostProcessorClass);
 
 	// Update the NavMesh if necessary
 	if(CachedNavMesh == None)

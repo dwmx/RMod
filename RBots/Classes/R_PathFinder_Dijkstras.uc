@@ -4,19 +4,23 @@
 //==============================================================================
 class R_PathFinder_Dijkstras extends R_PathFinder;
 
+const Utilities = Class'RBots.R_BotUtilities';
 const MAX_NODES = 1024; // Adjust to match maximum number of triangles
 
-function bool FindPath(int StartIndex, int EndIndex, out Vector PathPointVectors[32], out int NumPathPoints)
+function bool FindPath(
+	R_BotNavMesh NavMesh,
+	int StartIndex, int EndIndex,
+	out int OutPathIndices[32], out int OutPathIndexCount)
 {
-    local int Dist[1024];
+	local int Dist[1024];
     local int Prev[1024];
     local byte Visited[1024];
     local int i, j, k, u, v;
     local int Adjacents[3];
     local int MinDist, MinNode;
     local int TotalNodes;
-	local int PathPoints[32];
-	local Vector TriangleCenter, TriangleNormal;
+	//local int PathPoints[32];
+	//local Vector TriangleCenter, TriangleNormal;
 
     // Safety: assume NavMesh knows its triangle count
     TotalNodes = NavMesh.GetTriangleCount();
@@ -78,34 +82,27 @@ function bool FindPath(int StartIndex, int EndIndex, out Vector PathPointVectors
     // If no path found
     if (Prev[EndIndex] == -1 && EndIndex != StartIndex)
     {
-        NumPathPoints = 0;
+        OutPathIndexCount = 0;
         return false;
     }
 
     // Reconstruct path backwards
-    NumPathPoints = 0;
+    OutPathIndexCount = 0;
     u = EndIndex;
-    while (u != -1 && NumPathPoints < 32)
+    while (u != -1 && OutPathIndexCount < 32)
     {
-        PathPoints[NumPathPoints] = u;
-        NumPathPoints++;
+        OutPathIndices[OutPathIndexCount] = u;
+        OutPathIndexCount++;
         u = Prev[u];
     }
 
     // Reverse the path (since we built it backwards)
-    for (i = 0; i < NumPathPoints / 2; i++)
+    for (i = 0; i < OutPathIndexCount / 2; i++)
     {
-        j = PathPoints[i];
-        PathPoints[i] = PathPoints[NumPathPoints - 1 - i];
-        PathPoints[NumPathPoints - 1 - i] = j;
+        j = OutPathIndices[i];
+        OutPathIndices[i] = OutPathIndices[OutPathIndexCount - 1 - i];
+        OutPathIndices[OutPathIndexCount - 1 - i] = j;
     }
 
-	// Build the path point list from the nodes
-	for(i = 0; i < NumPathPoints; ++i)
-	{
-		NavMesh.GetTriangleNormalAndCenterUnchecked(PathPoints[i], TriangleNormal, TriangleCenter);
-		PathPointVectors[i] = TriangleCenter;
-	}
-
-    return true;
+	return true;
 }
