@@ -8,6 +8,7 @@ class R_RBotsDebug_StringManager extends Object;
 const Utilities = Class'RBots.R_BotUtilities';
 
 const StringType_String = 'StringType_String';
+const StringType_Warning = 'StringType_Warning';
 const StringType_Bool = 'StringType_Bool';
 const StringType_Int = 'StringType_Int';
 const StringType_Actor = 'StringType_Actor';
@@ -32,6 +33,8 @@ const DEBUG_CATEGORIES_ARRAY_SIZE = 1024;
 var Color CategoryColor;
 var Color LabelColor;
 var Color StringColor;
+var Color WarningLabelColor;
+var Color WarningStringColor;
 var Color BoolColorTrue;
 var Color BoolColorFalse;
 var Color IntColor;
@@ -76,6 +79,11 @@ function AddString(Name Category, String DebugString, optional String Label, opt
 	DebugStringArray[NumDebugStrings].StringType = StringType;
 	DebugStringArray[NumDebugStrings].MetaData = MetaData;
 	++NumDebugStrings;
+}
+
+function AddWarning(Name Category, String WarningString)
+{
+	AddString(Category, WarningString, "Warning", StringType_Warning);
 }
 
 function AddBool(Name Category, String Label, bool bBoolValue)
@@ -206,13 +214,24 @@ function DrawDebugString(Canvas C, float XPos, float YPos, out DebugString Debug
 		LabelString = DebugString.Label $ ": ";
 		C.StrLen(LabelString, StrW, StrH);
 		
-		C.DrawColor = LabelColor;
+		if(DebugString.StringType == StringType_Warning)
+		{
+			C.DrawColor = WarningLabelColor;
+		}
+		else
+		{
+			C.DrawColor = LabelColor;
+		}
 		C.SetPos(XPos, YPos);
 		C.DrawText(LabelString);
 	}
 
 	// Select draw color based on string type
-	if(DebugString.StringType == StringType_Bool)
+	if(DebugString.StringType == StringType_Warning)
+	{
+		C.DrawColor = WarningStringColor;
+	}
+	else if(DebugString.StringType == StringType_Bool)
 	{	// Bool
 		if(DebugString.MetaData == 0)
 		{
@@ -263,6 +282,8 @@ defaultproperties
 	CategoryColor=(R=80,G=255,B=80)
 	LabelColor=(R=255,G=255,B=255)
 	StringColor=(R=120,G=180,B=180)
+	WarningLabelColor=(R=255,G=255,B=80)
+	WarningStringColor=(R=128,G=128,B=40)
 	BoolColorTrue=(R=80,G=255,B=80)
 	BoolColorFalse=(R=255,G=80,B=80)
 	IntColor=(R=255,G=255,B=80)
