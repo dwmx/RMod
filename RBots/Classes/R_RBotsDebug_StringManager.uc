@@ -6,7 +6,31 @@
 class R_RBotsDebug_StringManager extends Object;
 
 const Utilities = Class'RBots.R_BotUtilities';
+const DebugLib = Class'RBots.R_RBots_DebugLibrary';
 
+const WhiteTexture = Texture'UWindow.WhiteTexture';
+
+// Debug Categories -- all strings are associated with one category
+var Name DebugCategoriesArray[64]; // Needs to match MAX_DEBUG_CATEGORIES
+var int NumDebugCategories;
+const MAX_DEBUG_CATEGORIES = 64;
+
+// Color legend -- Each Category can have one color legend
+struct LabeledColor
+{
+	var Color Color;
+	var String Label;
+};
+
+struct ColorLegend
+{
+	var LabeledColor LabeledColors[16]; // Need to match MAX_LABELED_COLORS
+	var int NumLabeledColors;
+};
+const MAX_LABELED_COLORS = 16;
+var ColorLegend ColorLegendArray[64]; // Needs to match MAX_DEBUG_CATEGORIES
+
+// Debug Strings
 const StringType_String = 'StringType_String';
 const StringType_Warning = 'StringType_Warning';
 const StringType_Bool = 'StringType_Bool';
@@ -28,10 +52,6 @@ var private DebugString DebugStringArray[1024];
 var private int NumDebugStrings;
 const DEBUG_STRING_ARRAY_SIZE = 1024;
 
-var Name DebugCategoriesArray[1024];
-var int NumDebugCategories;
-const DEBUG_CATEGORIES_ARRAY_SIZE = 1024;
-
 var Color CategoryColor;
 var Color LabelColor;
 var Color StringColor;
@@ -48,11 +68,83 @@ var Color ObjectColorNone;
 var Color ClassColor;
 var Color ClassColorNone;
 
+const COLOR_LEGEND_VERTICAL_SPACING = 10.0;
+const DEBUG_STRING_VERTICAL_SPACING = 10.0;
+const CATEGORY_SECTION_SPACING = 4.0;
+const CATEGORY_SPACING = 12.0;
+
 function Initialize()
 {
 
 }
 
+// Adds category if it is not already added
+function AddCategory(Name Category)
+{
+	local int i;
+
+	// Add category to DebugCategories array
+	for(i = 0; i < NumDebugCategories && i < MAX_DEBUG_CATEGORIES; ++i)
+	{
+		if(DebugCategoriesArray[i] == Category)
+		{
+			break;
+		}
+	}
+	if(i == NumDebugCategories && i < MAX_DEBUG_CATEGORIES)
+	{
+		// Add Category and create a color legend for it
+		DebugCategoriesArray[i] = Category;
+		ColorLegendArray[i].NumLabeledColors = 0;
+		++NumDebugCategories;
+	}
+}
+
+function bool GetCategoryIndex(Name Category, out int OutCategoryIndex)
+{
+	local int i;
+
+	for(i = 0; i < MAX_DEBUG_CATEGORIES; ++i)
+	{
+		if(DebugCategoriesArray[i] == Category)
+		{
+			OutCategoryIndex = i;
+			return true;
+		}
+	}
+
+	OutCategoryIndex = -1;
+	return false;
+}
+
+// Add a color to the specified Categorie's color legend
+function AddColor(Name Category, String Label, Color Color)
+{
+	local int CategoryIndex;
+	local int LabeledColorIndex;
+
+	// Ensure that the category has been added
+	AddCategory(Category);
+	
+	if(!GetCategoryIndex(Category, CategoryIndex))
+	{
+		Utilities.Static.RLog("AddColor failed -- GetCategoryIndex failed when it should not have");
+		return;
+	}
+
+	if(ColorLegendArray[CategoryIndex].NumLabeledColors >= MAX_LABELED_COLORS)
+	{
+		Utilities.Static.RLog("AddColor failed -- too many colors, max is" @ MAX_LABELED_COLORS);
+		return;
+	}
+
+	LabeledColorIndex = ColorLegendArray[CategoryIndex].NumLabeledColors;
+	ColorLegendArray[CategoryIndex].LabeledColors[LabeledColorIndex].Color = Color;
+	ColorLegendArray[CategoryIndex].LabeledColors[LabeledColorIndex].Label = Label;
+	ColorLegendArray[CategoryIndex].NumLabeledColors++;
+}
+
+// Add a string to the specified category
 function AddString(Name Category, String DebugString, optional String Label, optional Name StringType, optional int MetaData)
 {
 	local int i;
@@ -63,19 +155,8 @@ function AddString(Name Category, String DebugString, optional String Label, opt
 		return;
 	}
 
-	// Add category to DebugCategories array
-	for(i = 0; i < NumDebugCategories && i < DEBUG_CATEGORIES_ARRAY_SIZE; ++i)
-	{
-		if(DebugCategoriesArray[i] == Category)
-		{
-			break;
-		}
-	}
-	if(i == NumDebugCategories && i < DEBUG_CATEGORIES_ARRAY_SIZE)
-	{
-		DebugCategoriesArray[i] = Category;
-		++NumDebugCategories;
-	}
+	// Ensure that the category has been added
+	AddCategory(Category);
 
 	// Add string
 	DebugStringArray[NumDebugStrings].DebugCategory = Category;
@@ -126,7 +207,6 @@ function AddVector(Name Category, String Label, Vector VectorValue)
 	local String VectorString;
 
 	VectorString = "(X=" $ VectorValue.X $ ",Y=" $ VectorValue.Y $ ",Z=" $ VectorValue.Z $ ")";
-	//VectorString = String(VectorValue);
 
 	AddString(Category, VectorString, Label, StringType_Vector, 0);
 }
@@ -196,6 +276,8 @@ function AddClass(Name Category, String Label, Class ClassRef)
 
 function Clear()
 {
+	local int i;
+
 	NumDebugStrings = 0;
 	NumDebugCategories = 0;
 }
@@ -207,7 +289,6 @@ function DrawStringManager(Canvas C)
 
 	C.Font = C.MedFont;
 	
-
 	XPos = 16.0;
 	YPos = 16.0;
 
@@ -221,40 +302,85 @@ function DrawStringManager(Canvas C)
 		// Print category
 		C.SetPos(XPos, YPos);
 		C.DrawText("" $ DebugCategoriesArray[i]);
-		YPos += 14.0;
+		YPos += DEBUG_STRING_VERTICAL_SPACING;	// Add string size
+		YPos += CATEGORY_SECTION_SPACING;		// Add section spacing
 
-		// Strings color
-		C.DrawColor.R = 255;
-		C.DrawColor.G = 255;
-		C.DrawColor.B = 255;
+		// Draw the category's color legend if it has one
+		if(DrawColorLegend(C, XPos, YPos, ColorLegendArray[i]))
+		{
+			YPos += CATEGORY_SECTION_SPACING; // Add section spacing after color legend
+		}
 
+		// Draw all strings for this category
 		for(j = 0; j < NumDebugStrings; ++j)
 		{
 			if(DebugStringArray[j].DebugCategory == DebugCategoriesArray[i])
 			{
-				DrawDebugString(C, XPos, YPos, DebugStringArray[j]);
-				YPos += 10.0;
+				if(DrawDebugString(C, XPos, YPos, DebugStringArray[j]))
+				{
+					YPos += DEBUG_STRING_VERTICAL_SPACING;
+				}
 			}
 		}
 
-		YPos += 12.0;
+		YPos += CATEGORY_SPACING;
 	}
 }
 
-function DrawDebugString(Canvas C, float XPos, float YPos, out DebugString DebugString)
+function bool DrawColorLegend(Canvas C, out float InOutXPos, out float InOutYPos, out ColorLegend InColorLegend)
+{
+	local int i;
+	local float XPos, YPos;
+	local float RGB[3];
+
+	if(InColorLegend.NumLabeledColors == 0)
+	{
+		return false;
+	}
+
+	DebugLib.Static.InitializeCanvasForDebugDrawing(C);
+
+	XPos = InOutXPos;
+	YPos = InOutYPos;
+	for(i = 0; i < InColorLegend.NumLabeledColors; ++i)
+	{
+		// Draw Color rect
+		C.DrawColor = InColorLegend.LabeledColors[i].Color;
+		C.SetPos(XPos+1, YPos+1);
+		C.DrawRect(WhiteTexture, COLOR_LEGEND_VERTICAL_SPACING-2, COLOR_LEGEND_VERTICAL_SPACING-2);
+
+		// Draw Label text
+		XPos += COLOR_LEGEND_VERTICAL_SPACING + 4.0;
+		C.DrawColor = LabelColor;
+		C.SetPos(XPos, YPos);
+		C.DrawText(InColorLegend.LabeledColors[i].Label);
+
+		// Adjust for next entry
+		XPos = InOutXPos;
+		YPos += COLOR_LEGEND_VERTICAL_SPACING;
+	}
+
+	// Update where the drawing ended
+	InOutYPos = YPos;
+	return true;
+}
+
+function bool DrawDebugString(Canvas C, float XPos, float YPos, out DebugString InDebugString)
 {
 	local float StrW, StrH;
 	local String LabelString;
 
+	DebugLib.Static.InitializeCanvasForDebugDrawing(C);
+
 	StrW = 0.0;
 	StrH = 0.0;
 
-	if(DebugString.Label != "")
+	if(InDebugString.Label != "")
 	{
-		LabelString = DebugString.Label $ ": ";
+		LabelString = InDebugString.Label $ ": ";
 		C.StrLen(LabelString, StrW, StrH);
 		
-		if(DebugString.StringType == StringType_Warning)
+		if(InDebugString.StringType == StringType_Warning)
 		{
 			C.DrawColor = WarningLabelColor;
 		}
@@ -267,13 +393,13 @@ function DrawDebugString(Canvas C, float XPos, float YPos, out DebugString Debug
 	}
 
 	// Select draw color based on string type
-	if(DebugString.StringType == StringType_Warning)
+	if(InDebugString.StringType == StringType_Warning)
 	{
 		C.DrawColor = WarningStringColor;
 	}
-	else if(DebugString.StringType == StringType_Bool)
+	else if(InDebugString.StringType == StringType_Bool)
 	{	// Bool
-		if(DebugString.MetaData == 0)
+		if(InDebugString.MetaData == 0)
 		{
 			C.DrawColor = BoolColorFalse;
 		}
@@ -282,17 +408,17 @@ function DrawDebugString(Canvas C, float XPos, float YPos, out DebugString Debug
 			C.DrawColor = BoolColorTrue;
 		}
 	}
-	else if(DebugString.StringType == StringType_Int)
+	else if(InDebugString.StringType == StringType_Int)
 	{	// Int
 		C.DrawColor = IntColor;
 	}
-	else if(DebugString.StringType == StringType_Vector)
+	else if(InDebugString.StringType == StringType_Vector)
 	{	// Vector
 		C.DrawColor = VectorColor;
 	}
-	else if(DebugString.StringType == StringType_Actor)
+	else if(InDebugString.StringType == StringType_Actor)
 	{	// Actor
-		if(DebugString.MetaData == 0)
+		if(InDebugString.MetaData == 0)
 		{
 			C.DrawColor = ActorColorNone;
 		}
@@ -301,9 +427,9 @@ function DrawDebugString(Canvas C, float XPos, float YPos, out DebugString Debug
 			C.DrawColor = ActorColor;
 		}
 	}
-	else if(DebugString.StringType == StringType_Object)
+	else if(InDebugString.StringType == StringType_Object)
 	{	// Object
-		if(DebugString.MetaData == 0)
+		if(InDebugString.MetaData == 0)
 		{
 			C.DrawColor = ObjectColorNone;
 		}
@@ -312,9 +438,9 @@ function DrawDebugString(Canvas C, float XPos, float YPos, out DebugString Debug
 			C.DrawColor = ObjectColor;
 		}
 	}
-	else if(DebugString.StringType == StringType_Class)
+	else if(InDebugString.StringType == StringType_Class)
 	{	// Class
-		if(DebugString.MetaData == 0)
+		if(InDebugString.MetaData == 0)
 		{
 			C.DrawColor = ClassColorNone;
 		}
@@ -329,7 +455,8 @@ function DrawDebugString(Canvas C, float XPos, float YPos, out DebugString Debug
 	}
 
 	C.SetPos(XPos + StrW, YPos);
-	C.DrawText(DebugString.DebugString);
+	C.DrawText(InDebugString.DebugString);
+	return true;
 }
 
 defaultproperties
