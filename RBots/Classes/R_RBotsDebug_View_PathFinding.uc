@@ -11,9 +11,18 @@ const DebugPathFindingCategory = 'PathFinding';
 var private R_PathFindData PathFindData;
 const PathFindDataClass = Class'RBots.R_PathFindData';
 
+const NODE_DRAW_ELEVATION = 4.0;	// Pushes node drawing up on the Z axis
+const PATH_DRAW_ELEVATION = 32.0;	// Pushes path drawing up on the Z axis
+const PORTAL_DRAW_ELEVATION = 4.0;	// Pushes portal drawing up on the Z axis
+
+const PATH_POINT_DRAW_SIZE = 16.0;
+const PORTAL_DRAW_SIZE = 4.0;
+
 var Color PathNodeColor;	// Color of each NavMesh node
 var Color PathPointColor;	// Color of each world location path point
 var Color PathEdgeColor;	// Color of edges between path points
+var Color LeftPortalColor;	// Color of left portal points
+var Color RightPortalColor;	// Color of right portal points
 
 simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringManager)
 {
@@ -81,6 +90,7 @@ simulated function DrawPathNodes(Canvas C, R_Bot DebugTarget)
 	local int PathNodeIndex;
 	local int i, j;
 	local float NodeR, NodeG, NodeB;
+	local Vector DrawElevation;
 
 	if(PathFindData == None)
 	{
@@ -92,6 +102,9 @@ simulated function DrawPathNodes(Canvas C, R_Bot DebugTarget)
 	{
 		return;
 	}
+
+	DrawElevation = Vect(0,0,0);
+	DrawElevation.Z = NODE_DRAW_ELEVATION;
 
 	// Draw all nodes
 	Utilities.Static.ColorToFloats(PathNodeColor, NodeR, NodeG, NodeB);
@@ -108,9 +121,9 @@ simulated function DrawPathNodes(Canvas C, R_Bot DebugTarget)
 
 			for(j = 0; j < 3; ++j)
 			{
-				C.DrawLine3D(VertexLocations[0], VertexLocations[1], NodeR, NodeG, NodeB);
-				C.DrawLine3D(VertexLocations[1], VertexLocations[2], NodeR, NodeG, NodeB);
-				C.DrawLine3D(VertexLocations[2], VertexLocations[0], NodeR, NodeG, NodeB);
+				C.DrawLine3D(VertexLocations[0] + DrawElevation, VertexLocations[1] + DrawElevation, NodeR, NodeG, NodeB);
+				C.DrawLine3D(VertexLocations[1] + DrawElevation, VertexLocations[2] + DrawElevation, NodeR, NodeG, NodeB);
+				C.DrawLine3D(VertexLocations[2] + DrawElevation, VertexLocations[0] + DrawElevation, NodeR, NodeG, NodeB);
 			}
 		}
 	}
@@ -124,6 +137,7 @@ simulated function DrawPathPoints(Canvas C, R_Bot DebugTarget)
 	local Vector PathPoint, PrevPathPoint;
 	local float PointR, PointG, PointB;
 	local float EdgeR, EdgeG, EdgeB;
+	local Vector DrawElevation;
 
 	if(DebugTarget == None)
 	{
@@ -133,33 +147,66 @@ simulated function DrawPathPoints(Canvas C, R_Bot DebugTarget)
 	Utilities.Static.ColorToFloats(PathPointColor, PointR, PointG, PointB);
 	Utilities.Static.ColorToFloats(PathEdgeColor, EdgeR, EdgeG, EdgeB);
 
-	VertexExtents.X = 12.0;
-	VertexExtents.Y = 12.0;
-	VertexExtents.Z = 6.0;
+	VertexExtents = Vect(1.0,1.0,0.5) * PATH_POINT_DRAW_SIZE;
 	NumPathPoints = DebugTarget.GetNumPathPoints();
+
+	DrawElevation = Vect(0,0,0);
+	DrawElevation.Z = PATH_DRAW_ELEVATION;
 
 	for(i = 0; i < NumPathPoints; ++i)
 	{
 		PrevPathPoint = PathPoint;
 		if(DebugTarget.GetPathPoint(i, PathPoint))
 		{
-			CanvasLib.Static.DrawBox3D(C, PathPoint, VertexExtents, PointR, PointG, PointB);
+			CanvasLib.Static.DrawBox3D(C, PathPoint + DrawElevation, VertexExtents, PointR, PointG, PointB);
 		}
 
 		if(i > 0)
 		{
-			CanvasLib.Static.DrawLine3D(C, PrevPathPoint, PathPoint, EdgeR, EdgeG, EdgeB);
+			CanvasLib.Static.DrawLine3D(C, PrevPathPoint + DrawElevation, PathPoint + DrawElevation, EdgeR, EdgeG, EdgeB);
 		}
 	}
 }
 
 simulated function DrawPathPortals(Canvas C, R_Bot DebugTarget)
 {
+	local Vector PortalLeft, PortalRight;
+	local int PortalsCount;
+	local float PosX, PosY;
+	local int i;
+	local float LeftPortalRGB[3], RightPortalRGB[3];
+	local Vector PortalExtents;
+	local Vector DrawElevation;
+
+	if(PathFindData == None)
+	{
+		return;
+	}
+
+	Utilities.Static.ColorToFloats(LeftPortalColor, LeftPortalRGB[0], LeftPortalRGB[1], LeftPortalRGB[2]);
+	Utilities.Static.ColorToFloats(RightPortalColor, RightPortalRGB[0], RightPortalRGB[1], RightPortalRGB[2]);
+
+	DrawElevation = Vect(0,0,0);
+	DrawElevation.Z = PORTAL_DRAW_ELEVATION;
+
+	PortalExtents = Vect(1.0,1.0,0.5) * PORTAL_DRAW_SIZE;
+
+	PortalsCount = PathFindData.GetPortalsCount();
+	for(i = 0; i < PortalsCount; ++i)
+	{
+		if(PathFindData.GetPortal(i, PortalLeft, PortalRight))
+		{
+			CanvasLib.Static.DrawBox3D(C, PortalLeft + DrawElevation, PortalExtents, LeftPortalRGB[0], LeftPortalRGB[1], LeftPortalRGB[2]);
+			CanvasLib.Static.DrawBox3D(C, PortalRight + DrawElevation, PortalExtents, RightPortalRGB[0], RightPortalRGB[1], RightPortalRGB[2]);
+		}
+	}
 }
 
 defaultproperties
 {
-	PathNodeColor=(R=21,G=91,B=243)
-	PathPointColor=(R=25,G=228,B=86)
-	PathEdgeColor=(R=240,G=226,B=41)
+	PathNodeColor=(R=11,G=49,B=133)
+	PathPointColor=(R=55,G=255,B=28)
+	PathEdgeColor=(R=34,G=75,B=28)
+	LeftPortalColor=(R=255,G=56,B=238)
+	RightPortalColor=(R=240,G=226,B=41)
 }

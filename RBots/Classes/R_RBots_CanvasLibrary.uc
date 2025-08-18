@@ -38,3 +38,12 @@ static function DrawLine3D(Canvas C, Vector Start, Vector End, float R, float G,
 {
 	C.DrawLine3D(Start, End, R, G, B);
 }
+
+// World location to screen location
+static function WorldToScreen(Canvas C, Vector WorldLocation, out float OutScreenX, out float OutScreenY)
+{
+	local int X, Y;
+	C.TransformPoint(WorldLocation, X, Y);
+	OutScreenX = float(X);
+	OutScreenY = float(Y);
+}
