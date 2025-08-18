@@ -8,7 +8,8 @@ function bool PostProcessPath(
     R_BotNavMesh NavMesh,
     Vector StartLocation, Vector EndLocation,
     out int InPathIndices[32], int PathIndexCount,
-    out Vector OutPathPoints[32], out int OutPathPointCount)
+    out Vector OutPathPoints[32], out int OutPathPointCount,
+	optional R_PathFindData OptionalPathFindData)
 {
     local Vector PortalLeft[32], PortalRight[32];
     local int PortalCount;

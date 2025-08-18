@@ -10,7 +10,8 @@ const MAX_NODES = 1024; // Adjust to match maximum number of triangles
 function bool FindPath(
 	R_BotNavMesh NavMesh,
 	int StartIndex, int EndIndex,
-	out int OutPathIndices[32], out int OutPathIndexCount)
+	out int OutPathIndices[32], out int OutPathIndexCount,
+    optional R_PathFindData OptionalPathFindData)
 {
 	local int Dist[1024];
     local int Prev[1024];

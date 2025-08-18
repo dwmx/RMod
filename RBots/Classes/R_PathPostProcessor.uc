@@ -14,7 +14,8 @@ function bool PostProcessPath(
 	R_BotNavMesh NavMesh,
 	Vector StartLocation, Vector EndLocation,
 	out int InPathIndices[32], int PathIndexCount,
-	out Vector OutPathPoints[32], out int OutPathPointCount)
+	out Vector OutPathPoints[32], out int OutPathPointCount,
+	optional R_PathFindData OptionalPathFindData)
 {
 	// To be implemented in subclass
 	return false;

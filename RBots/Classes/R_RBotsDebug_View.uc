@@ -11,6 +11,9 @@ function R_RBotsDebug GetDebugMutator()
 	return R_RBotsDebug(Owner);
 }
 
+function DebugTargetChanged(R_Bot OldDebugTarget, R_Bot NewDebugTarget)
+{}
+
 simulated event PostRender(Canvas C) {} // To be implemented in subclasses
 
 // Implement in subclasses

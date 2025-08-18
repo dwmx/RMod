@@ -16,7 +16,8 @@ const Utilities = Class'RBots.R_BotUtilities';
 function bool FindPath(
 	R_BotNavMesh NavMesh,
 	int StartIndex, int EndIndex,
-	out int OutPathIndices[32], out int OutPathIndexCount)
+	out int OutPathIndices[32], out int OutPathIndexCount,
+	optional R_PathFindData OptionalPathFindData)
 {
 	// To be implemented in subclass
 	return false;

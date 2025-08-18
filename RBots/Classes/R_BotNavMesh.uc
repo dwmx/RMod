@@ -470,13 +470,14 @@ function bool DoesTriangleContainLocationUnchecked(int Index, Vector WorldLocati
 // Returns true if a path was successfully found
 //	PathFinder -- Performs index-based search on NavMesh nodes
 //	PathPostProcessor -- Translates indices to a list of world-space path points
-function bool FindPath(Vector StartLocation, Vector EndLocation, out Vector OutPathPoints[32], out int OutPathPointCount)
+function bool FindPath(
+	Vector StartLocation, Vector EndLocation,
+	out Vector OutPathPoints[32], out int OutPathPointCount,
+	optional R_PathFindData OptionalPathFindData)
 {
 	local int StartIndex, EndIndex;
 	local int PathIndices[32];
 	local int PathIndexCount;
-	//local Vector PathPoints[32];
-	//local int PathPointCount;
 
 	// Must have a PathFinder and a PathPostProcessor
 	if(PathFinder == None)
@@ -490,20 +491,28 @@ function bool FindPath(Vector StartLocation, Vector EndLocation, out Vector OutP
 		return false;
 	}
 
-	// Find path indices
+	// Find start and end nodes
 	if(!FindContainingNode(StartLocation, StartIndex) || !FindContainingNode(EndLocation, EndIndex))
 	{
 		Utilities.Static.RLog("NavMesh FindPath failed --  Failed to find StartIndex or EndIndex");
 		return false;
 	}
-	if(!PathFinder.FindPath(Self, StartIndex, EndIndex, PathIndices, PathIndexCount))
+
+	// If a PathFindData object was provided, clear it before execution
+	if(OptionalPathFindData != None)
+	{
+		OptionalPathFindData.Clear();
+	}
+
+	// Find path indices
+	if(!PathFinder.FindPath(Self, StartIndex, EndIndex, PathIndices, PathIndexCount, OptionalPathFindData))
 	{
 		Utilities.Static.RLog("NavMesh FindPath failed -- Failed to find path indices");
 		return false;
 	}
 
 	// Post-process to get path points
-	if(!PathPostProcessor.PostProcessPath(Self, StartLocation, EndLocation, PathIndices, PathIndexCount, OutPathPoints, OutPathPointCount))
+	if(!PathPostProcessor.PostProcessPath(Self, StartLocation, EndLocation, PathIndices, PathIndexCount, OutPathPoints, OutPathPointCount, OptionalPathFindData))
 	{
 		Utilities.Static.RLog("NavMesh FindPath failed -- Failed to post-process path indices");
 		return false;
