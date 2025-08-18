@@ -12,6 +12,7 @@ const StringType_Warning = 'StringType_Warning';
 const StringType_Bool = 'StringType_Bool';
 const StringType_Int = 'StringType_Int';
 const StringType_Actor = 'StringType_Actor';
+const StringType_Object = 'StringType_Object';
 const StringType_Class = 'StringType_Class';
 
 struct DebugString
@@ -40,6 +41,8 @@ var Color BoolColorFalse;
 var Color IntColor;
 var Color ActorColor;
 var Color ActorColorNone;
+var Color ObjectColor;
+var Color ObjectColorNone;
 var Color ClassColor;
 var Color ClassColorNone;
 
@@ -133,6 +136,31 @@ function AddActor(Name Category, String Label, Actor ActorRef)
 	}
 
 	AddString(Category, ActorString, Label, StringType_Actor, MetaData);
+}
+
+function AddObject(Name Category, String Label, Object ObjectRef)
+{
+	local int MetaData;
+	local String ObjectString;
+
+	if(Actor(ObjectRef) != None)
+	{
+		AddActor(Category, Label, Actor(ObjectRef));
+		return;
+	}
+
+	if(ObjectRef == None)
+	{
+		MetaData = 0;
+		ObjectString = "None";
+	}
+	else
+	{
+		MetaData = 1;
+		ObjectString = String(ObjectRef);
+	}
+
+	AddString(Category, ObjectString, Label, StringType_Object, MetaData);
 }
 
 function AddClass(Name Category, String Label, Class ClassRef)
@@ -257,6 +285,17 @@ function DrawDebugString(Canvas C, float XPos, float YPos, out DebugString Debug
 			C.DrawColor = ActorColor;
 		}
 	}
+	else if(DebugString.StringType == StringType_Object)
+	{	// Object
+		if(DebugString.MetaData == 0)
+		{
+			C.DrawColor = ObjectColorNone;
+		}
+		else
+		{
+			C.DrawColor = ObjectColor;
+		}
+	}
 	else if(DebugString.StringType == StringType_Class)
 	{	// Class
 		if(DebugString.MetaData == 0)
@@ -289,6 +328,8 @@ defaultproperties
 	IntColor=(R=255,G=255,B=80)
 	ActorColor=(R=80,G=80,B=255)
 	ActorColorNone=(R=255,G=80,B=80)
+	ObjectColor=(R=120,G=180,B=180)
+	ObjectColorNone=(R=255,G=80,B=80)
 	ClassColor=(R=153,G=5,B=86)
 	ClassColorNone=(R=255,G=80,B=80)
 }

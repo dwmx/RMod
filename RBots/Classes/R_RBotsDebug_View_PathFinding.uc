@@ -48,6 +48,7 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 		StringManager.AddClass(DebugPathFindingCategory, "PathFinderClass", NavMesh.PathFinderClass);
 		StringManager.AddClass(DebugPathFindingCategory, "PathPostProcessorClass", NavMesh.PathPostProcessorClass);
 		StringManager.AddClass(DebugPathFindingCategory, "PathFindDataClass", PathFindDataClass);
+		StringManager.AddObject(DebugPathFindingCategory, "PathFindData", PathFindData);
 	}
 
 	StringManager.AddInt(DebugPathFindingCategory, "NumPathPoints", NumPathPoints);
