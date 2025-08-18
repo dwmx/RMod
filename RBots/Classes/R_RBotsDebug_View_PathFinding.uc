@@ -12,6 +12,8 @@ const PathFindDataClass = Class'RBots.R_PathFindData';
 
 var Color PathPointColor;
 var Color PathEdgeColor;
+var Color PortalPointColor;
+var Color PortalEdgeColor;
 
 simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringManager)
 {
@@ -56,6 +58,7 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 	StringManager.AddObject(DebugPathFindingCategory, "PathFindData", PathFindData);
 	if(PathFindData != None)
 	{
+		StringManager.AddInt(DebugPathFindingCategory, "PathNodesCount", PathFindData.GetPathNodesCount());
 		StringManager.AddInt(DebugPathFindingCategory, "PortalsCount", PathFindData.GetPortalsCount());
 	}
 
@@ -65,6 +68,7 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 	//--------------------------------------------------------------------------
 	// Draw debug visuals
 	DrawPathPoints(C, DebugTarget);
+	DrawPathPortals(C, DebugTarget);
 }
 
 simulated function DrawPathPoints(Canvas C, R_Bot DebugTarget)
@@ -99,8 +103,14 @@ simulated function DrawPathPoints(Canvas C, R_Bot DebugTarget)
 	}
 }
 
+simulated function DrawPathPortals(Canvas C, R_Bot DebugTarget)
+{
+}
+
 defaultproperties
 {
 	PathPointColor=(R=255,G=0,B=0)
 	PathEdgeColor=(R=0,G=255,B=255)
+	PortalPointColor=(R=255,G=255,B=255)
+	PortalEdgeColor=(R=255,G=255,B=255)
 }

@@ -105,5 +105,15 @@ function bool FindPath(
         OutPathIndices[OutPathIndexCount - 1 - i] = j;
     }
 
+	// If a PathFindData object was provided, add relevant data
+	if(OptionalPathFindData != None)
+	{
+		OptionalPathFindData.ClearPathNodes();
+		for(i = 0; i < OutPathIndexCount; ++i)
+		{
+			OptionalPathFindData.PushPathNode(OutPathIndices[i]);
+		}
+	}
+
 	return true;
 }
