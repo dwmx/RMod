@@ -10,6 +10,8 @@ const PATH_POINT_ARRAY_SIZE = 32;
 var private Vector PathPoints[32];
 var private int NumPathPoints;
 
+var private R_PathFindData AttachedPathFindData;
+
 var R_BotNavMesh CachedNavMesh;
 
 function R_BotNavMesh GetNavMesh()
@@ -28,6 +30,22 @@ function R_BotNavMesh GetNavMesh()
 	return CachedNavMesh;
 }
 
+// Attaches PathFindData object to collect additional data from FindPath
+function AttachPathFindData(R_PathFindData NewPathFindData)
+{
+	DetachPathFindData();
+	AttachedPathFindData = NewPathFindData;
+}
+
+// Detaches, but does not destroy, current PathFindData object
+function DetachPathFindData()
+{
+	if(AttachedPathFindData != None)
+	{
+		AttachedPathFindData = None;
+	}
+}
+
 // Attempts to find a path between Start and End, and if successful, updates the Bot's path vars
 // Returns true if path was found and updated
 function bool TryUpdatePath(Vector Start, Vector End)
@@ -37,7 +55,7 @@ function bool TryUpdatePath(Vector Start, Vector End)
 	LocalNavMesh = GetNavMesh();
 	if(LocalNavMesh != None)
 	{
-		return LocalNavMesh.FindPath(Start, End, PathPoints, NumPathPoints);
+		return LocalNavMesh.FindPath(Start, End, PathPoints, NumPathPoints, AttachedPathFindData);
 	}
 
 	return false;

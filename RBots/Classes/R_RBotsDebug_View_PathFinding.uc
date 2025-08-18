@@ -7,13 +7,11 @@ class R_RbotsDebug_View_PathFinding extends R_RbotsDebug_View;
 const Utilities = Class'RBots.R_BotUtilities';
 const DebugPathFindingCategory = 'PathFinding';
 
+var private R_PathFindData PathFindData;
+const PathFindDataClass = Class'RBots.R_PathFindData';
+
 var Color PathPointColor;
 var Color PathEdgeColor;
-
-function DebugTargetChanged(R_Bot OldDebugTarget, R_Bot NewDebugTarget)
-{
-	Super.DebugTargetChanged(OldDebugTarget, NewDebugTarget);
-}
 
 simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringManager)
 {
@@ -31,6 +29,13 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 
 	if(DebugTarget != None)
 	{
+		// Make sure PathFindData is attached
+		if(PathFindData == None)
+		{
+			PathFindData = new(None) PathFindDataClass;
+		}
+		DebugTarget.AttachPathFindData(PathFindData);
+
 		NumPathPoints = DebugTarget.GetNumPathPoints();
 	}
 
@@ -42,6 +47,7 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 	{
 		StringManager.AddClass(DebugPathFindingCategory, "PathFinderClass", NavMesh.PathFinderClass);
 		StringManager.AddClass(DebugPathFindingCategory, "PathPostProcessorClass", NavMesh.PathPostProcessorClass);
+		StringManager.AddClass(DebugPathFindingCategory, "PathFindDataClass", PathFindDataClass);
 	}
 
 	StringManager.AddInt(DebugPathFindingCategory, "NumPathPoints", NumPathPoints);
