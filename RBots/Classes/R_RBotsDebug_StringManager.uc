@@ -11,6 +11,7 @@ const StringType_String = 'StringType_String';
 const StringType_Warning = 'StringType_Warning';
 const StringType_Bool = 'StringType_Bool';
 const StringType_Int = 'StringType_Int';
+const StringType_Vector = 'StringType_Vector';
 const StringType_Actor = 'StringType_Actor';
 const StringType_Object = 'StringType_Object';
 const StringType_Class = 'StringType_Class';
@@ -39,6 +40,7 @@ var Color WarningStringColor;
 var Color BoolColorTrue;
 var Color BoolColorFalse;
 var Color IntColor;
+var Color VectorColor;
 var Color ActorColor;
 var Color ActorColorNone;
 var Color ObjectColor;
@@ -117,6 +119,16 @@ function AddInt(Name Category, String Label, int IntValue)
 	IntString = String(IntValue);
 
 	AddString(Category, IntString, Label, StringType_Int, MetaData);
+}
+
+function AddVector(Name Category, String Label, Vector VectorValue)
+{
+	local String VectorString;
+
+	VectorString = "(X=" $ VectorValue.X $ ",Y=" $ VectorValue.Y $ ",Z=" $ VectorValue.Z $ ")";
+	//VectorString = String(VectorValue);
+
+	AddString(Category, VectorString, Label, StringType_Vector, 0);
 }
 
 function AddActor(Name Category, String Label, Actor ActorRef)
@@ -274,6 +286,10 @@ function DrawDebugString(Canvas C, float XPos, float YPos, out DebugString Debug
 	{	// Int
 		C.DrawColor = IntColor;
 	}
+	else if(DebugString.StringType == StringType_Vector)
+	{	// Vector
+		C.DrawColor = VectorColor;
+	}
 	else if(DebugString.StringType == StringType_Actor)
 	{	// Actor
 		if(DebugString.MetaData == 0)
@@ -326,6 +342,7 @@ defaultproperties
 	BoolColorTrue=(R=80,G=255,B=80)
 	BoolColorFalse=(R=255,G=80,B=80)
 	IntColor=(R=255,G=255,B=80)
+	VectorColor=(R=255,G=255,B=80)
 	ActorColor=(R=80,G=80,B=255)
 	ActorColorNone=(R=255,G=80,B=80)
 	ObjectColor=(R=120,G=180,B=180)
