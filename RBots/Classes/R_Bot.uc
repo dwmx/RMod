@@ -74,6 +74,10 @@ function bool GetPathPoint(int Index, out Vector PathPoint)
 	return true;
 }
 
+// Currently only implemented for PathBot
+function bool GetDesiredPathStart(out Vector OutDesiredStart) { return false; }
+function bool GetDesiredPathEnd(out Vector OutDesiredEnd) { return false; }
+
 function int GetNumPathPoints()
 {
 	return NumPathPoints;

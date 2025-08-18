@@ -5,18 +5,24 @@
 class R_RBotsDebug_PathBot extends R_Bot;
 
 var float TimeAccumulator;
-
 var Inventory CurrentPathingTarget;
+var bool bRandomPathing;
+
+var Vector StartLocation;
+var Vector EndLocation;
 
 event Tick(float DeltaSeconds)
 {
 	super.Tick(DeltaSeconds);
 
-	TimeAccumulator += DeltaSeconds;
-	if(TimeAccumulator >= 6.0)
+	if(bRandomPathing)
 	{
-		TimeAccumulator = 0.0;
-		FindNewDebugPath();
+		TimeAccumulator += DeltaSeconds;
+		if(TimeAccumulator >= 6.0)
+		{
+			TimeAccumulator = 0.0;
+			FindNewDebugPath();
+		}
 	}
 }
 
@@ -70,4 +76,33 @@ function Weapon GetRandomWeapon()
 function Actor GetCurrentPathingTarget()
 {
 	return CurrentPathingTarget;
+}
+
+function SetStartLocation(Vector NewStartLocation)
+{
+	StartLocation = NewStartLocation;
+	TryUpdatePath(StartLocation, EndLocation);
+}
+
+function SetEndLocation(Vector NewEndLocation)
+{
+	EndLocation = NewEndLocation;
+	TryUpdatePath(StartLocation, EndLocation);
+}
+
+function bool GetDesiredPathStart(out Vector OutDesiredStart)
+{
+	OutDesiredStart = StartLocation;
+	return true;
+}
+
+function bool GetDesiredPathEnd(out Vector OutDesiredEnd)
+{
+	OutDesiredEnd = EndLocation;
+	return true;
+}
+
+defaultproperties
+{
+	bRandomPathing=false
 }
