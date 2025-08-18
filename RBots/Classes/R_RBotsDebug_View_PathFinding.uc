@@ -39,21 +39,31 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 		NumPathPoints = DebugTarget.GetNumPathPoints();
 	}
 
+	//--------------------------------------------------------------------------
 	// Add Debug strings
 	StringManager.AddActor(DebugPathFindingCategory, "DebugTarget", DebugTarget);
 
+	// NavMesh
 	NavMesh = GetNavMesh();
 	if(NavMesh != None)
 	{
 		StringManager.AddClass(DebugPathFindingCategory, "PathFinderClass", NavMesh.PathFinderClass);
 		StringManager.AddClass(DebugPathFindingCategory, "PathPostProcessorClass", NavMesh.PathPostProcessorClass);
-		StringManager.AddClass(DebugPathFindingCategory, "PathFindDataClass", PathFindDataClass);
-		StringManager.AddObject(DebugPathFindingCategory, "PathFindData", PathFindData);
 	}
 
+	// PathFindData
+	StringManager.AddClass(DebugPathFindingCategory, "PathFindDataClass", PathFindDataClass);
+	StringManager.AddObject(DebugPathFindingCategory, "PathFindData", PathFindData);
+	if(PathFindData != None)
+	{
+		StringManager.AddInt(DebugPathFindingCategory, "PortalsCount", PathFindData.GetPortalsCount());
+	}
+
+	// Path
 	StringManager.AddInt(DebugPathFindingCategory, "NumPathPoints", NumPathPoints);
 
-	// Draw visuals
+	//--------------------------------------------------------------------------
+	// Draw debug visuals
 	DrawPathPoints(C, DebugTarget);
 }
 

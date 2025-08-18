@@ -498,10 +498,12 @@ function bool FindPath(
 		return false;
 	}
 
-	// If a PathFindData object was provided, clear it before execution
+	// If a PathFindData object was provided, initialize it before execution
 	if(OptionalPathFindData != None)
 	{
 		OptionalPathFindData.Clear();
+		OptionalPathFindData.SetPathFinderClass(PathFinder.Class);
+		OptionalPathFindData.SetPathPostProcessorClass(PathPostProcessor.Class);
 	}
 
 	// Find path indices

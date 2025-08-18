@@ -126,6 +126,18 @@ function bool PostProcessPath(
     // Add the end point
     OutPathPoints[OutPathPointCount++] = EndLocation;
 
+
+	// If a PathFindData object was provided, add data
+	if(OptionalPathFindData != None)
+	{
+		// Push portals
+		OptionalPathFindData.ClearPortals();
+		for(i = 0; i < PortalCount; ++i)
+		{
+			OptionalPathFindData.PushPortal(PortalLeft[i], PortalRight[i]);
+		}
+	}
+
     return true;
 }
 
