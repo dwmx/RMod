@@ -47,3 +47,21 @@ static function WorldToScreen(Canvas C, Vector WorldLocation, out float OutScree
 	OutScreenX = float(X);
 	OutScreenY = float(Y);
 }
+
+static function DrawTextAtWorldLocation(Canvas C, String TextString, Vector WorldLocation, optional Vector Alignment)
+{
+	local int IntPosX, IntPosY;
+	local float PosX, Posy;
+	local float StrW, StrH;
+
+	C.TransformPoint(WorldLocation, IntPosX, IntPosY);
+	PosX = float(IntPosX);
+	PosY = float(IntPosY);
+
+	C.StrLen(TextString, StrW, StrH);
+	PosX += Alignment.X * -1.0 * StrW;
+	PosY += Alignment.Y * -1.0 * StrH;
+
+	C.SetPos(PosX, PosY);
+	C.DrawText(TextString);
+}

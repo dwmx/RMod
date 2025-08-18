@@ -5,6 +5,7 @@
 class R_RbotsDebug_View_PathFinding extends R_RbotsDebug_View;
 
 const Utilities = Class'RBots.R_BotUtilities';
+const DebugLib = Class'RBots.R_RBots_DebugLibrary';
 const CanvasLib = Class'RBots.R_RBots_CanvasLibrary';
 const DebugPathFindingCategory = 'PathFinding';
 
@@ -90,6 +91,7 @@ simulated function DrawPathNodes(Canvas C, R_Bot DebugTarget)
 	local int PathNodeIndex;
 	local int i, j;
 	local float NodeR, NodeG, NodeB;
+	local Vector Normal, Center;
 	local Vector DrawElevation;
 
 	if(PathFindData == None)
@@ -119,12 +121,20 @@ simulated function DrawPathNodes(Canvas C, R_Bot DebugTarget)
 				NavMesh.GetVertexUnchecked(VertexIndices[j], VertexLocations[j]);
 			}
 
+			// Draw node edges
 			for(j = 0; j < 3; ++j)
 			{
 				C.DrawLine3D(VertexLocations[0] + DrawElevation, VertexLocations[1] + DrawElevation, NodeR, NodeG, NodeB);
 				C.DrawLine3D(VertexLocations[1] + DrawElevation, VertexLocations[2] + DrawElevation, NodeR, NodeG, NodeB);
 				C.DrawLine3D(VertexLocations[2] + DrawElevation, VertexLocations[0] + DrawElevation, NodeR, NodeG, NodeB);
 			}
+
+			// Draw the index in the middle of the node
+			NavMesh.GetTriangleNormalAndCenterUnchecked(PathNodeIndex, Normal, Center);
+
+			// Draw
+			DebugLib.Static.InitializeCanvasForDebugDrawing(C);
+			CanvasLib.Static.DrawTextAtWorldLocation(C, "" $ i, Center + DrawElevation, Vect(0.5,0.5,0.0));
 		}
 	}
 }
