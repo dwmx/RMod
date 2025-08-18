@@ -301,8 +301,9 @@ simulated event PostRender(Canvas C)
 function Mutate(string MutateString, PlayerPawn Sender)
 {
 	local R_Bot NewBot;
+	local R_RBotsDebug_PathBot PathBot;
 
-	Log(MutateString);
+
 
 	// Welcome string
 	if(Caps(MutateString) == "RBOTS")
@@ -318,12 +319,32 @@ function Mutate(string MutateString, PlayerPawn Sender)
 		return;
 	}
 
+	PathBot = R_RBotsDebug_PathBot(DebugTarget);
+
 	// Command handling
 	if(Caps(MutateString) == "RBOTS.DEBUG.PATHBOT")
 	{
 		Utilities.Static.RLog("Spawning a test pathing bot");
 		NewBot = Spawn(PathBotClass);
 		SetDebugTarget(NewBot);
+	}
+	else if(Caps(MutateString) == "RBOTS.DEBUG.PATHBOT.SETSTART")
+	{
+		if(PathBot == None)
+		{
+			Sender.ClientMessage("DebugTarget must be a PathBot");
+			return;
+		}
+		PathBot.SetStartLocation(Sender.Location);
+	}
+	else if(Caps(MutateString) == "RBOTS.DEBUG.PATHBOT.SETEND")
+	{
+		if(PathBot == None)
+		{
+			Sender.ClientMessage("DebugTarget must be a PathBot");
+			return;
+		}
+		PathBot.SetEndLocation(Sender.Location);
 	}
 	else if(Caps(MutateString) == "RBOTS.DEBUG.VIEW")
 	{
@@ -346,6 +367,8 @@ function Mutate(string MutateString, PlayerPawn Sender)
 function SendCommandList(PlayerPawn Sender)
 {
 	Sender.ClientMessage("mutate rbots.debug.pathbot -- Summons and auto-targets a bot to test path finding");
+	Sender.ClientMessage("mutate rbots.debug.pathbot.setstart -- Sets the start location for PathBot to Caller's current location");
+	Sender.ClientMessage("mutate rbots.debug.pathbot.setend -- Sets the end location for PathBot to Caller's current location");
 	Sender.ClientMessage("mutate rbots.debug.view -- Toggle all debug visualization");
 	Sender.ClientMessage("mutate rbots.debug.view.navmesh -- Toggle nav mesh debug view");
 	Sender.ClientMessage("mutate rbots.debug.view.pathfinding -- Toggle path finding debug view");

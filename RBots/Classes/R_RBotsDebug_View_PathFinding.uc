@@ -16,11 +16,14 @@ const NODE_DRAW_ELEVATION = 4.0;	// Pushes node drawing up on the Z axis
 const PATH_DRAW_ELEVATION = 32.0;	// Pushes path drawing up on the Z axis
 const PORTAL_DRAW_ELEVATION = 4.0;	// Pushes portal drawing up on the Z axis
 
-const PATH_POINT_DRAW_SIZE = 16.0;
+const GOAL_POINT_DRAW_SIZE = 16.0;
+const PATH_POINT_DRAW_SIZE = 8.0;
 const PORTAL_DRAW_SIZE = 4.0;
 
 var Color PathNodeColor;	// Color of each NavMesh node
 var Color PathPointColor;	// Color of each world location path point
+var Color PathStartColor;	// Color of the path start location
+var Color PathEndColor;		// Color of the path goal
 var Color PathEdgeColor;	// Color of edges between path points
 var Color LeftPortalColor;	// Color of left portal points
 var Color RightPortalColor;	// Color of right portal points
@@ -32,6 +35,7 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 	local R_BotNavMesh NavMesh;
 	local R_Bot DebugTarget;
 	local int NumPathPoints;
+	local Vector TempVector;
 
 	DebugMutator = GetDebugMutator();
 	if(DebugMutator != None)
@@ -54,6 +58,13 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 	//--------------------------------------------------------------------------
 	// Add Debug strings
 	StringManager.AddActor(DebugPathFindingCategory, "DebugTarget", DebugTarget);
+	if(DebugTarget != None)
+	{
+		DebugTarget.GetDesiredPathStart(TempVector);
+		StringManager.AddVector(DebugPathFindingCategory, "StartLocation", TempVector);
+		DebugTarget.GetDesiredPathEnd(TempVector);
+		StringManager.AddVector(DebugPathFindingCategory, "EndLocation", TempVector);
+	}
 
 	// NavMesh
 	NavMesh = GetNavMesh();
@@ -143,9 +154,10 @@ simulated function DrawPathPoints(Canvas C, R_Bot DebugTarget)
 {
 	local int i;
 	local int NumPathPoints;
-	local Vector VertexExtents;
+	local Vector PathPointExtents, GoalPointExtents;
 	local Vector PathPoint, PrevPathPoint;
 	local float PointR, PointG, PointB;
+	local float StartRGB[3], EndRGB[3];
 	local float EdgeR, EdgeG, EdgeB;
 	local Vector DrawElevation;
 
@@ -155,9 +167,12 @@ simulated function DrawPathPoints(Canvas C, R_Bot DebugTarget)
 	}
 
 	Utilities.Static.ColorToFloats(PathPointColor, PointR, PointG, PointB);
+	Utilities.Static.ColorToFloats(PathStartColor, StartRGB[0], StartRGB[1], StartRGB[2]);
+	Utilities.Static.ColorToFloats(PathEndColor, EndRGB[0], EndRGB[1], EndRGB[2]);
 	Utilities.Static.ColorToFloats(PathEdgeColor, EdgeR, EdgeG, EdgeB);
 
-	VertexExtents = Vect(1.0,1.0,0.5) * PATH_POINT_DRAW_SIZE;
+	PathPointExtents = Vect(1.0,1.0,0.5) * PATH_POINT_DRAW_SIZE;
+	GoalPointExtents = Vect(1.0,1.0,0.5) * GOAL_POINT_DRAW_SIZE;
 	NumPathPoints = DebugTarget.GetNumPathPoints();
 
 	DrawElevation = Vect(0,0,0);
@@ -168,7 +183,18 @@ simulated function DrawPathPoints(Canvas C, R_Bot DebugTarget)
 		PrevPathPoint = PathPoint;
 		if(DebugTarget.GetPathPoint(i, PathPoint))
 		{
-			CanvasLib.Static.DrawBox3D(C, PathPoint + DrawElevation, VertexExtents, PointR, PointG, PointB);
+			if(i == 0)
+			{	// Start location
+				CanvasLib.Static.DrawBox3D(C, PathPoint + DrawElevation, GoalPointExtents, StartRGB[0], StartRGB[1], StartRGB[2]);
+			}
+			else if(i == NumPathPoints - 1)
+			{	// End location
+				CanvasLib.Static.DrawBox3D(C, PathPoint + DrawElevation, GoalPointExtents, EndRGB[0], EndRGB[1], EndRGB[2]);
+			}
+			else
+			{	// Intermediate path point
+				CanvasLib.Static.DrawBox3D(C, PathPoint + DrawElevation, PathPointExtents, PointR, PointG, PointB);
+			}
 		}
 
 		if(i > 0)
@@ -215,8 +241,10 @@ simulated function DrawPathPortals(Canvas C, R_Bot DebugTarget)
 defaultproperties
 {
 	PathNodeColor=(R=11,G=49,B=133)
-	PathPointColor=(R=55,G=255,B=28)
-	PathEdgeColor=(R=34,G=75,B=28)
+	PathPointColor=(R=240,G=226,B=41)
+	PathStartColor=(R=255,G=56,B=238)
+	PathEndColor=(R=55,G=255,B=28)
+	PathEdgeColor=(R=240,G=226,B=41)
 	LeftPortalColor=(R=255,G=56,B=238)
 	RightPortalColor=(R=240,G=226,B=41)
 }
