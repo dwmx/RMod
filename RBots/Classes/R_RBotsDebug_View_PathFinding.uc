@@ -56,6 +56,14 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 	}
 
 	//--------------------------------------------------------------------------
+	// Add Color Legend
+	StringManager.AddColor(DebugPathFindingCategory, "Path Start Location", PathStartColor);
+	StringManager.AddColor(DebugPathFindingCategory, "Path End Location", PathEndColor);
+	StringManager.AddColor(DebugPathFindingCategory, "Left Portal Vertex", LeftPortalColor);
+	StringManager.AddColor(DebugPathFindingCategory, "Right Portal Vertex", RightPortalColor);
+	StringManager.AddColor(DebugPathFindingCategory, "Path Nodes", PathNodeColor);
+
+	//--------------------------------------------------------------------------
 	// Add Debug strings
 	StringManager.AddActor(DebugPathFindingCategory, "DebugTarget", DebugTarget);
 	if(DebugTarget != None)

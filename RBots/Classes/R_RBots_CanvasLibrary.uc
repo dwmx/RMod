@@ -5,6 +5,8 @@
 //==============================================================================
 class R_RBots_CanvasLibrary extends Object abstract;
 
+const WhiteTexture = Texture'UWindow.WhiteTexture';
+
 // Copy of Canvas.DrawBox3D, replacing ints with floats
 static function DrawBox3D(Canvas C, Vector Center, Vector Extents, float R, float G, float B)
 {

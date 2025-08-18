@@ -5,13 +5,17 @@
 class R_RbotsDebug_View_NavMesh extends R_RbotsDebug_View;
 
 const Utilities = Class'RBots.R_BotUtilities';
+const CanvasLib = Class'RBots.R_RBots_CanvasLibrary';
 const DebugNavMeshCategory = 'NavMesh';
 
-// Vertex display
-var Color VertexColor;
-var float VertexSize;
+// Vertical offset for drawing to avoid z fighting and invisible lines
+const VERTICAL_DRAW_OFFSET = 2.0;
 
-// Triangle display
+const VertexSize = 6.0;
+const NormalSize = 6.0;
+
+// Colors
+var Color VertexColor;
 var Color TriangleColor;
 var Color NormalColor;
 
@@ -20,6 +24,11 @@ simulated function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringMana
 	local R_BotNavMesh NavMesh;
 
 	NavMesh = GetNavMesh();
+
+	// Add color legend
+	StringManager.AddColor(DebugNavMeshCategory, "NavMesh Vertices", VertexColor);
+	StringManager.AddColor(DebugNavMeshCategory, "NavMesh Nodes", TriangleColor);
+	StringManager.AddColor(DebugNavMeshCategory, "Normals", NormalColor);
 
 	// Add debug strings
 	if(NavMesh != None)
@@ -43,26 +52,28 @@ simulated function DrawNavMesh(Canvas C, R_BotNavMesh NavMesh)
 {
 	DrawNavMeshVertices(C, NavMesh);
 	DrawNavMeshTriangles(C, NavMesh);
-	DrawPlayerContainedNavMeshTriangle(C, NavMesh);
+
+	// This will draw the node containing the player, and that node's adjacencies
+	//DrawPlayerContainedNavMeshTriangle(C, NavMesh);
 }
 
 simulated function DrawNavMeshVertices(Canvas C, R_BotNavMesh NavMesh)
 {
-	local Vector VertexExtents;
-	local Vector Vertex;
+	local Vector VertexLocation;
+	local Vector DrawExtents, DrawVerticalOffset;
+	local float VertexRGB[3];
 	local int VertexCount;
 	local int i;
 
-	VertexExtents.X = VertexSize;
-	VertexExtents.Y = VertexSize;
-	VertexExtents.Z = VertexSize;
+	DrawExtents = Vect(1.0,1.0,0.5) * VertexSize;
+	DrawVerticalOffset = Vect(0,0,1) * VERTICAL_DRAW_OFFSET;
+	Utilities.Static.ColorToFloats(VertexColor, VertexRGB[0], VertexRGB[1], VertexRGB[2]);
 
 	VertexCount = NavMesh.GetVertexCount();
-
 	for(i = 0; i < VertexCount; ++i)
 	{
-		NavMesh.GetVertexUnchecked(i, Vertex);
-		C.DrawBox3D(Vertex, VertexExtents, VertexColor.R, VertexColor.G, VertexColor.B);
+		NavMesh.GetVertexUnchecked(i, VertexLocation);
+		CanvasLib.Static.DrawBox3D(C, VertexLocation + DrawVerticalOffset, DrawExtents, VertexRGB[0], VertexRGB[1], VertexRGB[2]);
 	}
 }
 
@@ -70,23 +81,18 @@ simulated function DrawNavMeshTriangles(Canvas C, R_BotNavMesh NavMesh)
 {
 	local int IndexA, IndexB, IndexC;
 	local Vector VertexA, VertexB, VertexC;
-	local float TR, TG, TB;
-	local float NR, NG, NB;
+	local float NodeRGB[3], NormalRGB[3];
 	local Vector TriangleCenter, TriangleNormal;
+	local Vector DrawVerticalOffset;
 	local int TriangleCount;
 	local int i;
 
 	TriangleCount = NavMesh.GetTriangleCount();
 
-	// Triangle color
-	TR = float(TriangleColor.R) / 255.0;
-	TG = float(TriangleColor.G) / 255.0;
-	TB = float(TriangleColor.B) / 255.0;
+	Utilities.Static.ColorToFloats(TriangleColor, NodeRGB[0], NodeRGB[1], NodeRGB[2]);
+	Utilities.Static.ColorToFloats(NormalColor, NormalRGB[0], NormalRGB[1], NormalRGB[2]);
 
-	// Normal color
-	NR = float(NormalColor.R) / 255.0;
-	NG = float(NormalColor.G) / 255.0;
-	NB = float(NormalColor.B) / 255.0;
+	DrawVerticalOffset = Vect(0,0,1) * VERTICAL_DRAW_OFFSET;
 
 	for(i = 0; i < TriangleCount; ++i)
 	{
@@ -96,13 +102,13 @@ simulated function DrawNavMeshTriangles(Canvas C, R_BotNavMesh NavMesh)
 		NavMesh.GetVertexUnchecked(IndexC, VertexC);
 
 		// Draw triangle
-		C.DrawLine3D(VertexA, VertexB, TR, TG, TB);
-		C.DrawLine3D(VertexB, VertexC, TR, TG, TB);
-		C.DrawLine3D(VertexC, VertexA, TR, TG, TB);
+		C.DrawLine3D(VertexA + DrawVerticalOffset, VertexB + DrawVerticalOffset, NodeRGB[0], NodeRGB[1], NodeRGB[2]);
+		C.DrawLine3D(VertexB + DrawVerticalOffset, VertexC + DrawVerticalOffset, NodeRGB[0], NodeRGB[1], NodeRGB[2]);
+		C.DrawLine3D(VertexC + DrawVerticalOffset, VertexA + DrawVerticalOffset, NodeRGB[0], NodeRGB[1], NodeRGB[2]);
 
 		// Draw normal
 		NavMesh.GetTriangleNormalAndCenterUnchecked(i, TriangleNormal, TriangleCenter);
-		C.DrawLine3D(TriangleCenter, TriangleCenter + TriangleNormal * 32.0, NR, NG, NB);
+		C.DrawLine3D(TriangleCenter + DrawVerticalOffset, TriangleCenter + DrawVerticalOffset + TriangleNormal * NormalSize, NormalRGB[0], NormalRGB[1], NormalRGB[2]);
 	}
 }
 
@@ -141,7 +147,6 @@ simulated function DrawPlayerContainedNavMeshTriangle(Canvas C, R_BotNavMesh Nav
 defaultproperties
 {
 	VertexColor=(R=252,G=207,B=91)
-	VertexSize=16.0
-	TriangleColor=(R=11,G=247,B=11)
+	TriangleColor=(R=6,G=119,B=6)
 	NormalColor=(R=255,0,0)
 }
