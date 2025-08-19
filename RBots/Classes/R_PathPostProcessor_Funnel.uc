@@ -17,9 +17,8 @@ function bool PostProcessPath(
 
     local Vector Apex, Left, Right;
     local Vector NewLeft, NewRight;
+	local Vector ReferenceVector;
     local int ApexIndex, LeftIndex, RightIndex;
-    local Vector DirLeft, DirRight, DirNew;
-    local float Cross;
 
     // No path, just fail
     if (PathIndexCount <= 0)
@@ -49,83 +48,73 @@ function bool PostProcessPath(
     PortalRight[PortalCount] = EndLocation;
     PortalCount++;
 
-    // -------------------------------
-    // Funnel algorithm core
-    // -------------------------------
-    Apex      = StartLocation;
-    ApexIndex = 0;
-    Left      = PortalLeft[1];
-    Right     = PortalRight[1];
-    LeftIndex = 1;
-    RightIndex= 1;
+	// Funnel algo
+	Apex = StartLocation;
+	ApexIndex = 0;
 
-    OutPathPoints[0] = StartLocation;
-    OutPathPointCount = 1;
+	LeftIndex = 1;
+	RightIndex = 1;
 
-    for (i = 2; i < PortalCount; i++)
-    {
-        NewLeft  = PortalLeft[i];
-        NewRight = PortalRight[i];
+	Left = PortalLeft[LeftIndex];
+	Right = PortalRight[RightIndex];
 
-        // Check if new left is "inside" funnel
-        DirLeft = Left - Apex;
-        DirRight= Right - Apex;
-        DirNew  = NewLeft - Apex;
+	OutPathPoints[0] = StartLocation;
+	OutPathPointCount = 1;
 
-        Cross = Cross2D(DirLeft, DirNew, Apex);
-        if (Cross >= 0.0) // NewLeft is left of current Left
-        {
-            // Tighten funnel
-            Left = NewLeft;
-            LeftIndex = i;
+	for(i = 2; i < PortalCount; ++i)
+	{
+		// Get reference vector for edge cross checking
+		ReferenceVector = (Left - Apex) Cross (Right - Apex);
 
-            // If funnel collapses, move apex to Right
-            if (Cross2D(Right - Apex, Left - Apex, Apex) < 0.0)
-            {
-                Apex = Right;
-                ApexIndex = RightIndex;
-                OutPathPoints[OutPathPointCount++] = Apex;
+		// Check left
+		NewLeft = PortalLeft[i];
+		if(TriangleDot(ReferenceVector, Apex, Left, NewLeft) >= 0.0f)
+		{
+			if(Apex == Left || TriangleDot(ReferenceVector, Apex, Right, NewLeft) < 0.0f)
+			{
+				Left = NewLeft;
+				LeftIndex = i;
+			}
+			else
+			{
+				OutPathPoints[OutPathPointCount] = Right;
+				++OutPathPointCount;
 
-                // Reset funnel
-                Left = Apex;
-                Right = Apex;
-                LeftIndex = ApexIndex;
-                RightIndex = ApexIndex;
-                i = ApexIndex + 1;
-                continue;
-            }
-        }
+				Apex = Right;
+				Left = Apex;
+				ApexIndex = RightIndex;
+				LeftIndex = ApexIndex;
+				i = ApexIndex;
+				continue;
+			}
+		}
 
-        // Check if new right is "inside" funnel
-        DirNew = NewRight - Apex;
-        Cross = Cross2D(DirRight, DirNew, Apex);
-        if (Cross <= 0.0) // NewRight is right of current Right
-        {
-            // Tighten funnel
-            Right = NewRight;
-            RightIndex = i;
+		// Check right
+		NewRight = PortalRight[i];
+		if(TriangleDot(ReferenceVector, Apex, Right, NewRight) <= 0.0f)
+		{
+			if(Apex == Right || TriangleDot(ReferenceVector, Apex, Left, NewRight) > 0.0f)
+			{
+				Right = NewRight;
+				RightIndex = i;
+			}
+			else
+			{
+				OutPathPoints[OutPathPointCount] = Left;
+				++OutPathPointCount;
 
-            // If funnel collapses, move apex to Left
-            if (Cross2D(Right - Apex, Left - Apex, Apex) < 0.0)
-            {
-                Apex = Left;
-                ApexIndex = LeftIndex;
-                OutPathPoints[OutPathPointCount++] = Apex;
+				Apex = Left;
+				Right = Apex;
+				ApexIndex = LeftIndex;
+				RightIndex = ApexIndex;
+				i = ApexIndex;
+				continue;
+			}
+		}
+	}
 
-                // Reset funnel
-                Left = Apex;
-                Right = Apex;
-                LeftIndex = ApexIndex;
-                RightIndex = ApexIndex;
-                i = ApexIndex + 1;
-                continue;
-            }
-        }
-    }
-
-    // Add the end point
-    OutPathPoints[OutPathPointCount++] = EndLocation;
-
+	OutPathPoints[OutPathPointCount] = EndLocation;
+	++OutPathPointCount;
 
 	// If a PathFindData object was provided, add data
 	if(OptionalPathFindData != None)
@@ -141,12 +130,10 @@ function bool PostProcessPath(
     return true;
 }
 
-// -----------------------------------------------------------
-// 2D cross helper (uses triangle normal for projection)
-// -----------------------------------------------------------
-static final function float Cross2D(Vector A, Vector B, Vector Apex)
+function float TriangleDot(out Vector InReferenceVector, out Vector InA, out Vector InB, out Vector InC)
 {
-    // Project into a stable plane — here we ignore Z
-    // Assumes left/right already corrected in GetSharedEdgeUnchecked
-    return A.X * B.Y - A.Y * B.X;
+	local Vector Cross;
+
+	Cross = (InB - InA) Cross (InC - InA);
+	return Cross Dot InReferenceVector;
 }
