@@ -18,10 +18,9 @@ function bool FindPath(
     local byte Visited[1024];
     local int i, j, k, u, v;
     local int Adjacents[3];
+	local float Costs[3];
     local int MinDist, MinNode;
     local int TotalNodes;
-	//local int PathPoints[32];
-	//local Vector TriangleCenter, TriangleNormal;
 
     // Safety: assume NavMesh knows its triangle count
     TotalNodes = NavMesh.GetTriangleCount();
@@ -65,15 +64,18 @@ function bool FindPath(
             break;
 
         // Relax neighbors
-        NavMesh.GetTriangleAdjacentsUnchecked(MinNode, Adjacents[0], Adjacents[1], Adjacents[2]);
+        //NavMesh.GetTriangleAdjacentsUnchecked(MinNode, Adjacents[0], Adjacents[1], Adjacents[2]);
+		NavMesh.GetTriangleAdjacentsAndCostsUnchecked(MinNode, Adjacents[0], Adjacents[1], Adjacents[2], Costs[0], Costs[1], Costs[2]);
         for (k = 0; k < 3; k++)
         {
             v = Adjacents[k];
             if (v >= 0 && Visited[v] == 0)
             {
-                if (Dist[MinNode] + 1 < Dist[v]) // uniform cost (1 per edge)
+                //if (Dist[MinNode] + 1 < Dist[v]) // uniform cost (1 per edge)
+				if(Dist[MinNode] + Costs[MinNode] < Dist[v])
                 {
-                    Dist[v] = Dist[MinNode] + 1;
+                    //Dist[v] = Dist[MinNode] + 1;
+					Dist[v] = Dist[MinNode] + Costs[MinNode];
                     Prev[v] = MinNode;
                 }
             }

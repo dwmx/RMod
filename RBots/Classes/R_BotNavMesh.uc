@@ -282,6 +282,11 @@ function float CalcAdjacentTriangleDistance(int IndexA, int IndexB)
 	local Vector Delta, DeltaProjA, DeltaProjB;
 	local int i;
 
+	if(IndexA == INVALID_TRIANGLE_INDEX || IndexB == INVALID_TRIANGLE_INDEX)
+	{
+		return 0.0f;
+	}
+
 	GetTriangleNormalAndCenterUnchecked(IndexA, NormalA, CenterA);
 	GetTriangleNormalAndCenterUnchecked(IndexB, NormalB, CenterB);
 	
@@ -367,6 +372,16 @@ function GetTriangleAdjacentsUnchecked(int Index, out int OutIndexA, out int Out
 	OutIndexA = AdjacencyListArray[Index].Indices[0];
 	OutIndexB = AdjacencyListArray[Index].Indices[1];
 	OutIndexC = AdjacencyListArray[Index].Indices[2];
+}
+
+// Returns the three adjacent indices and their travel costs for the specified triangle index
+// Out indices will be -1 to indicate no adjacency
+function GetTriangleAdjacentsAndCostsUnchecked(int Index, out int OutIndexA, out int OutIndexB, out int OutIndexC, out float OutCostA, out float OutCostB, out float OutCostC)
+{
+	GetTriangleAdjacentsUnchecked(Index, OutIndexA, OutIndexB, OutIndexC);
+	OutCostA = AdjacencyListArray[Index].Costs[0];
+	OutCostB = AdjacencyListArray[Index].Costs[1];
+	OutCostC = AdjacencyListArray[Index].Costs[2];
 }
 
 // Returns the locations of the two vertices in the edge shared by the specified triangles
