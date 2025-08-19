@@ -21,7 +21,10 @@ var private int TriangleCount;
 
 struct AdjacencyList
 {
-	var int IndexA, IndexB, IndexC;
+	//var int IndexA, IndexB, IndexC;
+	//var float CostA, CostB, CostC;
+	var int Indices[3];
+	var float Costs[3];
 };
 var private AdjacencyList AdjacencyListArray[1024]; // Must match TRIANGLE_ARRAY_SIZE
 var private bool bBadAdjacents; // If true, there are bad graph adjacencies
@@ -90,7 +93,7 @@ function InitPathFinder()
 
 function Clear()
 {
-	local int i;
+	local int i, j;
 
 	VertexCount = 0;
 	TriangleCount = 0;
@@ -106,9 +109,10 @@ function Clear()
 		TriangleArray[i].IndexB = INVALID_VERTEX_INDEX;
 		TriangleArray[i].IndexC = INVALID_VERTEX_INDEX;
 
-		AdjacencyListArray[i].IndexA = INVALID_TRIANGLE_INDEX;
-		AdjacencyListArray[i].IndexB = INVALID_TRIANGLE_INDEX;
-		AdjacencyListArray[i].IndexC = INVALID_TRIANGLE_INDEX;
+		for(j = 0; j < 3; ++j)
+		{
+			AdjacencyListArray[i].Indices[j] = INVALID_TRIANGLE_INDEX;
+		}
 	}
 }
 
@@ -162,9 +166,10 @@ function BuildAdjacencyListArray()
 
 	for(i = 0; i < TRIANGLE_ARRAY_SIZE; ++i)
 	{
-		AdjacencyListArray[i].IndexA = INVALID_TRIANGLE_INDEX;
-		AdjacencyListArray[i].IndexB = INVALID_TRIANGLE_INDEX;
-		AdjacencyListArray[i].IndexC = INVALID_TRIANGLE_INDEX;
+		for(j = 0; j < 3; ++j)
+		{
+			AdjacencyListArray[i].Indices[j] = INVALID_TRIANGLE_INDEX;
+		}
 	}
 
 	for(i = 0; i < TriangleCount - 1; ++i)
@@ -220,49 +225,71 @@ function bool ShareAtLeastTwoVertices(int TriangleIndexA, int TriangleIndexB)
 function MarkTrianglesAdjacent(int TriangleIndexA, int TriangleIndexB)
 {
 	local int i, j;
+	local float Cost;
 
 	bBadAdjacents = false;
 
-	// Check that triangles are not already marked adjacent
-	if(	AdjacencyListArray[TriangleIndexA].IndexA != TriangleIndexB
-	&&	AdjacencyListArray[TriangleIndexA].IndexB != TriangleIndexB
-	&&	AdjacencyListArray[TriangleIndexA].IndexC != TriangleIndexB
-	&&	AdjacencyListArray[TriangleIndexB].IndexA != TriangleIndexA
-	&&	AdjacencyListArray[TriangleIndexB].IndexB != TriangleIndexA
-	&&	AdjacencyListArray[TriangleIndexB].IndexC != TriangleIndexA)
+	// Ensure that triangles are not already marked adjacent
+	for(i = 0; i < 3; ++i)
 	{
-		i = INVALID_TRIANGLE_INDEX;
-		if(AdjacencyListArray[TriangleIndexA].IndexA == INVALID_TRIANGLE_INDEX) i = 0;
-		else if(AdjacencyListArray[TriangleIndexA].IndexB == INVALID_TRIANGLE_INDEX) i = 1;
-		else if(AdjacencyListArray[TriangleIndexA].IndexC == INVALID_TRIANGLE_INDEX) i = 2;
-
-		j = INVALID_TRIANGLE_INDEX;
-		if(AdjacencyListArray[TriangleIndexB].IndexA == INVALID_TRIANGLE_INDEX) j = 0;
-		else if(AdjacencyListArray[TriangleIndexB].IndexB == INVALID_TRIANGLE_INDEX) j = 1;
-		else if(AdjacencyListArray[TriangleIndexB].IndexC == INVALID_TRIANGLE_INDEX) j = 2;
-
-		if(i == INVALID_TRIANGLE_INDEX || j == INVALID_TRIANGLE_INDEX)
+		if(	AdjacencyListArray[TriangleIndexA].Indices[i] == TriangleIndexB
+		||	AdjacencyListArray[TriangleIndexB].Indices[i] == TriangleIndexA)
 		{
-			Utilities.Static.RLog("Bad adjacent triangles in NavMesh");
 			bBadAdjacents = true;
+			Utilities.Static.RLog("NavMesh bad adjacents -- attempted to double-add adjacent triangles");
 			return;
 		}
-		else
-		{
-			if(i == 0)		AdjacencyListArray[TriangleIndexA].IndexA = TriangleIndexB;
-			else if(i == 1)	AdjacencyListArray[TriangleIndexA].IndexB = TriangleIndexB;
-			else if(i == 2)	AdjacencyListArray[TriangleIndexA].IndexC = TriangleIndexB;
+	}
 
-			if(j == 0)		AdjacencyListArray[TriangleIndexB].IndexA = TriangleIndexA;
-			else if(j == 1)	AdjacencyListArray[TriangleIndexB].IndexB = TriangleIndexA;
-			else if(j == 2)	AdjacencyListArray[TriangleIndexB].IndexC = TriangleIndexA;
+	// Find indices for each triangle
+	for(i = 0; i < 3; ++i)
+	{
+		if(AdjacencyListArray[TriangleIndexA].Indices[i] == INVALID_TRIANGLE_INDEX)
+		{
+			break;
 		}
 	}
-	else
+
+	for(j = 0; j < 3; ++j)
 	{
-		Utilities.Static.RLog("Bad adjacent triangles in NavMesh -- attempted to double-add adjacents");
-		bBadAdjacents = true;
+		if(AdjacencyListArray[TriangleIndexB].Indices[j] == INVALID_TRIANGLE_INDEX)
+		{
+			break;
+		}
 	}
+
+	if(i == 3 || i == INVALID_TRIANGLE_INDEX || j == 3 || j == INVALID_TRIANGLE_INDEX)
+	{
+		bBadAdjacents = true;
+		Utilities.Static.RLog("NavMesh bad adjacents -- attempted to add more than 3 adjacents");
+		return;
+	}
+
+	// Mark triangles adjacent
+	AdjacencyListArray[TriangleIndexA].Indices[i] = TriangleIndexB;
+	AdjacencyListArray[TriangleIndexB].Indices[j] = TriangleIndexA;
+
+	Cost = CalcAdjacentTriangleDistance(TriangleIndexA, TriangleIndexB);
+	AdjacencyListArray[TriangleIndexA].Costs[i] = Cost;
+	AdjacencyListArray[TriangleIndexB].Costs[j] = Cost;
+}
+
+// Given two adjacent triangles, calculates the distance between them
+function float CalcAdjacentTriangleDistance(int IndexA, int IndexB)
+{
+	local Vector NormalA, CenterA;
+	local Vector NormalB, CenterB;
+	local Vector Delta, DeltaProjA, DeltaProjB;
+	local int i;
+
+	GetTriangleNormalAndCenterUnchecked(IndexA, NormalA, CenterA);
+	GetTriangleNormalAndCenterUnchecked(IndexB, NormalB, CenterB);
+	
+	Delta = CenterB - CenterA;
+	DeltaProjA = Delta - (NormalA * (Delta Dot NormalA));
+	DeltaProjB = Delta - (NormalB * (Delta Dot NormalB));
+
+	return 0.5 * (VSize(DeltaProjA) + VSize(DeltaProjB));
 }
 
 function bool HasBadAdjacents()
@@ -337,9 +364,9 @@ function GetTriangleNormalAndCenterUnchecked(int Index, out Vector OutNormal, ou
 // Out indices will be -1 to indicate no adjacency
 function GetTriangleAdjacentsUnchecked(int Index, out int OutIndexA, out int OutIndexB, out int OutIndexC)
 {
-	OutIndexA = AdjacencyListArray[Index].IndexA;
-	OutIndexB = AdjacencyListArray[Index].IndexB;
-	OutIndexC = AdjacencyListArray[Index].IndexC;
+	OutIndexA = AdjacencyListArray[Index].Indices[0];
+	OutIndexB = AdjacencyListArray[Index].Indices[1];
+	OutIndexC = AdjacencyListArray[Index].Indices[2];
 }
 
 // Returns the locations of the two vertices in the edge shared by the specified triangles
