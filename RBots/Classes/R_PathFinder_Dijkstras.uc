@@ -72,10 +72,10 @@ function bool FindPath(
             if (v >= 0 && Visited[v] == 0)
             {
                 //if (Dist[MinNode] + 1 < Dist[v]) // uniform cost (1 per edge)
-				if(Dist[MinNode] + Costs[MinNode] < Dist[v])
+				if(Dist[MinNode] + Costs[k] < Dist[v])
                 {
                     //Dist[v] = Dist[MinNode] + 1;
-					Dist[v] = Dist[MinNode] + Costs[MinNode];
+					Dist[v] = Dist[MinNode] + Costs[k];
                     Prev[v] = MinNode;
                 }
             }
