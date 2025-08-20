@@ -21,6 +21,15 @@ var private Vector PortalsLeft[32];
 var private Vector PortalsRight[32];
 var private int PortalsCount;
 
+// Intermediate Boundary Push data
+const BOUNDARY_ARRAY_SIZE = 32;
+var private Vector BoundaryLeft[32];
+var private Vector BoundaryLeftPushDir[32];
+var private Vector BoundaryRight[32];
+var private Vector BoundaryRightPushDir[32];
+var private int BoundaryLeftCount;
+var private int BoundaryRightCount;
+
 // Clear all per-execution data, called by R_BotNavMesh.FindPath
 function Clear()
 {
@@ -28,6 +37,7 @@ function Clear()
 	PathPostProcessorClass = None;
 	ClearPathNodes();
 	ClearPortals();
+	ClearBoundaries();
 }
 
 function ClearPathNodes()
@@ -38,6 +48,12 @@ function ClearPathNodes()
 function ClearPortals()
 {
 	PortalsCount = 0;
+}
+
+function ClearBoundaries()
+{
+	BoundaryLeftCount = 0;
+	BoundaryRightCount = 0;
 }
 
 function SetPathFinderClass(Class<R_PathFinder> NewPathFinderClass)
@@ -105,4 +121,56 @@ function bool GetPortal(int PortalIndex, out Vector OutLeft, out Vector OutRight
 	OutLeft = PortalsLeft[PortalIndex];
 	OutRight = PortalsRight[PortalIndex];
 	return true;
+}
+
+function PushBoundaryLeft(out Vector InLeftBoundary, optional out Vector InLeftBoundaryPushDir)
+{
+	if(BoundaryLeftCount < BOUNDARY_ARRAY_SIZE)
+	{
+		BoundaryLeft[BoundaryLeftCount] = InLeftBoundary;
+		BoundaryLeftPushDir[BoundaryLeftCount] = InLeftBoundaryPushDir;
+		++BoundaryLeftCount;
+	}
+}
+
+function PushBoundaryRight(out Vector InRightBoundary, optional out Vector InRightBoundaryPushDir)
+{
+	if(BoundaryRightCount < BOUNDARY_ARRAY_SIZE)
+	{
+		BoundaryRight[BoundaryRightCount] = InRightBoundary;
+		BoundaryRightPushDir[BoundaryRightCount] = InRightBoundaryPushDir;
+		++BoundaryRightCount;
+	}
+}
+
+function int GetBoundaryLeftCount()
+{
+	return BoundaryLeftCount;
+}
+
+function int GetBoundaryRightCount()
+{
+	return BoundaryRightCount;
+}
+
+function bool GetBoundaryLeftVector(int Index, out Vector OutBoundaryLeftVector, optional out Vector OutBoundaryLeftPushDir)
+{
+	if(Index >= 0 && Index < BOUNDARY_ARRAY_SIZE && Index < BoundaryLeftCount)
+	{
+		OutBoundaryLeftVector = BoundaryLeft[Index];
+		OutBoundaryLeftPushDir = BoundaryLeftPushDir[Index];
+		return true;
+	}
+	return false;
+}
+
+function bool GetBoundaryRightVector(int Index, out Vector OutBoundaryRightVector, optional out Vector OutBoundaryRightPushDir)
+{
+	if(Index >= 0 && Index < BOUNDARY_ARRAY_SIZE && Index < BoundaryRightCount)
+	{
+		OutBoundaryRightVector = BoundaryRight[Index];
+		OutBoundaryRightPushDir = BoundaryRightPushDir[Index];
+		return true;
+	}
+	return false;
 }

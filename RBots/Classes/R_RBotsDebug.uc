@@ -277,8 +277,6 @@ simulated event PostRender(Canvas C)
 	local int i;
 	local R_BotManager LocalBotManager;
 
-	Log("My Debug Target:" @ DebugTarget);
-
 	if(!bDrawDebugVisualization)
 	{
 		return;
@@ -315,8 +313,6 @@ function Mutate(string MutateString, PlayerPawn Sender)
 {
 	local R_Bot NewBot;
 	local R_RBotsDebug_PathBot PathBot;
-
-
 
 	// Welcome string
 	if(Caps(MutateString) == "RBOTS")

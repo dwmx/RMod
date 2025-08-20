@@ -107,6 +107,9 @@ function bool PostProcessPath(
 	OutPathPoints[OutPathPointCount] = EndLocation;
 	++OutPathPointCount;
 
+	// Separate the path from the boundaries (push away from walls, ledges, etc)
+	BoundarySeparation(OutPathPoints, OutPathPointCount, PortalLeft, PortalRight, PortalCount, 32.0f, OptionalPathFindData);
+
 	// If a PathFindData object was provided, add data
 	if(OptionalPathFindData != None)
 	{
@@ -161,4 +164,126 @@ function float TriangleDot(out Vector InReferenceVector, out Vector InA, out Vec
 
 	Cross = (TempB - TempA) Cross (TempC - TempA);
 	return Cross Dot TempRef;
+}
+
+// Given an array of path points and left/right boundaries, this attempts to push the path away from the boundary by the
+// specified amount
+// Likely will result in a path with more points
+function BoundarySeparation(
+	out Vector InOutPathPoints[32], out int InOutNumPathPoints,
+	out Vector InLeftBoundary[32], out Vector InRightBoundary[32], int NumBoundaryPoints,
+	float SeparationDistance,
+	optional R_PathFindData OptionalPathFindData)
+{
+	local Vector UniqueLeftBoundary[32];
+	local Vector UniqueRightBoundary[32];
+	local Vector LeftBoundaryPushDir[32];
+	local Vector RightBoundaryPushDir[32];
+	local Vector V0, V1, V2; // Vectors for projecting onto Z=0
+	local int NumUniqueLeftBoundary, NumUniqueRightBoundary;
+	local int i, j;
+
+	CollapseDuplicateVectors(InLeftBoundary, NumBoundaryPoints, UniqueLeftBoundary, NumUniqueLeftBoundary);
+	CollapseDuplicateVectors(InRightBoundary, NumBoundaryPoints, UniqueRightBoundary, NumUniqueRightBoundary);
+
+	// Calc all left boundary push directions
+	for(i = 1; i < NumUniqueLeftBoundary - 1; ++i)
+	{
+		V0 = Vect(1,1,0) * UniqueLeftBoundary[i-1];
+		V1 = Vect(1,1,0) * UniqueLeftBoundary[i];
+		V2 = Vect(1,1,0) * UniqueLeftBoundary[i+1];
+		CalcPushDirection(V0, V1, V2, LeftBoundaryPushDir[i]);
+	}
+
+	// Calc all right boundary push directions
+	for(i = 1; i < NumUniqueRightBoundary - 1; ++i)
+	{
+		V0 = Vect(1,1,0) * UniqueRightBoundary[i-1];
+		V1 = Vect(1,1,0) * UniqueRightBoundary[i];
+		V2 = Vect(1,1,0) * UniqueRightBoundary[i+1];
+		CalcPushDirection(V0, V1, V2, RightBoundaryPushDir[i]);
+	}
+
+	// Add boundary push data if requested
+	if(OptionalPathFindData != None)
+	{
+		OptionalPathFindData.ClearBoundaries();
+		for(i = 0; i < NumUniqueLeftBoundary; ++i)
+		{
+			OptionalPathFindData.PushBoundaryLeft(UniqueLeftBoundary[i], LeftBoundaryPushDir[i]);
+		}
+
+		for(i = 0; i < NumUniqueRightBoundary; ++i)
+		{
+			OptionalPathFindData.PushBoundaryRight(UniqueRightBoundary[i], RightBoundaryPushDir[i]);
+		}
+	}
+
+	//// Push away from the left boundary
+	//for(i = 1; i < NumUniqueLeftBoundary - 1; ++i)
+	//{
+	//	PerpEdge = Normal(InLeftBoundary[i+1] - InLeftBoundary[i-1]);
+	//	PushEdge = InLeftBoundary[i] - InLeftBoundary[i-1];
+	//	PerpDotPush = PerpEdge Dot PushEdge;
+	//	if(PerpDotPush >= 0.95)
+	//	{
+	//		// Approximately colinear, ignore
+	//		continue;
+	//	}
+	//	PushEdge = Normal(PushEdge - (PerpEdge * PerpDotPush));
+//
+	//	// Find the two path points on opposite sides of the push edg
+	//	for(j = 0; j < InOutNumPathPoints - 1; ++j)
+	//	{
+	//		if(InOutPathPoints[j] == InLeftBoundary[i])
+	//		{	// Special case -- The path point is directly on the boundary vertex
+//
+	//		}
+	//		else if(InOutPathPoints[j] Dot PerpEdge <= 0.0f && InOutPathPoints[j+1] >= 0.0f)
+	//		{	// j is left, j+1 is right of push direction
+	//		}
+	//	}
+	//}
+}
+
+// Given three sequential boundary vertices, calculates a push direction
+function CalcPushDirection(out Vector InB0, out Vector InB1, out Vector InB2, out Vector OutPushDir)
+{
+	local Vector PerpDir;
+	local Vector PushVector;
+	local float PerpDotPush;
+
+	PerpDir = Normal(InB2 - InB0);
+	PushVector = InB1 - InB0;
+	
+	PushVector = PushVector - (PerpDir * (PushVector Dot PerpDir));
+	
+	OutPushDir = Normal(PushVector);
+}
+
+function CollapseDuplicateVectors(out Vector InVectorArray[32], int Num, out Vector OutNewVectorArray[32], out int OutNewNum)
+{
+	local int i;
+
+	OutNewNum = 0;
+	Num = Clamp(Num, 0, 32);
+	if(Num == 0)
+	{
+		OutNewNum = 0;
+		return;
+	}
+
+	OutNewVectorArray[0] = InVectorArray[0];
+	++OutNewNum;
+
+	i = 1;
+	while(i < Num)
+	{
+		if(InVectorArray[i] != OutNewVectorArray[OutNewNum-1])
+		{
+			OutNewVectorArray[OutNewNum] = InVectorArray[i];
+			++OutNewNum;
+		}
+		++i;
+	}
 }

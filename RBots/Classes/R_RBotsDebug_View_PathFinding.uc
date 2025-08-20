@@ -12,21 +12,24 @@ const DebugPathFindingCategory = 'PathFinding';
 var private R_PathFindData PathFindData;
 const PathFindDataClass = Class'RBots.R_PathFindData';
 
-const NODE_DRAW_ELEVATION = 4.0;	// Pushes node drawing up on the Z axis
-const PATH_DRAW_ELEVATION = 32.0;	// Pushes path drawing up on the Z axis
-const PORTAL_DRAW_ELEVATION = 4.0;	// Pushes portal drawing up on the Z axis
+const NODE_DRAW_ELEVATION = 4.0;		// Pushes node drawing up on the Z axis
+const PATH_DRAW_ELEVATION = 32.0;		// Pushes path drawing up on the Z axis
+const PORTAL_DRAW_ELEVATION = 4.0;		// Pushes portal drawing up on the Z axis
+const BOUNDARY_PUSH_ELEVATION = 4.0;	// Pushes boundary push drawing up on the Z axis
 
 const GOAL_POINT_DRAW_SIZE = 16.0;
 const PATH_POINT_DRAW_SIZE = 8.0;
 const PORTAL_DRAW_SIZE = 4.0;
+const BOUNDARY_PUSH_DRAW_LENGTH = 24.0;
 
-var Color PathNodeColor;	// Color of each NavMesh node
-var Color PathPointColor;	// Color of each world location path point
-var Color PathStartColor;	// Color of the path start location
-var Color PathEndColor;		// Color of the path goal
-var Color PathEdgeColor;	// Color of edges between path points
-var Color LeftPortalColor;	// Color of left portal points
-var Color RightPortalColor;	// Color of right portal points
+var Color PathNodeColor;		// Color of each NavMesh node
+var Color PathPointColor;		// Color of each world location path point
+var Color PathStartColor;		// Color of the path start location
+var Color PathEndColor;			// Color of the path goal
+var Color PathEdgeColor;		// Color of edges between path points
+var Color LeftPortalColor;		// Color of left portal points
+var Color RightPortalColor;		// Color of right portal points
+var Color BoundaryPushDirColor;		// Color of boundary-push vectors
 
 simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringManager)
 {
@@ -62,6 +65,7 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 	StringManager.AddColor(DebugPathFindingCategory, "Left Portal Vertex", LeftPortalColor);
 	StringManager.AddColor(DebugPathFindingCategory, "Right Portal Vertex", RightPortalColor);
 	StringManager.AddColor(DebugPathFindingCategory, "Path Nodes", PathNodeColor);
+	StringManager.AddColor(DebugPathFindingCategory, "Boundary Push Directions", BoundaryPushDirColor);
 
 	//--------------------------------------------------------------------------
 	// Add Debug strings
@@ -89,6 +93,8 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 	{
 		StringManager.AddInt(DebugPathFindingCategory, "PathNodesCount", PathFindData.GetPathNodesCount());
 		StringManager.AddInt(DebugPathFindingCategory, "PortalsCount", PathFindData.GetPortalsCount());
+		StringManager.AddInt(DebugPathFindingCategory, "BoundaryLeftCount", PathFindData.GetBoundaryLeftCount());
+		StringManager.AddInt(DebugPathFindingCategory, "BoundaryRightCount", PathFindData.GetBoundaryRightCount());
 	}
 
 	// Path
@@ -99,6 +105,7 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 	DrawPathNodes(C, DebugTarget);
 	DrawPathPoints(C, DebugTarget);
 	DrawPathPortals(C, DebugTarget);
+	DrawBoundaryPushDirs(C, DebugTarget);
 }
 
 simulated function DrawPathNodes(Canvas C, R_Bot DebugTarget)
@@ -246,6 +253,55 @@ simulated function DrawPathPortals(Canvas C, R_Bot DebugTarget)
 	}
 }
 
+simulated function DrawBoundaryPushDirs(Canvas C, R_Bot DebugTarget)
+{
+	local Vector BoundaryVector;
+	local Vector PushDir;
+	local Vector DrawOffset;
+	local float DrawRGB[3];
+	local int BoundaryCount;
+	local int i;
+
+	if(PathFindData == None)
+	{
+		return;
+	}
+
+	Utilities.Static.ColorToFloats(BoundaryPushDirColor, DrawRGB[0], DrawRGB[1], DrawRGB[2]);
+
+	DrawOffset = Vect(0,0,1) * BOUNDARY_PUSH_ELEVATION;
+
+	// Draw all left boundary push dirs
+	BoundaryCount = PathFindData.GetBoundaryLeftCount();
+	for(i = 0; i < BoundaryCount; ++i)
+	{
+		PathFindData.GetBoundaryLeftVector(i, BoundaryVector, PushDir);
+		if(PushDir != Vect(0,0,0))
+		{
+			CanvasLib.Static.DrawLine3D(
+			C,
+			DrawOffset + BoundaryVector,
+			DrawOffset + BoundaryVector + PushDir * BOUNDARY_PUSH_DRAW_LENGTH,
+			DrawRGB[0], DrawRGB[1], DrawRGB[2]);
+		}
+	}
+
+	// Draw all right boundary push dirs
+	BoundaryCount = PathFindData.GetBoundaryRightCount();
+	for(i = 0; i < BoundaryCount; ++i)
+	{
+		PathFindData.GetBoundaryRightVector(i, BoundaryVector, PushDir);
+		if(PushDir != Vect(0,0,0))
+		{
+			CanvasLib.Static.DrawLine3D(
+			C,
+			DrawOffset + BoundaryVector,
+			DrawOffset + BoundaryVector + PushDir * BOUNDARY_PUSH_DRAW_LENGTH,
+			DrawRGB[0], DrawRGB[1], DrawRGB[2]);
+		}
+	}
+}
+
 defaultproperties
 {
 	PathNodeColor=(R=11,G=49,B=133)
@@ -255,4 +311,5 @@ defaultproperties
 	PathEdgeColor=(R=240,G=226,B=41)
 	LeftPortalColor=(R=255,G=56,B=238)
 	RightPortalColor=(R=240,G=226,B=41)
+	BoundaryPushDirColor=(R=255,G=13,B=13)
 }

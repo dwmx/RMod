@@ -18,22 +18,6 @@ var config MapData MapDataArray[128];
 
 var Class<R_DynamicMapData> LoadedMapDataClass;
 
-event Tick(float deltaseconds)
-{
-	local Pawn P;
-	local PlayerPawn PP;
-
-	for(P = Level.PawnList; P != None; P = P.NextPawn)
-	{
-		PP = PlayerPawn(P);
-		if(PP != None && PP.Player != None && Viewport(PP.Player) != None)
-		{
-			Log(P.Weapon);
-			return;
-		}
-	}
-}
-
 event BeginPlay()
 {
 	local String CurrentMapName;
