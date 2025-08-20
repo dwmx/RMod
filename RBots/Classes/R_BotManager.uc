@@ -6,6 +6,7 @@
 class R_BotManager extends Actor config(RBots);
 
 const Utilities = Class'RBots.R_BotUtilities';
+const LogCategory = 'BotManager';
 
 const MAP_DATA_ARRAY_SIZE = 128;
 struct MapData
@@ -26,26 +27,26 @@ event BeginPlay()
 	local Class<R_DynamicMapData> DynamicMapDataClass;
 
 	Super.BeginPlay();
-	Utilities.Static.RLog("BotManager spawned");
+	Utilities.Static.RLog("BotManager spawned", LogCategory);
 	SaveConfig();
 
 	// Get current map name
 	CurrentMapName = GetCurrentMapName();
 
 	// Find matching MapData entry for the current map name
-	Utilities.Static.RLog("Locating MapData for current map: '" $ CurrentMapName $ "'");
+	Utilities.Static.RLog("Locating MapData for current map: '" $ CurrentMapName $ "'", LogCategory);
 	bValidMapDataClass = TryFindMapDataForMapName(CurrentMapName, DataClassName);
 	if(!bValidMapDataClass)
 	{
-		Utilities.Static.RLog("Failed to locate configured MapData for current map: '" $ CurrentMapName $ "' -- check RBots.R_BotManager.MapDataArray in your configuration file");
+		Utilities.Static.RLog("Failed to locate configured MapData for current map: '" $ CurrentMapName $ "' -- check RBots.R_BotManager.MapDataArray in your configuration file", LogCategory);
 	}
 	else
 	{
-		Utilities.Static.RLog("Located configured MapData for current map: '" $ CurrentMapName $ "': " $ DataClassName $ "'");
+		Utilities.Static.RLog("Located configured MapData for current map: '" $ CurrentMapName $ "': " $ DataClassName $ "'", LogCategory);
 		bLoadedMapData = TryLoadMapDataClass(DataClassName, DynamicMapDataClass);
 		if(bLoadedMapData)
 		{
-			Utilities.Static.RLog("Spawning MapData from class" @ DynamicMapDataClass);
+			Utilities.Static.RLog("Spawning MapData from class" @ DynamicMapDataClass, LogCategory);
 			Spawn(DynamicMapDataClass);
 			LoadedMapDataClass = DynamicMapDataClass;
 		}
@@ -108,18 +109,30 @@ function bool TryLoadMapDataClass(String DataClass, out Class<R_DynamicMapData> 
 	local Class<R_DynamicMapData> DynamicMapDataClass;
 	local int i;
 
-	Utilities.Static.RLog("Attempting to load MapDataClass '" $ DataClass $ "'");
+	Utilities.Static.RLog("Attempting to load MapDataClass '" $ DataClass $ "'", LogCategory);
 	DynamicMapDataClass = Class<R_DynamicMapData>(DynamicLoadObject(DataClass, Class'Class'));
 
 	if(DynamicMapDataClass == None)
 	{
-		Utilities.Static.RLog("Failed to load MapDataClass: '" $ DataClass $ "'");
+		Utilities.Static.RLog("Failed to load MapDataClass: '" $ DataClass $ "'", LogCategory);
 		return false;
 	}
 
 	OutLoadedClass = DynamicMapDataClass;
-	Utilities.Static.RLog("Loaded MapDataClass: '" $ DataClass $ "': " @ OutLoadedClass);
+	Utilities.Static.RLog("Loaded MapDataClass: '" $ DataClass $ "': " @ OutLoadedClass, LogCategory);
 	return true;
+}
+
+function SpawnBot()
+{
+	local R_Bot NewBot;
+	local PlayerPawn NewPlayerPawn;
+
+	Utilities.Static.RLog("Spawning Bot", LogCategory);
+	NewBot = Spawn(Class'RBots.R_Bot');
+	NewPlayerPawn = Spawn(Class'RuneI.PlayerAlric');
+	NewPlayerPawn.SetOwner(NewBot);
+	NewBot.PossessedPlayerPawn(NewPlayerPawn);
 }
 
 defaultproperties
