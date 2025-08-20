@@ -25,6 +25,8 @@ var private Class<R_Behavior> InitialBehaviorClass;
 var private Vector AccumulatedInputVector;
 var private Vector LastInputVector;
 
+const PATH_DISTANCE_TOLERANCE = 16.0;
+
 function R_BotNavMesh GetNavMesh()
 {
 	local R_BotNavMesh LocalNavMesh;
@@ -180,6 +182,8 @@ function SetBehavior(Class<R_Behavior> BehaviorClass)
 
 event Tick(float DeltaSeconds)
 {
+	Super.Tick(DeltaSeconds);
+
 	if(OwnedPlayerPawn != None)
 	{
 		// Spawn fire to respawn, for now
@@ -225,6 +229,7 @@ function Vector GetPathFollowMovementInputVector()
 	local float ClosestDistance, CurrentDistance;
 	local Vector P0, P1;
 	local Vector Result;
+	local float EndDistance;
 	local int i;
 
 	if(NumPathPoints == 0 || OwnedPlayerPawn == None)
@@ -261,7 +266,13 @@ function Vector GetPathFollowMovementInputVector()
 		P1 = PathPoints[ClosestIndex + 1];
 	}
 
-	if(DistanceFromLineSegment(PawnLocation, P0, P1) > 64)
+	EndDistance = VSize(Vect(1,1,0) * PathPoints[NumPathPoints - 1] - Vect(1,1,0) * PawnLocation);
+	if(EndDistance <= PATH_DISTANCE_TOLERANCE)
+	{
+		return Vect(0,0,0);
+	}
+
+	if(DistanceFromLineSegment(PawnLocation, P0, P1) > 16)
 	{
 		Result = P0 - PawnLocation;
 		Result.Z = 0.0;
@@ -280,6 +291,10 @@ function float DistanceFromLineSegment(Vector Location, Vector P0, Vector P1)
 	local Vector Delta0, Delta1;
 	local Vector Offset;
 
+	Location.Z = 0;
+	P0.Z = 0;
+	P1.Z = 0;
+
 	Delta0 = P1 - P0;
 	Delta0 = Normal(Delta0);
 	Delta1 = Location - P0;
@@ -294,6 +309,6 @@ function Vector GetLastInputVector()
 
 defaultproperties
 {
-	InitialBehaviorClass=Class'RBots.R_Behavior_Wander'
-	//InitialBehaviorClass=Class'RBots.R_Behavior_FindWeapon'
+	//InitialBehaviorClass=Class'RBots.R_Behavior_Wander'
+	InitialBehaviorClass=Class'RBots.R_Behavior_FindWeapon'
 }

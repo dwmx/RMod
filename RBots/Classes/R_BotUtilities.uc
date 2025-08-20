@@ -14,6 +14,11 @@ static function RLog(String LogString, optional Name LogSubCategory)
 	}
 }
 
+static function bool IsValidActor(Actor ActorRef)
+{
+	return ActorRef != None && !ActorRef.bDeleteMe;
+}
+
 static function ColorToFloats(Color InColor, out float R, out float G, out float B)
 {
 	R = float(InColor.R) / 255.0;

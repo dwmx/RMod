@@ -259,13 +259,25 @@ function ToggleTopLevelDebugVisualization()
 
 simulated event Tick(float DeltaSeconds)
 {
+	// Ensure HUD mutator is registered
 	RegisterHUDMutator();
+
+	// Validate DebugTarget reference
+	if(DebugTarget != None)
+	{
+		if(!Utilities.Static.IsValidActor(DebugTarget))
+		{
+			SetDebugTarget(None);
+		}
+	}	
 }
 
 simulated event PostRender(Canvas C)
 {
 	local int i;
 	local R_BotManager LocalBotManager;
+
+	Log("My Debug Target:" @ DebugTarget);
 
 	if(!bDrawDebugVisualization)
 	{
@@ -367,9 +379,23 @@ function Mutate(string MutateString, PlayerPawn Sender)
 			SetDebugTarget(NewBot);
 		}
 	}
+	else if(Caps(MutateString) == "RBOTS.DEBUG.REMOVEALLBOTS")
+	{
+		DebugCommand_RemoveAllBots(Sender);
+	}
 	else
 	{
 		Super.Mutate(MutateString, Sender);
+	}
+}
+
+function DebugCommand_RemoveAllBots(PlayerPawn Sender)
+{
+	local R_Bot Bot;
+
+	foreach AllActors(Class'RBots.R_Bot', Bot)
+	{
+		BotManager.RemoveBot(Bot);
 	}
 }
 
@@ -386,7 +412,7 @@ function SendCommandList(PlayerPawn Sender)
 
 function SetDebugTarget(R_Bot NewDebugTarget)
 {
-	if(DebugTarget != None)
+	if(Utilities.Static.IsValidActor(DebugTarget))
 	{
 		// Forget about old debug target here
 	}

@@ -18,6 +18,22 @@ var config MapData MapDataArray[128];
 
 var Class<R_DynamicMapData> LoadedMapDataClass;
 
+event Tick(float deltaseconds)
+{
+	local Pawn P;
+	local PlayerPawn PP;
+
+	for(P = Level.PawnList; P != None; P = P.NextPawn)
+	{
+		PP = PlayerPawn(P);
+		if(PP != None && PP.Player != None && Viewport(PP.Player) != None)
+		{
+			Log(P.Weapon);
+			return;
+		}
+	}
+}
+
 event BeginPlay()
 {
 	local String CurrentMapName;
@@ -141,6 +157,33 @@ function R_Bot SpawnBot()
 	NewBot.InitializeBot();
 
 	return NewBot;
+}
+
+function RemoveBot(R_Bot Bot)
+{
+	local PlayerPawn P;
+	local PlayerReplicationInfo PRI;
+
+	if(Bot == None)
+	{
+		return;
+	}
+
+	Utilities.Static.RLog("Removing Bot:" @ Bot, LogCategory);
+	P = Bot.GetOwnedPlayerPawn();
+	PRI = Bot.GetOwnedPRI();
+
+	if(P != None)
+	{
+		P.Destroy();
+	}
+
+	if(PRI != None)
+	{
+		PRI.Destroy();
+	}
+
+	Bot.Destroy();
 }
 
 defaultproperties
