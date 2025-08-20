@@ -2,9 +2,16 @@ class R_BotUtilities extends Object;
 
 const LogCategory = 'RBots';
 
-static function RLog(String LogString)
+static function RLog(String LogString, optional Name LogSubCategory)
 {
-	Log("[" $ LogCategory $ "]:" @ LogString, LogCategory);
+	if(LogSubCategory != '')
+	{
+		Log("[" $ LogCategory $ "." $ LogSubCategory $ "]:" @ LogString, LogCategory);
+	}
+	else
+	{
+		Log("[" $ LogCategory $ "]:" @ LogString, LogCategory);
+	}
 }
 
 static function ColorToFloats(Color InColor, out float R, out float G, out float B)
