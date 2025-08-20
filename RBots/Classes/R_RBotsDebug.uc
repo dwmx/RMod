@@ -14,6 +14,7 @@
 class R_RBotsDebug extends Mutator;
 
 const Utilities = Class'RBots.R_BotUtilities';
+const LogCategory = 'Debug';
 const DebugRBotsCategory = 'RBots';
 
 var bool bDrawDebugVisualization;
@@ -50,11 +51,11 @@ simulated function InitializeStringManager()
 	StringManager = new(None) StringManagerClass;
 	if(StringManager != None)
 	{
-		Utilities.Static.RLog("Initialized debug string manager from class" @ StringManagerClass);
+		Utilities.Static.RLog("Initialized debug string manager from class" @ StringManagerClass, LogCategory);
 	}
 	else
 	{
-		Utilities.Static.RLog("Failed to initialized debug string manager from class" @ StringManagerClass);
+		Utilities.Static.RLog("Failed to initialized debug string manager from class" @ StringManagerClass, LogCategory);
 	}
 }
 
@@ -65,7 +66,7 @@ simulated event BeginPlay()
 
 	EnableDefaultViews();
 
-	Utilities.Static.RLog("R_RBotsDebug debug view created and default views enabled");
+	Utilities.Static.RLog("R_RBotsDebug debug view created and default views enabled", LogCategory);
 }
 
 simulated function RegisterHUDMutator()
@@ -91,7 +92,7 @@ simulated function RegisterHUDMutator()
 
 	if(Owner == None)
 	{
-		Utilities.Static.RLog("Unable to attach RBotsDebug view, no owner");
+		Utilities.Static.RLog("Unable to attach RBotsDebug view, no owner", LogCategory);
 		bRegisteredHUDMutator = true;
 		return;
 	}
@@ -110,7 +111,7 @@ simulated function RegisterHUDMutator()
                 MyHUD.HUDMutator = Self;
                 bHUDMutator = true;
                 bRegisteredHUDMutator = true;
-				Utilities.Static.RLog("Registered RBotsDebug hud mutator");
+				Utilities.Static.RLog("Registered RBotsDebug hud mutator", LogCategory);
             }
         }
 	}
@@ -184,12 +185,12 @@ simulated function EnableDebugView(Class<R_RBotsDebug_View> DebugViewClass)
 
 	if(i == MAX_DEBUG_VIEWS)
 	{
-		Utilities.Static.RLog("Cannot load DebugView" @ DebugViewClass @ "-- too many enabled");
+		Utilities.Static.RLog("Cannot load DebugView" @ DebugViewClass @ "-- too many enabled", LogCategory);
 		return;
 	}
 
 	DebugViews[i] = Spawn(DebugViewClass, Self);
-	Utilities.Static.RLog("Enabled RBots Debug View for class" @ DebugViewClass);
+	Utilities.Static.RLog("Enabled RBots Debug View for class" @ DebugViewClass, LogCategory);
 }
 
 simulated event DisableDebugView(Class<R_RBotsDebug_View> DebugViewClass)
@@ -207,7 +208,7 @@ simulated event DisableDebugView(Class<R_RBotsDebug_View> DebugViewClass)
 		{
 			DebugViews[i].Destroy();
 			DebugViews[i] = None;
-			Utilities.Static.RLog("Disabled RBots Debug View for class" @ DebugViewClass);
+			Utilities.Static.RLog("Disabled RBots Debug View for class" @ DebugViewClass, LogCategory);
 		}
 	}
 }
@@ -324,7 +325,7 @@ function Mutate(string MutateString, PlayerPawn Sender)
 	// Command handling
 	if(Caps(MutateString) == "RBOTS.DEBUG.PATHBOT")
 	{
-		Utilities.Static.RLog("Spawning a test pathing bot");
+		Utilities.Static.RLog("Spawning a test pathing bot", LogCategory);
 		NewBot = Spawn(PathBotClass);
 		SetDebugTarget(NewBot);
 	}
@@ -358,6 +359,10 @@ function Mutate(string MutateString, PlayerPawn Sender)
 	{
 		ToggleDebugView(Class'RBots.R_RBotsDebug_View_PathFinding');
 	}
+	else if(Caps(MutateString) == "RBOTS.DEBUG.SPAWNBOT")
+	{
+		BotManager.SpawnBot();
+	}
 	else
 	{
 		Super.Mutate(MutateString, Sender);
@@ -372,6 +377,7 @@ function SendCommandList(PlayerPawn Sender)
 	Sender.ClientMessage("mutate rbots.debug.view -- Toggle all debug visualization");
 	Sender.ClientMessage("mutate rbots.debug.view.navmesh -- Toggle nav mesh debug view");
 	Sender.ClientMessage("mutate rbots.debug.view.pathfinding -- Toggle path finding debug view");
+	Sender.ClientMessage("mutate rbots.debug.spawnbot -- Spawns a bot");
 }
 
 function SetDebugTarget(R_Bot NewDebugTarget)
@@ -382,7 +388,7 @@ function SetDebugTarget(R_Bot NewDebugTarget)
 	}
 
 	DebugTarget = NewDebugTarget;
-	Utilities.Static.RLog("RBotsDebug DebugTarget updated to" @ DebugTarget);
+	Utilities.Static.RLog("RBotsDebug DebugTarget updated to" @ DebugTarget, LogCategory);
 }
 
 defaultproperties

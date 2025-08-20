@@ -5,6 +5,7 @@
 class R_DynamicMapData extends Actor abstract;
 
 const Utilities = Class'RBots.R_BotUtilities';
+const LogCategory = 'DynamicMapData';
 
 var Class<R_BotNavMesh> NavMeshClass;
 var R_BotNavMesh NavMesh;
@@ -20,18 +21,18 @@ final function InitializeNavMesh()
 {
 	if(NavMeshClass == None)
 	{
-		Utilities.Static.RLog("No NavMeshClass configured for" @ Self);
+		Utilities.Static.RLog("No NavMeshClass configured for" @ Self, LogCategory);
 	}
 	else
 	{
 		NavMesh = Spawn(NavMeshClass);
 		if(NavMesh == None)
 		{
-			Utilities.Static.RLog("Failed to spawn NavMesh from class" @ NavMeshClass);
+			Utilities.Static.RLog("Failed to spawn NavMesh from class" @ NavMeshClass, LogCategory);
 		}
 		else
 		{
-			Utilities.Static.RLog("Building NavMesh from class" @ NavMeshClass);
+			Utilities.Static.RLog("Building NavMesh from class" @ NavMeshClass, LogCategory);
 			BuildNavMesh(); // Subclass will construct the NavMesh here
 			NavMesh.ValidateAndPostProcess(); // Validate the NavMesh after Subclass builds it
 		}

@@ -6,6 +6,7 @@
 class R_BotNavMesh extends Actor;
 
 const Utilities = Class'RBots.R_BotUtilities';
+const LogCategory = 'NavMesh';
 
 const VERTEX_ARRAY_SIZE = 1024;
 var private Vector VertexArray[1024]; // Must match VERTEX_ARRAY_SIZE
@@ -56,17 +57,17 @@ function InitPathFinder()
 
 	if(PathFinderClass != None)
 	{
-		Utilities.Static.RLog("NavMesh initializing PathFinder from class" @ PathFinderClass);
+		Utilities.Static.RLog("NavMesh initializing PathFinder from class" @ PathFinderClass, LogCategory);
 		PathFinder = new(None) PathFinderClass;
 
 		if(PathFinder == None)
 		{
-			Utilities.Static.RLog("Initialization of PathFinder for NavMesh failed -- failed to instantiate");
+			Utilities.Static.RLog("Initialization of PathFinder for NavMesh failed -- failed to instantiate", LogCategory);
 		}
 	}
 	else
 	{
-		Utilities.Static.RLog("Initialization of PathFinder for NavMesh failed -- PathFinderClass == None");
+		Utilities.Static.RLog("Initialization of PathFinder for NavMesh failed -- PathFinderClass == None", LogCategory);
 	}
 	
 	// Instantiate PathPostProcessor
@@ -77,17 +78,17 @@ function InitPathFinder()
 
 	if(PathPostProcessorClass != None)
 	{
-		Utilities.Static.RLog("NavMesh initializing PathPostProcessor from class" @ PathPostProcessorClass);
+		Utilities.Static.RLog("NavMesh initializing PathPostProcessor from class" @ PathPostProcessorClass, LogCategory);
 		PathPostProcessor = new(None) PathPostProcessorClass;
 
 		if(PathPostProcessor == None)
 		{
-			Utilities.Static.RLog("Initialization of PathPostProcessor for NavMesh failed -- failed to instantiate");
+			Utilities.Static.RLog("Initialization of PathPostProcessor for NavMesh failed -- failed to instantiate", LogCategory);
 		}
 	}
 	else
 	{
-		Utilities.Static.RLog("Initialization of PathPostProcess for NavMesh failed -- PathPostProcessClass == None");
+		Utilities.Static.RLog("Initialization of PathPostProcess for NavMesh failed -- PathPostProcessClass == None", LogCategory);
 	}
 }
 
@@ -120,12 +121,12 @@ function PushVertex(Vector Vertex)
 {
 	if(VertexCount < 0)
 	{
-		Utilities.Static.RLog("Bad VertexCount:" @ VertexCount);
+		Utilities.Static.RLog("Bad VertexCount:" @ VertexCount, LogCategory);
 		return;
 	}
 	if(VertexCount >= VERTEX_ARRAY_SIZE)
 	{
-		Utilities.Static.RLog("Attempted call to PushVertex on full VertexArray");
+		Utilities.Static.RLog("Attempted call to PushVertex on full VertexArray", LogCategory);
 		return;
 	}
 
@@ -137,12 +138,12 @@ function PushTriangle(int VertexIndexA, int VertexIndexB, int VertexIndexC)
 {
 	if(TriangleCount < 0)
 	{
-		Utilities.Static.RLog("Bad TriangleCount:" @ TriangleCount);
+		Utilities.Static.RLog("Bad TriangleCount:" @ TriangleCount, LogCategory);
 		return;
 	}
 	if(TriangleCount >= TRIANGLE_ARRAY_SIZE)
 	{
-		Utilities.Static.RLog("Attempted call to PushTriangle on full TriangleArray");
+		Utilities.Static.RLog("Attempted call to PushTriangle on full TriangleArray", LogCategory);
 		return;
 	}
 
@@ -154,7 +155,7 @@ function PushTriangle(int VertexIndexA, int VertexIndexB, int VertexIndexC)
 
 function ValidateAndPostProcess()
 {
-	Utilities.Static.RLog("Validating NavMesh:" @ VertexCount @ "vertices," @ TriangleCount @ "triangles");
+	Utilities.Static.RLog("Validating NavMesh:" @ VertexCount @ "vertices," @ TriangleCount @ "triangles", LogCategory);
 
 	BuildAdjacencyListArray();
 }
@@ -236,7 +237,7 @@ function MarkTrianglesAdjacent(int TriangleIndexA, int TriangleIndexB)
 		||	AdjacencyListArray[TriangleIndexB].Indices[i] == TriangleIndexA)
 		{
 			bBadAdjacents = true;
-			Utilities.Static.RLog("NavMesh bad adjacents -- attempted to double-add adjacent triangles");
+			Utilities.Static.RLog("NavMesh bad adjacents -- attempted to double-add adjacent triangles", LogCategory);
 			return;
 		}
 	}
@@ -261,7 +262,7 @@ function MarkTrianglesAdjacent(int TriangleIndexA, int TriangleIndexB)
 	if(i == 3 || i == INVALID_TRIANGLE_INDEX || j == 3 || j == INVALID_TRIANGLE_INDEX)
 	{
 		bBadAdjacents = true;
-		Utilities.Static.RLog("NavMesh bad adjacents -- attempted to add more than 3 adjacents");
+		Utilities.Static.RLog("NavMesh bad adjacents -- attempted to add more than 3 adjacents", LogCategory);
 		return;
 	}
 
@@ -524,19 +525,19 @@ function bool FindPath(
 	// Must have a PathFinder and a PathPostProcessor
 	if(PathFinder == None)
 	{
-		Utilities.Static.RLog("NavMesh FindPath failed -- PathFinder is not initialized");
+		Utilities.Static.RLog("NavMesh FindPath failed -- PathFinder is not initialized", LogCategory);
 		return false;
 	}
 	if(PathPostProcessor == None)
 	{
-		Utilities.Static.RLog("NavMesh FindPath failed -- PathPostProcessor is not initialized");
+		Utilities.Static.RLog("NavMesh FindPath failed -- PathPostProcessor is not initialized", LogCategory);
 		return false;
 	}
 
 	// Find start and end nodes
 	if(!FindContainingNode(StartLocation, StartIndex) || !FindContainingNode(EndLocation, EndIndex))
 	{
-		Utilities.Static.RLog("NavMesh FindPath failed --  Failed to find StartIndex or EndIndex");
+		Utilities.Static.RLog("NavMesh FindPath failed --  Failed to find StartIndex or EndIndex", LogCategory);
 		return false;
 	}
 
@@ -551,14 +552,14 @@ function bool FindPath(
 	// Find path indices
 	if(!PathFinder.FindPath(Self, StartIndex, EndIndex, PathIndices, PathIndexCount, OptionalPathFindData))
 	{
-		Utilities.Static.RLog("NavMesh FindPath failed -- Failed to find path indices");
+		Utilities.Static.RLog("NavMesh FindPath failed -- Failed to find path indices", LogCategory);
 		return false;
 	}
 
 	// Post-process to get path points
 	if(!PathPostProcessor.PostProcessPath(Self, StartLocation, EndLocation, PathIndices, PathIndexCount, OutPathPoints, OutPathPointCount, OptionalPathFindData))
 	{
-		Utilities.Static.RLog("NavMesh FindPath failed -- Failed to post-process path indices");
+		Utilities.Static.RLog("NavMesh FindPath failed -- Failed to post-process path indices", LogCategory);
 		return false;
 	}
 
