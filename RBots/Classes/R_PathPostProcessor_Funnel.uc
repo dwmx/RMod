@@ -11,6 +11,7 @@ function bool PostProcessPath(
     out Vector OutPathPoints[32], out int OutPathPointCount,
 	optional R_PathFindData OptionalPathFindData)
 {
+	local Vector NodeNormal, NodeCenter;
     local Vector PortalLeft[32], PortalRight[32];
     local int PortalCount;
     local int i;
@@ -19,6 +20,7 @@ function bool PostProcessPath(
     local Vector NewLeft, NewRight;
 	local Vector ReferenceVector;
     local int ApexIndex, LeftIndex, RightIndex;
+	local float Dot;
 
     // No path, just fail
     if (PathIndexCount <= 0)
@@ -27,28 +29,18 @@ function bool PostProcessPath(
         return false;
     }
 
-    // Build portals (edges between consecutive triangles)
-    PortalCount = 0;
+	// Project start and end locations onto their containing nodes
+	NavMesh.GetTriangleNormalAndCenterUnchecked(InPathIndices[0], NodeNormal, NodeCenter);
+	StartLocation = StartLocation - (NodeNormal * ((StartLocation - NodeCenter) Dot NodeNormal));
+	NavMesh.GetTriangleNormalAndCenterUnchecked(InPathIndices[PathIndexCount - 1], NodeNormal, NodeCenter);
+	EndLocation = EndLocation - (NodeNormal * ((EndLocation - NodeCenter) Dot NodeNormal));
 
-    // First portal: start to itself (degenerate)
-    PortalLeft[PortalCount]  = StartLocation;
-    PortalRight[PortalCount] = StartLocation;
-    PortalCount++;
+	GetPortals(NavMesh, InPathIndices, PathIndexCount, StartLocation, EndLocation, PortalLeft, PortalRight, PortalCount);
 
-    for (i = 0; i < PathIndexCount - 1; i++)
-    {
-        NavMesh.GetSharedEdgePointsUnchecked(
-            InPathIndices[i], InPathIndices[i+1],
-            PortalLeft[PortalCount], PortalRight[PortalCount]);
-        PortalCount++;
-    }
+	OutPathPoints[0] = StartLocation;
+	OutPathPointCount = 1;
 
-    // Final portal: end point to itself
-    PortalLeft[PortalCount]  = EndLocation;
-    PortalRight[PortalCount] = EndLocation;
-    PortalCount++;
-
-	// Funnel algo
+	// Init funnel
 	Apex = StartLocation;
 	ApexIndex = 0;
 
@@ -58,19 +50,17 @@ function bool PostProcessPath(
 	Left = PortalLeft[LeftIndex];
 	Right = PortalRight[RightIndex];
 
-	OutPathPoints[0] = StartLocation;
-	OutPathPointCount = 1;
-
 	for(i = 2; i < PortalCount; ++i)
 	{
 		// Get reference vector for edge cross checking
-		ReferenceVector = (Left - Apex) Cross (Right - Apex);
+		ReferenceVector = Normal((Left - Apex) Cross (Right - Apex));
 
 		// Check left
 		NewLeft = PortalLeft[i];
 		if(TriangleDot(ReferenceVector, Apex, Left, NewLeft) >= 0.0f)
 		{
-			if(Apex == Left || TriangleDot(ReferenceVector, Apex, Right, NewLeft) < 0.0f)
+			Dot = TriangleDot(ReferenceVector, Apex, NewLeft, Right);
+			if(Apex == Left || Dot > 0.0f)
 			{
 				Left = NewLeft;
 				LeftIndex = i;
@@ -91,9 +81,10 @@ function bool PostProcessPath(
 
 		// Check right
 		NewRight = PortalRight[i];
-		if(TriangleDot(ReferenceVector, Apex, Right, NewRight) <= 0.0f)
+		if(TriangleDot(ReferenceVector, Apex, NewRight, Right) >= 0.0f)
 		{
-			if(Apex == Right || TriangleDot(ReferenceVector, Apex, Left, NewRight) > 0.0f)
+			Dot = TriangleDot(ReferenceVector, Apex, Left, NewRight);
+			if(Apex == Right || Dot > 0.0f)
 			{
 				Right = NewRight;
 				RightIndex = i;
@@ -130,10 +121,44 @@ function bool PostProcessPath(
     return true;
 }
 
+function GetPortals(
+	R_BotNavMesh NavMesh,
+	out int InPathIndices[32], int PathIndexCount,
+	out Vector InPathStartLocation, out Vector InPathEndLocation,
+	out Vector OutPortalsLeft[32], out Vector OutPortalsRight[32], out int OutPortalsCount)
+{
+	local int i;
+
+	OutPortalsCount = 0;
+
+	// First portal is start location
+	OutPortalsLeft[OutPortalsCount] = InPathStartLocation;
+	OutPortalsRight[OutPortalsCount] = InPathStartLocation;
+	++OutPortalsCount;
+
+	// Add edges between all nodes
+	for(i = 0; i < PathIndexCount - 1; ++i)
+	{
+		NavMesh.GetSharedEdgePointsUnchecked(InPathIndices[i], InPathIndices[i+1], OutPortalsLeft[OutPortalsCount], OutPortalsRight[OutPortalsCount]);
+		++OutPortalsCount;
+	}
+
+	// Last portal is end location
+	OutPortalsLeft[OutPortalsCount] = InPathEndLocation;
+	OutPortalsRight[OutPortalsCount] = InPathEndLocation;
+	++OutPortalsCount;
+}
+
 function float TriangleDot(out Vector InReferenceVector, out Vector InA, out Vector InB, out Vector InC)
 {
+	local Vector TempA, TempB, TempC, TempRef;
 	local Vector Cross;
 
-	Cross = (InB - InA) Cross (InC - InA);
-	return Cross Dot InReferenceVector;
+	TempA = Vect(1,1,0) * InA;
+	TempB = Vect(1,1,0) * InB;
+	TempC = Vect(1,1,0) * InC;
+	TempRef = Vect(0,0,1) * InReferenceVector;
+
+	Cross = (TempB - TempA) Cross (TempC - TempA);
+	return Cross Dot TempRef;
 }
