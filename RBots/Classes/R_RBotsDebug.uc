@@ -361,7 +361,11 @@ function Mutate(string MutateString, PlayerPawn Sender)
 	}
 	else if(Caps(MutateString) == "RBOTS.DEBUG.SPAWNBOT")
 	{
-		BotManager.SpawnBot();
+		NewBot = BotManager.SpawnBot();
+		if(NewBot != None)
+		{
+			SetDebugTarget(NewBot);
+		}
 	}
 	else
 	{

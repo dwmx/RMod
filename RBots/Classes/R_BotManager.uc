@@ -123,16 +123,24 @@ function bool TryLoadMapDataClass(String DataClass, out Class<R_DynamicMapData> 
 	return true;
 }
 
-function SpawnBot()
+function R_Bot SpawnBot()
 {
 	local R_Bot NewBot;
 	local PlayerPawn NewPlayerPawn;
+	local NavigationPoint StartPoint;
 
 	Utilities.Static.RLog("Spawning Bot", LogCategory);
+
+	StartPoint = Level.Game.FindPlayerStart(None);
+
 	NewBot = Spawn(Class'RBots.R_Bot');
-	NewPlayerPawn = Spawn(Class'RuneI.PlayerAlric');
+	NewPlayerPawn = Spawn(Class'RuneI.PlayerAlric',,,StartPoint.Location, StartPoint.Rotation);
+	
 	NewPlayerPawn.SetOwner(NewBot);
 	NewBot.PossessedPlayerPawn(NewPlayerPawn);
+	NewBot.InitializeBot();
+
+	return NewBot;
 }
 
 defaultproperties
