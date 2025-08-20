@@ -130,5 +130,6 @@ defaultproperties
 	MapDataArray(2)=(MapName="DM-Hudson",DataClass="RBots.R_MapData_Hudson")
 	MapDataArray(3)=(MapName="DM-Wonderland",DataClass="RBots.R_MapData_Wonderland")
 	MapDataArray(4)=(MapName="DM-Constable",DataClass="RBots.R_MapData_Constable")
+	MapDataArray(5)=(MapName="DM-Thorstadt",DataClass="RBots.R_MapData_Thorstadt")
 	MapDataArray(5)=(MapName="AR-8on8-ChampionsER",DataClass="RBots.R_MapData_Champions8on8ER");
 }
