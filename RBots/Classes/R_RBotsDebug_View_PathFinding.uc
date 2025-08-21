@@ -29,7 +29,29 @@ var Color PathEndColor;			// Color of the path goal
 var Color PathEdgeColor;		// Color of edges between path points
 var Color LeftPortalColor;		// Color of left portal points
 var Color RightPortalColor;		// Color of right portal points
-var Color BoundaryPushDirColor;		// Color of boundary-push vectors
+var Color BoundaryPushDirColor;	// Color of boundary-push vectors
+
+function InitPathFindData()
+{
+	if((PathFindData == None))
+	{
+		PathFindData = new(None) PathFindDataClass;
+	}
+}
+
+function DebugTargetChanged(R_Bot OldDebugTarget, R_Bot NewDebugTarget)
+{
+	InitPathFindData();
+
+	if(PathFindData != None)
+	{
+		PathFindData.Clear();
+		if(Utilities.Static.IsValidActor(NewDebugTarget))
+		{
+			NewDebugTarget.AttachPathFindData(PathFindData);
+		}
+	}
+}
 
 simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringManager)
 {
@@ -51,8 +73,9 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 		// Make sure PathFindData is attached
 		if(PathFindData == None)
 		{
-			PathFindData = new(None) PathFindDataClass;
+			InitPathFindData();
 		}
+
 		DebugTarget.AttachPathFindData(PathFindData);
 
 		NumPathPoints = DebugTarget.GetNumPathPoints();

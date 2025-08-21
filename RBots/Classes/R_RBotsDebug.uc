@@ -369,11 +369,12 @@ function Mutate(string MutateString, PlayerPawn Sender)
 	}
 	else if(Caps(MutateString) == "RBOTS.DEBUG.SPAWNBOT")
 	{
-		NewBot = BotManager.SpawnBot();
+		NewBot = BotManager.SpawnBot(true);
 		if(NewBot != None)
 		{
 			SetDebugTarget(NewBot);
 		}
+		NewBot.InitializeBot();
 	}
 	else if(Caps(MutateString) == "RBOTS.DEBUG.REMOVEALLBOTS")
 	{
@@ -408,12 +409,25 @@ function SendCommandList(PlayerPawn Sender)
 
 function SetDebugTarget(R_Bot NewDebugTarget)
 {
+	local R_Bot OldDebugTarget;
+	local int i;
+
 	if(Utilities.Static.IsValidActor(DebugTarget))
 	{
 		// Forget about old debug target here
 	}
 
+	OldDebugTarget = DebugTarget;
 	DebugTarget = NewDebugTarget;
+
+	for(i = 0; i < MAX_DEBUG_VIEWS; ++i)
+	{
+		if(Utilities.Static.IsValidActor(DebugViews[i]))
+		{
+			DebugViews[i].DebugTargetChanged(OldDebugTarget, DebugTarget);
+		}
+	}
+
 	Utilities.Static.RLog("RBotsDebug DebugTarget updated to" @ DebugTarget, LogCategory);
 }
 
