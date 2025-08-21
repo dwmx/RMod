@@ -7,6 +7,8 @@ class R_Bot extends Actor;
 const Utilities = Class'RBots.R_BotUtilities';
 const LogCategory = 'Bot';
 
+var private bool bBotInitialized;
+
 const PATH_POINT_ARRAY_SIZE = 32;
 var private Vector PathPoints[32];
 var private int NumPathPoints;
@@ -26,6 +28,11 @@ var private Vector AccumulatedInputVector;
 var private Vector LastInputVector;
 
 const PATH_DISTANCE_TOLERANCE = 16.0;
+
+event BeginPlay()
+{
+	bBotInitialized = false;
+}
 
 function R_BotNavMesh GetNavMesh()
 {
@@ -93,9 +100,25 @@ function bool GetPathPoint(int Index, out Vector PathPoint)
 	return true;
 }
 
-// Currently only implemented for PathBot
-function bool GetDesiredPathStart(out Vector OutDesiredStart) { return false; }
-function bool GetDesiredPathEnd(out Vector OutDesiredEnd) { return false; }
+function bool GetDesiredPathStart(out Vector OutDesiredStart)
+{
+	if(NumPathPoints >= 2)
+	{
+		OutDesiredStart = PathPoints[0];
+		return true;
+	}
+	return false;
+}
+
+function bool GetDesiredPathEnd(out Vector OutDesiredEnd)
+{
+	if(NumPathPoints >= 2)
+	{
+		OutDesiredEnd = PathPoints[NumPathPoints - 1];
+		return true;
+	}
+	return false;
+}
 
 function int GetNumPathPoints()
 {
@@ -136,6 +159,12 @@ function InitPlayerReplicationInfo(PlayerReplicationInfo NewPRI)
 
 function InitializeBot()
 {
+	if(bBotInitialized)
+	{
+		return;
+	}
+	bBotInitialized = true;
+	
 	Utilities.Static.RLog("Initializing bot" @ Self, LogCategory);
 	if(InitialBehaviorClass != None)
 	{
