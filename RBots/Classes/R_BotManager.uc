@@ -123,14 +123,30 @@ function bool TryLoadMapDataClass(String DataClass, out Class<R_DynamicMapData> 
 	return true;
 }
 
-function R_Bot SpawnBot()
+/**
+	SpawnBot
+	Main function for adding bots to the game
+	
+	bDeferredInitialization is provided as a means for callers to perform additional bot
+	configuration before they begin playing
+	NOTE: If caller provides bDeferredInitialization = true, they are responsible for calling
+	R_Bot.InitializeBot
+*/
+function R_Bot SpawnBot(optional bool bDeferredInitialization)
 {
 	local R_Bot NewBot;
 	local PlayerPawn NewPlayerPawn;
 	local NavigationPoint StartPoint;
 
-	Utilities.Static.RLog("Spawning Bot", LogCategory);
-
+	if(bDeferredInitialization)
+	{
+		Utilities.Static.RLog("Spawning Bot with deferred initialization", LogCategory);
+	}
+	else
+	{
+		Utilities.Static.RLog("Spawning Bot", LogCategory);
+	}
+	
 	StartPoint = Level.Game.FindPlayerStart(None);
 
 	NewBot = Spawn(Class'RBots.R_Bot');
@@ -138,7 +154,11 @@ function R_Bot SpawnBot()
 	
 	NewPlayerPawn.SetOwner(NewBot);
 	NewBot.PossessedPlayerPawn(NewPlayerPawn);
-	NewBot.InitializeBot();
+
+	if(!bDeferredInitialization)
+	{
+		NewBot.InitializeBot();
+	}
 
 	return NewBot;
 }
