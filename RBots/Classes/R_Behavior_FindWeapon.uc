@@ -36,7 +36,8 @@ function float ScoreWeapon(Weapon W)
 	return W.Damage;
 }
 
-function Weapon FindWeaponTarget()
+// Find weapon with highest desirability score
+function Weapon FindDesiredWeapon()
 {
 	local PlayerPawn P;
 	local Weapon BestWeapon, CurrentWeapon;
@@ -62,6 +63,66 @@ function Weapon FindWeaponTarget()
 	return BestWeapon;
 }
 
+function bool IsValidWeaponTarget(Weapon W)
+{
+	local PlayerPawn P;
+
+	if(W.Owner != None)
+	{
+		return false;
+	}
+
+	P = GetPlayerPawn();
+	if(P == None)
+	{
+		return false;
+	}
+
+	// CanBeUsed does most of this -- invisible check, duplicate inventory check, etc
+	if(!W.CanBeUsed(P))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+// Find any random weapon in the level
+function Weapon FindRandomWeapon()
+{
+	local R_Bot Bot;
+	local Weapon WeaponCandidates[64];
+	local int NumCandidates;
+	local Weapon W;
+
+	Bot = GetBot();
+	if(Bot != None)
+	{
+		NumCandidates = 0;
+		foreach Bot.AllActors(Class'Engine.Weapon', W)
+		{
+			if(!IsValidWeaponTarget(W))
+			{
+				continue;
+			}
+
+			WeaponCandidates[NumCandidates] = W;
+			++NumCandidates;
+			if(NumCandidates >= 64)
+			{
+				break;
+			}
+		}
+	}
+
+	if(NumCandidates == 0)
+	{
+		return None;
+	}
+
+	return WeaponCandidates[Rand(NumCandidates-1)];
+}
+
 function BehaviorTick(float DeltaSeconds)
 {
 	local R_Bot Bot;
@@ -81,10 +142,11 @@ function BehaviorTick(float DeltaSeconds)
 		TimeSeconds = P.Level.TimeSeconds;
 	}
 
-	if(WeaponTarget == None && TimeSeconds - LastWeaponUpdateTimeSeconds >= WeaponUpdateCooldownSeconds)
+	if(TimeSeconds - LastWeaponUpdateTimeSeconds >= WeaponUpdateCooldownSeconds)
 	{
 		LastWeaponUpdateTimeSeconds = TimeSeconds;
-		WeaponTarget = FindWeaponTarget();
+		//WeaponTarget = FindDesiredWeapon();
+		WeaponTarget = FindRandomWeapon();
 
 		if(WeaponTarget != None)
 		{
@@ -93,6 +155,7 @@ function BehaviorTick(float DeltaSeconds)
 	}
 
 	FollowPath();
+	TryPickupWeapon();	
 }
 
 function FollowPath()
@@ -108,7 +171,35 @@ function FollowPath()
 	}
 }
 
+function TryPickupWeapon()
+{
+	local PlayerPawn P;
+	local float Distance;
+
+	if(WeaponTarget == None || WeaponTarget.Owner != None)
+	{
+		return;
+	}
+
+	P = GetPlayerPawn();
+	if(P == None)
+	{
+		return;
+	}
+
+	Distance = VSize(WeaponTarget.Location - P.Location);
+	//Log("FindWeapon distance" @ Distance);
+	if(Distance <= 32.0)
+	{
+		P.Use();
+	}
+	else if(Distance <= 350.0 && P.Weapon != None)
+	{
+		P.SwitchWeapon(1); // Stow
+	}
+}
+
 defaultproperties
 {
-	WeaponUpdateCooldownSeconds=2.0
+	WeaponUpdateCooldownSeconds=8.0
 }
