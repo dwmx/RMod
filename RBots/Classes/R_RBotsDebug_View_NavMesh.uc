@@ -2,7 +2,7 @@
 //	R_RbotsDebug_View_NavMesh
 //	Debug View for RBots NavMesh
 //==============================================================================
-class R_RbotsDebug_View_NavMesh extends R_RbotsDebug_View;
+class R_RBotsDebug_View_NavMesh extends R_RBotsDebug_View;
 
 const Utilities = Class'RBots.R_BotUtilities';
 const CanvasLib = Class'RBots.R_RBots_CanvasLibrary';
