@@ -3280,6 +3280,23 @@ state PlayerWalking
             }
         }
     }
+
+	function Landed(vector HitNormal, actor HitActor)
+	{
+		Global.Landed(HitNormal, HitActor); //108
+        //Super.Landed(HitNormal, HitActor);
+		if (Velocity.Z < -1.4 * JumpZ)
+			ShakeView(0.175 - 0.00007 * Velocity.Z, -0.85 * Velocity.Z, -0.002 * Velocity.Z);
+
+		if (DodgeDir == DODGE_Active) //108 rest from playerpawn
+		{
+			DodgeDir = DODGE_Done;
+			DodgeClickTimer = 0.0;
+			Velocity *= 0.1;
+		}
+		else
+			DodgeDir = DODGE_None;
+	}
     
     /**
     *   GrabEdge (override)
