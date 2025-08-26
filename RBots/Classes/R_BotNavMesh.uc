@@ -3,7 +3,7 @@
 //	Represents a NavMesh
 //	This mesh needs to be manually constructed on a per-map basis
 //==============================================================================
-class R_BotNavMesh extends Actor;
+class R_BotNavMesh extends R_NavMesh;
 
 const Utilities = Class'RBots.R_BotUtilities';
 const LogCategory = 'NavMesh';
@@ -40,9 +40,8 @@ var R_PathFinder PathFinder;
 var Class<R_PathPostProcessor> PathPostProcessorClass;
 var R_PathPostProcessor PathPostProcessor;
 
-event PreBeginPlay()
+function InitializeNavMesh()
 {
-	Super.PreBeginPlay();
 	Clear();
 	InitPathFinder();
 }
@@ -134,6 +133,12 @@ function PushVertex(Vector Vertex)
 	++VertexCount;
 }
 
+// This NavMesh class doesn't implement edges so just return invalid data for edges
+function PushEdge(int V0, int V1) {}
+function int GetEdgeCount()	{ return 0; }
+function GetEdgeUnchecked(int Index, out int OutV0, out int OutV1) { OutV0 = -1; OutV1 = -1; }
+function bool GetEdgeChecked(int Index, out int OutV0, out int OutV1) { OutV0 = InvalidIndex(); OutV1 = InvalidIndex(); return false; }
+
 function PushTriangle(int VertexIndexA, int VertexIndexB, int VertexIndexC)
 {
 	if(TriangleCount < 0)
@@ -153,7 +158,12 @@ function PushTriangle(int VertexIndexA, int VertexIndexB, int VertexIndexC)
 	++TriangleCount;
 }
 
-function ValidateAndPostProcess()
+function bool ValidateNavMesh(out String OutFailedLogString)
+{
+	return true;
+}
+
+function PostProcessNavMesh()
 {
 	Utilities.Static.RLog("Validating NavMesh:" @ VertexCount @ "vertices," @ TriangleCount @ "triangles", LogCategory);
 
@@ -308,9 +318,25 @@ function int GetVertexCount()
 	return VertexCount;
 }
 
+function bool IsValidVertexIndex(int Index)
+{
+	return Index >= 0 && Index < ArrayCount(VertexArray) && Index < VertexCount;
+}
+
 function GetVertexUnchecked(int Index, out Vector OutVertex)
 {
 	OutVertex = VertexArray[Index];
+}
+
+function bool GetVertexChecked(int Index, out Vector OutVertex)
+{
+	if(!IsValidVertexIndex(Index))
+	{
+		OutVertex = Vect(0,0,0);
+		return false;
+	}
+	GetVertexUnchecked(Index, OutVertex);
+	return true;
 }
 
 function int GetTriangleCount()
@@ -323,6 +349,24 @@ function GetTriangleUnchecked(int Index, out int OutIndexA, out int OutIndexB, o
 	OutIndexA = TriangleArray[Index].IndexA;
 	OutIndexB = TriangleArray[Index].IndexB;
 	OutIndexC = TriangleArray[Index].IndexC;
+}
+
+function bool IsValidTriangleIndex(int Index)
+{
+	return Index >= 0 && Index < ArrayCount(TriangleArray) && Index < TriangleCount;
+}
+
+function bool GetTriangleChecked(int Index, out int OutIndexA, out int OutIndexB, out int OutIndexC)
+{
+	if(!IsValidTriangleIndex(Index))
+	{
+		OutIndexA = InvalidIndex();
+		OutIndexB = InvalidIndex();
+		OutIndexC = InvalidIndex();
+		return false;
+	}
+	GetTriangleUnchecked(Index, OutIndexA, OutIndexB, OutIndexC);
+	return true;
 }
 
 function GetTriangleVerticesUnchecked(int Index, out Vector OutVertexA, out Vector OutVertexB, out Vector OutVertexC)
@@ -449,7 +493,8 @@ function bool GetSharedEdgePointsUnchecked(int IndexA, int IndexB, out Vector Ou
 
 // Finds the node (polygon) which contains the given location and returns index
 // If no containing node found, returns false and -1 index
-function bool FindContainingNode(Vector WorldLocation, out int OutIndex)
+//function bool FindContainingNode(Vector WorldLocation, out int OutIndex)
+function bool FindContainingTriangle(Vector WorldLocation, out int OutIndex)
 {
 	local int i;
 
@@ -535,7 +580,7 @@ function bool FindPath(
 	}
 
 	// Find start and end nodes
-	if(!FindContainingNode(StartLocation, StartIndex) || !FindContainingNode(EndLocation, EndIndex))
+	if(!FindContainingTriangle(StartLocation, StartIndex) || !FindContainingTriangle(EndLocation, EndIndex))
 	{
 		Utilities.Static.RLog("NavMesh FindPath failed --  Failed to find StartIndex or EndIndex", LogCategory);
 		return false;

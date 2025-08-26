@@ -16,7 +16,7 @@ var bool bRegisteredHUDMutator;
 
 // Cached RBot system classes
 var R_BotManager BotManager;
-var R_BotNavMesh NavMesh;
+var R_NavMesh NavMesh;
 
 // Command manager
 var R_RBotsDebug_CommandManager CommandManager;
@@ -188,13 +188,13 @@ simulated function R_BotManager GetBotManager()
 	return BotManager;
 }
 
-simulated function R_BotNavMesh GetNavMesh()
+simulated function R_NavMesh GetNavMesh()
 {
-	local R_BotNavMesh LocalNavMesh;
+	local R_NavMesh LocalNavMesh;
 
 	if(NavMesh == None)
 	{
-		foreach AllActors(Class'RBots.R_BotNavMesh', LocalNavMesh)
+		foreach AllActors(Class'RBots.R_NavMesh', LocalNavMesh)
 		{
 			break;
 		}

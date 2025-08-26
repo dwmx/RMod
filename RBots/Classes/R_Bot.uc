@@ -15,7 +15,7 @@ var private int NumPathPoints;
 
 var private R_PathFindData AttachedPathFindData;
 
-var R_BotNavMesh CachedNavMesh;
+var R_NavMesh CachedNavMesh;
 
 var private PlayerPawn OwnedPlayerPawn;
 var private PlayerReplicationInfo OwnedPRI;
@@ -34,13 +34,13 @@ event BeginPlay()
 	bBotInitialized = false;
 }
 
-function R_BotNavMesh GetNavMesh()
+function R_NavMesh GetNavMesh()
 {
-	local R_BotNavMesh LocalNavMesh;
+	local R_NavMesh LocalNavMesh;
 
 	if(CachedNavMesh == None)
 	{
-		foreach AllActors(Class'RBots.R_BotNavMesh', LocalNavMesh)
+		foreach AllActors(Class'RBots.R_NavMesh', LocalNavMesh)
 		{
 			break;
 		}
@@ -76,7 +76,7 @@ function R_PathFindData GetPathFindData()
 // Returns true if path was found and updated
 function bool TryUpdatePath(Vector Start, Vector End)
 {
-	local R_BotNavMesh LocalNavmesh;
+	local R_NavMesh LocalNavmesh;
 
 	LocalNavMesh = GetNavMesh();
 	if(LocalNavMesh != None)

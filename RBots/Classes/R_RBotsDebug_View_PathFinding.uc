@@ -65,7 +65,7 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 {
 	local float PathPointR, PathPointG, PathPointB;
 	local R_RBotsDebug DebugMutator;
-	local R_BotNavMesh NavMesh;
+	local R_NavMesh NavMesh;
 	local R_Bot DebugTarget;
 	local int NumPathPoints;
 	local Vector TempVector;
@@ -113,8 +113,8 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 	NavMesh = GetNavMesh();
 	if(NavMesh != None)
 	{
-		StringManager.AddClass(DebugPathFindingCategory, "PathFinderClass", NavMesh.PathFinderClass);
-		StringManager.AddClass(DebugPathFindingCategory, "PathPostProcessorClass", NavMesh.PathPostProcessorClass);
+		StringManager.AddClass(DebugPathFindingCategory, "PathFinderClass", NavMesh.GetPathFinderClass());
+		StringManager.AddClass(DebugPathFindingCategory, "PathPostProcessorClass", NavMesh.GetPathPostProcessorClass());
 	}
 
 	// PathFindData
@@ -141,7 +141,7 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 
 simulated function DrawPathNodes(Canvas C, R_Bot DebugTarget)
 {
-	local R_BotNavMesh NavMesh;
+	local R_NavMesh NavMesh;
 	local int VertexIndices[3];
 	local Vector VertexLocations[3];
 	local int PathNodesCount;

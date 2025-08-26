@@ -34,7 +34,7 @@ simulated function ToggleVertices()
 
 simulated function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
 {
-	local R_BotNavMesh NavMesh;
+	local R_NavMesh NavMesh;
 
 	NavMesh = GetNavMesh();
 
@@ -48,7 +48,6 @@ simulated function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringMana
 	{
 		StringManager.AddInt(DebugNavMeshCategory, "NumVertices", NavMesh.GetVertexCount());
 		StringManager.AddInt(DebugNavMeshCategory, "NumTriangles", NavMesh.GetTriangleCount());
-		StringManager.AddBool(DebugNavMeshCategory, "HasBadAdjacents", NavMesh.HasBadAdjacents());
 	}
 	else
 	{
@@ -61,7 +60,7 @@ simulated function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringMana
 	}
 }
 
-simulated function DrawNavMesh(Canvas C, R_BotNavMesh NavMesh)
+simulated function DrawNavMesh(Canvas C, R_NavMesh NavMesh)
 {
 	DrawNavMeshVertices(C, NavMesh);
 	DrawNavMeshTriangles(C, NavMesh);
@@ -70,7 +69,7 @@ simulated function DrawNavMesh(Canvas C, R_BotNavMesh NavMesh)
 	//DrawPlayerContainedNavMeshTriangle(C, NavMesh);
 }
 
-simulated function DrawNavMeshVertices(Canvas C, R_BotNavMesh NavMesh)
+simulated function DrawNavMeshVertices(Canvas C, R_NavMesh NavMesh)
 {
 	local Vector VertexLocation;
 	local Vector DrawExtents, DrawVerticalOffset;
@@ -95,7 +94,7 @@ simulated function DrawNavMeshVertices(Canvas C, R_BotNavMesh NavMesh)
 	}
 }
 
-simulated function DrawNavMeshTriangles(Canvas C, R_BotNavMesh NavMesh)
+simulated function DrawNavMeshTriangles(Canvas C, R_NavMesh NavMesh)
 {
 	local int IndexA, IndexB, IndexC;
 	local Vector VertexA, VertexB, VertexC;
@@ -133,7 +132,7 @@ simulated function DrawNavMeshTriangles(Canvas C, R_BotNavMesh NavMesh)
 	}
 }
 
-simulated function DrawPlayerContainedNavMeshTriangle(Canvas C, R_BotNavMesh NavMesh)
+simulated function DrawPlayerContainedNavMeshTriangle(Canvas C, R_NavMesh NavMesh)
 {
 	local int ContainingIndex;
 	local Vector TriangleNormal, TriangleCenter;
@@ -146,7 +145,7 @@ simulated function DrawPlayerContainedNavMeshTriangle(Canvas C, R_BotNavMesh Nav
 	{
 		PlayerLocation = Owner.Owner.Location;
 
-		if(NavMesh.FindContainingNode(PlayerLocation, ContainingIndex))
+		if(NavMesh.FindContainingTriangle(PlayerLocation, ContainingIndex))
 		{
 			NavMesh.GetTriangleNormalAndCenterUnchecked(ContainingIndex, TriangleNormal, TriangleCenter);
 			C.DrawBox3D(TriangleCenter, Vect(64,64,64), 1, 1, 0);

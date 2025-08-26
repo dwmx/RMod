@@ -7,8 +7,8 @@ class R_DynamicMapData extends Actor abstract;
 const Utilities = Class'RBots.R_BotUtilities';
 const LogCategory = 'DynamicMapData';
 
-var Class<R_BotNavMesh> NavMeshClass;
-var R_BotNavMesh NavMesh;
+var Class<R_NavMesh> NavMeshClass;
+var R_NavMesh NavMesh;
 
 event PostBeginPlay()
 {
@@ -19,6 +19,8 @@ event PostBeginPlay()
 
 final function InitializeNavMesh()
 {
+	local String FailedLogString;
+
 	if(NavMeshClass == None)
 	{
 		Utilities.Static.RLog("No NavMeshClass configured for" @ Self, LogCategory);
@@ -32,9 +34,20 @@ final function InitializeNavMesh()
 		}
 		else
 		{
-			Utilities.Static.RLog("Building NavMesh from class" @ NavMeshClass, LogCategory);
+			Utilities.Static.RLog("Instantiated NavMesh from class:" @ NavMeshClass @ " -- Initializing and building", LogCategory);
+			NavMesh.InitializeNavMesh();
 			BuildNavMesh(); // Subclass will construct the NavMesh here
-			NavMesh.ValidateAndPostProcess(); // Validate the NavMesh after Subclass builds it
+
+			// Validate the constructed NavMesh
+			if(!NavMesh.ValidateNavMesh(FailedLogString))
+			{
+				Utilities.Static.RLog("NavMesh validation failed:" @ FailedLogString, LogCategory);
+			}
+			else
+			{
+				Utilities.Static.RLog("Post-processing NavMesh", LogCategory);
+				NavMesh.PostProcessNavMesh();
+			}
 		}
 	}
 }

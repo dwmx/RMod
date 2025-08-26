@@ -20,7 +20,7 @@ simulated event PostRender(Canvas C) {} // To be implemented in subclasses
 simulated function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager) {}
 
 // Utility function for subclasses -- gets NavMesh from parent debug actor
-simulated function R_BotNavMesh GetNavMesh()
+simulated function R_NavMesh GetNavMesh()
 {
 	local R_RBotsDebug RBotsDebug;
 
