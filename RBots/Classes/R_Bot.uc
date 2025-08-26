@@ -66,6 +66,12 @@ function DetachPathFindData()
 	}
 }
 
+// Get the currently attached PathFindData, or None
+function R_PathFindData GetPathFindData()
+{
+	return AttachedPathFindData;
+}
+
 // Attempts to find a path between Start and End, and if successful, updates the Bot's path vars
 // Returns true if path was found and updated
 function bool TryUpdatePath(Vector Start, Vector End)

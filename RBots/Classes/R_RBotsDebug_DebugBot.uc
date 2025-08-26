@@ -1,8 +1,8 @@
 //==============================================================================
-//	R_RBotsDebug_PathBot
+//	R_RBotsDebug_DebugBot
 //	Special debug bot class meant for debugging path finding
 //==============================================================================
-class R_RBotsDebug_PathBot extends R_Bot;
+class R_RBotsDebug_DebugBot extends R_Bot;
 
 var float TimeAccumulator;
 var Inventory CurrentPathingTarget;

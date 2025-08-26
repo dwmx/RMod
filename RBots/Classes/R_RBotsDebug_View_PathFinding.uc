@@ -45,6 +45,14 @@ function DebugTargetChanged(R_Bot OldDebugTarget, R_Bot NewDebugTarget)
 
 	if(PathFindData != None)
 	{
+		if(OldDebugTarget != None)
+		{
+			if(OldDebugTarget.GetPathFindData() == PathFindData)
+			{
+				OldDebugTarget.DetachPathFindData();
+			}
+		}
+
 		PathFindData.Clear();
 		if(Utilities.Static.IsValidActor(NewDebugTarget))
 		{

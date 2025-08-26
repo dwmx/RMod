@@ -25,9 +25,9 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 	{
 		DrawDebugTarget(C, StringManager, DebugTarget);
 
-		if(R_RBotsDebug_PathBot(DebugTarget) != None)
-		{	// Draw debug PathBot information
-			DrawDebugTaret_PathBot(C, StringManager, R_RBotsDebug_PathBot(DebugTarget));
+		if(R_RBotsDebug_DebugBot(DebugTarget) != None)
+		{	// Draw debug DebugBot information
+			DrawDebugTaret_DebugBot(C, StringManager, R_RBotsDebug_DebugBot(DebugTarget));
 		}
 	}
 }
@@ -58,10 +58,10 @@ simulated function DrawDebugTarget(Canvas C, R_RBotsDebug_StringManager StringMa
 	}
 }
 
-// Draw debug information specific to PathBots
-simulated function DrawDebugTaret_PathBot(Canvas C, R_RBotsDebug_StringManager StringManager, R_RBotsDebug_PathBot PathBotDebugTarget)
+// Draw debug information specific to DebugBots
+simulated function DrawDebugTaret_DebugBot(Canvas C, R_RBotsDebug_StringManager StringManager, R_RBotsDebug_DebugBot DebugBotDebugTarget)
 {
-	StringManager.AddActor(DebugRBotsCategory, "CurrentPathingTarget", PathBotDebugTarget.GetCurrentPathingTarget());
+	StringManager.AddActor(DebugRBotsCategory, "CurrentPathingTarget", DebugBotDebugTarget.GetCurrentPathingTarget());
 }
 
 simulated function DrawDebugTarget_MovementInput(Canvas C, R_Bot BotDebugTarget)

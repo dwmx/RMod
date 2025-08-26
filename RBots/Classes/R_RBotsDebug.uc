@@ -3,13 +3,7 @@
 //	Mutator which provides debug view information
 //
 //	Use mutate commands for debug testing:
-//
-//	mutate rbots.debug.pathbot
-//		- Summons and auto-targets a bot to test path finding
-//
-//	Toggle the visibility of debug views with the following:
-//	mutate rbots.debug.view.navmesh
-//	mutate rbots.debug.view.pathfinding
+//	"mutate rbots"
 //==============================================================================
 class R_RBotsDebug extends Mutator;
 
@@ -24,6 +18,17 @@ var bool bRegisteredHUDMutator;
 var R_BotManager BotManager;
 var R_BotNavMesh NavMesh;
 
+// Command manager
+var R_RBotsDebug_CommandManager CommandManager;
+const CommandNameSpace_RBots 			= 'RBots'; // Main debug commands and top level namespace
+const CommandManagerClass_RBots			= Class'RBots.R_RBotsDebug_CommandManager_Bot';
+
+const CommandNameSpace_NavMesh 			= 'NavMesh'; // NavMesh commands
+const CommandManagerClass_NavMesh		= Class'RBots.R_RBotsDebug_CommandManager_NavMesh';
+
+const CommandNameSpace_PathFinding 		= 'PathFinding'; // PathFinding commands
+const CommandManagerClass_PathFinding	= Class'RBots.R_RBotsDebug_CommandManager_PathFinding';
+
 // String manager
 const StringManagerClass = Class'RBots.R_RBotsDebug_StringManager';
 var R_RBotsDebug_StringManager StringManager;
@@ -33,12 +38,58 @@ const MAX_DEBUG_VIEWS = 16;
 var R_RBotsDebug_View DebugViews[16]; // Must match MAX_DEBUG_VIEWS
 
 // Debug targeting
-const PathBotClass = Class'RBots.R_RBotsDebug_PathBot';
+//const PathBotClass = Class'RBots.R_RBotsDebug_PathBot';
 var R_Bot DebugTarget;
 
 simulated event PreBeginPlay()
 {
+	InitializeCommandManagers();
 	InitializeStringManager();
+}
+
+simulated function R_RBotsDebug_CommandManager CreateCommandManager(Class<R_RBotsDebug_CommandManager> CommandManagerClass, Name NameSpace)
+{
+	local R_RBotsDebug_CommandManager NewCommandManager;
+
+	if(CommandManagerClass == None)
+	{
+		Utilities.Static.RLog("CreateCommandManager failed -- CommandManagerClass == None");
+		return None;
+	}
+
+	if(NameSpace == '')
+	{
+		Utilities.Static.RLog("CreateCommandManager failed -- NameSpace cannot be empty");
+		return None;
+	}
+
+	NewCommandManager = new(None) CommandManagerClass;
+	if(NewCommandManager == None)
+	{
+		Utilities.Static.RLog("CreateCommandManager failed -- Instantiation failed");
+		return None;
+	}
+
+	NewCommandManager.Initialize(NameSpace);
+	return NewCommandManager;
+}
+
+simulated function InitializeCommandManagers()
+{
+	local R_RBotsDebug_CommandManager CommandManager_Main;
+	local R_RBotsDebug_CommandManager CommandManager_NavMesh;
+	local R_RBotsDebug_CommandManager CommandManager_PathFinding;
+
+	CommandManager_Main = CreateCommandManager(CommandManagerClass_RBots, CommandNameSpace_RBots);
+	CommandManager_NavMesh = CreateCommandManager(CommandManagerClass_NavMesh, CommandNameSpace_NavMesh);
+	CommandManager_PathFinding = CreateCommandManager(CommandManagerClass_PathFinding, CommandNameSpace_PathFinding);
+
+	CommandManager_Main.AddSubCommandManager(CommandManager_NavMesh);
+	CommandManager_Main.AddSubCommandManager(CommandManager_PathFinding);
+
+	CommandManager = CommandManager_Main;
+
+	Utilities.Static.RLog("Initialized command manager", LogCategory);
 }
 
 simulated function InitializeStringManager()
@@ -213,6 +264,31 @@ simulated event DisableDebugView(Class<R_RBotsDebug_View> DebugViewClass)
 	}
 }
 
+simulated function R_Bot GetDebugTarget()
+{
+	return DebugTarget;
+}
+
+simulated function R_RBotsDebug_View GetDebugView(Class<R_RBotsDebug_View> DebugViewClass)
+{
+	local int i;
+
+	if(DebugViewClass == None)
+	{
+		return None;
+	}
+
+	for(i = 0; i < MAX_DEBUG_VIEWS; ++i)
+	{
+		if(DebugViews[i] != None && DebugViews[i].Class == DebugViewClass)
+		{
+			return DebugViews[i];
+		}
+	}
+
+	return None;
+}
+
 simulated function EnableDefaultViews()
 {
 	EnableDebugView(Class'RBots.R_RBotsDebug_View_NavMesh');
@@ -311,100 +387,18 @@ simulated event PostRender(Canvas C)
 
 function Mutate(string MutateString, PlayerPawn Sender)
 {
-	local R_Bot NewBot;
-	local R_RBotsDebug_PathBot PathBot;
-
-	// Welcome string
-	if(Caps(MutateString) == "RBOTS")
+	if(CommandManager != None)
 	{
-		Sender.ClientMessage("RBots Debug Mutator -- Type 'mutate rbots.debug' for a list of available commands");
-		return;
-	}
-
-	// Debug commands
-	if(Caps(MutateString) == "RBOTS.DEBUG")
-	{
-		SendCommandList(Sender);
-		return;
-	}
-
-	PathBot = R_RBotsDebug_PathBot(DebugTarget);
-
-	// Command handling
-	if(Caps(MutateString) == "RBOTS.DEBUG.PATHBOT")
-	{
-		Utilities.Static.RLog("Spawning a test pathing bot", LogCategory);
-		NewBot = Spawn(PathBotClass);
-		SetDebugTarget(NewBot);
-	}
-	else if(Caps(MutateString) == "RBOTS.DEBUG.PATHBOT.SETSTART")
-	{
-		if(PathBot == None)
+		if(CommandManager.ReceiveCommand(MutateString, Self, Sender))
 		{
-			Sender.ClientMessage("DebugTarget must be a PathBot");
 			return;
 		}
-		PathBot.SetStartLocation(Sender.Location);
 	}
-	else if(Caps(MutateString) == "RBOTS.DEBUG.PATHBOT.SETEND")
-	{
-		if(PathBot == None)
-		{
-			Sender.ClientMessage("DebugTarget must be a PathBot");
-			return;
-		}
-		PathBot.SetEndLocation(Sender.Location);
-	}
-	else if(Caps(MutateString) == "RBOTS.DEBUG.VIEW")
-	{
-		ToggleTopLevelDebugVisualization();
-	}
-	else if(Caps(MutateString) == "RBOTS.DEBUG.VIEW.NAVMESH")
-	{
-		ToggleDebugView(Class'RBots.R_RBotsDebug_View_NavMesh');
-	}
-	else if(Caps(MutateString) == "RBOTS.DEBUG.VIEW.PATHFINDING")
-	{
-		ToggleDebugView(Class'RBots.R_RBotsDebug_View_PathFinding');
-	}
-	else if(Caps(MutateString) == "RBOTS.DEBUG.SPAWNBOT")
-	{
-		NewBot = BotManager.SpawnBot(true);
-		if(NewBot != None)
-		{
-			SetDebugTarget(NewBot);
-		}
-		NewBot.InitializeBot();
-	}
-	else if(Caps(MutateString) == "RBOTS.DEBUG.REMOVEALLBOTS")
-	{
-		DebugCommand_RemoveAllBots(Sender);
-	}
-	else
-	{
-		Super.Mutate(MutateString, Sender);
-	}
-}
 
-function DebugCommand_RemoveAllBots(PlayerPawn Sender)
-{
-	local R_Bot Bot;
-
-	foreach AllActors(Class'RBots.R_Bot', Bot)
+	if(NextMutator != None)
 	{
-		BotManager.RemoveBot(Bot);
+		NextMutator.Mutate(MutateString, Sender);
 	}
-}
-
-function SendCommandList(PlayerPawn Sender)
-{
-	Sender.ClientMessage("mutate rbots.debug.pathbot -- Summons and auto-targets a bot to test path finding");
-	Sender.ClientMessage("mutate rbots.debug.pathbot.setstart -- Sets the start location for PathBot to Caller's current location");
-	Sender.ClientMessage("mutate rbots.debug.pathbot.setend -- Sets the end location for PathBot to Caller's current location");
-	Sender.ClientMessage("mutate rbots.debug.view -- Toggle all debug visualization");
-	Sender.ClientMessage("mutate rbots.debug.view.navmesh -- Toggle nav mesh debug view");
-	Sender.ClientMessage("mutate rbots.debug.view.pathfinding -- Toggle path finding debug view");
-	Sender.ClientMessage("mutate rbots.debug.spawnbot -- Spawns a bot");
 }
 
 function SetDebugTarget(R_Bot NewDebugTarget)

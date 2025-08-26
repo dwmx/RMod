@@ -12,12 +12,25 @@ const DebugNavMeshCategory = 'NavMesh';
 const VERTICAL_DRAW_OFFSET = 2.0;
 
 const VertexSize = 6.0;
-const NormalSize = 6.0;
+const NormalSize = 16.0;
+
+var private bool bDrawNormals;
+var private bool bDrawVertices;
 
 // Colors
 var Color VertexColor;
 var Color TriangleColor;
 var Color NormalColor;
+
+simulated function ToggleNormals()
+{
+	bDrawNormals = !bDrawNormals;
+}
+
+simulated function ToggleVertices()
+{
+	bDrawVertices = !bDrawVertices;
+}
 
 simulated function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
 {
@@ -65,6 +78,11 @@ simulated function DrawNavMeshVertices(Canvas C, R_BotNavMesh NavMesh)
 	local int VertexCount;
 	local int i;
 
+	if(!bDrawVertices)
+	{
+		return;
+	}
+
 	DrawExtents = Vect(1.0,1.0,0.5) * VertexSize;
 	DrawVerticalOffset = Vect(0,0,1) * VERTICAL_DRAW_OFFSET;
 	Utilities.Static.ColorToFloats(VertexColor, VertexRGB[0], VertexRGB[1], VertexRGB[2]);
@@ -107,8 +125,11 @@ simulated function DrawNavMeshTriangles(Canvas C, R_BotNavMesh NavMesh)
 		C.DrawLine3D(VertexC + DrawVerticalOffset, VertexA + DrawVerticalOffset, NodeRGB[0], NodeRGB[1], NodeRGB[2]);
 
 		// Draw normal
-		NavMesh.GetTriangleNormalAndCenterUnchecked(i, TriangleNormal, TriangleCenter);
-		C.DrawLine3D(TriangleCenter + DrawVerticalOffset, TriangleCenter + DrawVerticalOffset + TriangleNormal * NormalSize, NormalRGB[0], NormalRGB[1], NormalRGB[2]);
+		if(bDrawNormals)
+		{
+			NavMesh.GetTriangleNormalAndCenterUnchecked(i, TriangleNormal, TriangleCenter);
+			C.DrawLine3D(TriangleCenter + DrawVerticalOffset, TriangleCenter + DrawVerticalOffset + TriangleNormal * NormalSize, NormalRGB[0], NormalRGB[1], NormalRGB[2]);
+		}
 	}
 }
 
@@ -149,4 +170,6 @@ defaultproperties
 	VertexColor=(R=252,G=207,B=91)
 	TriangleColor=(R=6,G=119,B=6)
 	NormalColor=(R=255,0,0)
+	bDrawNormals=true
+	bDrawVertices=false
 }
