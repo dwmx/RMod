@@ -16,6 +16,12 @@ class R_NavMesh extends Actor abstract;
 const Utilities = Class'RBots.R_BotUtilities';
 const LogCategory = 'NavMesh';
 
+const NavMeshLib = Class'RBots.R_NavMeshLibrary';
+
+// Class for fast proximity node look-ups
+var private Class<R_NavMeshBVH> NavMeshBVHClass;
+var private R_NavMeshBVH NavMeshBVH;
+
 // Class for graph-based pathfinding on navmesh
 var private Class<R_PathFinder> PathFinderClass;
 var private R_PathFinder PathFinder;
@@ -89,12 +95,118 @@ final function InitializeNavMeshBase()
 	bInitialized = true;
 
 	// Init necessary SubObjects
+	InitNavMeshBVH();
 	InitPathFinder();
 	InitPathPostProcessor();
 
 	// Init subclass
 	InitializeNavMesh();
 }
+
+final function InitNavMeshBVH()
+{
+	local String FailedLogString;
+
+	if(NavMeshBVH != None)
+	{	// Already instantiated
+		return;
+	}
+
+	NavMeshBVH = R_NavMeshBVH(InitNavMeshSubObject(NavMeshBVHClass, FailedLogString));
+	if(NavMeshBVH == None)
+	{
+		Utilities.Static.RLog("InitNavMeshBVH failed --" @ FailedLogString, LogCategory);
+		return;
+	}
+
+	Utilities.Static.RLog("Initialized NavMeshBVH:" @ NavMeshBVH, LogCategory);
+}
+
+final function InitPathFinder()
+{
+	local String FailedLogString;
+
+	if(PathFinder != None)
+	{	// Already instantiated
+		return;
+	}
+
+	PathFinder = R_PathFinder(InitNavMeshSubObject(PathFinderClass, FailedLogString));
+	if(PathFinder == None)
+	{
+		Utilities.Static.RLog("InitPathFinder failed --" @ FailedLogString, LogCategory);
+		return;
+	}
+
+	Utilities.Static.RLog("Initialized PathFinder:" @ PathFinder, LogCategory);
+}
+
+final function InitPathPostProcessor()
+{
+	local String FailedLogString;
+
+	if(PathPostProcessor != None)
+	{	// Already instantiated
+		return;
+	}
+
+	PathPostProcessor = R_PathPostProcessor(InitNavMeshSubObject(PathPostProcessorClass, FailedLogString));
+	if(PathPostProcessor == None)
+	{
+		Utilities.Static.RLog("InitPathPostProcessor failed --" @ FailedLogString, LogCategory);
+		return;
+	}
+
+	Utilities.Static.RLog("Initialized PathPostProcessor:" @ PathPostProcessor, LogCategory);
+}
+
+final function Object InitNavMeshSubObject(Class ObjectClass, out String OutFailedLogString)
+{
+	local Object Result;
+
+	if(ObjectClass == None)
+	{
+		OutFailedLogString = "Bad ObjectClass:" @ ObjectClass;
+		return None;
+	}
+
+	Result = new(None) ObjectClass;
+	if(Result == None)
+	{
+		OutFailedLogString = "Instantiation failed for ObjectClass:" @ ObjectClass;
+		return None;
+	}
+
+	return Result;
+}
+
+final function PostProcessNavMeshBase()
+{
+	PostProcessNavMeshBVH();
+	PostProcessNavMesh();
+}
+
+final function PostProcessNavMeshBVH()
+{
+	local Vector NavMeshMin, NavMeshMax;
+
+	if(NavMeshBVH == None)
+	{
+		return;
+	}
+
+	NavMeshLib.Static.CalcNavMeshAABB(Self, NavMeshMin, NavMeshMax);
+	NavMeshBVH.SetBounds(NavMeshMin, NavMeshMax);
+
+	// TODO: Now insert all children
+}
+
+// Class accessors
+final function Class<R_NavMeshBVH> GetNavMeshBVHClass()	{ return NavMeshBVHClass; }
+final function Class<R_PathFinder> GetPathFinderClass() { return PathFinderClass; }
+final function Class<R_PathPostProcessor> GetPathPostProcessorClass() { return PathPostProcessorClass; }
+
+final function R_NavMeshBVH GetNavMeshBVH() { return NavMeshBVH; }
 
 function bool FindPath(
 	Vector StartLocation, Vector EndLocation,
@@ -147,71 +259,10 @@ function bool FindPath(
 	return true;
 }
 
-final function InitPathFinder()
-{
-	local String FailedLogString;
-
-	if(PathFinder != None)
-	{	// Already instantiated
-		return;
-	}
-
-	PathFinder = R_PathFinder(InitNavMeshSubObject(PathFinderClass, FailedLogString));
-	if(PathFinder == None)
-	{
-		Utilities.Static.RLog("InitPathFinder failed --" @ FailedLogString);
-		return;
-	}
-
-	Utilities.Static.RLog("Initialized PathFinder:" @ PathFinder);
-}
-
-final function InitPathPostProcessor()
-{
-	local String FailedLogString;
-
-	if(PathPostProcessor != None)
-	{	// Already instantiated
-		return;
-	}
-
-	PathPostProcessor = R_PathPostProcessor(InitNavMeshSubObject(PathPostProcessorClass, FailedLogString));
-	if(PathPostProcessor == None)
-	{
-		Utilities.Static.RLog("InitPathPostProcessor failed --" @ FailedLogString);
-		return;
-	}
-
-	Utilities.Static.RLog("Initialized PathPostProcessor:" @ PathPostProcessor);
-}
-
-final function Object InitNavMeshSubObject(Class ObjectClass, out String OutFailedLogString)
-{
-	local Object Result;
-
-	if(ObjectClass == None)
-	{
-		OutFailedLogString = "Bad ObjectClass:" @ ObjectClass;
-		return None;
-	}
-
-	Result = new(None) ObjectClass;
-	if(Result == None)
-	{
-		OutFailedLogString = "Instantiation failed for ObjectClass:" @ ObjectClass;
-		return None;
-	}
-
-	return Result;
-}
-
-// Path finding
-final function Class<R_PathFinder> GetPathFinderClass() { return PathFinderClass; }
-final function Class<R_PathPostProcessor> GetPathPostProcessorClass() { return PathPostProcessorClass; }
-
 defaultproperties
 {
 	RemoteRole=ROLE_None
+	NavMeshBVHClass=Class'RBots.R_NavMeshBVH_Implementation2D'
 	PathFinderClass=Class'RBots.R_PathFinder_Dijkstras'
 	PathPostProcessorClass=Class'RBots.R_PathPostProcessor_Funnel'
 }

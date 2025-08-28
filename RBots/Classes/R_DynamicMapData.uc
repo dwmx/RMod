@@ -46,7 +46,7 @@ final function InitializeNavMesh()
 			else
 			{
 				Utilities.Static.RLog("NavMesh built and validated, now post-processing", LogCategory);
-				NavMesh.PostProcessNavMesh();
+				NavMesh.PostProcessNavMeshBase();
 			}
 		}
 	}

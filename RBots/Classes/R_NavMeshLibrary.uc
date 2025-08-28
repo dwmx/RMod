@@ -119,3 +119,63 @@ static function float CalcTriangleCenterEdgeDistance(out Vector InVLoc[3], out V
 	Closest = InELoc[0] + t * EdgeDir;
 	return VSize(Closest - Center);
 }
+
+// CalcTriangleAABB
+// Calculates the Min/Max AABB for a given triangle
+static function CalcTriangleAABB(out Vector InVLoc[3], out Vector OutMin, out Vector OutMax)
+{
+	OutMin.X = Min(InVLoc[0].X, Min(InVLoc[1].X, InVLoc[2].X));
+	OutMin.Y = Min(InVLoc[0].Y, Min(InVLoc[1].Y, InVLoc[2].Y));
+	OutMin.Z = Min(InVLoc[0].Z, Min(InVLoc[1].Z, InVLoc[2].Z));
+
+	OutMax.X = Max(InVLoc[0].X, Max(InVLoc[1].X, InVLoc[2].X));
+	OutMax.Y = Max(InVLoc[0].Y, Max(InVLoc[1].Y, InVLoc[2].Y));
+	OutMax.Z = Max(InVLoc[0].Z, Max(InVLoc[1].Z, InVLoc[2].Z));
+}
+
+// CalcNavMeshAABB
+// Calculates the Min/Max AABB for all triangles in a NavMesh
+static function CalcNavMeshAABB(R_NavMesh NavMesh, out Vector OutMin, out Vector OutMax)
+{
+	local int TriangleCount;
+	local int V[3];
+	local Vector VLoc[3];
+	local Vector TempMin, TempMax;
+	local int i, j;
+
+	TriangleCount = NavMesh.GetTriangleCount();
+	if(TriangleCount <= 0)
+	{
+		OutMin = Vect(0,0,0);
+		OutMax = Vect(0,0,0);
+		return;
+	}
+
+	// Initialize to first triangle
+	NavMesh.GetTriangleVertexIndicesUnchecked(0, V[0], V[1], V[2]);
+	for(j = 0; j < 3; ++j)
+	{
+		NavMesh.GetVertexUnchecked(V[j], VLoc[j]);
+	}
+	CalcTriangleAABB(VLoc, OutMin, OutMax);
+
+	// Calculate the rest
+	for(i = 1; i < TriangleCount; ++i)
+	{
+		NavMesh.GetTriangleVertexIndicesUnchecked(i, V[0], V[1], V[2]);
+		for(j = 0; j < 3; ++j)
+		{
+			NavMesh.GetVertexUnchecked(V[j], VLoc[j]);
+		}
+
+		CalcTriangleAABB(VLoc, TempMin, TempMax);
+
+		OutMin.X = Min(TempMin.X, OutMin.X);
+		OutMin.Y = Min(TempMin.Y, OutMin.Y);
+		OutMin.Z = Min(TempMin.Z, OutMin.Z);
+
+		OutMax.X = Max(TempMax.X, OutMax.X);
+		OutMax.Y = Max(TempMax.Y, OutMax.Y);
+		OutMax.Z = Max(TempMax.Z, OutMax.Z); 
+	}
+}

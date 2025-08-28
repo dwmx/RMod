@@ -7,6 +7,31 @@ class R_RBots_CanvasLibrary extends Object abstract;
 
 const WhiteTexture = Texture'UWindow.WhiteTexture';
 
+static function DrawAABB3D(Canvas C, out Vector InMin, out Vector InMax, float RGB[3])
+{
+	local Vector Delta;
+
+	Delta = InMax - InMin;
+
+	// Top
+	C.DrawLine3D(InMin + Vect(0,0,1) * Delta, InMin + Vect(1,0,1) * Delta, RGB[0], RGB[1], RGB[2]);
+	C.DrawLine3D(InMin + Vect(1,0,1) * Delta, InMin + Vect(1,1,1) * Delta, RGB[0], RGB[1], RGB[2]);
+	C.DrawLine3D(InMin + Vect(1,1,1) * Delta, InMin + Vect(0,1,1) * Delta, RGB[0], RGB[1], RGB[2]);
+	C.DrawLine3D(InMin + Vect(0,1,1) * Delta, InMin + Vect(0,0,1) * Delta, RGB[0], RGB[1], RGB[2]);
+
+	// Bottom
+	C.DrawLine3D(InMin + Vect(0,0,0) * Delta, InMin + Vect(1,0,0) * Delta, RGB[0], RGB[1], RGB[2]);
+	C.DrawLine3D(InMin + Vect(1,0,0) * Delta, InMin + Vect(1,1,0) * Delta, RGB[0], RGB[1], RGB[2]);
+	C.DrawLine3D(InMin + Vect(1,1,0) * Delta, InMin + Vect(0,1,0) * Delta, RGB[0], RGB[1], RGB[2]);
+	C.DrawLine3D(InMin + Vect(0,1,0) * Delta, InMin + Vect(0,0,0) * Delta, RGB[0], RGB[1], RGB[2]);
+
+	// Sides
+	C.DrawLine3D(InMin + Vect(0,0,0) * Delta, InMin + Vect(0,0,1) * Delta, RGB[0], RGB[1], RGB[2]);
+	C.DrawLine3D(InMin + Vect(1,0,0) * Delta, InMin + Vect(1,0,1) * Delta, RGB[0], RGB[1], RGB[2]);
+	C.DrawLine3D(InMin + Vect(1,1,0) * Delta, InMin + Vect(1,1,1) * Delta, RGB[0], RGB[1], RGB[2]);
+	C.DrawLine3D(InMin + Vect(0,1,0) * Delta, InMin + Vect(0,1,1) * Delta, RGB[0], RGB[1], RGB[2]);
+}
+
 // Copy of Canvas.DrawBox3D, replacing ints with floats
 static function DrawBox3D(Canvas C, Vector Center, Vector Extents, float R, float G, float B)
 {
