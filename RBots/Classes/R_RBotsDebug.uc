@@ -5,7 +5,7 @@
 //	Use mutate commands for debug testing:
 //	"mutate rbots"
 //==============================================================================
-class R_RBotsDebug extends Mutator;
+class R_RBotsDebug extends Mutator config(RBotsDebug);
 
 const Utilities = Class'RBots.R_BotUtilities';
 const LogCategory = 'Debug';
@@ -39,6 +39,7 @@ var R_RBotsDebug_StringManager StringManager;
 // Debug views
 const MAX_DEBUG_VIEWS = 16;
 var R_RBotsDebug_View DebugViews[16]; // Must match MAX_DEBUG_VIEWS
+var config Class<R_RBotsDebug_View> DefaultViews[ArrayCount(DebugViews)];
 
 // Debug targeting
 //const PathBotClass = Class'RBots.R_RBotsDebug_PathBot';
@@ -248,6 +249,37 @@ simulated function EnableDebugView(Class<R_RBotsDebug_View> DebugViewClass)
 
 	DebugViews[i] = Spawn(DebugViewClass, Self);
 	Utilities.Static.RLog("Enabled RBots Debug View for class" @ DebugViewClass, LogCategory);
+
+	// Update default views for config
+	AddDefaultDebugView(DebugViewClass);
+}
+
+simulated event AddDefaultDebugView(Class<R_RBotsDebug_View> DebugViewClass)
+{
+	local int i;
+
+	for(i = 0; i < ArrayCount(DefaultViews); ++i)
+	{ // Make sure this view is not already in default views
+		if(DefaultViews[i] == DebugViewClass)
+		{
+			return;
+		}
+	}
+
+	for(i = 0; i < ArrayCount(DefaultViews); ++i)
+	{
+		if(DefaultViews[i] == None)
+		{
+			break;
+		}
+	}
+
+	if(i < ArrayCount(DefaultViews))
+	{
+		DefaultViews[i] = DebugViewClass;
+	}
+
+	SaveConfig();
 }
 
 simulated event DisableDebugView(Class<R_RBotsDebug_View> DebugViewClass)
@@ -266,6 +298,23 @@ simulated event DisableDebugView(Class<R_RBotsDebug_View> DebugViewClass)
 			DebugViews[i].Destroy();
 			DebugViews[i] = None;
 			Utilities.Static.RLog("Disabled RBots Debug View for class" @ DebugViewClass, LogCategory);
+
+			RemoveDefaultDebugView(DebugViewClass);
+		}
+	}
+}
+
+simulated event RemoveDefaultDebugView(Class<R_RBotsDebug_View> DebugViewClass)
+{
+	local int i;
+
+	for(i = 0; i < ArrayCount(DefaultViews); ++i)
+	{
+		if(DefaultViews[i] == DebugViewClass)
+		{
+			DefaultViews[i] = None;
+			SaveConfig();
+			return;
 		}
 	}
 }
@@ -297,9 +346,15 @@ simulated function R_RBotsDebug_View GetDebugView(Class<R_RBotsDebug_View> Debug
 
 simulated function EnableDefaultViews()
 {
-	EnableDebugView(Class'RBots.R_RBotsDebug_View_NavMesh');
-	EnableDebugView(Class'RBots.R_RbotsDebug_View_PathFinding');
-	EnableDebugView(Class'RBots.R_RBotsDebug_View_Bots');
+	local int i;
+
+	for(i = 0; i < ArrayCount(DefaultViews); ++i)
+	{
+		if(DefaultViews[i] != None)
+		{
+			EnableDebugView(DefaultViews[i]);
+		}
+	}
 }
 
 simulated function bool IsViewEnabled(Class<R_RbotsDebug_View> DebugViewClass)
@@ -434,4 +489,6 @@ function SetDebugTarget(R_Bot NewDebugTarget)
 defaultproperties
 {
 	bDrawDebugVisualization=true
+	DefaultViews(0)=Class'RBots.R_RBotsDebug_View_NavMesh'
+	DefaultViews(1)=Class'RBots.R_RBotsDebug_View_BVH'
 }
