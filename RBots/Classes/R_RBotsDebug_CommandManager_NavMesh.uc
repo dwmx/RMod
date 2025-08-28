@@ -9,6 +9,7 @@ const Command_Hide = "Hide";
 const Command_Toggle = "Toggle";
 const Command_ToggleNormals = "ToggleNormals";
 const Command_ToggleVertices = "ToggleVertices";
+const Command_ToggleEdges = "ToggleEdges";
 
 function RegisterCommandList()
 {
@@ -17,6 +18,7 @@ function RegisterCommandList()
 	RegisterCommand(Command_Toggle);
 	RegisterCommand(Command_ToggleNormals);
 	RegisterCommand(Command_ToggleVertices);
+	RegisterCommand(Command_ToggleEdges);
 }
 
 function bool TryHandleCommand(String CommandString, R_RBotsDebug DebugMutator, PlayerPawn Sender)
@@ -28,6 +30,7 @@ function bool TryHandleCommand(String CommandString, R_RBotsDebug DebugMutator, 
 		case Command_Toggle:			HandleCommand_Toggle(DebugMutator, Sender);			return true;
 		case Command_ToggleNormals:		HandleCommand_ToggleNormals(DebugMutator, Sender);	return true;
 		case Command_ToggleVertices:	HandleCommand_ToggleVertices(DebugMutator, Sender);	return true;
+		case Command_ToggleEdges:		HandleCommand_ToggleEdges(DebugMutator, Sender);	return true;
 	}
 
 	return false;
@@ -91,6 +94,20 @@ function HandleCommand_ToggleVertices(R_RBotsDebug DebugMutator, PlayerPawn Send
 		if(DVNavMesh != None)
 		{
 			DVNavMesh.ToggleVertices();
+		}
+	}
+}
+
+function HandleCommand_ToggleEdges(R_RBotsDebug DebugMutator, PlayerPawn Sender)
+{
+	local R_RBotsDebug_View_NavMesh DVNavMesh;
+
+	if(DebugMutator != None)
+	{
+		DVNavMesh = GetDVNavMesh(DebugMutator);
+		if(DVNavMesh != None)
+		{
+			DVNavMesh.ToggleEdges();
 		}
 	}
 }

@@ -8,6 +8,8 @@ class R_BotNavMesh extends R_NavMesh;
 const Utilities = Class'RBots.R_BotUtilities';
 const LogCategory = 'NavMesh';
 
+const NavMeshLib = Class'RBots.R_NavMeshLibrary';
+
 const VERTEX_ARRAY_SIZE = 1024;
 var private Vector VertexArray[1024]; // Must match VERTEX_ARRAY_SIZE
 var private int VertexCount;
@@ -137,9 +139,9 @@ function PushVertex(Vector Vertex)
 function PushEdge(int V0, int V1) {}
 function int GetEdgeCount()	{ return 0; }
 function GetEdgeUnchecked(int Index, out int OutV0, out int OutV1) { OutV0 = -1; OutV1 = -1; }
-function bool GetEdgeChecked(int Index, out int OutV0, out int OutV1) { OutV0 = InvalidIndex(); OutV1 = InvalidIndex(); return false; }
+function bool GetEdgeChecked(int Index, out int OutV0, out int OutV1) { OutV0 = NavMeshLib.Static.InvalidIndex(); OutV1 = NavMeshLib.Static.InvalidIndex(); return false; }
 
-function PushTriangle(int VertexIndexA, int VertexIndexB, int VertexIndexC)
+function PushTriangleAsVertices(int VertexIndexA, int VertexIndexB, int VertexIndexC)
 {
 	if(TriangleCount < 0)
 	{
@@ -148,7 +150,7 @@ function PushTriangle(int VertexIndexA, int VertexIndexB, int VertexIndexC)
 	}
 	if(TriangleCount >= TRIANGLE_ARRAY_SIZE)
 	{
-		Utilities.Static.RLog("Attempted call to PushTriangle on full TriangleArray", LogCategory);
+		Utilities.Static.RLog("Attempted call to PushTriangleAsVertices on full TriangleArray", LogCategory);
 		return;
 	}
 
@@ -360,9 +362,9 @@ function bool GetTriangleChecked(int Index, out int OutIndexA, out int OutIndexB
 {
 	if(!IsValidTriangleIndex(Index))
 	{
-		OutIndexA = InvalidIndex();
-		OutIndexB = InvalidIndex();
-		OutIndexC = InvalidIndex();
+		OutIndexA = NavMeshLib.Static.InvalidIndex();
+		OutIndexB = NavMeshLib.Static.InvalidIndex();
+		OutIndexC = NavMeshLib.Static.InvalidIndex();
 		return false;
 	}
 	GetTriangleUnchecked(Index, OutIndexA, OutIndexB, OutIndexC);

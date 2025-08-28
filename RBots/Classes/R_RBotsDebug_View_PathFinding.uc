@@ -172,7 +172,7 @@ simulated function DrawPathNodes(Canvas C, R_Bot DebugTarget)
 	{
 		if(PathFindData.GetPathNode(i, PathNodeIndex))
 		{
-			NavMesh.GetTriangleUnchecked(PathNodeIndex, VertexIndices[0], VertexIndices[1], VertexIndices[2]);
+			NavMesh.GetTriangleVertexIndicesUnchecked(PathNodeIndex, VertexIndices[0], VertexIndices[1], VertexIndices[2]);
 			for(j = 0; j < 3; ++j)
 			{
 				NavMesh.GetVertexUnchecked(VertexIndices[j], VertexLocations[j]);

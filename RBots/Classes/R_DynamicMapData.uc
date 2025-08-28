@@ -45,7 +45,7 @@ final function InitializeNavMesh()
 			}
 			else
 			{
-				Utilities.Static.RLog("Post-processing NavMesh", LogCategory);
+				Utilities.Static.RLog("NavMesh built and validated, now post-processing", LogCategory);
 				NavMesh.PostProcessNavMesh();
 			}
 		}
@@ -58,4 +58,5 @@ defaultproperties
 {
 	RemoteRole=ROLE_None
 	NavMeshClass=Class'RBots.R_BotNavMesh'
+	//NavMeshClass=Class'RBots.R_NavMesh_New'
 }
