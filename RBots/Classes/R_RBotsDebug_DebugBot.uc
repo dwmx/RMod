@@ -31,7 +31,7 @@ function FindNewDebugPath()
 	local Weapon NewTargetWeapon;
 	local Vector StartLocation;
 	local Vector EndLocation;
-	local R_BotNavMesh LocalNavmesh;
+	local R_NavMesh LocalNavmesh;
 
 	NewTargetWeapon = GetRandomWeapon();
 	if(NewTargetWeapon != None)

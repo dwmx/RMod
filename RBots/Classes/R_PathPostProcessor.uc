@@ -11,7 +11,7 @@ class R_PathPostProcessor extends Object abstract;
 	array of world-space locations to follow that path
 */
 function bool PostProcessPath(
-	R_BotNavMesh NavMesh,
+	R_NavMesh NavMesh,
 	Vector StartLocation, Vector EndLocation,
 	out int InPathIndices[32], int PathIndexCount,
 	out Vector OutPathPoints[32], out int OutPathPointCount,

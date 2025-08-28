@@ -1,7 +1,7 @@
 //==============================================================================
 //	R_NavMesh
 //==============================================================================
-class R_NavMesh_New extends R_NavMesh;
+class R_NavMesh_Implementation extends R_NavMesh;
 
 const Utilities = Class'RBots.R_BotUtilities';
 const LogCategory = 'NavMesh';
@@ -39,7 +39,7 @@ struct NavMeshAdjacency
 {
 	var int T[3];	// Indices into TriangleArray
 	var int E[3];	// Indices into EdgeArray
-	var int C[3];	// Cost for each connection
+	var float C[3];	// Cost for each connection
 };
 var private NavMeshAdjacency AdjacencyArray[ArrayCount(TriangleArray)];
 
@@ -251,7 +251,7 @@ function BuildAdjacencies()
 		{
 			AdjacencyArray[i].T[j] = NavMeshLib.Static.InvalidIndex();
 			AdjacencyArray[i].E[j] = NavMeshLib.Static.InvalidIndex();
-			AdjacencyArray[i].C[j] = 0;
+			AdjacencyArray[i].C[j] = 0.0f;
 		}
 	}
 
@@ -296,7 +296,7 @@ function int FindSharedEdgeIndex(int T0, int T1)
 // Marks the triangles as adjacents, sharing the edge specified by index E
 function MarkTrianglesAdjacent(int T0, int T1, int E)
 {
-	local int Cost;
+	local float Cost;
 	local int i, j;
 
 	for(i = 0; i < 3; ++i)
@@ -321,9 +321,7 @@ function MarkTrianglesAdjacent(int T0, int T1, int E)
 		return;
 	}
 
-	Cost = 0;
-	// TODO:
-	//Cost = CalculateCost(T0, T1);
+	Cost = CalcAdjacencyCost(T0, T1, E);
 
 	AdjacencyArray[T0].T[i] = T1;
 	AdjacencyArray[T0].E[i] = E;
@@ -332,6 +330,26 @@ function MarkTrianglesAdjacent(int T0, int T1, int E)
 	AdjacencyArray[T1].T[j] = T0;
 	AdjacencyArray[T1].E[j] = E;
 	AdjacencyArray[T1].C[j] = Cost;
+}
+
+function float CalcAdjacencyCost(int T0, int T1, int E)
+{
+	local int V0[3], V1[3], EV[2];
+	local Vector VLoc0[3], VLoc1[3], EVLoc[2];
+	local float Distance0, Distance1;
+	local int i;
+
+	GetTriangleVertexIndicesUnchecked(T0, V0[0], V0[1], V0[2]);
+	GetTriangleVertexIndicesUnchecked(T1, V1[0], V1[1], V1[2]);
+	GetEdgeVertexIndicesUnchecked(E, EV[0], EV[1]);
+
+	for(i = 0; i < 3; ++i)	GetVertexUnchecked(V0[i], VLoc0[i]);
+	for(i = 0; i < 3; ++i)	GetVertexUnchecked(V1[i], VLoc1[i]);
+	for(i = 0; i < 2; ++i)	GetVertexUnchecked(EV[i], EVLoc[i]);
+	
+	Distance0 = NavMeshLib.Static.CalcTriangleCenterEdgeDistance(VLoc0, EVLoc);
+	Distance1 = NavMeshLib.Static.CalcTriangleCenterEdgeDistance(VLoc1, EVLoc);
+	return Distance0 + Distance1;
 }
 
 // Post process edge information
@@ -394,4 +412,145 @@ function GetTriangleEdgeIndicesUnchecked(int Index, out int OutE0, out int OutE1
 	OutE0 = TriangleArray[Index].E[0];
 	OutE1 = TriangleArray[Index].E[1];
 	OutE2 = TriangleArray[Index].E[2];
+}
+
+function GetTriangleAdjacentsUnchecked(int Index, out int OutT0, out int OutT1, out int OutT2)
+{
+	OutT0 = AdjacencyArray[Index].T[0];
+	OutT1 = AdjacencyArray[Index].T[1];
+	OutT2 = AdjacencyArray[Index].T[2];
+}
+
+function GetTriangleAdjacentDataUnchecked(int Index, out int OutT[3], out int OutE[3], out float OutC[3])
+{
+	local int i;
+
+	for(i = 0; i < 3; ++i)
+	{
+		OutT[i] = AdjacencyArray[Index].T[i];
+		OutE[i] = AdjacencyArray[Index].E[i];
+		OutC[i] = AdjacencyArray[Index].C[i];
+	}
+}
+
+function bool GetTriangleSharedEdgeLocationsUnchecked(int IndexA, int IndexB, out Vector OutLeftLocation, out Vector OutRightLocation)
+{
+	local int VerticesA[3], VerticesB[3];
+	local int Shared[3], SharedCount;
+	local Vector EdgePoints[2];
+	local Vector NormalA, CenterA;
+	local Vector NormalB, CenterB;
+	local Vector TravelDirection, EdgeDirection;
+	local Vector CrossDirections;
+	local float NormalDotCross;
+	local int i, j;
+
+	GetTriangleVertexIndicesUnchecked(IndexA, VerticesA[0], VerticesA[1], VerticesA[2]);
+	GetTriangleVertexIndicesUnchecked(IndexB, VerticesB[0], VerticesB[1], VerticesB[2]);
+
+	SharedCount = 0;
+	for(i = 0; i < 3; ++i)
+	{
+		for(j = 0; j < 3; ++j)
+		{
+			if(VerticesA[i] == VerticesB[j])
+			{
+				Shared[SharedCount] = VerticesA[i];
+				++SharedCount;
+			}
+		}
+	}
+
+	if(SharedCount != 2)
+	{
+		OutLeftLocation = Vect(0,0,0);
+		OutRightLocation = Vect(0,0,0);
+		return false;
+	}
+
+	GetVertexUnchecked(Shared[0], EdgePoints[0]);
+	GetVertexUnchecked(Shared[1], EdgePoints[1]);
+
+	GetTriangleNormalAndCenterUnchecked(IndexA, NormalA, CenterA);
+	GetTriangleNormalAndCenterUnchecked(IndexB, NormalB, CenterB);
+
+	TravelDirection = CenterB - CenterA;
+	EdgeDirection = EdgePoints[1] - EdgePoints[0];
+	CrossDirections = TravelDirection Cross EdgeDirection;
+	NormalDotCross = NormalA Dot CrossDirections;
+
+	if(NormalDotCross > 0)
+	{
+		OutLeftLocation = EdgePoints[0];
+		OutRightLocation = EdgePoints[1];
+	}
+	else
+	{
+		OutLeftLocation = EdgePoints[1];
+		OutRightLocation = EdgePoints[0];
+	}
+
+	return true;
+}
+
+function GetTriangleNormalAndCenterUnchecked(int Index, out Vector OutNormal, out Vector OutCenter)
+{
+	local int V[3];
+	local Vector VLoc[3];
+	local int i;
+
+	GetTriangleVertexIndicesUnchecked(Index, V[0], V[1], V[2]);
+	for(i = 0; i < 3; ++i)
+	{
+		GetVertexUnchecked(V[i], VLoc[i]);
+	}
+
+	OutNormal = Normal((VLoc[1] - VLoc[0]) Cross (VLoc[2] - VLoc[0]));
+	OutCenter = VLoc[0] + VLoc[1] + VLoc[2];
+	OutCenter.X /= 3.0;
+	OutCenter.Y /= 3.0;
+	OutCenter.Z /= 3.0;
+}
+
+function bool FindContainingTriangle(out Vector InLocation, out int OutT0)
+{
+	// TODO:
+	// Right now, this is a linear search
+	// Need to implement BVH and search with that
+	local int i;
+
+	for(i = 0; i < NumTriangles; ++i)
+	{
+		if(IsLocationWithinTriangle(i, InLocation))
+		{
+			OutT0 = i;
+			return true;
+		}
+	}
+
+	OutT0 = NavMeshLib.Static.InvalidIndex();
+	return false;
+}
+
+function bool IsLocationWithinTriangle(int Index, out Vector InWorldLocation)
+{
+	local Vector TNormal, TCenter;
+	local int V[3];
+	local Vector VLoc[3];
+	local int i;
+
+	// Location must be on the positive side of the specified triangle
+	GetTriangleNormalAndCenterUnchecked(Index, TNormal, TCenter);
+	if((InWorldLocation - TCenter) Dot TNormal < 0.0)
+	{
+		return false;
+	}
+
+	GetTriangleVertexIndicesUnchecked(Index, V[0], V[1], V[2]);
+	for(i = 0; i < 3; ++i)
+	{
+		GetVertexUnchecked(V[i], VLoc[i]);
+	}
+
+	return NavMeshLib.Static.IsLocationWithinTriangle(VLoc, InWorldLocation);
 }

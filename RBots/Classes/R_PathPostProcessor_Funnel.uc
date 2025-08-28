@@ -9,7 +9,7 @@ const MAX_POINT_ARRAY_SIZE = 32;
 const BOUNDARY_SEPARATION_DIST = 48.0;	// The distance paths will try to stay from boundaries
 
 function bool PostProcessPath(
-    R_BotNavMesh NavMesh,
+    R_NavMesh NavMesh,
     Vector StartLocation, Vector EndLocation,
     out int InPathIndices[32], int PathIndexCount,
     out Vector OutPathPoints[32], out int OutPathPointCount,
@@ -207,7 +207,7 @@ function BoundarySeparatePathPoint2D(out Vector InOutPathPoint, out Vector InBou
 // Returns arrays of left and right boundary points, and left and right portal
 // arrays as indices into the boundary points
 function GetPortals(
-	R_BotNavmesh NavMesh,
+	R_Navmesh NavMesh,
 	out int InPathIndices[32], int NumPathIndices,
 	out Vector InPathStartLocation, out Vector InPathEndLocation,
 	out Vector OutBoundaryLeft[32], out int OutNumBoundaryLeft,
@@ -233,7 +233,7 @@ function GetPortals(
 	// Insert each shared edge along the corridor
 	for(i = 0; i < NumPathIndices - 1; ++i)
 	{
-		NavMesh.GetSharedEdgePointsUnchecked(InPathIndices[i], InPathIndices[i+1], Left, Right);
+		NavMesh.GetTriangleSharedEdgeLocationsUnchecked(InPathIndices[i], InPathIndices[i+1], Left, Right);
 
 		InsertPortalPoint(Left, OutBoundaryLeft, OutNumBoundaryLeft, OutPortalLeft, OutNumPortals);
 		InsertPortalPoint(Right, OutBoundaryRight, OutNumBoundaryRight, OutPortalRight, OutNumPortals);

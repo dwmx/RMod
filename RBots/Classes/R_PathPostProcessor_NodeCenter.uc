@@ -6,7 +6,7 @@
 class R_PathPostProcessor_NodeCenter extends R_PathPostProcessor;
 
 function bool PostProcessPath(
-	R_BotNavMesh NavMesh,
+	R_NavMesh NavMesh,
 	Vector StartLocation, Vector EndLocation,
 	out int InPathIndices[32], int PathIndexCount,
 	out Vector OutPathPoints[32], out int OutPathPointCount,

@@ -52,7 +52,7 @@ simulated function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringMana
 	// Add debug strings
 	if(NavMesh != None)
 	{
-		StringManager.AddClass(DebugNavMeshCategory, "NavMesh Class:", NavMesh.Class);
+		StringManager.AddClass(DebugNavMeshCategory, "NavMesh Class", NavMesh.Class);
 		StringManager.AddInt(DebugNavMeshCategory, "NumVertices", NavMesh.GetVertexCount());
 		StringManager.AddInt(DebugNavMeshCategory, "NumEdges", NavMesh.GetEdgeCount());
 		StringManager.AddInt(DebugNavMeshCategory, "NumTriangles", NavMesh.GetTriangleCount());
@@ -235,8 +235,8 @@ defaultproperties
 	VertexColor=(R=252,G=207,B=91)
 	TriangleColor=(R=6,G=119,B=6)
 	NormalColor=(R=255,0,0)
-	EdgeColor_Normal=(R=237,G=240,B=55)
-	EdgeColor_Border=(R=236,G=29,B=255)
+	EdgeColor_Normal=(R=29,G=44,B=133)
+	EdgeColor_Border=(R=43,G=255,B=53)
 	EdgeColor_Impassable=(R=255,G=32,B=32)
 	bDrawNormals=true
 	bDrawVertices=false

@@ -35,7 +35,7 @@ final function InitializeNavMesh()
 		else
 		{
 			Utilities.Static.RLog("Instantiated NavMesh from class:" @ NavMeshClass @ " -- Initializing and building", LogCategory);
-			NavMesh.InitializeNavMesh();
+			NavMesh.InitializeNavMeshBase();
 			BuildNavMesh(); // Subclass will construct the NavMesh here
 
 			// Validate the constructed NavMesh
@@ -52,11 +52,10 @@ final function InitializeNavMesh()
 	}
 }
 
-function BuildNavMesh() {} // To be implemented in subclasses
+function BuildNavMesh(); // To be implemented in subclasses
 
 defaultproperties
 {
 	RemoteRole=ROLE_None
-	NavMeshClass=Class'RBots.R_BotNavMesh'
-	//NavMeshClass=Class'RBots.R_NavMesh_New'
+	NavMeshClass=Class'RBots.R_NavMesh_Implementation'
 }

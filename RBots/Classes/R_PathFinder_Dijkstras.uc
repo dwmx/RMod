@@ -8,7 +8,7 @@ const Utilities = Class'RBots.R_BotUtilities';
 const MAX_NODES = 1024; // Adjust to match maximum number of triangles
 
 function bool FindPath(
-	R_BotNavMesh NavMesh,
+	R_NavMesh NavMesh,
 	int StartIndex, int EndIndex,
 	out int OutPathIndices[32], out int OutPathIndexCount,
     optional R_PathFindData OptionalPathFindData)
@@ -21,6 +21,9 @@ function bool FindPath(
 	local float Costs[3];
     local int MinDist, MinNode;
     local int TotalNodes;
+	local int T[3];		// Adjacent triangle indices
+	local int E[3];		// Adjacent triangle shared edges
+	local float C[3];	// Cost for adjacent connections
 
     // Safety: assume NavMesh knows its triangle count
     TotalNodes = NavMesh.GetTriangleCount();
@@ -64,18 +67,16 @@ function bool FindPath(
             break;
 
         // Relax neighbors
-        //NavMesh.GetTriangleAdjacentsUnchecked(MinNode, Adjacents[0], Adjacents[1], Adjacents[2]);
-		NavMesh.GetTriangleAdjacentsAndCostsUnchecked(MinNode, Adjacents[0], Adjacents[1], Adjacents[2], Costs[0], Costs[1], Costs[2]);
+		NavMesh.GetTriangleAdjacentDataUnchecked(MinNode, T, E, C);
         for (k = 0; k < 3; k++)
         {
-            v = Adjacents[k];
+            v = T[k];
             if (v >= 0 && Visited[v] == 0)
             {
-                //if (Dist[MinNode] + 1 < Dist[v]) // uniform cost (1 per edge)
-				if(Dist[MinNode] + Costs[k] < Dist[v])
+				if(Dist[MinNode] + C[k] < Dist[v])
                 {
                     //Dist[v] = Dist[MinNode] + 1;
-					Dist[v] = Dist[MinNode] + Costs[k];
+					Dist[v] = Dist[MinNode] + C[k];
                     Prev[v] = MinNode;
                 }
             }
