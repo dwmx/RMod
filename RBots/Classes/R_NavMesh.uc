@@ -18,10 +18,6 @@ const LogCategory = 'NavMesh';
 
 const NavMeshLib = Class'RBots.R_NavMeshLibrary';
 
-// Class for fast proximity node look-ups
-var private Class<R_NavMeshBVH> NavMeshBVHClass;
-var private R_NavMeshBVH NavMeshBVH;
-
 // Class for graph-based pathfinding on navmesh
 var private Class<R_PathFinder> PathFinderClass;
 var private R_PathFinder PathFinder;
@@ -95,31 +91,11 @@ final function InitializeNavMeshBase()
 	bInitialized = true;
 
 	// Init necessary SubObjects
-	InitNavMeshBVH();
 	InitPathFinder();
 	InitPathPostProcessor();
 
 	// Init subclass
 	InitializeNavMesh();
-}
-
-final function InitNavMeshBVH()
-{
-	local String FailedLogString;
-
-	if(NavMeshBVH != None)
-	{	// Already instantiated
-		return;
-	}
-
-	NavMeshBVH = R_NavMeshBVH(InitNavMeshSubObject(NavMeshBVHClass, FailedLogString));
-	if(NavMeshBVH == None)
-	{
-		Utilities.Static.RLog("InitNavMeshBVH failed --" @ FailedLogString, LogCategory);
-		return;
-	}
-
-	Utilities.Static.RLog("Initialized NavMeshBVH:" @ NavMeshBVH, LogCategory);
 }
 
 final function InitPathFinder()
@@ -182,31 +158,12 @@ final function Object InitNavMeshSubObject(Class ObjectClass, out String OutFail
 
 final function PostProcessNavMeshBase()
 {
-	PostProcessNavMeshBVH();
 	PostProcessNavMesh();
 }
 
-final function PostProcessNavMeshBVH()
-{
-	local Vector NavMeshMin, NavMeshMax;
-
-	if(NavMeshBVH == None)
-	{
-		return;
-	}
-
-	NavMeshLib.Static.CalcNavMeshAABB(Self, NavMeshMin, NavMeshMax);
-	NavMeshBVH.SetBounds(NavMeshMin, NavMeshMax);
-
-	// TODO: Now insert all children
-}
-
 // Class accessors
-final function Class<R_NavMeshBVH> GetNavMeshBVHClass()	{ return NavMeshBVHClass; }
 final function Class<R_PathFinder> GetPathFinderClass() { return PathFinderClass; }
 final function Class<R_PathPostProcessor> GetPathPostProcessorClass() { return PathPostProcessorClass; }
-
-final function R_NavMeshBVH GetNavMeshBVH() { return NavMeshBVH; }
 
 function bool FindPath(
 	Vector StartLocation, Vector EndLocation,
@@ -262,7 +219,6 @@ function bool FindPath(
 defaultproperties
 {
 	RemoteRole=ROLE_None
-	NavMeshBVHClass=Class'RBots.R_NavMeshBVH_Implementation2D'
 	PathFinderClass=Class'RBots.R_PathFinder_Dijkstras'
 	PathPostProcessorClass=Class'RBots.R_PathPostProcessor_Funnel'
 }
