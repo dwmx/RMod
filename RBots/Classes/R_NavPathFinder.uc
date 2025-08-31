@@ -1,10 +1,10 @@
 //==============================================================================
-//	R_PathFinder
+//	R_NavPathFinder
 //	Abstract class providing the interface for finding paths within a NavMesh
-//	Subclass to implement a pathfinding algorithm and update the PathFinder
+//	Subclass to implement a pathfinding algorithm and update the NavPathFinder
 //	class in NavMesh
 //==============================================================================
-class R_PathFinder extends Object abstract;
+class R_NavPathFinder extends Object abstract;
 
 const Utilities = Class'RBots.R_BotUtilities';
 
@@ -16,8 +16,8 @@ const Utilities = Class'RBots.R_BotUtilities';
 function bool FindPath(
 	R_NavMesh NavMesh,
 	int StartIndex, int EndIndex,
-	out int OutPathIndices[32], out int OutPathIndexCount,
-	optional R_PathFindData OptionalPathFindData)
+	R_NavPath NavPath,
+	optional R_NavPathObserver OptionalNavPathObserver)
 {
 	// To be implemented in subclass
 	return false;

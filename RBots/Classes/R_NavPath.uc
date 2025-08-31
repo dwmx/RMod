@@ -7,7 +7,7 @@ class R_NavPath extends Object;
 const Utilities = Class'RBots.R_BotUtilities';
 const LogCategory = 'NavPath';
 
-const NavMeshLib = Class'RBots.R_NavMeshLibrary';
+const NavLib = Class'RBots.R_NavLibrary';
 
 var private int PathNodeIndices[128];
 var private int NumPathNodeIndices;
@@ -46,7 +46,7 @@ function bool GetPathNodeIndex(int Index, out int OutPathNodeIndex)
 {
 	if(Index < 0 || Index >= NumPathNodeIndices)
 	{
-		OutPathNodeIndex = NavMeshLib.Static.InvalidIndex();
+		OutPathNodeIndex = NavLib.Static.InvalidIndex();
 		return false;
 	}
 
@@ -80,4 +80,37 @@ function bool GetPathLocation(int Index, out Vector OutPathLocation)
 
 	OutPathLocation = PathLocations[Index];
 	return true;
+}
+
+// Returns the index of the path point closest to InLocation
+// Projects onto XY plane
+function int GetClosestPathLocationIndex2D(out Vector InLocation)
+{
+	local float ClosestDistance, CurrentDistance;
+	local int ClosestIndex;
+	local int i;
+
+	if(NumPathLocations <= 0)
+	{
+		return NavLib.Static.InvalidIndex();
+	}
+
+	if(NumPathLocations == 1)
+	{
+		return 0;
+	}
+
+	ClosestDistance = VSize(Vect(1,1,0) * (PathLocations[0] - InLocation));
+	ClosestIndex = 0;
+	for(i = 1; i < NumPathLocations; ++i)
+	{
+		CurrentDistance = VSize(Vect(1,1,0) * (PathLocations[i] - InLocation));
+		if(CurrentDistance < ClosestDistance)
+		{
+			ClosestDistance = CurrentDistance;
+			ClosestIndex = i;
+		}
+	}
+
+	return ClosestIndex;
 }

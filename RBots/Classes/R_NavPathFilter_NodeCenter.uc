@@ -1,26 +1,29 @@
 //==============================================================================
-//	R_PathPostProcessor_NodeCenter
+//	R_NavPathFilter_NodeCenter
 //	Processes a NavMesh path as a list of points located at the center of each
 //	triangle node
 //==============================================================================
-class R_PathPostProcessor_NodeCenter extends R_PathPostProcessor;
+class R_NavPathFilter_NodeCenter extends R_NavPathFilter;
 
 function bool PostProcessPath(
 	R_NavMesh NavMesh,
 	Vector StartLocation, Vector EndLocation,
-	out int InPathIndices[32], int PathIndexCount,
-	out Vector OutPathPoints[32], out int OutPathPointCount,
-	optional R_PathFindData OptionalPathFindData)
+	R_NavPath NavPath,
+	optional R_NavPathObserver OptionalNavPathObserver)
 {
 	local int i;
 	local Vector Normal, Center;
+	local int PathIndexCount;
+	local int Index;
+
+	PathIndexCount = NavPath.GetNumPathNodeIndices();
 
 	for(i = 0; i < PathIndexCount; ++i)
 	{
-		NavMesh.GetTriangleNormalAndCenterUnchecked(InPathIndices[i], Normal, Center);
-		OutPathPoints[i] = Center;
+		NavPath.GetPathNodeIndex(i, Index);
+		NavMesh.GetTriangleNormalAndCenterUnchecked(Index, Normal, Center);
+		NavPath.PushPathLocation(Center);
 	}
 
-	OutPathPointCount = i;
 	return true;
 }

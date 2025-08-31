@@ -16,15 +16,15 @@ class R_NavMesh extends Actor abstract;
 const Utilities = Class'RBots.R_BotUtilities';
 const LogCategory = 'NavMesh';
 
-const NavMeshLib = Class'RBots.R_NavMeshLibrary';
+const NavLib = Class'RBots.R_NavLibrary';
 
 // Class for graph-based pathfinding on navmesh
-var private Class<R_PathFinder> PathFinderClass;
-var private R_PathFinder PathFinder;
+var private Class<R_NavPathFinder> NavPathFinderClass;
+var private R_NavPathFinder NavPathFinder;
 
 // Class for filtering path nodes and outputting world locations
-var private Class<R_PathPostProcessor> PathPostProcessorClass;
-var private R_PathPostProcessor PathPostProcessor;
+var private Class<R_NavPathFilter> NavPathFilterClass;
+var private R_NavPathFilter NavPathFilter;
 
 var private bool bInitialized;
 
@@ -91,49 +91,49 @@ final function InitializeNavMeshBase()
 	bInitialized = true;
 
 	// Init necessary SubObjects
-	InitPathFinder();
-	InitPathPostProcessor();
+	InitNavPathFinder();
+	InitNavPathFilter();
 
 	// Init subclass
 	InitializeNavMesh();
 }
 
-final function InitPathFinder()
+final function InitNavPathFinder()
 {
 	local String FailedLogString;
 
-	if(PathFinder != None)
+	if(NavPathFinder != None)
 	{	// Already instantiated
 		return;
 	}
 
-	PathFinder = R_PathFinder(InitNavMeshSubObject(PathFinderClass, FailedLogString));
-	if(PathFinder == None)
+	NavPathFinder = R_NavPathFinder(InitNavMeshSubObject(NavPathFinderClass, FailedLogString));
+	if(NavPathFinder == None)
 	{
-		Utilities.Static.RLog("InitPathFinder failed --" @ FailedLogString, LogCategory);
+		Utilities.Static.RLog("InitNavPathFinder failed --" @ FailedLogString, LogCategory);
 		return;
 	}
 
-	Utilities.Static.RLog("Initialized PathFinder:" @ PathFinder, LogCategory);
+	Utilities.Static.RLog("Initialized NavPathFinder:" @ NavPathFinder, LogCategory);
 }
 
-final function InitPathPostProcessor()
+final function InitNavPathFilter()
 {
 	local String FailedLogString;
 
-	if(PathPostProcessor != None)
+	if(NavPathFilter != None)
 	{	// Already instantiated
 		return;
 	}
 
-	PathPostProcessor = R_PathPostProcessor(InitNavMeshSubObject(PathPostProcessorClass, FailedLogString));
-	if(PathPostProcessor == None)
+	NavPathFilter = R_NavPathFilter(InitNavMeshSubObject(NavPathFilterClass, FailedLogString));
+	if(NavPathFilter == None)
 	{
-		Utilities.Static.RLog("InitPathPostProcessor failed --" @ FailedLogString, LogCategory);
+		Utilities.Static.RLog("InitNavPathFilter failed --" @ FailedLogString, LogCategory);
 		return;
 	}
 
-	Utilities.Static.RLog("Initialized PathPostProcessor:" @ PathPostProcessor, LogCategory);
+	Utilities.Static.RLog("Initialized NavPathFilter:" @ NavPathFilter, LogCategory);
 }
 
 final function Object InitNavMeshSubObject(Class ObjectClass, out String OutFailedLogString)
@@ -162,29 +162,35 @@ final function PostProcessNavMeshBase()
 }
 
 // Class accessors
-final function Class<R_PathFinder> GetPathFinderClass() { return PathFinderClass; }
-final function Class<R_PathPostProcessor> GetPathPostProcessorClass() { return PathPostProcessorClass; }
+final function Class<R_NavPathFinder> GetNavPathFinderClass() { return NavPathFinderClass; }
+final function Class<R_NavPathFilter> GetNavPathFilterClass() { return NavPathFilterClass; }
 
+// FindPath -- Main pathfinding function
+// Returns path data in NavPath
+// If NavPathObserver is provided, intermmediate path finding data can be viewed
 function bool FindPath(
 	Vector StartLocation, Vector EndLocation,
-	out Vector OutPathPoints[32], out int OutPathPointCount,
-	optional R_PathFindData OptionalPathFindData)
+	R_NavPath NavPath,
+	optional R_NavPathObserver OptionalNavPathObserver)
 {
 	local int StartIndex, EndIndex;
 	local String FailedLogString;
-	local int PathIndices[32];
-	local int PathIndexCount;
 
 	FailedLogString = "FindPath failed -- ";
 
-	if(PathFinder == None)
-	{	// Ensure PathFinder is initialized
-		Utilities.Static.RLog(FailedLogString $ "Uninitialized PathFinder:" @ PathFinder, LogCategory);
+	if(NavPath == None)
+	{	// Must have a NavPath
+		Utilities.Static.RLog(FailedLogString $ "Invalid NavPath argument:" @ NavPath, LogCategory);
 		return false;
 	}
-	if(PathPostProcessor == None)
-	{	// Ensure PathPostProcessor is initialized
-		Utilities.Static.RLog(FailedLogString $ "Uninitialized PathPostProcessor:" @ PathPostProcessor, LogCategory);
+	if(NavPathFinder == None)
+	{	// Ensure NavPathFinder is initialized
+		Utilities.Static.RLog(FailedLogString $ "Uninitialized NavPathFinder:" @ NavPathFinder, LogCategory);
+		return false;
+	}
+	if(NavPathFilter == None)
+	{	// Ensure NavPathFilter is initialized
+		Utilities.Static.RLog(FailedLogString $ "Uninitialized NavPathFilter:" @ NavPathFilter, LogCategory);
 		return false;
 	}
 
@@ -194,23 +200,31 @@ function bool FindPath(
 		return false;
 	}
 
-	if(OptionalPathFindData != None)
-	{	// If a PathFindData object was provided, initialize it before execution
-		OptionalPathFindData.Clear();
-		OptionalPathFindData.SetPathFinderClass(PathFinder.Class);
-		OptionalPathFindData.SetPathPostProcessorClass(PathPostProcessor.Class);
+	if(OptionalNavPathObserver != None)
+	{	// If a NavPathObserver object was provided, initialize it before execution
+		OptionalNavPathObserver.Clear();
+		OptionalNavPathObserver.SetNavPathFinderClass(NavPathFinder.Class);
+		OptionalNavPathObserver.SetNavPathFilterClass(NavPathFilter.Class);
 	}
 
-	if(!PathFinder.FindPath(Self, StartIndex, EndIndex, PathIndices, PathIndexCount, OptionalPathFindData))
+	// Initialize NavPath
+	NavPath.Clear();
+
+	if(!NavPathFinder.FindPath(Self, StartIndex, EndIndex, NavPath, OptionalNavPathObserver))
 	{	// Find path nodes
-		Utilities.Static.RLog(FailedLogString $ "PathFinder failed to find path", LogCategory);
+		Utilities.Static.RLog(FailedLogString $ "NavPathFinder failed to find path", LogCategory);
 		return false;
 	}
 
-	if(!PathPostProcessor.PostProcessPath(Self, StartLocation, EndLocation, PathIndices, PathIndexCount, OutPathPoints, OutPathPointCount, OptionalPathFindData))
+	if(!NavPathFilter.PostProcessPath(Self, StartLocation, EndLocation, NavPath, OptionalNavPathObserver))
 	{	// Post process path nodes into path points
-		Utilities.Static.RLog(FailedLogString $ "PathPostProcessor failed to produce path points", LogCategory);
+		Utilities.Static.RLog(FailedLogString $ "NavPathFilter failed to produce path points", LogCategory);
 		return false;
+	}
+
+	if(OptionalNavPathObserver != None)
+	{	// If a NavPathObserver was provided, copy path data over
+		OptionalNavPathObserver.CopyNavPath(NavPath);
 	}
 
 	return true;
@@ -219,6 +233,6 @@ function bool FindPath(
 defaultproperties
 {
 	RemoteRole=ROLE_None
-	PathFinderClass=Class'RBots.R_PathFinder_Dijkstras'
-	PathPostProcessorClass=Class'RBots.R_PathPostProcessor_Funnel'
+	NavPathFinderClass=Class'RBots.R_NavPathFinder_Dijkstras'
+	NavPathFilterClass=Class'RBots.R_NavPathFilter_Funnel'
 }

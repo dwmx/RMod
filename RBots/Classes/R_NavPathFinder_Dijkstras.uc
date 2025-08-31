@@ -1,8 +1,8 @@
 //==============================================================================
-//	R_PathFinder_Dijkstras
+//	R_NavPathFinder_Dijkstras
 //	NavMesh path finding implementation using Dijkstras
 //==============================================================================
-class R_PathFinder_Dijkstras extends R_PathFinder;
+class R_NavPathFinder_Dijkstras extends R_NavPathFinder;
 
 const Utilities = Class'RBots.R_BotUtilities';
 const MAX_NODES = 1024; // Adjust to match maximum number of triangles
@@ -10,8 +10,8 @@ const MAX_NODES = 1024; // Adjust to match maximum number of triangles
 function bool FindPath(
 	R_NavMesh NavMesh,
 	int StartIndex, int EndIndex,
-	out int OutPathIndices[32], out int OutPathIndexCount,
-    optional R_PathFindData OptionalPathFindData)
+	R_NavPath NavPath,
+	optional R_NavPathObserver OptionalNavPathObserver)
 {
 	local int Dist[1024];
     local int Prev[1024];
@@ -24,6 +24,8 @@ function bool FindPath(
 	local int T[3];		// Adjacent triangle indices
 	local int E[3];		// Adjacent triangle shared edges
 	local float C[3];	// Cost for adjacent connections
+	local int PathIndices[128];
+	local int PathIndexCount;
 
     // Safety: assume NavMesh knows its triangle count
     TotalNodes = NavMesh.GetTriangleCount();
@@ -86,36 +88,38 @@ function bool FindPath(
     // If no path found
     if (Prev[EndIndex] == -1 && EndIndex != StartIndex)
     {
-        OutPathIndexCount = 0;
+        //PathIndexCount = 0;
         return false;
     }
 
     // Reconstruct path backwards
-    OutPathIndexCount = 0;
+    PathIndexCount = 0;
     u = EndIndex;
-    while (u != -1 && OutPathIndexCount < 32)
+    while (u != -1 && PathIndexCount < 32)
     {
-        OutPathIndices[OutPathIndexCount] = u;
-        OutPathIndexCount++;
+        PathIndices[PathIndexCount] = u;
+        PathIndexCount++;
         u = Prev[u];
     }
 
     // Reverse the path (since we built it backwards)
-    for (i = 0; i < OutPathIndexCount / 2; i++)
+    for (i = 0; i < PathIndexCount / 2; i++)
     {
-        j = OutPathIndices[i];
-        OutPathIndices[i] = OutPathIndices[OutPathIndexCount - 1 - i];
-        OutPathIndices[OutPathIndexCount - 1 - i] = j;
+        j = PathIndices[i];
+        PathIndices[i] = PathIndices[PathIndexCount - 1 - i];
+        PathIndices[PathIndexCount - 1 - i] = j;
     }
 
-	// If a PathFindData object was provided, add relevant data
-	if(OptionalPathFindData != None)
+	// Push all to navpath
+	for(i = 0; i < PathIndexCount; ++i)
 	{
-		OptionalPathFindData.ClearPathNodes();
-		for(i = 0; i < OutPathIndexCount; ++i)
-		{
-			OptionalPathFindData.PushPathNode(OutPathIndices[i]);
-		}
+		NavPath.PushPathNodeIndex(PathIndices[i]);
+	}
+
+	// If a NavPathObserver object was provided, add relevant data
+	if(OptionalNavPathObserver != None)
+	{
+		// Only add data specifically relevant to Dijkstra's
 	}
 
 	return true;

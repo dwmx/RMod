@@ -1,10 +1,10 @@
 //==============================================================================
-//	R_NavMeshLibrary
+//	R_NavLibrary
 //	Shared static data to be used across multiple classes
 //	UC does not permit the useage of consts, structs or enums outside of their
 //	defined classes, so this is just a workaround
 //==============================================================================
-class R_NavMeshLibrary extends Object abstract;
+class R_NavLibrary extends Object abstract;
 
 // Invalid index used across all navmesh index types
 static function int InvalidIndex() 			{ return -1; }
@@ -178,4 +178,31 @@ static function CalcNavMeshAABB(R_NavMesh NavMesh, out Vector OutMin, out Vector
 		OutMax.Y = Max(TempMax.Y, OutMax.Y);
 		OutMax.Z = Max(TempMax.Z, OutMax.Z); 
 	}
+}
+
+// -----------------------------------------------------------------------------
+// Math functions
+// These should probably be merged up to RBase
+
+// DistanceLocationToLineSegment
+// Returns the shortest possible distance from Location to the line segment formed
+// by P0 and P1
+static function float DistanceLocationToLineSegment(Vector Location, Vector P0, Vector P1)
+{
+	local Vector Delta0, Delta1;
+	local Vector Offset;
+
+	Delta0 = P1 - P0;
+	Delta0 = Normal(Delta0);
+	Delta1 = Location - P0;
+
+	return VSize(Delta1 - (Delta0 * (Delta1 Dot Delta0)));
+}
+
+static function float DistanceLocationToLineSegment2D(Vector Location, Vector P0, Vector P1)
+{
+	Location *= Vect(1,1,0);
+	P0 *= Vect(1,1,0);
+	P1 *= Vect(1,1,0);
+	return DistanceLocationToLineSegment(Location, P0, P1);
 }

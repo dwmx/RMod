@@ -1,9 +1,9 @@
 //==============================================================================
-//	R_PathPostProcessor
+//	R_NavPathFilter
 //	Abstract class providing the interface for processing a series of NavMesh
 //	path indices into world locations
 //==============================================================================
-class R_PathPostProcessor extends Object abstract;
+class R_NavPathFilter extends Object abstract;
 
 /**
 	PostProcessPath
@@ -13,9 +13,8 @@ class R_PathPostProcessor extends Object abstract;
 function bool PostProcessPath(
 	R_NavMesh NavMesh,
 	Vector StartLocation, Vector EndLocation,
-	out int InPathIndices[32], int PathIndexCount,
-	out Vector OutPathPoints[32], out int OutPathPointCount,
-	optional R_PathFindData OptionalPathFindData)
+	R_NavPath NavPath,
+	optional R_NavPathObserver OptionalNavPathObserver)
 {
 	// To be implemented in subclass
 	return false;

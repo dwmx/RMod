@@ -1,19 +1,18 @@
 //==============================================================================
-//  R_PathPostProcessor_Funnel
+//  R_NavPathFilter_Funnel
 //  Applies a funnel filter to a path of NavMesh indices
 //==============================================================================
-class R_PathPostProcessor_Funnel extends R_PathPostProcessor;
+class R_NavPathFilter_Funnel extends R_NavPathFilter;
 
 // This is just a temp constant until something better is figured out
 const MAX_POINT_ARRAY_SIZE = 32;
 const BOUNDARY_SEPARATION_DIST = 48.0;	// The distance paths will try to stay from boundaries
 
 function bool PostProcessPath(
-    R_NavMesh NavMesh,
-    Vector StartLocation, Vector EndLocation,
-    out int InPathIndices[32], int PathIndexCount,
-    out Vector OutPathPoints[32], out int OutPathPointCount,
-	optional R_PathFindData OptionalPathFindData)
+	R_NavMesh NavMesh,
+	Vector StartLocation, Vector EndLocation,
+	R_NavPath NavPath,
+	optional R_NavPathObserver OptionalNavPathObserver)
 {
 	local Vector NodeNormal, NodeCenter;
     //local Vector PortalLeft[32], PortalRight[32];
@@ -33,32 +32,40 @@ function bool PostProcessPath(
 	local Vector ReferenceVector;
     local int ApexIndex, LeftIndex, RightIndex;
 	local float Dot;
+	local int PathIndexCount;
+	local int IndexA, IndexB;
+
+	PathIndexCount = NavPath.GetNumPathNodeIndices();
 
     // No path, just fail
     if (PathIndexCount <= 0)
     {
-        OutPathPointCount = 0;
+        //OutPathPointCount = 0;
         return false;
     }
 
 	// Project start and end locations onto their containing nodes
-	NavMesh.GetTriangleNormalAndCenterUnchecked(InPathIndices[0], NodeNormal, NodeCenter);
+	NavPath.GetPathNodeIndex(0, IndexA);
+	NavPath.GetPathNodeIndex(NavPath.GetNumPathNodeIndices() - 1, IndexB);
+	NavMesh.GetTriangleNormalAndCenterUnchecked(IndexA, NodeNormal, NodeCenter);
 	StartLocation = StartLocation - (NodeNormal * ((StartLocation - NodeCenter) Dot NodeNormal));
-	NavMesh.GetTriangleNormalAndCenterUnchecked(InPathIndices[PathIndexCount - 1], NodeNormal, NodeCenter);
+	NavMesh.GetTriangleNormalAndCenterUnchecked(IndexB, NodeNormal, NodeCenter);
 	EndLocation = EndLocation - (NodeNormal * ((EndLocation - NodeCenter) Dot NodeNormal));
 
 	//GetPortals(NavMesh, InPathIndices, PathIndexCount, StartLocation, EndLocation, PortalLeft, PortalRight, PortalCount);
 	// Get boundary and portals
 	GetPortals(
 		NavMesh,
-		InPathIndices, PathIndexCount, 
+		//InPathIndices, PathIndexCount, 
+		NavPath,
 		StartLocation, EndLocation,
 		BoundaryLeft, NumBoundaryLeftPoints,
 		BoundaryRight, NumBoundaryRightPoints,
 		PortalLeft, PortalRight, NumPortalIndices);
 
-	OutPathPoints[0] = StartLocation;
-	OutPathPointCount = 1;
+	//OutPathPoints[0] = StartLocation;
+	//OutPathPointCount = 1;
+	NavPath.PushPathLocation(StartLocation);
 
 	// Init funnel
 	Apex = StartLocation;
@@ -98,8 +105,9 @@ function bool PostProcessPath(
 					BoundarySeparatePathPoint2D(NewPathPoint, V1, PushDir, BOUNDARY_SEPARATION_DIST);
 				}
 				
-				OutPathPoints[OutPathPointCount] = NewPathPoint;
-				++OutPathPointCount;
+				//OutPathPoints[OutPathPointCount] = NewPathPoint;
+				//++OutPathPointCount;
+				NavPath.PushPathLocation(NewPathPoint);
 
 				Apex = Right;
 				Left = Apex;
@@ -133,8 +141,9 @@ function bool PostProcessPath(
 					BoundarySeparatePathPoint2D(NewPathPoint, V1, PushDir, BOUNDARY_SEPARATION_DIST);
 				}
 				
-				OutPathPoints[OutPathPointCount] = NewPathPoint;
-				++OutPathPointCount;
+				//OutPathPoints[OutPathPointCount] = NewPathPoint;
+				//++OutPathPointCount;
+				NavPath.PushPathLocation(NewPathPoint);
 
 				Apex = Left;
 				Right = Apex;
@@ -146,21 +155,22 @@ function bool PostProcessPath(
 		}
 	}
 
-	OutPathPoints[OutPathPointCount] = EndLocation;
-	++OutPathPointCount;
+	//OutPathPoints[OutPathPointCount] = EndLocation;
+	//++OutPathPointCount;
+	NavPath.PushPathLocation(EndLocation);
 
-	// If a PathFindData object was provided, add data
-	if(OptionalPathFindData != None)
+	// If a NavPathObserver object was provided, add data
+	if(OptionalNavPathObserver != None)
 	{
 		// Push boundaries, portals and push directions
-		OptionalPathFindData.ClearPortals();
+		OptionalNavPathObserver.ClearPortals();
 		for(i = 0; i < NumPortalIndices; ++i)
 		{
-			OptionalPathFindData.PushPortal(BoundaryLeft[PortalLeft[i]], BoundaryRight[PortalRight[i]]);
+			OptionalNavPathObserver.PushPortal(BoundaryLeft[PortalLeft[i]], BoundaryRight[PortalRight[i]]);
 		}
 
 		// Push boundaries
-		OptionalPathFindData.ClearBoundaries();
+		OptionalNavPathObserver.ClearBoundaries();
 		if(NumBoundaryLeftPoints >= 3)
 		{
 			for(i = 1; i < NumBoundaryLeftPoints - 1; ++i)
@@ -169,7 +179,7 @@ function bool PostProcessPath(
 				V1 = BoundaryLeft[PortalLeft[i]];
 				V2 = BoundaryLeft[PortalLeft[i]+1];
 				CalcPushDirection2D(V0, V1, V2, PushDir);
-				OptionalPathFindData.PushBoundaryLeft(V1, PushDir);
+				OptionalNavPathObserver.PushBoundaryLeft(V1, PushDir);
 			}
 		}
 		if(NumBoundaryRightPoints >= 3)
@@ -180,7 +190,7 @@ function bool PostProcessPath(
 				V1 = BoundaryRight[PortalRight[i]];
 				V2 = BoundaryRight[PortalRight[i]+1];
 				CalcPushDirection2D(V0, V1, V2, PushDir);
-				OptionalPathFindData.PushBoundaryRight(V1, PushDir);
+				OptionalNavPathObserver.PushBoundaryRight(V1, PushDir);
 			}
 		}
 	}
@@ -208,7 +218,8 @@ function BoundarySeparatePathPoint2D(out Vector InOutPathPoint, out Vector InBou
 // arrays as indices into the boundary points
 function GetPortals(
 	R_Navmesh NavMesh,
-	out int InPathIndices[32], int NumPathIndices,
+	//out int InPathIndices[32], int NumPathIndices,
+	R_NavPath NavPath,
 	out Vector InPathStartLocation, out Vector InPathEndLocation,
 	out Vector OutBoundaryLeft[32], out int OutNumBoundaryLeft,
 	out Vector OutBoundaryRight[32], out int OutNumBoundaryRight,
@@ -216,6 +227,10 @@ function GetPortals(
 {
 	local Vector Left, Right;
 	local int i;
+	local int NumPathIndices;
+	local int IndexA, IndexB;
+
+	NumPathIndices = NavPath.GetNumPathNodeIndices();
 
 	OutNumBoundaryLeft = 0;
 	OutNumBoundaryRight = 0;
@@ -233,7 +248,9 @@ function GetPortals(
 	// Insert each shared edge along the corridor
 	for(i = 0; i < NumPathIndices - 1; ++i)
 	{
-		NavMesh.GetTriangleSharedEdgeLocationsUnchecked(InPathIndices[i], InPathIndices[i+1], Left, Right);
+		NavPath.GetPathNodeIndex(i, IndexA);
+		NavPath.GetPathNodeIndex(i+1, IndexB);
+		NavMesh.GetTriangleSharedEdgeLocationsUnchecked(IndexA, IndexB, Left, Right);
 
 		InsertPortalPoint(Left, OutBoundaryLeft, OutNumBoundaryLeft, OutPortalLeft, OutNumPortals);
 		InsertPortalPoint(Right, OutBoundaryRight, OutNumBoundaryRight, OutPortalRight, OutNumPortals);
@@ -293,7 +310,7 @@ function bool PostProcessPath(
     Vector StartLocation, Vector EndLocation,
     out int InPathIndices[32], int PathIndexCount,
     out Vector OutPathPoints[32], out int OutPathPointCount,
-	optional R_PathFindData OptionalPathFindData)
+	optional R_NavPathObserver OptionalNavPathObserver)
 {
 	local Vector NodeNormal, NodeCenter;
     local Vector PortalLeft[32], PortalRight[32];
@@ -392,16 +409,16 @@ function bool PostProcessPath(
 	++OutPathPointCount;
 
 	// Separate the path from the boundaries (push away from walls, ledges, etc)
-	BoundarySeparation(OutPathPoints, OutPathPointCount, PortalLeft, PortalRight, PortalCount, 32.0f, OptionalPathFindData);
+	BoundarySeparation(OutPathPoints, OutPathPointCount, PortalLeft, PortalRight, PortalCount, 32.0f, OptionalNavPathObserver);
 
-	// If a PathFindData object was provided, add data
-	if(OptionalPathFindData != None)
+	// If a NavPathObserver object was provided, add data
+	if(OptionalNavPathObserver != None)
 	{
 		// Push portals
-		OptionalPathFindData.ClearPortals();
+		OptionalNavPathObserver.ClearPortals();
 		for(i = 0; i < PortalCount; ++i)
 		{
-			OptionalPathFindData.PushPortal(PortalLeft[i], PortalRight[i]);
+			OptionalNavPathObserver.PushPortal(PortalLeft[i], PortalRight[i]);
 		}
 	}
 

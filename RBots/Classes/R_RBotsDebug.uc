@@ -242,6 +242,10 @@ simulated function EnableDebugView(Class<R_RBotsDebug_View> DebugViewClass)
 	}
 
 	DebugViews[i] = Spawn(DebugViewClass, Self);
+	if(DebugViews[i] != None)
+	{
+		DebugViews[i].DebugTargetChanged(None, DebugTarget);
+	}
 	Utilities.Static.RLog("Enabled RBots Debug View for class" @ DebugViewClass, LogCategory);
 
 	// Update default views for config

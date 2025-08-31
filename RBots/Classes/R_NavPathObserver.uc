@@ -1,19 +1,14 @@
 
 //==============================================================================
-//	R_PathFindData
+//	R_NavPathObserver
 //	An object which may optionally be provided to R_BotNavMesh.FindPath
-//	When provided, PathFinder and PathPostProcessor may push details about their
+//	When provided, NavPathFinder and NavPathFilter may push details about their
 //	execution into this object (intermediate data, portals, etc)
 //==============================================================================
-class R_PathFindData extends Object;
+class R_NavPathObserver extends R_NavPath;
 
-var private Class<R_PathFinder> PathFinderClass;
-var private Class<R_PathPostProcessor> PathPostProcessorClass;
-
-// Path node indices into NavMesh
-const PATH_NODES_ARRAY_SIZE = 32;
-var private int PathNodes[32];
-var private int PathNodesCount;
+var private Class<R_NavPathFinder> NavPathFinderClass;
+var private Class<R_NavPathFilter> NavPathFilterClass;
 
 // Portals used by Funnel
 const PORTALS_ARRAY_SIZE = 32;
@@ -33,16 +28,11 @@ var private int BoundaryRightCount;
 // Clear all per-execution data, called by R_BotNavMesh.FindPath
 function Clear()
 {
-	PathFinderClass = None;
-	PathPostProcessorClass = None;
-	ClearPathNodes();
+	Super.Clear();
+	NavPathFinderClass = None;
+	NavPathFilterClass = None;
 	ClearPortals();
 	ClearBoundaries();
-}
-
-function ClearPathNodes()
-{
-	PathNodesCount = 0;
 }
 
 function ClearPortals()
@@ -56,16 +46,45 @@ function ClearBoundaries()
 	BoundaryRightCount = 0;
 }
 
-function SetPathFinderClass(Class<R_PathFinder> NewPathFinderClass)
+// CopyNavPath
+// Copy data from the provided NavPath to this NavPathObserver
+function CopyNavPath(R_NavPath SourceNavPath)
 {
-	PathFinderClass = NewPathFinderClass;
+	local int NumPathNodeIndices, NumPathLocations;
+	local int PathNodeIndex;
+	local Vector PathLocation;
+	local int i;
+
+	// Copy node indices
+	NumPathNodeIndices = SourceNavPath.GetNumPathNodeIndices();
+	for(i = 0; i < NumPathNodeIndices; ++i)
+	{
+		SourceNavPath.GetPathNodeIndex(i, PathNodeIndex);
+		PushPathNodeIndex(PathNodeIndex);
+	}
+
+	// Copy locations
+	NumPathLocations = SourceNavPath.GetNumPathLocations();
+	for(i = 0; i < NumPathLocations; ++i)
+	{
+		SourceNavPath.GetPathLocation(i, PathLocation);
+		PushPathLocation(PathLocation);
+	}
 }
 
-function SetPathPostProcessorClass(Class<R_PathPostProcessor> NewPathPostProcessorClass)
+function Class<R_NavPathFinder> GetNavPathFinderClass() { return NavPathFinderClass; }
+function SetNavPathFinderClass(Class<R_NavPathFinder> NewNavPathFinderClass)
 {
-	PathPostProcessorClass = NewPathPostProcessorClass;
+	NavPathFinderClass = NewNavPathFinderClass;
 }
 
+function Class<R_NavPathFilter> GetNavPathFilterClass() { return NavPathFilterClass; }
+function SetNavPathFilterClass(Class<R_NavPathFilter> NewNavPathFilterClass)
+{
+	NavPathFilterClass = NewNavPathFilterClass;
+}
+
+/*
 function PushPathNode(int PathNode)
 {
 	if(PathNodesCount >= PATH_NODES_ARRAY_SIZE)
@@ -91,6 +110,7 @@ function bool GetPathNode(int PathNodeIndex, out int OutNavMeshNodeIndex)
 	OutNavMeshNodeIndex = PathNodes[PathNodeIndex];
 	return true;
 }
+	*/
 
 function PushPortal(out Vector InPortalLeft, out Vector InPortalRight)
 {

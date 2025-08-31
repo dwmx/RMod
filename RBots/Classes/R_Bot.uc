@@ -7,27 +7,27 @@ class R_Bot extends Actor;
 const Utilities = Class'RBots.R_BotUtilities';
 const LogCategory = 'Bot';
 
+const NavLib = Class'RBots.R_NavLibrary';
+
 var private bool bBotInitialized;
 
-const PATH_POINT_ARRAY_SIZE = 32;
-var private Vector PathPoints[32];
-var private int NumPathPoints;
-
-var private R_PathFindData AttachedPathFindData;
-
-var R_NavMesh CachedNavMesh;
-
+// Player
 var private PlayerPawn OwnedPlayerPawn;
 var private PlayerReplicationInfo OwnedPRI;
 
+// Navigation
+var private R_NavMesh CachedNavMesh;
+var private R_NavPath NavPath;
+var private R_NavPathObserver AttachedNavPathObserver;
+const PATH_DISTANCE_TOLERANCE = 16.0;
+
+// Behavior
+var private Class<R_Behavior> InitialBehaviorClass;
 var private R_Behavior ActiveBehavior;
 
-var private Class<R_Behavior> InitialBehaviorClass;
-
+// Control
 var private Vector AccumulatedInputVector;
 var private Vector LastInputVector;
-
-const PATH_DISTANCE_TOLERANCE = 16.0;
 
 event BeginPlay()
 {
@@ -50,26 +50,26 @@ function R_NavMesh GetNavMesh()
 	return CachedNavMesh;
 }
 
-// Attaches PathFindData object to collect additional data from FindPath
-function AttachPathFindData(R_PathFindData NewPathFindData)
+// Attaches NavPathObserver object to collect additional data from FindPath
+function AttachNavPathObserver(R_NavPathObserver NewNavPathObserver)
 {
-	DetachPathFindData();
-	AttachedPathFindData = NewPathFindData;
+	DetachNavPathObserver();
+	AttachedNavPathObserver = NewNavPathObserver;
 }
 
-// Detaches, but does not destroy, current PathFindData object
-function DetachPathFindData()
+// Detaches, but does not destroy, current NavPathObserver object
+function DetachNavPathObserver()
 {
-	if(AttachedPathFindData != None)
+	if(AttachedNavPathObserver != None)
 	{
-		AttachedPathFindData = None;
+		AttachedNavPathObserver = None;
 	}
 }
 
-// Get the currently attached PathFindData, or None
-function R_PathFindData GetPathFindData()
+// Get the currently attached NavPathObserver, or None
+function R_NavPathObserver GetNavPathObserver()
 {
-	return AttachedPathFindData;
+	return AttachedNavPathObserver;
 }
 
 // Attempts to find a path between Start and End, and if successful, updates the Bot's path vars
@@ -81,7 +81,7 @@ function bool TryUpdatePath(Vector Start, Vector End)
 	LocalNavMesh = GetNavMesh();
 	if(LocalNavMesh != None)
 	{
-		return LocalNavMesh.FindPath(Start, End, PathPoints, NumPathPoints, AttachedPathFindData);
+		return LocalNavMesh.FindPath(Start, End, NavPath, AttachedNavPathObserver);
 	}
 
 	return false;
@@ -90,45 +90,7 @@ function bool TryUpdatePath(Vector Start, Vector End)
 // Clears this Bot's current path
 function ClearPath()
 {
-	NumPathPoints = 0;
-}
-
-function bool GetPathPoint(int Index, out Vector PathPoint)
-{
-	if(Index < 0 || Index >= NumPathPoints || Index >= PATH_POINT_ARRAY_SIZE)
-	{
-		Index = -1;
-		PathPoint = Vect(0,0,0);
-		return false;
-	}
-
-	PathPoint = PathPoints[Index];
-	return true;
-}
-
-function bool GetDesiredPathStart(out Vector OutDesiredStart)
-{
-	if(NumPathPoints >= 2)
-	{
-		OutDesiredStart = PathPoints[0];
-		return true;
-	}
-	return false;
-}
-
-function bool GetDesiredPathEnd(out Vector OutDesiredEnd)
-{
-	if(NumPathPoints >= 2)
-	{
-		OutDesiredEnd = PathPoints[NumPathPoints - 1];
-		return true;
-	}
-	return false;
-}
-
-function int GetNumPathPoints()
-{
-	return NumPathPoints;
+	NavPath.Clear();
 }
 
 // Called by BotManager when granted a PlayerPawn
@@ -172,6 +134,14 @@ function InitializeBot()
 	bBotInitialized = true;
 	
 	Utilities.Static.RLog("Initializing bot" @ Self, LogCategory);
+
+	// Spawn NavPath
+	if(NavPath == None)
+	{
+		NavPath = new(None) Class'RBots.R_NavPath';
+		NavPath.InitNavPath();
+	}
+
 	if(InitialBehaviorClass != None)
 	{
 		SetBehavior(InitialBehaviorClass);
@@ -259,82 +229,58 @@ function AddMovementInput(Vector MovementInputVector)
 // Returns the movement input vector which will best follow the current path
 function Vector GetPathFollowMovementInputVector()
 {
-	local Vector PawnLocation;
-	local int ClosestIndex;
-	local float ClosestDistance, CurrentDistance;
+	local Vector PawnLocation, PathLocation;
 	local Vector P0, P1;
-	local Vector Result;
+	local int ClosestIndex;
+	local int NumPathLocations;
 	local float EndDistance;
 	local int i;
-
-	if(NumPathPoints == 0 || OwnedPlayerPawn == None)
+	local Vector Result;
+	
+	if(NavPath == None || OwnedPlayerPawn == None)
 	{
 		return Vect(0,0,0);
 	}
 
 	PawnLocation = OwnedPlayerPawn.Location;
-	ClosestIndex = -1;
-	ClosestDistance = 999999.0f;
-	for(i = 0; i < NumPathPoints; ++i)
-	{
-		CurrentDistance = VSize(PathPoints[i] - PawnLocation);
-		if(CurrentDistance < ClosestDistance)
-		{
-			ClosestDistance = CurrentDistance;
-			ClosestIndex = i;
-		}
-	}
+	ClosestIndex = NavPath.GetClosestPathLocationIndex2D(PawnLocation);
 
-	if(ClosestIndex == -1)
+	if(ClosestIndex == NavLib.Static.InvalidIndex())
 	{
 		return Vect(0,0,0);
 	}
 
-	if(ClosestIndex == NumPathPoints - 1)
+	NumPathLocations = NavPath.GetNumPathLocations();
+
+	if(ClosestIndex == NumPathLocations - 1)
 	{
-		P0 = PathPoints[NumPathPoints - 2];
-		P1 = PathPoints[NumPathPoints - 1];
+		NavPath.GetPathLocation(NumPathLocations - 2, P0);
+		NavPath.GetPathLocation(NumPathLocations - 1, P1);
 	}
 	else
 	{
-		P0 = PathPoints[ClosestIndex];
-		P1 = PathPoints[ClosestIndex + 1];
+		NavPath.GetPathLocation(ClosestIndex, P0);
+		NavPath.GetPathLocation(ClosestIndex + 1, P1);
 	}
 
-	EndDistance = VSize(Vect(1,1,0) * PathPoints[NumPathPoints - 1] - Vect(1,1,0) * PawnLocation);
+	NavPath.GetPathLocation(NumPathLocations - 1, PathLocation);
+	EndDistance = VSize(Vect(1,1,0) * PathLocation - Vect(1,1,0) * PawnLocation);
 	if(EndDistance <= PATH_DISTANCE_TOLERANCE)
 	{
 		return Vect(0,0,0);
 	}
 
-	if(DistanceFromLineSegment(PawnLocation, P0, P1) > 16)
+	if(NavLib.Static.DistanceLocationToLineSegment2D(PawnLocation, P0, P1) > PATH_DISTANCE_TOLERANCE)
 	{
 		Result = P0 - PawnLocation;
-		Result.Z = 0.0;
 	}
 	else
 	{
 		Result = P1 - P0;
-		Result.Z = 0.0;
 	}
 
+	Result = Result * Vect(1,1,0);	// XY Input only
 	return Normal(Result);
-}
-
-function float DistanceFromLineSegment(Vector Location, Vector P0, Vector P1)
-{
-	local Vector Delta0, Delta1;
-	local Vector Offset;
-
-	Location.Z = 0;
-	P0.Z = 0;
-	P1.Z = 0;
-
-	Delta0 = P1 - P0;
-	Delta0 = Normal(Delta0);
-	Delta1 = Location - P0;
-
-	return VSize(Delta1 - (Delta0 * (Delta1 Dot Delta0)));
 }
 
 function Vector GetLastInputVector()

@@ -6,7 +6,7 @@ class R_NavMesh_Implementation extends R_NavMesh;
 const Utilities = Class'RBots.R_BotUtilities';
 const LogCategory = 'NavMesh';
 
-const NavMeshLib = Class'RBots.R_NavMeshLibrary';
+const NavLib = Class'RBots.R_NavLibrary';
 
 // NavMesh vertex structure
 struct NavMeshVertex
@@ -249,8 +249,8 @@ function BuildAdjacencies()
 	{
 		for(j = 0; j < 3; ++j)
 		{
-			AdjacencyArray[i].T[j] = NavMeshLib.Static.InvalidIndex();
-			AdjacencyArray[i].E[j] = NavMeshLib.Static.InvalidIndex();
+			AdjacencyArray[i].T[j] = NavLib.Static.InvalidIndex();
+			AdjacencyArray[i].E[j] = NavLib.Static.InvalidIndex();
 			AdjacencyArray[i].C[j] = 0.0f;
 		}
 	}
@@ -260,7 +260,7 @@ function BuildAdjacencies()
 		for(j = i + 1; j < NumTriangles; ++j)
 		{
 			EdgeIndex = FindSharedEdgeIndex(i, j);
-			if(EdgeIndex != NavMeshLib.Static.InvalidIndex())
+			if(EdgeIndex != NavLib.Static.InvalidIndex())
 			{
 				MarkTrianglesAdjacent(i, j, EdgeIndex);
 			}
@@ -290,7 +290,7 @@ function int FindSharedEdgeIndex(int T0, int T1)
 		}
 	}
 
-	return NavMeshLib.Static.InvalidIndex();
+	return NavLib.Static.InvalidIndex();
 }
 
 // Marks the triangles as adjacents, sharing the edge specified by index E
@@ -301,7 +301,7 @@ function MarkTrianglesAdjacent(int T0, int T1, int E)
 
 	for(i = 0; i < 3; ++i)
 	{
-		if(AdjacencyArray[T0].T[i] == NavMeshLib.Static.InvalidIndex())
+		if(AdjacencyArray[T0].T[i] == NavLib.Static.InvalidIndex())
 		{
 			break;
 		}
@@ -309,7 +309,7 @@ function MarkTrianglesAdjacent(int T0, int T1, int E)
 
 	for(j = 0; j < 3; ++j)
 	{
-		if(AdjacencyArray[T1].T[j] == NavMeshLib.Static.InvalidIndex())
+		if(AdjacencyArray[T1].T[j] == NavLib.Static.InvalidIndex())
 		{
 			break;
 		}
@@ -347,8 +347,8 @@ function float CalcAdjacencyCost(int T0, int T1, int E)
 	for(i = 0; i < 3; ++i)	GetVertexUnchecked(V1[i], VLoc1[i]);
 	for(i = 0; i < 2; ++i)	GetVertexUnchecked(EV[i], EVLoc[i]);
 	
-	Distance0 = NavMeshLib.Static.CalcTriangleCenterEdgeDistance(VLoc0, EVLoc);
-	Distance1 = NavMeshLib.Static.CalcTriangleCenterEdgeDistance(VLoc1, EVLoc);
+	Distance0 = NavLib.Static.CalcTriangleCenterEdgeDistance(VLoc0, EVLoc);
+	Distance1 = NavLib.Static.CalcTriangleCenterEdgeDistance(VLoc1, EVLoc);
 	return Distance0 + Distance1;
 }
 
@@ -365,16 +365,16 @@ function PostProcessEdges()
 	// in the adjacency array
 	for(i = 0; i < NumEdges; ++i)
 	{
-		EdgeArray[i].Flags = EdgeArray[i].Flags | NavMeshLib.Static.EdgeFlag_Border();
+		EdgeArray[i].Flags = EdgeArray[i].Flags | NavLib.Static.EdgeFlag_Border();
 	}
 
 	for(i = 0; i < NumTriangles; ++i)
 	{
 		for(j = 0; j < 3; ++j)
 		{
-			if(AdjacencyArray[i].E[j] != NavMeshLib.Static.InvalidIndex())
+			if(AdjacencyArray[i].E[j] != NavLib.Static.InvalidIndex())
 			{
-				EdgeArray[AdjacencyArray[i].E[j]].Flags = EdgeArray[AdjacencyArray[i].E[j]].Flags & ~NavMeshLib.Static.EdgeFlag_Border();
+				EdgeArray[AdjacencyArray[i].E[j]].Flags = EdgeArray[AdjacencyArray[i].E[j]].Flags & ~NavLib.Static.EdgeFlag_Border();
 			}
 		}
 	}
@@ -528,7 +528,7 @@ function bool FindContainingTriangle(out Vector InLocation, out int OutT0)
 		}
 	}
 
-	OutT0 = NavMeshLib.Static.InvalidIndex();
+	OutT0 = NavLib.Static.InvalidIndex();
 	return false;
 }
 
@@ -552,5 +552,5 @@ function bool IsLocationWithinTriangle(int Index, out Vector InWorldLocation)
 		GetVertexUnchecked(V[i], VLoc[i]);
 	}
 
-	return NavMeshLib.Static.IsLocationWithinTriangle(VLoc, InWorldLocation);
+	return NavLib.Static.IsLocationWithinTriangle(VLoc, InWorldLocation);
 }
