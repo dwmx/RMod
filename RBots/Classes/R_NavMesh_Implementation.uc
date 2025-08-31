@@ -512,6 +512,7 @@ function GetTriangleNormalAndCenterUnchecked(int Index, out Vector OutNormal, ou
 	OutCenter.Z /= 3.0;
 }
 
+/*
 function bool FindContainingTriangle(out Vector InLocation, out int OutT0)
 {
 	// TODO:
@@ -554,3 +555,4 @@ function bool IsLocationWithinTriangle(int Index, out Vector InWorldLocation)
 
 	return NavLib.Static.IsLocationWithinTriangle(VLoc, InWorldLocation);
 }
+	*/

@@ -218,6 +218,7 @@ simulated function DrawNavMeshTriangles(Canvas C, R_RbotsDebug_StringManager Str
 	}
 }
 
+/*
 simulated function DrawPlayerContainedNavMeshTriangle(Canvas C, R_NavMesh NavMesh)
 {
 	local int ContainingIndex;
@@ -249,6 +250,7 @@ simulated function DrawPlayerContainedNavMeshTriangle(Canvas C, R_NavMesh NavMes
 		}
 	}
 }
+	*/
 
 defaultproperties
 {

@@ -206,3 +206,33 @@ static function float DistanceLocationToLineSegment2D(Vector Location, Vector P0
 	P1 *= Vect(1,1,0);
 	return DistanceLocationToLineSegment(Location, P0, P1);
 }
+
+// DistanceLocationToTriangle
+// Given a location and a triangle defined by 3 vertex locations (P0, P1, P2), returns the shortest
+// distance from that location to any edge of the triangle
+static function float DistanceLocationToTriangle(Vector Location, Vector VLoc[3])
+{
+	local float Distance0, Distance1, Distance2;
+
+	if(IsLocationWithinTriangle(VLoc, Location))
+	{
+		return 0.0;
+	}
+
+	Distance0 = DistanceLocationToLineSegment(Location, VLoc[0], VLoc[1]);
+	Distance1 = DistanceLocationToLineSegment(Location, VLoc[1], VLoc[2]);
+	Distance2 = DistanceLocationToLineSegment(Location, VLoc[2], VLoc[0]);
+
+	return Min(Distance0, Min(Distance1, Distance2));
+}
+
+static function float DistanceLocationToTriangle2D(Vector Location, Vector VLoc[3])
+{
+	local int i;
+	Location *= Vect(1,1,0);
+	for(i = 0; i < 3; ++i)
+	{
+		VLoc[i] *= Vect(1,1,0);
+	}
+	return DistanceLocationToTriangle(Location, VLoc);
+}

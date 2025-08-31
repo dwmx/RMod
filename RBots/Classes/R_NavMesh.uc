@@ -18,6 +18,10 @@ const LogCategory = 'NavMesh';
 
 const NavLib = Class'RBots.R_NavLibrary';
 
+// Class for accelerated spatial and proximity look-ups
+var private Class<R_NavMeshSpatialQuery> NavMeshSpatialQueryClass;
+var private R_NavMeshSpatialQuery NavMeshSpatialQuery;
+
 // Class for graph-based pathfinding on navmesh
 var private Class<R_NavPathFinder> NavPathFinderClass;
 var private R_NavPathFinder NavPathFinder;
@@ -68,9 +72,11 @@ function GetTriangleNormalAndCenterUnchecked(int Index, out Vector OutNormal, ou
 // If there is no shared edge, function returns false
 function bool GetTriangleSharedEdgeLocationsUnchecked(int IndexA, int IndexB, out Vector OutLeftLocation, out Vector OutRightLocation);
 
+/*
 // Finds the NavMesh triangle which contains the given world location
 // Returns true/false if found, and the triangle index as T0
 function bool FindContainingTriangle(out Vector InLocation, out int OutT0);
+*/
 
 //------------------------------------------------------------------------------
 //	Base NavMesh implementation -- Do not override
@@ -91,11 +97,31 @@ final function InitializeNavMeshBase()
 	bInitialized = true;
 
 	// Init necessary SubObjects
+	InitNavMeshSpatialQuery();
 	InitNavPathFinder();
 	InitNavPathFilter();
 
 	// Init subclass
 	InitializeNavMesh();
+}
+
+final function InitNavMeshSpatialQuery()
+{
+	local String FailedLogString;
+
+	if(NavMeshSpatialQuery != None)
+	{	// Already instantiated
+		return;
+	}
+
+	NavMeshSpatialQuery = R_NavMeshSpatialQuery(InitNavMeshSubObject(NavMeshSpatialQueryClass, FailedLogString));
+	if(NavMeshSpatialQuery == None)
+	{
+		Utilities.Static.RLog("InitNavMeshSpatialQuery failed --" @ FailedLogString, LogCategory);
+		return;
+	}
+
+	Utilities.Static.RLog("Initialized NavMeshSpatialQuery:" @ NavMeshSpatialQuery, LogCategory);
 }
 
 final function InitNavPathFinder()
@@ -159,9 +185,20 @@ final function Object InitNavMeshSubObject(Class ObjectClass, out String OutFail
 final function PostProcessNavMeshBase()
 {
 	PostProcessNavMesh();
+
+	if(NavMeshSpatialQuery != None)
+	{
+		Utilities.Static.RLog("NavMeshSpatialQuery post-processing NavMesh", LogCategory);
+		NavMeshSpatialQuery.InitNavMeshSpatialQuery(Self);
+	}
+	else
+	{
+		Utilities.Static.RLog("NavMeshSpatialQuery could not post-process NavMesh, look-ups will not work", LogCategory);
+	}
 }
 
 // Class accessors
+final function Class<R_NavMeshSpatialQuery> GetNavMeshSpatialQueryClass() { return NavMeshSpatialQueryClass; }
 final function Class<R_NavPathFinder> GetNavPathFinderClass() { return NavPathFinderClass; }
 final function Class<R_NavPathFilter> GetNavPathFilterClass() { return NavPathFilterClass; }
 
@@ -183,6 +220,11 @@ function bool FindPath(
 		Utilities.Static.RLog(FailedLogString $ "Invalid NavPath argument:" @ NavPath, LogCategory);
 		return false;
 	}
+	if(NavMeshSpatialQuery == None)
+	{	// Ensure NavMeshSpatialQuery is initialized
+		Utilities.Static.RLog(FailedLogString $ "Uninitialized NavMeshSpatialQuery:" @ NavMeshSpatialQuery, LogCategory);
+		return false;
+	}
 	if(NavPathFinder == None)
 	{	// Ensure NavPathFinder is initialized
 		Utilities.Static.RLog(FailedLogString $ "Uninitialized NavPathFinder:" @ NavPathFinder, LogCategory);
@@ -194,8 +236,10 @@ function bool FindPath(
 		return false;
 	}
 
-	if(!FindContainingTriangle(StartLocation, StartIndex) || !FindContainingTriangle(EndLocation, EndIndex))
-	{	// Find start and end nodes
+	// Get start and end node indices from spatial query
+	if(	!NavMeshSpatialQuery.FindContainingNode(Self, StartLocation, StartIndex)
+	||	!NavMeshSpatialQuery.FindContainingNode(Self, EndLocation, EndIndex))
+	{
 		Utilities.Static.RLog(FailedLogString $ "Failed to find StartIndex or EndIndex", LogCategory);
 		return false;
 	}
@@ -233,6 +277,7 @@ function bool FindPath(
 defaultproperties
 {
 	RemoteRole=ROLE_None
+	NavMeshSpatialQueryClass=Class'RBots.R_NavMeshSpatialQuery_Linear'
 	NavPathFinderClass=Class'RBots.R_NavPathFinder_Dijkstras'
 	NavPathFilterClass=Class'RBots.R_NavPathFilter_Funnel'
 }
