@@ -11,6 +11,7 @@ const Command_ToggleNormals = "Normals";
 const Command_ToggleVertices = "Vertices";
 const Command_ToggleEdges = "Edges";
 const Command_ToggleTriangles = "Triangles";
+const Command_ToggleProximity = "Proximity";
 
 function RegisterCommandList()
 {
@@ -21,6 +22,7 @@ function RegisterCommandList()
 	RegisterCommand(Command_ToggleVertices);
 	RegisterCommand(Command_ToggleEdges);
 	RegisterCommand(Command_ToggleTriangles);
+	RegisterCommand(Command_ToggleProximity);
 }
 
 function bool TryHandleCommand(String CommandString, R_RBotsDebug DebugMutator, PlayerPawn Sender)
@@ -34,6 +36,7 @@ function bool TryHandleCommand(String CommandString, R_RBotsDebug DebugMutator, 
 		case Command_ToggleVertices:	HandleCommand_ToggleVertices(DebugMutator, Sender);		return true;
 		case Command_ToggleEdges:		HandleCommand_ToggleEdges(DebugMutator, Sender);		return true;
 		case Command_ToggleTriangles:	HandleCommand_ToggleTriangles(DebugMutator, Sender);	return true;
+		case Command_ToggleProximity:	HandleCommand_ToggleProximity(DebugMutator, Sender);	return true;
 	}
 
 	return false;
@@ -125,6 +128,20 @@ function HandleCommand_ToggleTriangles(R_RBotsDebug DebugMutator, PlayerPawn Sen
 		if(DVNavMesh != None)
 		{
 			DVNavMesh.ToggleTriangles();
+		}
+	}
+}
+
+function HandleCommand_ToggleProximity(R_RBotsDebug DebugMutator, PlayerPawn Sender)
+{
+	local R_RBotsDebug_View_NavMesh DVNavMesh;
+
+	if(DebugMutator != None)
+	{
+		DVNavMesh = GetDVNavMesh(DebugMutator);
+		if(DVNavMesh != None)
+		{
+			DVNavMesh.ToggleProximity();
 		}
 	}
 }

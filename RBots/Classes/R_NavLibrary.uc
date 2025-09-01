@@ -6,6 +6,8 @@
 //==============================================================================
 class R_NavLibrary extends Object abstract;
 
+const EPSILON = 0.00006;
+
 // Invalid index used across all navmesh index types
 static function int InvalidIndex() 			{ return -1; }
 
@@ -207,28 +209,181 @@ static function float DistanceLocationToLineSegment2D(Vector Location, Vector P0
 	return DistanceLocationToLineSegment(Location, P0, P1);
 }
 
-// DistanceLocationToTriangle
-// Given a location and a triangle defined by 3 vertex locations (P0, P1, P2), returns the shortest
-// distance from that location to any edge of the triangle
-static function float DistanceLocationToTriangle(Vector Location, Vector VLoc[3])
+// DistanceLineSegmentToLineSegment
+// Returns the minimum possible distance from line segment 0 to line segment 1
+static function float DistanceLineSegmentToLineSegment(vector VLoc0[2], vector VLoc1[2])
 {
-	local float Distance0, Distance1, Distance2;
+    local vector   u, v, w, dP;
+    local float    a, b, c, dUV, e, denom;
+    local float    sc, sN, sD;
+    local float    tc, tN, tD;
 
-	if(IsLocationWithinTriangle(VLoc, Location))
+    // Segment 0: P0 -> P1
+    // Segment 1: Q0 -> Q1
+    u = VLoc0[1] - VLoc0[0];
+    v = VLoc1[1] - VLoc1[0];
+    w = VLoc0[0] - VLoc1[0];
+
+    a = u dot u;        // always >= 0
+    b = u dot v;
+    c = v dot v;        // always >= 0
+    dUV = u dot w;
+    e = v dot w;
+    denom = a*c - b*b;  // always >= 0
+
+    sD = denom;
+    tD = denom;
+
+    // compute sc, tc
+    if (denom < EPSILON) {
+        // the lines are almost parallel
+        sN = 0.0;
+        sD = 1.0;
+        tN = e;
+        tD = c;
+    } else {
+        // get the closest points on the infinite lines
+        sN = (b*e - c*dUV);
+        tN = (a*e - b*dUV);
+
+        // sc < 0 ? clamp to 0
+        if (sN < 0.0) {
+            sN = 0.0;
+            tN = e;
+            tD = c;
+        } else if (sN > sD) {
+            sN = sD;
+            tN = e + b;
+            tD = c;
+        }
+    }
+
+    if (tN < 0.0) {
+        tN = 0.0;
+        // recompute sc for this tc
+        if (-dUV < 0.0) {
+            sN = 0.0;
+        } else if (-dUV > a) {
+            sN = sD;
+        } else {
+            sN = -dUV;
+            sD = a;
+        }
+    } else if (tN > tD) {
+        tN = tD;
+        // recompute sc for this tc
+        if ((-dUV + b) < 0.0) {
+            sN = 0.0;
+        } else if ((-dUV + b) > a) {
+            sN = sD;
+        } else {
+            sN = (-dUV + b);
+            sD = a;
+        }
+    }
+
+    // finally sc = sN/sD, tc = tN/tD
+	if(Abs(sN) < EPSILON)
 	{
-		return 0.0;
+		sc = 0.0;
+	}
+	else
+	{
+		sc = sN / sD;
 	}
 
-	Distance0 = DistanceLocationToLineSegment(Location, VLoc[0], VLoc[1]);
-	Distance1 = DistanceLocationToLineSegment(Location, VLoc[1], VLoc[2]);
-	Distance2 = DistanceLocationToLineSegment(Location, VLoc[2], VLoc[0]);
+	if(Abs(tN) < EPSILON)
+	{
+		tc = 0.0;
+	}
+	else
+	{
+		tc = tN / tD;
+	}
 
-	return Min(Distance0, Min(Distance1, Distance2));
+    // get the difference of the two closest points
+    dP = w + (sc * u) - (tc * v);  // =  P(sc) - Q(tc)
+
+    return VSize(dP);
 }
+
+
+static function float DistanceLocationToTriangle(Vector Location, Vector VLoc[3])
+{
+    local Vector A, B, C;
+    local Vector AB, AC, AP;
+    local float d00, d01, d11, d20, d21, denom, v, w, u;
+    local float Dist, BestDist;
+
+    A = VLoc[0];
+    B = VLoc[1];
+    C = VLoc[2];
+
+    // --- Step 1: Barycentric test (is point inside triangle?) ---
+    AB = B - A;
+    AC = C - A;
+    AP = Location - A;
+
+    d00 = AB Dot AB;
+    d01 = AB Dot AC;
+    d11 = AC Dot AC;
+    d20 = AP Dot AB;
+    d21 = AP Dot AC;
+
+    denom = d00 * d11 - d01 * d01;
+    if (denom != 0.0)
+    {
+        v = (d11 * d20 - d01 * d21) / denom;
+        w = (d00 * d21 - d01 * d20) / denom;
+        u = 1.0 - v - w;
+
+        if (u >= 0 && v >= 0 && w >= 0)
+        {
+            // Inside triangle → distance is 0
+            return 0.0;
+        }
+    }
+
+    // --- Step 2: Distance to each edge segment ---
+    BestDist = DistancePointToSegment(Location, A, B);
+    Dist     = DistancePointToSegment(Location, B, C);
+    if (Dist < BestDist)
+        BestDist = Dist;
+
+    Dist     = DistancePointToSegment(Location, C, A);
+    if (Dist < BestDist)
+        BestDist = Dist;
+
+    return BestDist;
+}
+
+// Helper: shortest distance from point P to segment AB
+static function float DistancePointToSegment(Vector P, Vector A, Vector B)
+{
+    local Vector AB, AP;
+    local float t;
+    local Vector Closest;
+
+    AB = B - A;
+    AP = P - A;
+
+    t = (AP Dot AB) / (AB Dot AB);
+
+    if (t < 0.0)
+        Closest = A;
+    else if (t > 1.0)
+        Closest = B;
+    else
+        Closest = A + t * AB;
+
+    return VSize(P - Closest);
+}
+
 
 static function float DistanceLocationToTriangle2D(Vector Location, Vector VLoc[3])
 {
 	local int i;
+
 	Location *= Vect(1,1,0);
 	for(i = 0; i < 3; ++i)
 	{

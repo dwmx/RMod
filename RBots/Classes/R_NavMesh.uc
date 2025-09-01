@@ -72,12 +72,6 @@ function GetTriangleNormalAndCenterUnchecked(int Index, out Vector OutNormal, ou
 // If there is no shared edge, function returns false
 function bool GetTriangleSharedEdgeLocationsUnchecked(int IndexA, int IndexB, out Vector OutLeftLocation, out Vector OutRightLocation);
 
-/*
-// Finds the NavMesh triangle which contains the given world location
-// Returns true/false if found, and the triangle index as T0
-function bool FindContainingTriangle(out Vector InLocation, out int OutT0);
-*/
-
 //------------------------------------------------------------------------------
 //	Base NavMesh implementation -- Do not override
 event PreBeginPlay()
@@ -272,6 +266,31 @@ function bool FindPath(
 	}
 
 	return true;
+}
+
+// Returns the index of the node containing the specified location
+function int FindContainingNodeIndex(Vector Location)
+{
+	local int Result;
+
+	if(NavMeshSpatialQuery == None)
+	{
+		return NavLib.Static.InvalidIndex();
+	}
+
+	NavMeshSpatialQuery.FindContainingNode(Self, Location, Result);
+	return Result;
+}
+
+function FindNodesInRadius(Vector Origin, float Radius, out int OutNodes[32], out int OutNumNodes)
+{
+	if(NavMeshSpatialQuery == None)
+	{
+		OutNumNodes = 0;
+		return;
+	}
+
+	NavMeshSpatialQuery.FindNodesInRadius(Self, Origin, Radius, OutNodes, OutNumNodes);
 }
 
 defaultproperties
