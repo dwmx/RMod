@@ -113,6 +113,25 @@ function int FindOrPushEdge(int V0, int V1)
 	return NumEdges - 1;
 }
 
+function int FindEdge(int V0, int V1)
+{
+	local int MinIndex, MaxIndex;
+	local int i;
+
+	MinIndex = Min(V0, V1);
+	MaxIndex = Max(V0, V1);
+
+	for(i = 0; i < NumEdges; ++i)
+	{
+		if(EdgeArray[i].V[0] == MinIndex && EdgeArray[i].V[1] == MaxIndex)
+		{
+			return i;
+		}
+	}
+
+	return NavLib.Static.InvalidIndex();
+}
+
 // Given three vertices in clockwise winding order, adds them as a triangle
 function PushTriangleAsVertices(int V0, int V1, int V2)
 {
@@ -398,6 +417,28 @@ function GetEdgeVertexIndicesUnchecked(int Index, out int OutV0, out int OutV1)
 function GetEdgeFlagsUnchecked(int Index, out int OutEdgeFlags)
 {
 	OutEdgeFlags = EdgeArray[Index].Flags;
+}
+
+function SetEdgePassable(int V0, int V1, bool bPassable)
+{
+	local int EdgeIndex;
+
+	EdgeIndex = FindEdge(V0, V1);
+	if(EdgeIndex == NavLib.Static.InvalidIndex())
+	{
+		Utilities.Static.RLog("SetEdgePassable failed for:" @ V0 $ "," $ V1);
+		return;
+	}
+
+	if(!bPassable)
+	{
+		EdgeArray[EdgeIndex].Flags = EdgeArray[EdgeIndex].Flags | NavLib.Static.EdgeFlag_Impassable();
+	}
+	else
+	{
+		EdgeArray[EdgeIndex].Flags = EdgeArray[EdgeIndex].Flags & ~NavLib.Static.EdgeFlag_Impassable();
+	}
+	
 }
 
 function GetTriangleVertexIndicesUnchecked(int Index, out int OutV0, out int OutV1, out int OutV2)

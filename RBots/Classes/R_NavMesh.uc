@@ -46,6 +46,7 @@ function PushEdge(int V0, int V1);
 function int GetEdgeCount();
 function GetEdgeVertexIndicesUnchecked(int Index, out int OutV0, out int OutV1);
 function GetEdgeFlagsUnchecked(int Index, out int OutEdgeFlags);
+function SetEdgePassable(int V0, int V1, bool bPassable);
 
 // Triangle functions
 function PushTriangleAsVertices(int V0, int V1, int V2);
