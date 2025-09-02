@@ -25,6 +25,10 @@ const PATH_DISTANCE_TOLERANCE = 16.0;
 var private Class<R_Behavior> InitialBehaviorClass;
 var private R_Behavior ActiveBehavior;
 
+const Behavior_Fight = Class'RBots.R_Behavior_Fight';
+const Behavior_FindWeapon = Class'RBots.R_Behavior_FindWeapon';
+const Behavior_Wander = Class'RBots.R_Behavior_Wander';
+
 // Control
 var private Vector AccumulatedInputVector;
 var private Vector LastInputVector;
@@ -36,15 +40,15 @@ event BeginPlay()
 
 function R_NavMesh GetNavMesh()
 {
-	local R_NavMesh LocalNavMesh;
+	local R_DynamicMapData MapData;
 
 	if(CachedNavMesh == None)
 	{
-		foreach AllActors(Class'RBots.R_NavMesh', LocalNavMesh)
+		foreach AllActors(Class'RBots.R_DynamicMapData', MapData)
 		{
+			CachedNavMesh = MapData.GetNavMesh();
 			break;
 		}
-		CachedNavMesh = LocalNavMesh;
 	}
 	
 	return CachedNavMesh;
@@ -185,8 +189,28 @@ function SetBehavior(Class<R_Behavior> BehaviorClass)
 	}
 }
 
+function Class<R_Behavior> DetermineDesiredBehavior()
+{
+	local PlayerPawn P;
+
+	P = GetOwnedPlayerPawn();
+	if(P != None)
+	{
+		if(P.Weapon == None)
+		{
+			return Behavior_FindWeapon;
+		}
+		else
+		{
+			return Behavior_Fight;
+		}
+	}
+}
+
 event Tick(float DeltaSeconds)
 {
+	local Class<R_Behavior> DesiredBehavior;
+
 	Super.Tick(DeltaSeconds);
 
 	if(OwnedPlayerPawn != None)
@@ -196,6 +220,12 @@ event Tick(float DeltaSeconds)
 		{
 			OwnedPlayerPawn.Fire();
 		}
+	}
+
+	DesiredBehavior = DetermineDesiredBehavior();
+	if(DesiredBehavior != ActiveBehavior.Class)
+	{
+		SetBehavior(DesiredBehavior);
 	}
 
 	if(ActiveBehavior != None)
