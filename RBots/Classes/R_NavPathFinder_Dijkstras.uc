@@ -7,6 +7,10 @@ class R_NavPathFinder_Dijkstras extends R_NavPathFinder;
 const Utilities = Class'RBots.R_BotUtilities';
 const MAX_NODES = 1024; // Adjust to match maximum number of triangles
 
+function GetNeighborSet(R_NavMesh NavMesh, int NodeIndex)
+{
+}
+
 function bool FindPath(
 	R_NavMesh NavMesh,
 	int StartIndex, int EndIndex,

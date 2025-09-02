@@ -2,7 +2,7 @@
 //	R_NavPath
 //	Contains and manages the results of a FindPath nav query
 //==============================================================================
-class R_NavPath extends Object;
+class R_NavPath extends R_NavObject;
 
 const Utilities = Class'RBots.R_BotUtilities';
 const LogCategory = 'NavPath';

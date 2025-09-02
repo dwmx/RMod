@@ -11,7 +11,8 @@
 //	- R_NavMesh.ValidateNavMesh()
 //	- R_NavMesh.PostProcessNavMesh()
 //==============================================================================
-class R_NavMesh extends Actor abstract;
+//class R_NavMesh extends Actor abstract;
+class R_NavMesh extends R_NavObject abstract;
 
 const Utilities = Class'RBots.R_BotUtilities';
 const LogCategory = 'NavMesh';
@@ -52,6 +53,7 @@ function SetEdgePassable(int V0, int V1, bool bPassable);
 function PushTriangleAsVertices(int V0, int V1, int V2);
 function PushTriangleAsEdges(int E0, int E1, int E2);
 function int GetTriangleCount();
+function GetTriangleVertexLocationsUnchecked(int Index, out Vector VLoc[3]);
 function GetTriangleVertexIndicesUnchecked(int Index, out int OutV0, out int OutV1, out int OutV2);
 function GetTriangleEdgeIndicesUnchecked(int Index, out int OutE0, out int OutE1, out int OutE2);
 
@@ -75,10 +77,6 @@ function bool GetTriangleSharedEdgeLocationsUnchecked(int IndexA, int IndexB, ou
 
 //------------------------------------------------------------------------------
 //	Base NavMesh implementation -- Do not override
-event PreBeginPlay()
-{
-	bInitialized = false;
-}
 
 // Initialization and construction
 final function InitializeNavMeshBase()
@@ -296,7 +294,7 @@ function FindNodesInRadius(Vector Origin, float Radius, out int OutNodes[32], ou
 
 defaultproperties
 {
-	RemoteRole=ROLE_None
+	bInitialized=false
 	NavMeshSpatialQueryClass=Class'RBots.R_NavMeshSpatialQuery_Linear'
 	NavPathFinderClass=Class'RBots.R_NavPathFinder_Dijkstras'
 	NavPathFilterClass=Class'RBots.R_NavPathFilter_Funnel'

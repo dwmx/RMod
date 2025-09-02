@@ -191,19 +191,15 @@ simulated function R_BotManager GetBotManager()
 
 simulated function R_NavMesh GetNavMesh()
 {
-	local R_NavMesh LocalNavMesh;
+	local R_DynamicMapData MapData;
 
 	if(NavMesh == None)
 	{
-		foreach AllActors(Class'RBots.R_NavMesh', LocalNavMesh)
+		foreach AllActors(Class'RBots.R_DynamicMapData', MapData)
 		{
+			NavMesh = MapData.GetNavMesh();
 			break;
 		}
-	}
-
-	if(LocalNavMesh != None)
-	{
-		NavMesh = LocalNavMesh;
 	}
 
 	return NavMesh;

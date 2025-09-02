@@ -4,7 +4,7 @@
 //	Subclass to implement a pathfinding algorithm and update the NavPathFinder
 //	class in NavMesh
 //==============================================================================
-class R_NavPathFinder extends Object abstract;
+class R_NavPathFinder extends R_NavObject abstract;
 
 const Utilities = Class'RBots.R_BotUtilities';
 

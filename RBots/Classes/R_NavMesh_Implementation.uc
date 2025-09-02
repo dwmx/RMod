@@ -441,6 +441,13 @@ function SetEdgePassable(int V0, int V1, bool bPassable)
 	
 }
 
+function GetTriangleVertexLocationsUnchecked(int Index, out Vector VLoc[3])
+{
+	VLoc[0] = VertexArray[TriangleArray[Index].V[0]].Location;
+	VLoc[1] = VertexArray[TriangleArray[Index].V[1]].Location;
+	VLoc[2] = VertexArray[TriangleArray[Index].V[2]].Location;
+}
+
 function GetTriangleVertexIndicesUnchecked(int Index, out int OutV0, out int OutV1, out int OutV2)
 {
 	OutV0 = TriangleArray[Index].V[0];

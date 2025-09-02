@@ -108,3 +108,93 @@ function bool FindNodesInRadius(R_NavMesh NavMesh, Vector Origin, float Radius, 
 
 	return true;
 }
+
+/*
+function bool FindNodeSpatialNeighbors2D(
+	R_NavMesh NavMesh,
+	int NodeIndex,
+	float MaxDistance,
+	out int OutNeighborIndices[32],
+	out int OutNumNeighborIndices)
+{
+	local Vector VLoc0[3], VLoc1[3];
+	local int NumTriangles;
+	local float Distance;
+	local int i;
+
+	if(MaxDistance < 0.0)
+	{	// Negative distance invalid
+		OutNumNeighborIndices = 0;
+		return false;
+	}
+
+	OutNumNeighborIndices = 0;
+
+	NavMesh.GetTriangleVertexLocationsUnchecked(NodeIndex, VLoc0);
+	for(i = 0; i < 3; ++i)
+	{
+		if(OutNumNeighborIndices >= ArrayCount(OutNeighborIndices))
+		{
+			break;
+		}
+
+		if(i == NodeIndex)
+		{
+			continue;
+		}
+
+		NavMesh.GetTriangleVertexLocationsUnchecked(i, VLoc1);
+		Distance = NavLib.Static.DistanceTriangleToTriangle2D(VLoc0, VLoc1);
+		if(Distance <= MaxDistance)
+		{
+			OutNeighborIndices[OutNumNeighborIndices] = i;
+			++OutNumNeighborIndices;
+		}
+	}
+
+	return true;
+}
+	*/
+
+function bool FindNodeNeighbors2D(
+	R_NavMesh NavMesh,
+	int NodeIndex,
+	float MaxProximalRadius,
+	out R_NavNeighbor OutNeighbors[32],
+	out int OutNumNeighbors)
+{
+	local Vector VLoc0[3], VLoc1[3];
+	local int NumNodes;
+	local int i;
+
+	MaxProximalRadius = FMax(0.0, MaxProximalRadius);
+
+	// Get input node
+	NavMesh.GetTriangleVertexLocationsUnchecked(NodeIndex, VLoc0);
+
+	OutNumNeighbors = 0;
+	NumNodes = NavMesh.GetTriangleCount();
+	for(i = 0; i < NumNodes; ++i)
+	{
+		if(OutNumNeighbors >= ArrayCount(OutNeighbors))
+		{
+			break;
+		}
+
+		if(i == NodeIndex)
+		{
+			continue;
+		}
+
+		NavMesh.GetTriangleVertexLocationsUnchecked(i, VLoc1);
+		if(GeomLib.Static.DistanceTriangleToTriangle2D(VLoc0, VLoc1) <= MaxProximalRadius)
+		{
+			OutNeighbors[OutNumNeighbors].NeighborType = NeighborType_Proximal;
+			OutNeighbors[OutNumNeighbors].Cost = 0.0;
+			OutNeighbors[OutNumNeighbors].NodeIndex = i;
+			++OutNumNeighbors;
+		}
+	}
+
+	return true;
+}

@@ -27,7 +27,7 @@ final function InitializeNavMesh()
 	}
 	else
 	{
-		NavMesh = Spawn(NavMeshClass);
+		NavMesh = new(None) NavMeshClass;
 		if(NavMesh == None)
 		{
 			Utilities.Static.RLog("Failed to spawn NavMesh from class" @ NavMeshClass, LogCategory);
@@ -53,6 +53,8 @@ final function InitializeNavMesh()
 }
 
 function BuildNavMesh(); // To be implemented in subclasses
+
+function R_NavMesh GetNavMesh() { return NavMesh; }
 
 defaultproperties
 {

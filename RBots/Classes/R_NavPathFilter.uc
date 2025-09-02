@@ -3,7 +3,7 @@
 //	Abstract class providing the interface for processing a series of NavMesh
 //	path indices into world locations
 //==============================================================================
-class R_NavPathFilter extends Object abstract;
+class R_NavPathFilter extends R_NavObject abstract;
 
 /**
 	PostProcessPath
