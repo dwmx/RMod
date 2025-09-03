@@ -237,3 +237,25 @@ static function bool IsLocationWithinTriangle2D(Vector Location, Vector VLoc[3])
 
 	return (U >= 0.0) && (V >= 0.0) && (A >= 0.0);
 }
+
+//	ProjectLocationZOnPlane
+//	Given a location and a plane defined by an origin and a normal, projects that location onto the plane
+//	along only the world Z axis
+static function ProjectLocationZOnPlane(Vector Location, Vector PlaneOrigin, Vector PlaneNormal, out Vector OutProjectedLocation)
+{
+	local Vector Dir;
+	local float Denom;
+	local float t;
+
+	Dir = Vect(0,0,1);
+	Denom = PlaneNormal Dot Dir;
+
+	if(Abs(Denom) < Epsilon())
+	{
+		OutProjectedLocation = Location;
+		return;
+	}
+
+	t = ((PlaneOrigin - Location) Dot PlaneNormal) / Denom;
+	OutProjectedLocation = Location + t * Dir;
+}
