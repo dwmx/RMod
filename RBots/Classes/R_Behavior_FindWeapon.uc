@@ -1,8 +1,8 @@
 //==============================================================================
-//	R_Behavior_FindWeapon
+//	R_BotBehavior_FindWeapon
 //	Try to acquire a weapon
 //==============================================================================
-class R_Behavior_FindWeapon extends R_Behavior;
+class R_BotBehavior_FindWeapon extends R_BotBehavior;
 
 var private Weapon WeaponTarget;
 var private float WeaponUpdateCooldownSeconds, LastWeaponUpdateTimeSeconds;

@@ -1,8 +1,8 @@
 //==============================================================================
-//	R_Behavior_Wander
+//	R_BotBehavior_Wander
 //	Wander around, aimlessly
 //==============================================================================
-class R_Behavior_Wander extends R_Behavior;
+class R_BotBehavior_Wander extends R_BotBehavior;
 
 function String GetDescriptiveString()
 {

@@ -11,6 +11,19 @@ const NavLib = Class'RBots.R_NavLibrary';
 
 var private bool bBotInitialized;
 
+// BotObjects
+var private R_BotObject BotObjects[16];
+
+const BotObject_Perception = Class'RBots.R_BotPerception';
+
+// Behavior
+var private Class<R_BotBehavior> InitialBehaviorClass;
+var private R_BotBehavior ActiveBehavior;
+
+const Behavior_Fight = Class'RBots.R_BotBehavior_Fight';
+const Behavior_FindWeapon = Class'RBots.R_BotBehavior_FindWeapon';
+const Behavior_Wander = Class'RBots.R_BotBehavior_Wander';
+
 // Player
 var private PlayerPawn OwnedPlayerPawn;
 var private PlayerReplicationInfo OwnedPRI;
@@ -20,14 +33,6 @@ var private R_NavMesh CachedNavMesh;
 var private R_NavPath NavPath;
 var private R_NavPathObserver AttachedNavPathObserver;
 const PATH_DISTANCE_TOLERANCE = 16.0;
-
-// Behavior
-var private Class<R_Behavior> InitialBehaviorClass;
-var private R_Behavior ActiveBehavior;
-
-const Behavior_Fight = Class'RBots.R_Behavior_Fight';
-const Behavior_FindWeapon = Class'RBots.R_Behavior_FindWeapon';
-const Behavior_Wander = Class'RBots.R_Behavior_Wander';
 
 // Control
 var private Vector AccumulatedInputVector;
@@ -139,6 +144,9 @@ function InitializeBot()
 	
 	Utilities.Static.RLog("Initializing bot" @ Self, LogCategory);
 
+	// Create BotObjects
+	CreateBotObject(BotObject_Perception);
+
 	// Spawn NavPath
 	if(NavPath == None)
 	{
@@ -162,12 +170,66 @@ function PlayerReplicationInfo GetOwnedPRI()
 	return OwnedPRI;
 }
 
-function R_Behavior GetActiveBehavior()
+function R_BotBehavior GetActiveBehavior()
 {
 	return ActiveBehavior;
 }
 
-function SetBehavior(Class<R_Behavior> BehaviorClass)
+//	CreateBotObject
+//	Main function for creating, initializating, and auto-managing bot subobjects
+function R_BotObject CreateBotObject(Class<R_BotObject> BotObjectClass)
+{
+	local int i;
+
+	if(BotObjectClass == None)
+	{
+		Utilities.Static.RLog("CreateBotObject failed -- BotObjectClass:" @ BotObjectClass, LogCategory);
+		return None;
+	}
+
+	Utilities.Static.RLog("Creating BotObject from class" @ BotObjectClass, LogCategory);
+
+	for(i = 0; i < ArrayCount(BotObjects); ++i)
+	{
+		if(BotObjects[i] == None)
+		{
+			break;
+		}
+	}
+
+	if(i >= ArrayCount(BotObjects))
+	{
+		Utilities.Static.RLog("CreateBotObject failed -- BotObjects array overflow", LogCategory);
+		return None;
+	}
+
+	BotObjects[i] = new(Self) BotObjectClass;
+	if(BotObjects[i] == None)
+	{
+		Utilities.Static.RLog("CreateBotObject failed -- Failed to instantiate from BotObjectClass:" @ BotObjectClass, LogCategory);
+		return None;
+	}
+
+	BotObjects[i].BaseInitBotObject(Self);
+	return BotObjects[i];
+}
+
+function R_BotObject GetBotObjectByClass(Class<R_BotObject> BotObjectClass)
+{
+	local int i;
+
+	for(i = 0; i < ArrayCount(BotObjects); ++i)
+	{
+		if(BotObjects[i] != None && BotObjects[i].Class == BotObjectClass)
+		{
+			return BotObjects[i];
+		}
+	}
+
+	return None;
+}
+
+function SetBehavior(Class<R_BotBehavior> BehaviorClass)
 {
 	if(ActiveBehavior != None)
 	{
@@ -189,7 +251,7 @@ function SetBehavior(Class<R_Behavior> BehaviorClass)
 	}
 }
 
-function Class<R_Behavior> DetermineDesiredBehavior()
+function Class<R_BotBehavior> DetermineDesiredBehavior()
 {
 	local PlayerPawn P;
 
@@ -209,7 +271,7 @@ function Class<R_Behavior> DetermineDesiredBehavior()
 
 event Tick(float DeltaSeconds)
 {
-	local Class<R_Behavior> DesiredBehavior;
+	local Class<R_BotBehavior> DesiredBehavior;
 
 	Super.Tick(DeltaSeconds);
 
@@ -222,6 +284,10 @@ event Tick(float DeltaSeconds)
 		}
 	}
 
+	// Tick BotObjects
+	TickBotObjects(DeltaSeconds);
+
+	// Tick Behavior
 	DesiredBehavior = DetermineDesiredBehavior();
 	if(DesiredBehavior != ActiveBehavior.Class)
 	{
@@ -234,6 +300,22 @@ event Tick(float DeltaSeconds)
 	}
 
 	TickMovement(DeltaSeconds);
+}
+
+//	TickBotObjects
+//	Tick all bot objects created via CreateBotObject
+//	BotObjects can disable their tick via SetTickBotObjectEnabled
+function TickBotObjects(float DeltaSeconds)
+{
+	local int i;
+
+	for(i = 0; i < ArrayCount(BotObjects); ++i)
+	{
+		if(BotObjects[i] != None)
+		{
+			BotObjects[i].BaseTickBotObject(DeltaSeconds);
+		}
+	}
 }
 
 function TickMovement(float DeltaSeconds)
@@ -320,6 +402,6 @@ function Vector GetLastInputVector()
 
 defaultproperties
 {
-	//InitialBehaviorClass=Class'RBots.R_Behavior_Wander'
-	InitialBehaviorClass=Class'RBots.R_Behavior_FindWeapon'
+	//InitialBehaviorClass=Class'RBots.R_BotBehavior_Wander'
+	InitialBehaviorClass=Class'RBots.R_BotBehavior_FindWeapon'
 }
