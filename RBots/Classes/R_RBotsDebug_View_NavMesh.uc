@@ -19,6 +19,8 @@ var config private bool bDrawNormals;
 var config private bool bDrawVertices;
 var config private bool bDrawEdges;
 var config private bool bDrawTriangles;
+var config private bool bDrawNeighbors;
+var config private bool bDrawAdjacents;
 var config private bool bDrawProximity;
 
 // Colors
@@ -31,7 +33,8 @@ var Color EdgeColor_Border;
 var Color EdgeColor_Impassable;
 
 var Color TriangleColor_Contained;
-var Color TriangleColor_Proxy;
+var Color TriangleColor_Adjacent;
+var Color TriangleColor_Proximity;
 
 simulated function ToggleNormals()
 {
@@ -65,7 +68,19 @@ simulated function ToggleTriangles()
 	SaveConfig();
 }
 
-simulated function ToggleProximity()
+function ToggleNeighbors()
+{
+	bDrawNeighbors = !bDrawNeighbors;
+	SaveConfig();
+}
+
+function ToggleAdjacents()
+{
+	bDrawAdjacents = !bDrawAdjacents;
+	SaveConfig();
+}
+
+function ToggleProximity()
 {
 	bDrawProximity = !bDrawProximity;
 	SaveConfig();
@@ -110,9 +125,11 @@ simulated function DrawNavMesh(Canvas C, R_RbotsDebug_StringManager StringManage
 	{
 		DrawNavMeshTriangles(C, StringManager, NavMesh);
 	}
-	if(bDrawProximity)
+
+	StringManager.AddBool(DebugNavMeshCategory, "Draw Neighbors", bDrawNeighbors);
+	if(bDrawNeighbors)
 	{
-		DrawNavMeshProximity(C, StringManager, NavMesh);
+		DrawNavMeshNeighbors(C, StringManager, NavMesh);
 	}
 	
 	// This will draw the node containing the player, and that node's adjacencies
@@ -232,47 +249,74 @@ simulated function DrawNavMeshTriangles(Canvas C, R_RbotsDebug_StringManager Str
 	}
 }
 
-simulated function DrawNavMeshProximity(Canvas C, R_RbotsDebug_StringManager StringManager, R_NavMesh NavMesh)
+simulated function DrawNavMeshNeighbors(Canvas C, R_RbotsDebug_StringManager StringManager, R_NavMesh NavMesh)
 {
 	local Vector PlayerLocation;
 	local int NodeIndex;
 	local int V[3];
 	local Vector VLoc[3];
-	local float RGBActive[3], RGBProxy[3];
-	local int Nodes[32], NumNodes;
+	local float RGBActive[3], RGBProxy[3], RGBAdjacent[3];
+	local int Nodes[16];
+	local float Costs[16];
+	local int NumNodes;
+	local int AdjacentNodes[3], AdjacentEdges[3];
+	local float AdjacentCosts[3];
 	local int i, j;
 
 	Utilities.Static.ColorToFloats(TriangleColor_Contained, RGBActive[0], RGBActive[1], RGBActive[2]);
-	Utilities.Static.ColorToFloats(TriangleColor_Proxy, RGBProxy[0], RGBProxy[1], RGBProxy[2]);
 
 	if(Owner != None && Owner.Owner != None)
 	{
 		PlayerLocation = Owner.Owner.Location;
 		NodeIndex = NavMesh.FindContainingNodeIndex(PlayerLocation);
 
+		StringManager.AddColor(DebugNavMeshCategory, "Current Index", TriangleColor_Contained);
+		StringManager.AddInt(DebugNavMeshCategory, "Current Index", NodeIndex);
+
 		// Draw node the player is standing on
-		NavMesh.GetTriangleVertexIndicesUnchecked(NodeIndex, V[0], V[1], V[2]);
-		for(i = 0; i < 3; ++i)
-		{
-			NavMesh.GetVertexUnchecked(V[i], VLoc[i]);
-		}
+		NavMesh.GetTriangleVertexLocationsUnchecked(NodeIndex, VLoc);
 		DrawTriangle(C, VLoc, RGBActive, 0.75, 8.0);
 
-		// Draw all proxy nodes in some radius
-		NavMesh.FindNodesInRadius(PlayerLocation, 64.0, Nodes, NumNodes);
-		for(i = 0; i < NumNodes; ++i)
+		// Draw adjacent nodes
+		StringManager.AddBool(DebugNavMeshCategory, "Draw Adjacent Neighbors", bDrawAdjacents);
+		if(bDrawAdjacents)
 		{
-			if(Nodes[i] == NodeIndex)
-			{
-				continue;
-			}
+			// Draw all adjacent nodes
+			Utilities.Static.ColorToFloats(TriangleColor_Adjacent, RGBAdjacent[0], RGBAdjacent[1], RGBAdjacent[2]);
+			StringManager.AddColor(DebugNavMeshCategory, "Adjacent Neighbors", TriangleColor_Adjacent);
 
-			NavMesh.GetTriangleVertexIndicesUnchecked(Nodes[i], V[0], V[1], V[2]);
-			for(j = 0; j < 3; ++j)
+			NavMesh.GetTriangleAdjacentDataUnchecked(NodeIndex, AdjacentNodes, AdjacentEdges, AdjacentCosts);
+			for(i = 0; i < 3; ++i)
 			{
-				NavMesh.GetVertexUnchecked(V[j], VLoc[j]);
+				if(AdjacentNodes[i] == NavLib.Static.InvalidIndex())
+				{
+					continue;
+				}
+
+				NavMesh.GetTriangleVertexLocationsUnchecked(AdjacentNodes[i], VLoc);
+				DrawTriangle(C, VLoc, RGBAdjacent, 0.75, 8.0);
 			}
-			DrawTriangle(C, VLoc, RGBProxy, 0.75, 8.0);
+		}
+		
+		// Draw proximal nodes
+		StringManager.AddBool(DebugNavMeshCategory, "Draw Proximal Neighbors", bDrawProximity);
+		if(bDrawProximity)
+		{
+			Utilities.Static.ColorToFloats(TriangleColor_Proximity, RGBProxy[0], RGBProxy[1], RGBProxy[2]);
+			StringManager.AddColor(DebugNavMeshCategory, "Proximal Neighbors", TriangleColor_Proximity);
+
+			// Draw all proxy nodes in some radius
+			NavMesh.GetTriangleProximalDataUnchecked(NodeIndex, Nodes, Costs, NumNodes);
+			for(i = 0; i < NumNodes; ++i)
+			{
+				if(Nodes[i] == NodeIndex)
+				{
+					continue;
+				}
+
+				NavMesh.GetTriangleVertexLocationsUnchecked(Nodes[i], VLoc);
+				DrawTriangle(C, VLoc, RGBProxy, 0.75, 8.0);
+			}
 		}
 	}
 }
@@ -339,7 +383,8 @@ defaultproperties
 	VertexColor=(R=252,G=207,B=91)
 	TriangleColor=(R=4,G=73,B=4)
 	TriangleColor_Contained=(R=23,G=255,B=54)
-	TriangleColor_Proxy=(R=251,G=255,B=3)
+	TriangleColor_Adjacent=(R=255,G=0,B=255)
+	TriangleColor_Proximity=(R=251,G=255,B=3)
 	NormalColor=(R=255,0,0)
 	EdgeColor_Normal=(R=29,G=44,B=133)
 	EdgeColor_Border=(R=43,G=255,B=53)
@@ -347,4 +392,7 @@ defaultproperties
 	bDrawNormals=true
 	bDrawVertices=false
 	bDrawEdges=true
+	bDrawNeighbors=true
+	bDrawAdjacents=true
+	bDrawProximity=true
 }

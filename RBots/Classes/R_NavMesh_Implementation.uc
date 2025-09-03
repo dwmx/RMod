@@ -7,6 +7,7 @@ const Utilities = Class'RBots.R_BotUtilities';
 const LogCategory = 'NavMesh';
 
 const NavLib = Class'RBots.R_NavLibrary';
+const GeomLib = Class'RBase.R_AGeometryLibrary';
 
 // NavMesh vertex structure
 struct NavMeshVertex
@@ -42,6 +43,14 @@ struct NavMeshAdjacency
 	var float C[3];	// Cost for each connection
 };
 var private NavMeshAdjacency AdjacencyArray[ArrayCount(TriangleArray)];
+
+struct NavMeshProximalNeighbor
+{
+	var int T[16];		// Indices
+	var float C[16];	// Costs
+	var int Num;
+};
+var private NavMeshProximalNeighbor ProximalArray[ArrayCount(TriangleArray)];
 
 function InitializeNavMesh()
 {
@@ -251,18 +260,19 @@ function bool ValidateNavMeshTriangles(out String OutFailedLogString)
 // Perform post-build and post-validation processing
 function PostProcessNavMesh()
 {
-	BuildAdjacencies();
+	BuildAdjacentSet();
+	BuildProximalSet();
 	PostProcessEdges();
 }
 
 // Generates all data in the AdjacencyArray, identifying which nodes are connected, which
 // edges are shared, and the costs between connections
-function BuildAdjacencies()
+function BuildAdjacentSet()
 {
 	local int EdgeIndex;
 	local int i, j;
 
-	Utilities.Static.RLog("Building adjacencies", LogCategory);
+	Utilities.Static.RLog("Building adjacent set", LogCategory);
 
 	for(i = 0; i < NumTriangles; ++i)
 	{
@@ -285,6 +295,89 @@ function BuildAdjacencies()
 			}
 		}
 	}
+}
+
+function BuildProximalSet()
+{
+	local Vector VLoc0[3], VLoc1[3];
+	local float ProximalDistance;
+	local float ProximalCost;
+	local int i, j;
+
+	Utilities.Static.RLog("Building proximal set", LogCategory);
+
+	for(i = 0; i < NumTriangles - 1; ++i)
+	{
+		GetTriangleVertexLocationsUnchecked(i, VLoc0);
+		for(j = i + 1; j < NumTriangles; ++j)
+		{
+			// Make sure i and j are not already adjacents
+			if(AreNodesAdjacent(i, j))
+			{
+				continue;
+			}
+
+			if(ProximalArray[i].Num >= ArrayCount(ProximalArray[i].T))
+			{	// Break to outer loop if index i is full
+				break;
+			}
+			if(ProximalArray[j].Num >= ArrayCount(ProximalArray[j].T))
+			{	// Skip this j index if it's full
+				continue;
+			}
+
+			GetTriangleVertexLocationsUnchecked(j, VLoc1);
+			ProximalDistance = GeomLib.Static.DistanceTriangleToTriangle2D(VLoc0, VLoc1);
+			if(ProximalDistance <= 128.0) // Will need to figure this value out, use 128 for now
+			{
+				ProximalCost = CalcProximalNeighborCost(VLoc0, VLoc1, ProximalDistance);
+
+				// Mark i and j as proximal neighbors
+				// TODO: Right now, they have the same cost, but the cost from i to j and j to i will not be the same
+				// i.e. if you can drop from i to j, but you have to climb from j to get to i
+				ProximalArray[i].T[ProximalArray[i].Num] = j;
+				ProximalArray[i].C[ProximalArray[i].Num] = ProximalCost;
+				++ProximalArray[i].Num;
+
+				ProximalArray[j].T[ProximalArray[j].Num] = i;
+				ProximalArray[j].C[ProximalArray[j].Num] = ProximalCost;
+				++ProximalArray[j].Num;
+			}
+		}
+	}
+}
+
+function bool AreNodesAdjacent(int Node0, int Node1)
+{
+	local int i;
+
+	for(i = 0; i < 3; ++i)
+	{
+		if(AdjacencyArray[Node0].T[i] == Node1 || AdjacencyArray[Node1].T[i] == Node0)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+// CalcProximalCost
+// Calculate the cost to go from Node0 to Node1, given the XY proximal distance
+function float CalcProximalNeighborCost(out Vector InVLoc0[3], out Vector InVLoc1[3], float ProximalXYDistance)
+{
+	local Vector C0, C1;
+	local int i;
+
+	// For now, just return distance from centers
+	for(i = 0; i < 3; ++i)
+	{
+		C0 += InVLoc0[i];
+		C1 += InVLoc1[i];
+	}
+	C0 *= (1.0/3.0);
+	C1 *= (1.0/3.0);
+
+	return (ProximalXYDistance + Abs(C1.Z - C0.Z)) * 0.1; // XY Distance between nodes + Z difference
 }
 
 // If an edge is shared between the two triangles, returns the index of that edge
@@ -373,7 +466,7 @@ function float CalcAdjacencyCost(int T0, int T1, int E)
 
 // Post process edge information
 // This identifies border edges and applies the border flag
-// Note that this function relies on adjacency information, so it must be run after BuildAdjacencies
+// Note that this function relies on adjacency information, so it must be run after BuildAdjacentSet
 function PostProcessEdges()
 {
 	local int i, j;
@@ -478,6 +571,18 @@ function GetTriangleAdjacentDataUnchecked(int Index, out int OutT[3], out int Ou
 		OutT[i] = AdjacencyArray[Index].T[i];
 		OutE[i] = AdjacencyArray[Index].E[i];
 		OutC[i] = AdjacencyArray[Index].C[i];
+	}
+}
+
+function GetTriangleProximalDataUnchecked(int Index, out int OutT[16], out float OutC[16], out int OutNum)
+{
+	local int i;
+
+	for(i = 0; i < ProximalArray[Index].Num; ++i)
+	{
+		OutT[i] = ProximalArray[Index].T[i];
+		OutC[i] = ProximalArray[Index].C[i];
+		OutNum = ProximalArray[Index].Num;
 	}
 }
 

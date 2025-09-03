@@ -67,6 +67,8 @@ function GetTriangleAdjacentsUnchecked(int Index, out int OutT0, out int OutT1, 
 // OutC[x]: Cost of connection between the given triangle and OutT[x]
 function GetTriangleAdjacentDataUnchecked(int Index, out int OutT[3], out int OutE[3], out float OutC[3]);
 
+function GetTriangleProximalDataUnchecked(int Index, out int OutT[16], out float OutC[16], out int OutNum);
+
 // Returns the normal and center location vectors for the given triangle index
 function GetTriangleNormalAndCenterUnchecked(int Index, out Vector OutNormal, out Vector OutCenter);
 
@@ -290,6 +292,39 @@ function FindNodesInRadius(Vector Origin, float Radius, out int OutNodes[32], ou
 	}
 
 	NavMeshSpatialQuery.FindNodesInRadius(Self, Origin, Radius, OutNodes, OutNumNodes);
+}
+
+// Find nodes proximal to the given node
+function FindNodeProximalNeighbors2D(
+	int NodeIndex,
+	float MaxProximalDistance,
+	out int OutNeighborIndices[32],
+	out float OutNeighborCosts[32],
+	out int OutNumNeighbors)
+{
+	local R_NavNeighbor Result[32];
+	local int NumNeighbors;
+	local int i;
+
+	if(NavMeshSpatialQuery == None)
+	{
+		OutNumNeighbors = 0;
+		return;
+	}
+
+	NavMeshSpatialQuery.FindNodeProximalNeighbors2D(
+		Self,
+		NodeIndex,
+		MaxProximalDistance,
+		Result,
+		NumNeighbors);
+	
+	for(i = 0; i < NumNeighbors; ++i)
+	{
+		OutNeighborIndices[i] = Result[i].NodeIndex;
+		OutNeighborIndices[i] = Result[i].Cost;
+	}
+	OutNumNeighbors = NumNeighbors;
 }
 
 defaultproperties
