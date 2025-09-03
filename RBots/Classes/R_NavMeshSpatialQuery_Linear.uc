@@ -14,9 +14,14 @@ function bool FindContainingNode(R_NavMesh NavMesh, Vector Location, out int Out
 {
 	local int NumNodes;
 	local Vector Normal, Center;
-	local int V[3];
 	local Vector VLoc[3];
-	local int i, j;
+	local Vector LocationProjected;
+	local int BestNode;
+	local float BestDist, CurrentDist;
+	local int i;
+
+	BestNode = NavLib.Static.InvalidIndex();
+	BestDist = 0.0;
 
 	NumNodes = NavMesh.GetTriangleCount();
 	for(i = 0; i < NumNodes; ++i)
@@ -29,22 +34,27 @@ function bool FindContainingNode(R_NavMesh NavMesh, Vector Location, out int Out
 		}
 
 		// Get the triangle
-		NavMesh.GetTriangleVertexIndicesUnchecked(i, V[0], V[1], V[2]);
-		for(j = 0; j < 3; ++j)
-		{
-			NavMesh.GetVertexUnchecked(V[j], VLoc[j]);
-		}
+		NavMesh.GetTriangleVertexLocationsUnchecked(i, VLoc);
 
 		// Check location in triangle
-		if(NavLib.Static.IsLocationWithinTriangle(VLoc, Location))
+		GeomLib.Static.ProjectLocationZOnPlane(Location, Center, Normal, LocationProjected);
+		if(GeomLib.Static.IsLocationWithinTriangle2D(LocationProjected, VLoc))
 		{
-			OutNode = i;
-			return true;
+			CurrentDist = VSize(LocationProjected - Location);
+			if(CurrentDist < BestDist || BestNode == NavLib.Static.InvalidIndex())
+			{
+				BestDist = CurrentDist;
+				BestNode = i;
+			}
 		}
 	}
 
-	OutNode = NavLib.Static.InvalidIndex();
-	return false;
+	OutNode = BestNode;
+	if(OutNode == NavLib.Static.InvalidIndex())
+	{
+		return false;
+	}
+	return true;
 }
 
 function bool FindNodesInRadius(R_NavMesh NavMesh, Vector Origin, float Radius, out int OutNodes[32], out int OutNumNodes)
