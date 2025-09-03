@@ -20,6 +20,7 @@ const LogCategory = 'CommandManager';
 const Utilities = Class'RBots.R_BotUtilities';
 
 var private Name NameSpace;
+var private String ParentNameSpace;
 
 const MAX_SUB_COMMAND_MANAGERS = 16;
 var private R_RBotsDebug_CommandManager SubCommandManagers[16];
@@ -63,10 +64,33 @@ function AddSubCommandManager(R_RBotsDebug_CommandManager SubCommandManager)
 	}
 
 	SubCommandManagers[NumSubCommandManagers] = SubCommandManager;
+	if(ParentNameSpace == "")
+	{
+		SubCommandManagers[NumSubCommandManagers].ParentNameSpace = String(NameSpace);
+	}
+	else
+	{
+		SubCommandManagers[NumSubCommandManagers].ParentNameSpace = ParentNameSpace $ "." $ String(NameSpace);
+	}
+	
 	++NumSubCommandManagers;
 }
 
-function PrintAllCommands(PlayerPawn Receiver, optional String ParentNameSpaceString)
+function Name GetNameSpace()
+{
+	return NameSpace;
+}
+
+function String GetFullyQualifiedNameSpaceString()
+{
+	if(ParentNameSpace == "")
+	{
+		return String(NameSpace);
+	}
+	return ParentNameSpace $ "." $ String(NameSpace);
+}
+
+function PrintAllCommands(PlayerPawn Receiver)
 {
 	local String NameSpaceString;
 	local int i;
@@ -76,11 +100,23 @@ function PrintAllCommands(PlayerPawn Receiver, optional String ParentNameSpaceSt
 		return;
 	}
 
-	NameSpaceString = ParentNameSpaceString $ "." $ String(NameSpace);
+	NameSpaceString = GetFullyQualifiedNameSpaceString();
 
+	// Print all command strings inside this namespace
+	Receiver.ClientMessage("-------------Available Commands-------------");
 	for(i = 0; i < NumCommandStrings; ++i)
 	{
 		Receiver.ClientMessage(NameSpaceString $ "." $ CommandStrings[i]);
+	}
+
+	// Print all sub-command manager namespaces
+	if(NumSubCommandManagers > 0)
+	{
+		Receiver.ClientMessage("-------------Available NameSpaces-------------");
+		for(i = 0; i < NumSubCommandManagers; ++i)
+		{
+			Receiver.ClientMessage(NameSpaceString $ "." $ String(SubCommandManagers[i].GetNameSpace()));
+		}
 	}
 }
 
