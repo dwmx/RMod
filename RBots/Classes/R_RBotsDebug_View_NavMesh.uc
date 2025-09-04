@@ -6,6 +6,7 @@ class R_RBotsDebug_View_NavMesh extends R_RBotsDebug_View config(RBotsDebug);
 
 const Utilities = Class'RBots.R_BotUtilities';
 const CanvasLib = Class'RBots.R_RBots_CanvasLibrary';
+const DebugLib = Class'RBots.R_RBots_DebugLibrary';
 const NavLib = Class'RBots.R_NavLibrary';
 const NavTranslator = Class'RBots.R_RBotsDebug_NavObjectTranslator';
 const DebugNavMeshCategory = 'NavMesh';
@@ -21,6 +22,7 @@ var config private bool bDrawVertices;
 var config private bool bDrawEdges;
 var config private bool bDrawTriangles;
 var config private bool bDrawNeighbors;
+var config private bool bDrawNeighborCosts;
 var config private bool bDrawAdjacents;
 var config private bool bDrawProximity;
 
@@ -72,6 +74,12 @@ simulated function ToggleTriangles()
 function ToggleNeighbors()
 {
 	bDrawNeighbors = !bDrawNeighbors;
+	SaveConfig();
+}
+
+function ToggleCosts()
+{
+	bDrawNeighborCosts = !bDrawNeighborCosts;
 	SaveConfig();
 }
 
@@ -255,10 +263,8 @@ simulated function DrawNavMeshNeighbors(Canvas C, R_RbotsDebug_StringManager Str
 	local Vector PlayerLocation;
 	local int NodeIndex;
 	local int V[3];
-	local Vector VLoc[3];
+	local Vector VLoc[3], Normal, Center;
 	local float RGBActive[3], RGBProxy[3], RGBAdjacent[3];
-	//local int Nodes[32];
-	//local float Costs[16];
 	local int NumNodes;
 	local int AdjacentNodes[3];
 	local float AdjacentCosts[3];
@@ -266,6 +272,7 @@ simulated function DrawNavMeshNeighbors(Canvas C, R_RbotsDebug_StringManager Str
 	local float ProximalCosts[32];
 	local int i, j;
 
+	DebugLib.Static.InitializeCanvasForDebugDrawing(C);
 	Utilities.Static.ColorToFloats(TriangleColor_Contained, RGBActive[0], RGBActive[1], RGBActive[2]);
 
 	if(Owner != None && Owner.Owner != None)
@@ -298,6 +305,12 @@ simulated function DrawNavMeshNeighbors(Canvas C, R_RbotsDebug_StringManager Str
 
 				NavMesh.GetTriangleVertexLocationsUnchecked(AdjacentNodes[i], VLoc);
 				DrawTriangle(C, VLoc, RGBAdjacent, 0.75, 8.0);
+
+				if(bDrawNeighborCosts)
+				{
+					NavMesh.GetTriangleNormalAndCenterUnchecked(AdjacentNodes[i], Normal, Center);
+					CanvasLib.Static.DrawTextAtWorldLocation(C, "C:" $ Utilities.Static.FloatToString(AdjacentCosts[i], 1), Center, Vect(0.5,0.5,0.0));
+				}
 			}
 		}
 		
@@ -319,6 +332,12 @@ simulated function DrawNavMeshNeighbors(Canvas C, R_RbotsDebug_StringManager Str
 
 				NavMesh.GetTriangleVertexLocationsUnchecked(ProximalNodes[i], VLoc);
 				DrawTriangle(C, VLoc, RGBProxy, 0.75, 8.0);
+
+				if(bDrawNeighborCosts)
+				{
+					NavMesh.GetTriangleNormalAndCenterUnchecked(ProximalNodes[i], Normal, Center);
+					CanvasLib.Static.DrawTextAtWorldLocation(C, "C:" $ Utilities.Static.FloatToString(ProximalCosts[i], 1), Center, Vect(0.5,0.5,0.0));
+				}
 			}
 		}
 	}
@@ -347,40 +366,6 @@ function DrawTriangle(Canvas C, Vector VLoc[3], float RGB[3], float Scale, optio
 	CanvasLib.Static.DrawLine3D(C, VLoc[2], VLoc[0], RGB[0], RGB[1], RGB[2]);
 }
 
-/*
-simulated function DrawPlayerContainedNavMeshTriangle(Canvas C, R_NavMesh NavMesh)
-{
-	local int ContainingIndex;
-	local Vector TriangleNormal, TriangleCenter;
-	local Vector PlayerLocation;
-	//local int AdjacentIndexA, AdjacentIndexB, AdjacentIndexC;
-	local int Adjacents[3];
-	local int i;
-
-	if(Owner != None && Owner.Owner != None)
-	{
-		PlayerLocation = Owner.Owner.Location;
-
-		if(NavMesh.FindContainingTriangle(PlayerLocation, ContainingIndex))
-		{
-			NavMesh.GetTriangleNormalAndCenterUnchecked(ContainingIndex, TriangleNormal, TriangleCenter);
-			C.DrawBox3D(TriangleCenter, Vect(64,64,64), 1, 1, 0);
-
-			// Draw adjacents
-			NavMesh.GetTriangleAdjacentsUnchecked(ContainingIndex, Adjacents[0], Adjacents[1], Adjacents[2]);
-			for(i = 0; i < 3; ++i)
-			{
-				if(Adjacents[i] != -1)
-				{
-					NavMesh.GetTriangleNormalAndCenterUnchecked(Adjacents[i], TriangleNormal, TriangleCenter);
-					C.DrawBox3D(TriangleCenter, Vect(64,64,64), 0, 0, 1);
-				}
-			}
-		}
-	}
-}
-	*/
-
 defaultproperties
 {
 	VertexColor=(R=252,G=207,B=91)
@@ -396,6 +381,7 @@ defaultproperties
 	bDrawVertices=false
 	bDrawEdges=true
 	bDrawNeighbors=true
+	bDrawNeighborCosts=true
 	bDrawAdjacents=true
 	bDrawProximity=true
 }
