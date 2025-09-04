@@ -331,22 +331,13 @@ function int FindSharedEdgeIndex(int T0, int T1)
 
 function float CalcAdjacencyCost(int T0, int T1, int E)
 {
-	local int V0[3], V1[3], EV[2];
-	local Vector VLoc0[3], VLoc1[3], EVLoc[2];
-	local float Distance0, Distance1;
-	local int i;
+	local Vector Normal0, Center0;
+	local Vector Normal1, Center1;
 
-	GetTriangleVertexIndicesUnchecked(T0, V0[0], V0[1], V0[2]);
-	GetTriangleVertexIndicesUnchecked(T1, V1[0], V1[1], V1[2]);
-	GetEdgeVertexIndicesUnchecked(E, EV[0], EV[1]);
+	GetTriangleNormalAndCenterUnchecked(T0, Normal0, Center0);
+	GetTriangleNormalAndCenterUnchecked(T1, Normal1, Center1);
 
-	for(i = 0; i < 3; ++i)	GetVertexUnchecked(V0[i], VLoc0[i]);
-	for(i = 0; i < 3; ++i)	GetVertexUnchecked(V1[i], VLoc1[i]);
-	for(i = 0; i < 2; ++i)	GetVertexUnchecked(EV[i], EVLoc[i]);
-	
-	Distance0 = NavLib.Static.CalcTriangleCenterEdgeDistance(VLoc0, EVLoc);
-	Distance1 = NavLib.Static.CalcTriangleCenterEdgeDistance(VLoc1, EVLoc);
-	return Distance0 + Distance1;
+	return VSize(Center1 - Center0);
 }
 
 function BuildProximalSet()
@@ -397,18 +388,11 @@ function BuildProximalSet()
 function float CalcProximalNeighborCost(out Vector InVLoc0[3], out Vector InVLoc1[3], float ProximalXYDistance)
 {
 	local Vector C0, C1;
-	local int i;
 
-	// For now, just return distance from centers
-	for(i = 0; i < 3; ++i)
-	{
-		C0 += InVLoc0[i];
-		C1 += InVLoc1[i];
-	}
-	C0 *= (1.0/3.0);
-	C1 *= (1.0/3.0);
+	C0 = (InVLoc0[0] + InVLoc0[1] + InVLoc0[2]) * (1.0/3.0);
+	C1 = (InVLoc1[0] + InVLoc1[1] + InVLoc1[2]) * (1.0/3.0);
 
-	return (ProximalXYDistance + Abs(C1.Z - C0.Z)) * 0.1; // XY Distance between nodes + Z difference
+	return VSize(C1 - C0);
 }
 
 function int GetVertexCount() { return NumVertices; }
