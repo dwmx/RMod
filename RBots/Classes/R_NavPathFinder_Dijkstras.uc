@@ -7,9 +7,7 @@ class R_NavPathFinder_Dijkstras extends R_NavPathFinder;
 const Utilities = Class'RBots.R_BotUtilities';
 const MAX_NODES = 1024; // Adjust to match maximum number of triangles
 
-function GetNeighborSet(R_NavMesh NavMesh, int NodeIndex)
-{
-}
+const NavLib = Class'RBots.R_NavLibrary';
 
 function bool FindPath(
 	R_NavMesh NavMesh,
@@ -25,11 +23,9 @@ function bool FindPath(
 	local float Costs[3];
     local int MinDist, MinNode;
     local int TotalNodes;
-	local int T[3];		// Adjacent triangle indices
-	local int E[3];		// Adjacent triangle shared edges
-	local float C[3];	// Cost for adjacent connections
 	local int PathIndices[128];
 	local int PathIndexCount;
+	local R_NavNeighborSet NeighborSet;
 
     // Safety: assume NavMesh knows its triangle count
     TotalNodes = NavMesh.GetTriangleCount();
@@ -73,16 +69,25 @@ function bool FindPath(
             break;
 
         // Relax neighbors
-		NavMesh.GetTriangleAdjacentDataUnchecked(MinNode, T, E, C);
-        for (k = 0; k < 3; k++)
+		//NavMesh.GetTriangleAdjacentDataUnchecked(MinNode, T, E, C);
+
+		// Get full neighbor set (adjacents + proximals)
+		//GetNeighborSet(NavMesh, MinNode, T, C, NumNeighbors);
+		NavMesh.GetTriangleNeighborSetUnchecked(MinNode, NeighborSet);
+
+        //for (k = 0; k < NumNeighbors; k++)
+		for(k = 0; k < NeighborSet.NumNeighbors; ++k)
         {
-            v = T[k];
+            //v = T[k];
+			v = NeighborSet.Neighbors[k].NeighborIndex;
             if (v >= 0 && Visited[v] == 0)
             {
-				if(Dist[MinNode] + C[k] < Dist[v])
+				//if(Dist[MinNode] + C[k] < Dist[v])
+				if(Dist[MinNode] + NeighborSet.Neighbors[k].NeighborCost < Dist[v])
                 {
                     //Dist[v] = Dist[MinNode] + 1;
-					Dist[v] = Dist[MinNode] + C[k];
+					//Dist[v] = Dist[MinNode] + C[k];
+					Dist[v] = Dist[MinNode] + NeighborSet.Neighbors[k].NeighborCost;
                     Prev[v] = MinNode;
                 }
             }

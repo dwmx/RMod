@@ -57,18 +57,9 @@ function GetTriangleVertexLocationsUnchecked(int Index, out Vector VLoc[3]);
 function GetTriangleVertexIndicesUnchecked(int Index, out int OutV0, out int OutV1, out int OutV2);
 function GetTriangleEdgeIndicesUnchecked(int Index, out int OutE0, out int OutE1, out int OutE2);
 
-// Return up to 3 directly adjacent triangles to the given triangle index
-// Out indices will be InvalidIndex if not found
-function GetTriangleAdjacentsUnchecked(int Index, out int OutT0, out int OutT1, out int OutT2);
-
-// Get all adjacency information for the given triangle index
-// OutT[x]: Adjacent triangle index for adjacent index x
-// OutE[x]: Edge shared with triangle OutT[x]
-// OutC[x]: Cost of connection between the given triangle and OutT[x]
-function GetTriangleAdjacentDataUnchecked(int Index, out int OutT[3], out int OutE[3], out float OutC[3]);
-
-// Get the proximal neighbors
-function GetTriangleProximalDataUnchecked(int Index, out int OutT[16], out float OutC[16], out int OutNum);
+// Returns the NeighborSet for the given node index
+// This includes all adjacent and proximal neighbors	
+function GetTriangleNeighborSetUnchecked(int Index, out R_NavNeighborSet OutNodeNeighborSet);
 
 // Returns the normal and center location vectors for the given triangle index
 function GetTriangleNormalAndCenterUnchecked(int Index, out Vector OutNormal, out Vector OutCenter);
@@ -300,5 +291,6 @@ defaultproperties
 	bInitialized=false
 	NavMeshSpatialQueryClass=Class'RBots.R_NavMeshSpatialQuery_Linear'
 	NavPathFinderClass=Class'RBots.R_NavPathFinder_Dijkstras'
-	NavPathFilterClass=Class'RBots.R_NavPathFilter_Funnel'
+	//NavPathFilterClass=Class'RBots.R_NavPathFilter_Funnel'
+	NavPathFilterClass=Class'RBots.R_NavPathFilter_NodeCenter'
 }

@@ -166,6 +166,7 @@ function bool FindNodeSpatialNeighbors2D(
 }
 	*/
 
+	/*
 function bool FindNodeNeighbors2D(
 	R_NavMesh NavMesh,
 	int NodeIndex,
@@ -208,3 +209,4 @@ function bool FindNodeNeighbors2D(
 
 	return true;
 }
+	*/

@@ -7,6 +7,7 @@ class R_RBotsDebug_View_NavMesh extends R_RBotsDebug_View config(RBotsDebug);
 const Utilities = Class'RBots.R_BotUtilities';
 const CanvasLib = Class'RBots.R_RBots_CanvasLibrary';
 const NavLib = Class'RBots.R_NavLibrary';
+const NavTranslator = Class'RBots.R_RBotsDebug_NavObjectTranslator';
 const DebugNavMeshCategory = 'NavMesh';
 
 // Vertical offset for drawing to avoid z fighting and invisible lines
@@ -256,11 +257,13 @@ simulated function DrawNavMeshNeighbors(Canvas C, R_RbotsDebug_StringManager Str
 	local int V[3];
 	local Vector VLoc[3];
 	local float RGBActive[3], RGBProxy[3], RGBAdjacent[3];
-	local int Nodes[16];
-	local float Costs[16];
+	//local int Nodes[32];
+	//local float Costs[16];
 	local int NumNodes;
-	local int AdjacentNodes[3], AdjacentEdges[3];
+	local int AdjacentNodes[3];
 	local float AdjacentCosts[3];
+	local int ProximalNodes[32];
+	local float ProximalCosts[32];
 	local int i, j;
 
 	Utilities.Static.ColorToFloats(TriangleColor_Contained, RGBActive[0], RGBActive[1], RGBActive[2]);
@@ -285,8 +288,8 @@ simulated function DrawNavMeshNeighbors(Canvas C, R_RbotsDebug_StringManager Str
 			Utilities.Static.ColorToFloats(TriangleColor_Adjacent, RGBAdjacent[0], RGBAdjacent[1], RGBAdjacent[2]);
 			StringManager.AddColor(DebugNavMeshCategory, "Adjacent Neighbors", TriangleColor_Adjacent);
 
-			NavMesh.GetTriangleAdjacentDataUnchecked(NodeIndex, AdjacentNodes, AdjacentEdges, AdjacentCosts);
-			for(i = 0; i < 3; ++i)
+			NavTranslator.Static.GetAdjacentNeighbors(NavMesh, NodeIndex, AdjacentNodes, AdjacentCosts, NumNodes);
+			for(i = 0; i < NumNodes; ++i)
 			{
 				if(AdjacentNodes[i] == NavLib.Static.InvalidIndex())
 				{
@@ -306,15 +309,15 @@ simulated function DrawNavMeshNeighbors(Canvas C, R_RbotsDebug_StringManager Str
 			StringManager.AddColor(DebugNavMeshCategory, "Proximal Neighbors", TriangleColor_Proximity);
 
 			// Draw all proxy nodes in some radius
-			NavMesh.GetTriangleProximalDataUnchecked(NodeIndex, Nodes, Costs, NumNodes);
+			NavTranslator.Static.GetProximalNeighbors(NavMesh, NodeIndex, ProximalNodes, ProximalCosts, NumNodes);
 			for(i = 0; i < NumNodes; ++i)
 			{
-				if(Nodes[i] == NodeIndex)
+				if(ProximalNodes[i] == NodeIndex)
 				{
 					continue;
 				}
 
-				NavMesh.GetTriangleVertexLocationsUnchecked(Nodes[i], VLoc);
+				NavMesh.GetTriangleVertexLocationsUnchecked(ProximalNodes[i], VLoc);
 				DrawTriangle(C, VLoc, RGBProxy, 0.75, 8.0);
 			}
 		}

@@ -35,6 +35,7 @@ struct NavMeshTriangle
 var private NavMeshTriangle TriangleArray[10000];
 var private int NumTriangles;
 
+/*
 // Adjacencies
 struct NavMeshAdjacency
 {
@@ -51,6 +52,19 @@ struct NavMeshProximalNeighbor
 	var int Num;
 };
 var private NavMeshProximalNeighbor ProximalArray[ArrayCount(TriangleArray)];
+*/
+
+
+
+//=========================================
+// TODO:
+//	This needs to replace BOTH the Adjacency array AND the Proximal array
+
+var private R_NavNeighborSet NeighborSets[ArrayCount(TriangleArray)];
+
+//=========================================
+
+
 
 function InitializeNavMesh()
 {
@@ -260,29 +274,31 @@ function bool ValidateNavMeshTriangles(out String OutFailedLogString)
 // Perform post-build and post-validation processing
 function PostProcessNavMesh()
 {
+	InitializeNeighborSets();
 	BuildAdjacentSet();
 	BuildProximalSet();
 	PostProcessEdges();
+}
+
+function InitializeNeighborSets()
+{
+	local int i;
+
+	for(i = 0; i < NumTriangles; ++i)
+	{
+		NeighborSets[i].NumNeighbors = 0;
+	}
 }
 
 // Generates all data in the AdjacencyArray, identifying which nodes are connected, which
 // edges are shared, and the costs between connections
 function BuildAdjacentSet()
 {
+	local float Cost;
 	local int EdgeIndex;
 	local int i, j;
 
 	Utilities.Static.RLog("Building adjacent set", LogCategory);
-
-	for(i = 0; i < NumTriangles; ++i)
-	{
-		for(j = 0; j < 3; ++j)
-		{
-			AdjacencyArray[i].T[j] = NavLib.Static.InvalidIndex();
-			AdjacencyArray[i].E[j] = NavLib.Static.InvalidIndex();
-			AdjacencyArray[i].C[j] = 0.0f;
-		}
-	}
 
 	for(i = 0; i < NumTriangles - 1; ++i)
 	{
@@ -291,93 +307,12 @@ function BuildAdjacentSet()
 			EdgeIndex = FindSharedEdgeIndex(i, j);
 			if(EdgeIndex != NavLib.Static.InvalidIndex())
 			{
-				MarkTrianglesAdjacent(i, j, EdgeIndex);
+				Cost = CalcAdjacencyCost(i, j, EdgeIndex);
+				NavObjectClass.Static.NavNeighborSet_AddNeighbor(NeighborSets[i], NeighborType_Adjacent, Cost, j);
+				NavObjectClass.Static.NavNeighborSet_AddNeighbor(NeighborSets[j], NeighborType_Adjacent, Cost, i);
 			}
 		}
 	}
-}
-
-function BuildProximalSet()
-{
-	local Vector VLoc0[3], VLoc1[3];
-	local float ProximalDistance;
-	local float ProximalCost;
-	local int i, j;
-
-	Utilities.Static.RLog("Building proximal set", LogCategory);
-
-	for(i = 0; i < NumTriangles - 1; ++i)
-	{
-		GetTriangleVertexLocationsUnchecked(i, VLoc0);
-		for(j = i + 1; j < NumTriangles; ++j)
-		{
-			// Make sure i and j are not already adjacents
-			if(AreNodesAdjacent(i, j))
-			{
-				continue;
-			}
-
-			if(ProximalArray[i].Num >= ArrayCount(ProximalArray[i].T))
-			{	// Break to outer loop if index i is full
-				break;
-			}
-			if(ProximalArray[j].Num >= ArrayCount(ProximalArray[j].T))
-			{	// Skip this j index if it's full
-				continue;
-			}
-
-			GetTriangleVertexLocationsUnchecked(j, VLoc1);
-			ProximalDistance = GeomLib.Static.DistanceTriangleToTriangle2D(VLoc0, VLoc1);
-			if(ProximalDistance <= 128.0) // Will need to figure this value out, use 128 for now
-			{
-				ProximalCost = CalcProximalNeighborCost(VLoc0, VLoc1, ProximalDistance);
-
-				// Mark i and j as proximal neighbors
-				// TODO: Right now, they have the same cost, but the cost from i to j and j to i will not be the same
-				// i.e. if you can drop from i to j, but you have to climb from j to get to i
-				ProximalArray[i].T[ProximalArray[i].Num] = j;
-				ProximalArray[i].C[ProximalArray[i].Num] = ProximalCost;
-				++ProximalArray[i].Num;
-
-				ProximalArray[j].T[ProximalArray[j].Num] = i;
-				ProximalArray[j].C[ProximalArray[j].Num] = ProximalCost;
-				++ProximalArray[j].Num;
-			}
-		}
-	}
-}
-
-function bool AreNodesAdjacent(int Node0, int Node1)
-{
-	local int i;
-
-	for(i = 0; i < 3; ++i)
-	{
-		if(AdjacencyArray[Node0].T[i] == Node1 || AdjacencyArray[Node1].T[i] == Node0)
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
-// CalcProximalCost
-// Calculate the cost to go from Node0 to Node1, given the XY proximal distance
-function float CalcProximalNeighborCost(out Vector InVLoc0[3], out Vector InVLoc1[3], float ProximalXYDistance)
-{
-	local Vector C0, C1;
-	local int i;
-
-	// For now, just return distance from centers
-	for(i = 0; i < 3; ++i)
-	{
-		C0 += InVLoc0[i];
-		C1 += InVLoc1[i];
-	}
-	C0 *= (1.0/3.0);
-	C1 *= (1.0/3.0);
-
-	return (ProximalXYDistance + Abs(C1.Z - C0.Z)) * 0.1; // XY Distance between nodes + Z difference
 }
 
 // If an edge is shared between the two triangles, returns the index of that edge
@@ -405,45 +340,6 @@ function int FindSharedEdgeIndex(int T0, int T1)
 	return NavLib.Static.InvalidIndex();
 }
 
-// Marks the triangles as adjacents, sharing the edge specified by index E
-function MarkTrianglesAdjacent(int T0, int T1, int E)
-{
-	local float Cost;
-	local int i, j;
-
-	for(i = 0; i < 3; ++i)
-	{
-		if(AdjacencyArray[T0].T[i] == NavLib.Static.InvalidIndex())
-		{
-			break;
-		}
-	}
-
-	for(j = 0; j < 3; ++j)
-	{
-		if(AdjacencyArray[T1].T[j] == NavLib.Static.InvalidIndex())
-		{
-			break;
-		}
-	}
-
-	if(i == 3 || j == 3)
-	{
-		Utilities.Static.RLog("MarkTrianglesAdjacent failed for indices [" $ T0 $ "," $ T1 $ "] -- One triangle has too many adjacents", LogCategory);
-		return;
-	}
-
-	Cost = CalcAdjacencyCost(T0, T1, E);
-
-	AdjacencyArray[T0].T[i] = T1;
-	AdjacencyArray[T0].E[i] = E;
-	AdjacencyArray[T0].C[i] = Cost;
-
-	AdjacencyArray[T1].T[j] = T0;
-	AdjacencyArray[T1].E[j] = E;
-	AdjacencyArray[T1].C[j] = Cost;
-}
-
 function float CalcAdjacencyCost(int T0, int T1, int E)
 {
 	local int V0[3], V1[3], EV[2];
@@ -464,6 +360,68 @@ function float CalcAdjacencyCost(int T0, int T1, int E)
 	return Distance0 + Distance1;
 }
 
+function BuildProximalSet()
+{
+	local Vector VLoc0[3], VLoc1[3];
+	local float ProximalDistance;
+	local float ProximalCost;
+	local int i, j;
+
+	Utilities.Static.RLog("Building proximal set", LogCategory);
+
+	for(i = 0; i < NumTriangles - 1; ++i)
+	{
+		GetTriangleVertexLocationsUnchecked(i, VLoc0);
+		for(j = i + 1; j < NumTriangles; ++j)
+		{
+			if(NavObjectClass.Static.NavNeighborSet_ContainsNeighbor(NeighborSets[i], j))
+			{ 	// If i already contains j, continue
+				continue;
+			}
+			if(NavObjectClass.Static.NavNeighborSet_AtMaxCapacity(NeighborSets[i]))
+			{	// Break to outer loop if index i is full
+				break;
+			}
+			if(NavObjectClass.Static.NavNeighborSet_AtMaxCapacity(NeighborSets[j]))
+			{	// Skip if index j is full
+				continue;
+			}
+
+			GetTriangleVertexLocationsUnchecked(j, VLoc1);
+			ProximalDistance = GeomLib.Static.DistanceTriangleToTriangle2D(VLoc0, VLoc1);
+			if(ProximalDistance <= 128.0) // Will need to figure this value out, use 128 for now
+			{
+				ProximalCost = CalcProximalNeighborCost(VLoc0, VLoc1, ProximalDistance);
+
+				// Mark i and j as proximal neighbors
+				// TODO: Right now, they have the same cost, but the cost from i to j and j to i will not be the same
+				// i.e. if you can drop from i to j, but you have to climb from j to get to i
+				NavObjectClass.Static.NavNeighborSet_AddNeighbor(NeighborSets[i], NeighborType_Proximal, ProximalCost, j);
+				NavObjectClass.Static.NavNeighborSet_AddNeighbor(NeighborSets[j], NeighborType_Proximal, ProximalCost, i);
+			}
+		}
+	}
+}
+
+// CalcProximalCost
+// Calculate the cost to go from Node0 to Node1, given the XY proximal distance
+function float CalcProximalNeighborCost(out Vector InVLoc0[3], out Vector InVLoc1[3], float ProximalXYDistance)
+{
+	local Vector C0, C1;
+	local int i;
+
+	// For now, just return distance from centers
+	for(i = 0; i < 3; ++i)
+	{
+		C0 += InVLoc0[i];
+		C1 += InVLoc1[i];
+	}
+	C0 *= (1.0/3.0);
+	C1 *= (1.0/3.0);
+
+	return (ProximalXYDistance + Abs(C1.Z - C0.Z)) * 0.1; // XY Distance between nodes + Z difference
+}
+
 // Post process edge information
 // This identifies border edges and applies the border flag
 // Note that this function relies on adjacency information, so it must be run after BuildAdjacentSet
@@ -473,6 +431,7 @@ function PostProcessEdges()
 
 	Utilities.Static.RLog("Post processing edge data", LogCategory);
 
+	/*
 	// It's easiest to mark all edges as border edges and then remove them when they're discovered
 	// in the adjacency array
 	for(i = 0; i < NumEdges; ++i)
@@ -490,6 +449,7 @@ function PostProcessEdges()
 			}
 		}
 	}
+		*/
 }
 
 function int GetVertexCount() { return NumVertices; }
@@ -555,6 +515,7 @@ function GetTriangleEdgeIndicesUnchecked(int Index, out int OutE0, out int OutE1
 	OutE2 = TriangleArray[Index].E[2];
 }
 
+/*
 function GetTriangleAdjacentsUnchecked(int Index, out int OutT0, out int OutT1, out int OutT2)
 {
 	OutT0 = AdjacencyArray[Index].T[0];
@@ -584,6 +545,11 @@ function GetTriangleProximalDataUnchecked(int Index, out int OutT[16], out float
 		OutC[i] = ProximalArray[Index].C[i];
 		OutNum = ProximalArray[Index].Num;
 	}
+}
+	*/
+function GetTriangleNeighborSetUnchecked(int Index, out R_NavNeighborSet OutNodeNeighborSet)
+{
+	NavObjectClass.Static.NavNeighborSet_Copy(NeighborSets[Index], OutNodeNeighborSet);
 }
 
 function bool GetTriangleSharedEdgeLocationsUnchecked(int IndexA, int IndexB, out Vector OutLeftLocation, out Vector OutRightLocation)

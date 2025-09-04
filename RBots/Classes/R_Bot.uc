@@ -255,18 +255,20 @@ function Class<R_BotBehavior> DetermineDesiredBehavior()
 {
 	local PlayerPawn P;
 
-	P = GetOwnedPlayerPawn();
-	if(P != None)
-	{
-		if(P.Weapon == None)
-		{
-			return Behavior_FindWeapon;
-		}
-		else
-		{
-			return Behavior_Fight;
-		}
-	}
+	return Behavior_FindWeapon;
+
+	//P = GetOwnedPlayerPawn();
+	//if(P != None)
+	//{
+	//	if(P.Weapon == None)
+	//	{
+	//		return Behavior_FindWeapon;
+	//	}
+	//	else
+	//	{
+	//		return Behavior_Fight;
+	//	}
+	//}
 }
 
 event Tick(float DeltaSeconds)
