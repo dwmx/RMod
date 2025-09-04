@@ -35,35 +35,7 @@ struct NavMeshTriangle
 var private NavMeshTriangle TriangleArray[10000];
 var private int NumTriangles;
 
-/*
-// Adjacencies
-struct NavMeshAdjacency
-{
-	var int T[3];	// Indices into TriangleArray
-	var int E[3];	// Indices into EdgeArray
-	var float C[3];	// Cost for each connection
-};
-var private NavMeshAdjacency AdjacencyArray[ArrayCount(TriangleArray)];
-
-struct NavMeshProximalNeighbor
-{
-	var int T[16];		// Indices
-	var float C[16];	// Costs
-	var int Num;
-};
-var private NavMeshProximalNeighbor ProximalArray[ArrayCount(TriangleArray)];
-*/
-
-
-
-//=========================================
-// TODO:
-//	This needs to replace BOTH the Adjacency array AND the Proximal array
-
 var private R_NavNeighborSet NeighborSets[ArrayCount(TriangleArray)];
-
-//=========================================
-
 
 
 function InitializeNavMesh()
@@ -274,16 +246,30 @@ function bool ValidateNavMeshTriangles(out String OutFailedLogString)
 // Perform post-build and post-validation processing
 function PostProcessNavMesh()
 {
+	InitializePostProcessEdgeFlags();
 	InitializeNeighborSets();
 	BuildAdjacentSet();
 	BuildProximalSet();
-	PostProcessEdges();
+}
+
+function InitializePostProcessEdgeFlags()
+{
+	local int i;
+
+	// Mark all edges in the mesh as borders
+	// They will be unmarked one at a time as they are discovered to be shared by two triangles
+	// This occurs in BuildAdjacentSet
+	for(i = 0; i < NumEdges; ++i)
+	{
+		EdgeArray[i].Flags = EdgeArray[i].Flags | NavLib.Static.EdgeFlag_Border();
+	}
 }
 
 function InitializeNeighborSets()
 {
 	local int i;
 
+	// Init all neighbor sets
 	for(i = 0; i < NumTriangles; ++i)
 	{
 		NeighborSets[i].NumNeighbors = 0;
@@ -310,6 +296,9 @@ function BuildAdjacentSet()
 				Cost = CalcAdjacencyCost(i, j, EdgeIndex);
 				NavObjectClass.Static.NavNeighborSet_AddNeighbor(NeighborSets[i], NeighborType_Adjacent, Cost, j);
 				NavObjectClass.Static.NavNeighborSet_AddNeighbor(NeighborSets[j], NeighborType_Adjacent, Cost, i);
+
+				// Unmark this edge as a border edge
+				EdgeArray[EdgeIndex].Flags = EdgeArray[EdgeIndex].Flags & ~NavLib.Static.EdgeFlag_Border();
 			}
 		}
 	}
@@ -422,36 +411,6 @@ function float CalcProximalNeighborCost(out Vector InVLoc0[3], out Vector InVLoc
 	return (ProximalXYDistance + Abs(C1.Z - C0.Z)) * 0.1; // XY Distance between nodes + Z difference
 }
 
-// Post process edge information
-// This identifies border edges and applies the border flag
-// Note that this function relies on adjacency information, so it must be run after BuildAdjacentSet
-function PostProcessEdges()
-{
-	local int i, j;
-
-	Utilities.Static.RLog("Post processing edge data", LogCategory);
-
-	/*
-	// It's easiest to mark all edges as border edges and then remove them when they're discovered
-	// in the adjacency array
-	for(i = 0; i < NumEdges; ++i)
-	{
-		EdgeArray[i].Flags = EdgeArray[i].Flags | NavLib.Static.EdgeFlag_Border();
-	}
-
-	for(i = 0; i < NumTriangles; ++i)
-	{
-		for(j = 0; j < 3; ++j)
-		{
-			if(AdjacencyArray[i].E[j] != NavLib.Static.InvalidIndex())
-			{
-				EdgeArray[AdjacencyArray[i].E[j]].Flags = EdgeArray[AdjacencyArray[i].E[j]].Flags & ~NavLib.Static.EdgeFlag_Border();
-			}
-		}
-	}
-		*/
-}
-
 function int GetVertexCount() { return NumVertices; }
 function int GetEdgeCount() { return NumEdges; }
 function int GetTriangleCount() { return NumTriangles; }
@@ -515,38 +474,6 @@ function GetTriangleEdgeIndicesUnchecked(int Index, out int OutE0, out int OutE1
 	OutE2 = TriangleArray[Index].E[2];
 }
 
-/*
-function GetTriangleAdjacentsUnchecked(int Index, out int OutT0, out int OutT1, out int OutT2)
-{
-	OutT0 = AdjacencyArray[Index].T[0];
-	OutT1 = AdjacencyArray[Index].T[1];
-	OutT2 = AdjacencyArray[Index].T[2];
-}
-
-function GetTriangleAdjacentDataUnchecked(int Index, out int OutT[3], out int OutE[3], out float OutC[3])
-{
-	local int i;
-
-	for(i = 0; i < 3; ++i)
-	{
-		OutT[i] = AdjacencyArray[Index].T[i];
-		OutE[i] = AdjacencyArray[Index].E[i];
-		OutC[i] = AdjacencyArray[Index].C[i];
-	}
-}
-
-function GetTriangleProximalDataUnchecked(int Index, out int OutT[16], out float OutC[16], out int OutNum)
-{
-	local int i;
-
-	for(i = 0; i < ProximalArray[Index].Num; ++i)
-	{
-		OutT[i] = ProximalArray[Index].T[i];
-		OutC[i] = ProximalArray[Index].C[i];
-		OutNum = ProximalArray[Index].Num;
-	}
-}
-	*/
 function GetTriangleNeighborSetUnchecked(int Index, out R_NavNeighborSet OutNodeNeighborSet)
 {
 	NavObjectClass.Static.NavNeighborSet_Copy(NeighborSets[Index], OutNodeNeighborSet);
@@ -630,48 +557,3 @@ function GetTriangleNormalAndCenterUnchecked(int Index, out Vector OutNormal, ou
 	OutCenter.Y /= 3.0;
 	OutCenter.Z /= 3.0;
 }
-
-/*
-function bool FindContainingTriangle(out Vector InLocation, out int OutT0)
-{
-	// TODO:
-	// Right now, this is a linear search
-	// Need to implement BVH and search with that
-	local int i;
-
-	for(i = 0; i < NumTriangles; ++i)
-	{
-		if(IsLocationWithinTriangle(i, InLocation))
-		{
-			OutT0 = i;
-			return true;
-		}
-	}
-
-	OutT0 = NavLib.Static.InvalidIndex();
-	return false;
-}
-
-function bool IsLocationWithinTriangle(int Index, out Vector InWorldLocation)
-{
-	local Vector TNormal, TCenter;
-	local int V[3];
-	local Vector VLoc[3];
-	local int i;
-
-	// Location must be on the positive side of the specified triangle
-	GetTriangleNormalAndCenterUnchecked(Index, TNormal, TCenter);
-	if((InWorldLocation - TCenter) Dot TNormal < 0.0)
-	{
-		return false;
-	}
-
-	GetTriangleVertexIndicesUnchecked(Index, V[0], V[1], V[2]);
-	for(i = 0; i < 3; ++i)
-	{
-		GetVertexUnchecked(V[i], VLoc[i]);
-	}
-
-	return NavLib.Static.IsLocationWithinTriangle(VLoc, InWorldLocation);
-}
-	*/
