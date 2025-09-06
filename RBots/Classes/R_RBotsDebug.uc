@@ -489,5 +489,9 @@ function SetDebugTarget(R_Bot NewDebugTarget)
 defaultproperties
 {
 	bDrawDebugVisualization=true
+	// Leave all of these here -- default views will fail to load them from config at startup
+	// if these are not in defaultproperties
 	DefaultViews(0)=Class'RBots.R_RBotsDebug_View_NavMesh'
+	DefaultViews(1)=Class'RBots.R_RBotsDebug_View_Bots'
+	DefaultViews(2)=Class'RBots.R_RBotsDebug_View_PathFinding'
 }
