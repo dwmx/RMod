@@ -20,11 +20,13 @@ const NormalSize = 16.0;
 var config private bool bDrawNormals;
 var config private bool bDrawVertices;
 var config private bool bDrawEdges;
+var config private bool bDrawEdgeOrientations;
 var config private bool bDrawTriangles;
 var config private bool bDrawNeighbors;
 var config private bool bDrawNeighborCosts;
 var config private bool bDrawAdjacents;
 var config private bool bDrawProximity;
+var config private bool bDrawPlayerBorders;
 
 // Colors
 var Color VertexColor;
@@ -34,24 +36,27 @@ var Color NormalColor;
 var Color EdgeColor_Normal;
 var Color EdgeColor_Border;
 var Color EdgeColor_Impassable;
+var Color EdgeColor_Orientation;
 
 var Color TriangleColor_Contained;
 var Color TriangleColor_Adjacent;
 var Color TriangleColor_Proximity;
 
-simulated function ToggleNormals()
+var Color PlayerColor_Borders;
+
+function ToggleNormals()
 {
 	bDrawNormals = !bDrawNormals;
 	SaveConfig();
 }
 
-simulated function ToggleVertices()
+function ToggleVertices()
 {
 	bDrawVertices = !bDrawVertices;
 	SaveConfig();
 }
 
-simulated function ToggleEdges()
+function ToggleEdges()
 {
 	bDrawEdges = !bDrawEdges;
 	if(bDrawEdges && bDrawTriangles)
@@ -61,7 +66,13 @@ simulated function ToggleEdges()
 	SaveConfig();
 }
 
-simulated function ToggleTriangles()
+function ToggleEdgeOrientations()
+{
+	bDrawEdgeOrientations = !bDrawEdgeOrientations;
+	SaveConfig();
+}
+
+function ToggleTriangles()
 {
 	bDrawTriangles = !bDrawTriangles;
 	if(bDrawTriangles && bDrawEdges)
@@ -95,7 +106,13 @@ function ToggleProximity()
 	SaveConfig();
 }
 
-simulated function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
+function TogglePlayerBorders()
+{
+	bDrawPlayerBorders = !bDrawPlayerBorders;
+	SaveConfig();
+}
+
+function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
 {
 	local R_NavMesh NavMesh;
 
@@ -120,19 +137,27 @@ simulated function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringMana
 	}
 }
 
-simulated function DrawNavMesh(Canvas C, R_RbotsDebug_StringManager StringManager, R_NavMesh NavMesh)
+function DrawNavMesh(Canvas C, R_RbotsDebug_StringManager StringManager, R_NavMesh NavMesh)
 {
+	if(bDrawEdges)
+	{	// Drawing Edges
+		StringManager.AddString(DebugNavMeshCategory, "Edges", "Draw Type");
+		DrawNavMeshEdges(C, StringManager, NavMesh);
+	}
+	else if(bDrawTriangles)
+	{	// Drawing Triangles
+		StringManager.AddString(DebugNavMeshCategory, "Triangles", "Draw Type");
+		DrawNavMeshTriangles(C, StringManager, NavMesh);
+	}
+	else
+	{	// Not drawing edges or triangles
+		StringManager.AddString(DebugNavMeshCategory, "None", "Draw Type");
+	}
+
+	StringManager.AddBool(DebugNavMeshCategory, "Draw Vertices", bDrawVertices);
 	if(bDrawVertices)
 	{
 		DrawNavMeshVertices(C, StringManager, NavMesh);
-	}
-	if(bDrawEdges)
-	{
-		DrawNavMeshEdges(C, StringManager, NavMesh);
-	}
-	if(bDrawTriangles)
-	{
-		DrawNavMeshTriangles(C, StringManager, NavMesh);
 	}
 
 	StringManager.AddBool(DebugNavMeshCategory, "Draw Neighbors", bDrawNeighbors);
@@ -140,12 +165,18 @@ simulated function DrawNavMesh(Canvas C, R_RbotsDebug_StringManager StringManage
 	{
 		DrawNavMeshNeighbors(C, StringManager, NavMesh);
 	}
+
+	StringManager.AddBool(DebugNavMeshCategory, "Draw Player Borders", bDrawPlayerBorders);
+	if(bDrawPlayerBorders)
+	{
+		DrawNavMeshPlayerBorders(C, StringManager, NavMesh);
+	}
 	
 	// This will draw the node containing the player, and that node's adjacencies
 	//DrawPlayerContainedNavMeshTriangle(C, NavMesh);
 }
 
-simulated function DrawNavMeshVertices(Canvas C, R_RbotsDebug_StringManager StringManager, R_NavMesh NavMesh)
+function DrawNavMeshVertices(Canvas C, R_RbotsDebug_StringManager StringManager, R_NavMesh NavMesh)
 {
 	local Vector VertexLocation;
 	local Vector DrawExtents, DrawVerticalOffset;
@@ -167,14 +198,16 @@ simulated function DrawNavMeshVertices(Canvas C, R_RbotsDebug_StringManager Stri
 	}
 }
 
-simulated function DrawNavMeshEdges(Canvas C, R_RbotsDebug_StringManager StringManager, R_NavMesh NavMesh)
+function DrawNavMeshEdges(Canvas C, R_RbotsDebug_StringManager StringManager, R_NavMesh NavMesh)
 {
 	local int V0, V1;
 	local int EdgeFlags;
 	local Vector Location0, Location1;
+	local Vector Center, Orientation;
 	local int EdgeCount;
-	local float EdgeRGB[3], BorderPassableRGB[3], BorderImpassableRGB[3];
+	local float EdgeRGB[3], BorderPassableRGB[3], BorderImpassableRGB[3], OrientationRGB[3];
 	local Vector DrawVerticalOffset;
+	local bool bImpassable, bBorder;
 	local int i;
 
 	StringManager.AddColor(DebugNavMeshCategory, "Edges", EdgeColor_Normal);
@@ -187,6 +220,12 @@ simulated function DrawNavMeshEdges(Canvas C, R_RbotsDebug_StringManager StringM
 	Utilities.Static.ColorToFloats(EdgeColor_Border, BorderPassableRGB[0], BorderPassableRGB[1], BorderPassableRGB[2]);
 	Utilities.Static.ColorToFloats(EdgeColor_Impassable, BorderImpassableRGB[0], BorderImpassableRGB[1], BorderImpassableRGB[2]);
 
+	if(bDrawEdgeOrientations)
+	{
+		StringManager.AddColor(DebugNavMeshCategory, "Edge Orientations", EdgeColor_Orientation);
+		Utilities.Static.ColorToFloats(EdgeColor_Orientation, OrientationRGB[0], OrientationRGB[1], OrientationRGB[2]);
+	}
+
 	DrawVerticalOffset = Vect(0,0,1) * VERTICAL_DRAW_OFFSET;
 
 	for(i = 0; i < EdgeCount; ++i)
@@ -198,23 +237,51 @@ simulated function DrawNavMeshEdges(Canvas C, R_RbotsDebug_StringManager StringM
 		NavMesh.GetEdgeFlagsUnchecked(i, EdgeFlags);
 
 		// Draw edge -----------------------------------------------------------
-		if((EdgeFlags & NavLib.Static.EdgeFlag_Impassable()) == NavLib.Static.EdgeFlag_Impassable())
+		bImpassable = false;
+		bBorder = false;
+		if((EdgeFlags & NavLib.Static.EdgeFlag_Impassable()) == NavLib.Static.EdgeFlag_Impassable())	bImpassable = true;
+		if((EdgeFlags & NavLib.Static.EdgeFlag_Border()) == NavLib.Static.EdgeFlag_Border())			bBorder = true;
+
+		if(bImpassable)
 		{	// Impassable edge
-			C.DrawLine3D(Location0 + DrawVerticalOffset, Location1 + DrawVerticalOffset, BorderImpassableRGB[0], BorderImpassableRGB[1], BorderImpassableRGB[2]);
-			continue;
+			CanvasLib.Static.DrawLine3D(
+				C,
+				Location0 + DrawVerticalOffset,
+				Location1 + DrawVerticalOffset,
+				BorderImpassableRGB[0], BorderImpassableRGB[1], BorderImpassableRGB[2]);
 		}
-		if((EdgeFlags & NavLib.Static.EdgeFlag_Border()) == NavLib.Static.EdgeFlag_Border())
+		else if(bBorder)
 		{	// Border edge
-			C.DrawLine3D(Location0 + DrawVerticalOffset, Location1 + DrawVerticalOffset, BorderPassableRGB[0], BorderPassableRGB[1], BorderPassableRGB[2]);
-			continue;
+			CanvasLib.Static.DrawLine3D(
+				C,
+				Location0 + DrawVerticalOffset,
+				Location1 + DrawVerticalOffset,
+				BorderPassableRGB[0], BorderPassableRGB[1], BorderPassableRGB[2]);
+		}
+		else
+		{	// Normal edge
+			CanvasLib.Static.DrawLine3D(
+				C,
+				Location0 + DrawVerticalOffset,
+				Location1 + DrawVerticalOffset,
+				EdgeRGB[0], EdgeRGB[1], EdgeRGB[2]);
 		}
 
-		// Normal edge
-		C.DrawLine3D(Location0 + DrawVerticalOffset, Location1 + DrawVerticalOffset, EdgeRGB[0], EdgeRGB[1], EdgeRGB[2]);
+		// Edge orientation
+		if(bDrawEdgeOrientations && (bBorder || bImpassable))
+		{
+			NavMesh.GetEdgeOrientationUnchecked(i, Orientation);
+			Center = (Location0 + Location1) * 0.5f;
+			CanvasLib.Static.DrawLine3D(
+				C,
+				Center + DrawVerticalOffset,
+				(Center + Orientation * 64.0) + DrawVerticalOffset,
+				OrientationRGB[0], OrientationRGB[1], OrientationRGB[2]);
+		}
 	}
 }
 
-simulated function DrawNavMeshTriangles(Canvas C, R_RbotsDebug_StringManager StringManager, R_NavMesh NavMesh)
+function DrawNavMeshTriangles(Canvas C, R_RbotsDebug_StringManager StringManager, R_NavMesh NavMesh)
 {
 	local int IndexA, IndexB, IndexC;
 	local Vector VertexA, VertexB, VertexC;
@@ -258,7 +325,7 @@ simulated function DrawNavMeshTriangles(Canvas C, R_RbotsDebug_StringManager Str
 	}
 }
 
-simulated function DrawNavMeshNeighbors(Canvas C, R_RbotsDebug_StringManager StringManager, R_NavMesh NavMesh)
+function DrawNavMeshNeighbors(Canvas C, R_RbotsDebug_StringManager StringManager, R_NavMesh NavMesh)
 {
 	local Vector PlayerLocation;
 	local int NodeIndex;
@@ -366,6 +433,39 @@ function DrawTriangle(Canvas C, Vector VLoc[3], float RGB[3], float Scale, optio
 	CanvasLib.Static.DrawLine3D(C, VLoc[2], VLoc[0], RGB[0], RGB[1], RGB[2]);
 }
 
+function DrawNavMeshPlayerBorders(Canvas C, R_RbotsDebug_StringManager StringManager, R_NavMesh NavMesh)
+{
+	local Vector Location;
+	local int EdgeIndices[32], NumEdges;
+	local float EdgeDistances[32];
+	local Vector VLoc[2], EdgeCenter;
+	local float BorderRGB[3];
+	local String DistanceString;
+	local int i;
+
+	StringManager.AddColor(DebugNavMeshCategory, "Near Player Borders", PlayerColor_Borders);
+
+	if(Owner != None && Owner.Owner != None)
+	{
+		Utilities.Static.ColorToFloats(PlayerColor_Borders, BorderRGB[0], BorderRGB[1], BorderRGB[2]);
+
+		Location = Owner.Owner.Location;
+
+		NavMesh.FindRelevantBorderEdgesInRadius2D(Location, 256.0, EdgeIndices, EdgeDistances, NumEdges);
+		for(i = 0; i < NumEdges; ++i)
+		{
+			NavMesh.GetEdgeVertexLocationsUnchecked(EdgeIndices[i], VLoc);
+			EdgeCenter = (VLoc[0] + VLoc[1]) * 0.5f;
+			CanvasLib.Static.DrawLine3D(C, Location, EdgeCenter, BorderRGB[0], BorderRGB[1], BorderRGB[2]);
+
+			// Draw distance as text
+			DistanceString = Utilities.Static.FloatToString(EdgeDistances[i], 1);
+			DebugLib.Static.InitializeCanvasForDebugDrawing(C);
+			CanvasLib.Static.DrawTextAtWorldLocation(C, DistanceString, EdgeCenter, Vect(0.5, 0.5, 0.0));
+		}
+	}
+}
+
 defaultproperties
 {
 	VertexColor=(R=252,G=207,B=91)
@@ -377,11 +477,15 @@ defaultproperties
 	EdgeColor_Normal=(R=29,G=44,B=133)
 	EdgeColor_Border=(R=43,G=255,B=53)
 	EdgeColor_Impassable=(R=255,G=32,B=32)
+	EdgeColor_Orientation=(R=255,G=255,B=0)
+	PlayerColor_Borders=(R=248,G=55,B=255)
 	bDrawNormals=true
 	bDrawVertices=false
 	bDrawEdges=true
+	bDrawEdgeOrientations=true
 	bDrawNeighbors=true
 	bDrawNeighborCosts=true
 	bDrawAdjacents=true
 	bDrawProximity=true
+	bDrawPlayerBorders=true
 }

@@ -119,94 +119,154 @@ function bool FindNodesInRadius(R_NavMesh NavMesh, Vector Origin, float Radius, 
 	return true;
 }
 
-/*
-function bool FindNodeSpatialNeighbors2D(
+function bool FindRelevantBorderEdgesInRadius2D(
 	R_NavMesh NavMesh,
-	int NodeIndex,
-	float MaxDistance,
-	out int OutNeighborIndices[32],
-	out int OutNumNeighborIndices)
+	Vector Location,
+	float Radius,
+	out int OutEdgeIndices[32],
+	out float OutEdgeDistances[32],
+	out int OutNumEdges)
 {
-	local Vector VLoc0[3], VLoc1[3];
-	local int NumTriangles;
-	local float Distance;
-	local int i;
+	local R_NavNeighborSet NeighborSet;
+	local int NumNeighbors;
+	local int ContainingIndex, CurrentIndex;
+	local int Queue[128], Visited[1024]; // If Visited is not large enough to hold every node in the NavMesh, this function will infinite loop
+	local int NumQueue, NumVisited;
+	local int Edges[3];
+	local Vector VLocTriangle[3], VLocEdge[2];
+	local Vector EdgeOrientation;
+	local float Dist;
+	local int EdgeFlags;
+	local int NeighborIndex;
+	local int i, j;
+	local bool bSkip;
 
-	if(MaxDistance < 0.0)
-	{	// Negative distance invalid
-		OutNumNeighborIndices = 0;
+	if(!FindContainingNode(NavMesh, Location, ContainingIndex))
+	{	// This is a DFS from containing node, so cancel if no node found
+		OutNumEdges = 0;
 		return false;
 	}
 
-	OutNumNeighborIndices = 0;
+	Queue[0] = ContainingIndex;
+	NumQueue = 1;
+	Visited[0] = ContainingIndex;
+	NumVisited = 1;
 
-	NavMesh.GetTriangleVertexLocationsUnchecked(NodeIndex, VLoc0);
-	for(i = 0; i < 3; ++i)
+	OutNumEdges = 0;
+	while(NumQueue > 0)
 	{
-		if(OutNumNeighborIndices >= ArrayCount(OutNeighborIndices))
+		--NumQueue;
+		CurrentIndex = Queue[NumQueue];
+
+		// Push adjacent neighbors
+		NavMesh.GetTriangleNeighborSetUnchecked(CurrentIndex, NeighborSet);
+		NumNeighbors = NeighborSet.NumNeighbors;
+		for(i = 0; i < NumNeighbors; ++i)
 		{
-			break;
+			NeighborIndex = NeighborSet.Neighbors[i].NeighborIndex;
+
+			// Skip already visited neighbors
+			bSkip = false;
+			for(j = 0; j < NumVisited; ++j)
+			{
+				if(Visited[j] == NeighborIndex)
+				{
+					bSkip = true;
+					break;
+				}
+			}
+			if(bSkip)
+			{
+				continue;
+			}
+
+			// Skip non-adjacent neighbors
+			if(NeighborSet.Neighbors[i].NeighborType != NeighborType_Adjacent)
+			{
+				continue;
+			}
+			
+			// Mark this neighbor as a visited node
+			Visited[NumVisited] = NeighborIndex;
+			++NumVisited;
+
+			// The adjacent triangle needs to have at least one edge in radius
+			NavMesh.GetTriangleVertexLocationsUnchecked(NeighborIndex, VLocTriangle);
+
+			bSkip = true;
+			for(j = 0; j < 3; ++j)
+			{
+				Dist = NavLib.Static.DistanceLocationToLineSegment(
+					Vect(1,1,0) * Location,
+					Vect(1,1,0) * VLocTriangle[j],
+					Vect(1,1,0) * VLocTriangle[(j + 1) % 3]);
+				if(Dist <= Radius)
+				{
+					bSkip = false;
+					break;
+				}
+			}
+
+			if(bSkip)
+			{	// No edge in radius in this node
+				continue;
+			}
+
+			// At least one edge is in radius, add to queue
+			Queue[NumQueue] = NeighborIndex;
+			++NumQueue;
 		}
 
-		if(i == NodeIndex)
-		{
-			continue;
-		}
 
-		NavMesh.GetTriangleVertexLocationsUnchecked(i, VLoc1);
-		Distance = NavLib.Static.DistanceTriangleToTriangle2D(VLoc0, VLoc1);
-		if(Distance <= MaxDistance)
+		// Check and push edges
+		NavMesh.GetTriangleEdgeIndicesUnchecked(CurrentIndex, Edges[0], Edges[1], Edges[2]);
+
+		for(i = 0; i < 3; ++i)
 		{
-			OutNeighborIndices[OutNumNeighborIndices] = i;
-			++OutNumNeighborIndices;
+			// Make sure it's not already being output
+			bSkip = false;
+			for(j = 0; j < OutNumEdges; ++j)
+			{
+				if(OutEdgeIndices[j] == Edges[i])
+				{
+					bSkip = true;
+					break;
+				}
+			}
+			if(bSkip)
+			{
+				continue;
+			}
+
+			// Make sure the edge is a border or an impassable edge
+			NavMesh.GetEdgeFlagsUnchecked(Edges[i], EdgeFlags);
+			if(	(EdgeFlags & NavLib.Static.EdgeFlag_Border()) == 0
+			&&	(EdgeFlags & NavLib.Static.EdgeFlag_Impassable()) == 0)
+			{
+				continue;
+			}
+
+			// Check against edge vertex locations
+			NavMesh.GetEdgeVertexLocationsUnchecked(Edges[i], VLocEdge);
+
+			// Check if location is on the correct side of the border edge
+			NavMesh.GetEdgeOrientationUnchecked(Edges[i], EdgeOrientation);
+			if((((VLocEdge[0] + VLocEdge[1]) * 0.5f) - Location) Dot EdgeOrientation > 0.0f)
+			{	// Must be on the 'surface' side of the edge
+				continue;
+			}
+
+			Dist = NavLib.Static.DistanceLocationToLineSegment(
+				Vect(1,1,0) * Location,
+				Vect(1,1,0) * VLocEdge[0],
+				Vect(1,1,0) * VLocEdge[1]);
+
+			if(Dist <= Radius)
+			{	// This edge is in radius, add it to output
+				OutEdgeIndices[OutNumEdges] = Edges[i];
+				OutEdgeDistances[OutNumEdges] = Dist;
+				++OutNumEdges;
+			}
 		}
 	}
-
-	return true;
 }
-	*/
-
-	/*
-function bool FindNodeNeighbors2D(
-	R_NavMesh NavMesh,
-	int NodeIndex,
-	float MaxProximalRadius,
-	out R_NavNeighbor OutNeighbors[32],
-	out int OutNumNeighbors)
-{
-	local Vector VLoc0[3], VLoc1[3];
-	local int NumNodes;
-	local int i;
-
-	MaxProximalRadius = FMax(0.0, MaxProximalRadius);
-
-	// Get input node
-	NavMesh.GetTriangleVertexLocationsUnchecked(NodeIndex, VLoc0);
-
-	OutNumNeighbors = 0;
-	NumNodes = NavMesh.GetTriangleCount();
-	for(i = 0; i < NumNodes; ++i)
-	{
-		if(OutNumNeighbors >= ArrayCount(OutNeighbors))
-		{
-			break;
-		}
-
-		if(i == NodeIndex)
-		{
-			continue;
-		}
-
-		NavMesh.GetTriangleVertexLocationsUnchecked(i, VLoc1);
-		if(GeomLib.Static.DistanceTriangleToTriangle2D(VLoc0, VLoc1) <= MaxProximalRadius)
-		{
-			OutNeighbors[OutNumNeighbors].NeighborType = NeighborType_Proximal;
-			OutNeighbors[OutNumNeighbors].Cost = 0.0;
-			OutNeighbors[OutNumNeighbors].NodeIndex = i;
-			++OutNumNeighbors;
-		}
-	}
-
-	return true;
-}
-	*/

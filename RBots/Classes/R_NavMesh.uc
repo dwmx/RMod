@@ -45,8 +45,10 @@ function GetVertexUnchecked(int Index, out Vector OutLocation);
 // Edge functions
 function PushEdge(int V0, int V1);
 function int GetEdgeCount();
+function GetEdgeVertexLocationsUnchecked(int Index, out Vector VLoc[2]);
 function GetEdgeVertexIndicesUnchecked(int Index, out int OutV0, out int OutV1);
 function GetEdgeFlagsUnchecked(int Index, out int OutEdgeFlags);
+function GetEdgeOrientationUnchecked(int Index, out Vector OutEdgeOrientation);
 function SetEdgePassable(int V0, int V1, bool bPassable);
 
 // Triangle functions
@@ -261,6 +263,13 @@ function bool FindPath(
 	return true;
 }
 
+//------------------------------------------------------------------------------
+//	Spatial Query Functions
+//	All of these functions route calls to the NavMeshSpatialQuery object
+//
+//	TODO: Consider a function `GetSpatialQueryInterface` which just returns the
+//	NavMeshSpatialQuery object
+
 // Returns the index of the node containing the specified location
 function int FindContainingNodeIndex(Vector Location)
 {
@@ -284,6 +293,22 @@ function FindNodesInRadius(Vector Origin, float Radius, out int OutNodes[32], ou
 	}
 
 	NavMeshSpatialQuery.FindNodesInRadius(Self, Origin, Radius, OutNodes, OutNumNodes);
+}
+
+function bool FindRelevantBorderEdgesInRadius2D(
+	Vector Location,
+	float Radius,
+	out int OutEdgeIndices[32],
+	out float OutEdgeDistances[32],
+	out int OutNumEdges)
+{
+	if(NavMeshSpatialQuery == None)
+	{
+		OutNumEdges = 0;
+		return false;
+	}
+
+	return NavMeshSpatialQuery.FindRelevantBorderEdgesInRadius2D(Self, Location, Radius, OutEdgeIndices, OutEdgeDistances, OutNumEdges);
 }
 
 defaultproperties

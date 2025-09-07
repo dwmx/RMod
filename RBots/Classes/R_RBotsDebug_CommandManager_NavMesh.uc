@@ -10,11 +10,13 @@ const Command_Toggle = "Toggle";
 const Command_ToggleNormals = "Normals";
 const Command_ToggleVertices = "Vertices";
 const Command_ToggleEdges = "Edges";
+const Command_ToggleEdgeOrientations = "EdgeOrientations";
 const Command_ToggleTriangles = "Triangles";
 const Command_ToggleNeighbors = "Neighbors";
 const Command_ToggleCosts = "Costs";
 const Command_ToggleAdjacents = "Adjacents";
 const Command_ToggleProximity = "Proximity";
+const Command_TogglePlayerBorders = "PlayerBorders";
 
 function RegisterCommandList()
 {
@@ -24,28 +26,32 @@ function RegisterCommandList()
 	RegisterCommand(Command_ToggleNormals);
 	RegisterCommand(Command_ToggleVertices);
 	RegisterCommand(Command_ToggleEdges);
+	RegisterCommand(Command_ToggleEdgeOrientations);
 	RegisterCommand(Command_ToggleTriangles);
 	RegisterCommand(Command_ToggleNeighbors);
 	RegisterCommand(Command_ToggleCosts);
 	RegisterCommand(Command_ToggleAdjacents);
 	RegisterCommand(Command_ToggleProximity);
+	RegisterCommand(Command_TogglePlayerBorders);
 }
 
 function bool TryHandleCommand(String CommandString, R_RBotsDebug DebugMutator, PlayerPawn Sender)
 {
 	switch(CommandString)
 	{
-		case Command_Show:				HandleCommand_Show(DebugMutator, Sender);				return true;
-		case Command_Hide:				HandleCommand_Hide(DebugMutator, Sender);				return true;
-		case Command_Toggle:			HandleCommand_Toggle(DebugMutator, Sender);				return true;
-		case Command_ToggleNormals:		HandleCommand_ToggleNormals(DebugMutator, Sender);		return true;
-		case Command_ToggleVertices:	HandleCommand_ToggleVertices(DebugMutator, Sender);		return true;
-		case Command_ToggleEdges:		HandleCommand_ToggleEdges(DebugMutator, Sender);		return true;
-		case Command_ToggleTriangles:	HandleCommand_ToggleTriangles(DebugMutator, Sender);	return true;
-		case Command_ToggleNeighbors:	HandleCommand_ToggleNeighbors(DebugMutator, Sender);	return true;
-		case Command_ToggleCosts:		HandleCommand_ToggleCosts(DebugMutator, Sender);		return true;
-		case Command_ToggleAdjacents:	HandleCommand_ToggleAdjacents(DebugMutator, Sender);	return true;
-		case Command_ToggleProximity:	HandleCommand_ToggleProximity(DebugMutator, Sender);	return true;
+		case Command_Show:						HandleCommand_Show(DebugMutator, Sender);					return true;
+		case Command_Hide:						HandleCommand_Hide(DebugMutator, Sender);					return true;
+		case Command_Toggle:					HandleCommand_Toggle(DebugMutator, Sender);					return true;
+		case Command_ToggleNormals:				HandleCommand_ToggleNormals(DebugMutator, Sender);			return true;
+		case Command_ToggleVertices:			HandleCommand_ToggleVertices(DebugMutator, Sender);			return true;
+		case Command_ToggleEdges:				HandleCommand_ToggleEdges(DebugMutator, Sender);			return true;
+		case Command_ToggleEdgeOrientations:	HandleCommand_ToggleEdgeOrientations(DebugMutator, Sender);	return true;
+		case Command_ToggleTriangles:			HandleCommand_ToggleTriangles(DebugMutator, Sender);		return true;
+		case Command_ToggleNeighbors:			HandleCommand_ToggleNeighbors(DebugMutator, Sender);		return true;
+		case Command_ToggleCosts:				HandleCommand_ToggleCosts(DebugMutator, Sender);			return true;
+		case Command_ToggleAdjacents:			HandleCommand_ToggleAdjacents(DebugMutator, Sender);		return true;
+		case Command_ToggleProximity:			HandleCommand_ToggleProximity(DebugMutator, Sender);		return true;
+		case Command_TogglePlayerBorders:		HandleCommand_TogglePlayerBorders(DebugMutator, Sender);	return true;
 	}
 
 	return false;
@@ -127,6 +133,20 @@ function HandleCommand_ToggleEdges(R_RBotsDebug DebugMutator, PlayerPawn Sender)
 	}
 }
 
+function HandleCommand_ToggleEdgeOrientations(R_RBotsDebug DebugMutator, PlayerPawn Sender)
+{
+	local R_RBotsDebug_View_NavMesh DVNavMesh;
+
+	if(DebugMutator != None)
+	{
+		DVNavMesh = GetDVNavMesh(DebugMutator);
+		if(DVNavMesh != None)
+		{
+			DVNavMesh.ToggleEdgeOrientations();
+		}
+	}
+}
+
 function HandleCommand_ToggleTriangles(R_RBotsDebug DebugMutator, PlayerPawn Sender)
 {
 	local R_RBotsDebug_View_NavMesh DVNavMesh;
@@ -195,4 +215,18 @@ function HandleCommand_ToggleProximity(R_RBotsDebug DebugMutator, PlayerPawn Sen
 			DVNavMesh.ToggleProximity();
 		}
 	}
+}
+
+function HandleCommand_TogglePlayerBorders(R_RBotsDebug DebugMutator, PlayerPawn Sender)
+{
+	local R_RBotsDebug_View_NavMesh DVNavMesh;
+
+	if(DebugMutator != None)
+	{
+		DVNavMesh = GetDVNavMesh(DebugMutator);
+		if(DVNavMesh != None)
+		{
+			DVNavMesh.TogglePlayerBorders();
+		}
+	} 
 }

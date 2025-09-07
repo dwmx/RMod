@@ -22,6 +22,7 @@ struct NavMeshEdge
 {
 	var int V[2];	// Indices into VertexArray
 	var int Flags;	// Flags associated with this edge
+	var Vector Orientation; // For border edges, this points towards triangle surface
 };
 var private NavMeshEdge EdgeArray[10000];
 var private int NumEdges;
@@ -249,6 +250,7 @@ function PostProcessNavMesh()
 	InitializePostProcessEdgeFlags();
 	InitializeNeighborSets();
 	BuildAdjacentSet();
+	BuildEdgeOrientations();
 	BuildProximalSet();
 }
 
@@ -303,6 +305,109 @@ function BuildAdjacentSet()
 		}
 	}
 }
+
+// Border edges need to know which direction points toward the surface of its triangle, and which
+// side points away from the triangle
+// This is used for pathfinding wall separation, and for border avoidance
+// This relies on all border edge flags being valid before being called
+function BuildEdgeOrientations()
+{
+    local int EdgeIndex;
+    local Vector V0, V1, EdgeVec;
+    local Vector ECenter, ToTri, Perp;
+    local int i, j, k;
+
+    Utilities.Static.RLog("Building edge orientations", LogCategory);
+
+    for (i = 0; i < NumTriangles; ++i)
+    {
+        for (j = 0; j < 3; ++j)
+        {
+            EdgeIndex = TriangleArray[i].E[j];
+
+            // Only care about border/impassable edges
+            if ((EdgeArray[EdgeIndex].Flags & NavLib.Static.EdgeFlag_Border()) == 0
+            &&  (EdgeArray[EdgeIndex].Flags & NavLib.Static.EdgeFlag_Impassable()) == 0)
+            {
+                continue;
+            }
+
+            // Get edge vertices
+            V0 = VertexArray[EdgeArray[EdgeIndex].V[0]].Location;
+            V1 = VertexArray[EdgeArray[EdgeIndex].V[1]].Location;
+
+            // Edge midpoint
+            ECenter = Vect(1,1,0) * ((V0 + V1) * 0.5);
+
+            // Find the "third vertex" of the triangle
+            for (k = 0; k < 3; ++k)
+            {
+                if (TriangleArray[i].V[k] != EdgeArray[EdgeIndex].V[0]
+                &&  TriangleArray[i].V[k] != EdgeArray[EdgeIndex].V[1])
+                {
+                    break;
+                }
+            }
+
+            ToTri = Vect(1,1,0) * (VertexArray[TriangleArray[i].V[k]].Location - ECenter);
+
+            // Edge vector
+            EdgeVec = Vect(1,1,0) * (V1 - V0);
+
+            // Perpendicular (rotate edge 90° CCW in 2D)
+            Perp.X = -EdgeVec.Y;
+            Perp.Y =  EdgeVec.X;
+            Perp.Z =  0;
+
+            // Make sure it points into the triangle
+            if (Perp Dot ToTri < 0)
+            {
+                Perp *= -1;
+            }
+
+            EdgeArray[EdgeIndex].Orientation = Normal(Perp);
+        }
+    }
+}
+
+/*
+function BuildEdgeOrientations()
+{
+	local int EdgeIndex;
+	local Vector TCenter, ECenter;
+	local Vector Orientation;
+	local int i, j, k;
+
+	Utilities.Static.RLog("Building edge orientations", LogCategory);
+
+	for(i = 0; i < NumTriangles; ++i)
+	{
+		TCenter = Vect(0,0,0);
+		for(j = 0; j < 3; ++j)
+		{	// Calc triangle center
+			TCenter += VertexArray[TriangleArray[i].V[j]].Location;
+		}
+		TCenter = Vect(1,1,0) * (TCenter * (1.0/3.0));
+		
+		for(j = 0; j < 3; ++j)
+		{
+			EdgeIndex = TriangleArray[i].E[j];
+			if((EdgeArray[EdgeIndex].Flags & NavLib.Static.EdgeFlag_Border()) != 0)
+			{
+				ECenter = Vect(0,0,0);
+				for(k = 0; k < 2; ++k)
+				{
+					ECenter += VertexArray[EdgeArray[TriangleArray[i].E[j]].V[0]].Location;
+				}
+				ECenter = Vect(1,1,0) * (ECenter * (1.0/2.0));
+
+				Orientation = Normal(TCenter - ECenter);
+				EdgeArray[EdgeIndex].Orientation = Orientation;
+			}
+		}
+	}
+}
+	*/
 
 // If an edge is shared between the two triangles, returns the index of that edge
 // Returns InvalidIndex otherwise
@@ -376,11 +481,91 @@ function BuildProximalSet()
 				// Mark i and j as proximal neighbors
 				// TODO: Right now, they have the same cost, but the cost from i to j and j to i will not be the same
 				// i.e. if you can drop from i to j, but you have to climb from j to get to i
-				NavObjectClass.Static.NavNeighborSet_AddNeighbor(NeighborSets[i], NeighborType_Proximal, ProximalCost, j);
-				NavObjectClass.Static.NavNeighborSet_AddNeighbor(NeighborSets[j], NeighborType_Proximal, ProximalCost, i);
+				if(ShouldABeProximalToB(j, VLoc1, i, VLoc0, ProximalDistance))
+				{
+					NavObjectClass.Static.NavNeighborSet_AddNeighbor(NeighborSets[i], NeighborType_Proximal, ProximalCost, j);
+				}
+				if(ShouldABeProximalToB(i, VLoc0, j, VLoc1, ProximalCost))
+				{
+					NavObjectClass.Static.NavNeighborSet_AddNeighbor(NeighborSets[j], NeighborType_Proximal, ProximalCost, i);
+				}
 			}
 		}
 	}
+}
+
+// Returns true if index A should be marked as proximal to index B
+// It is assumed that A and B have already been distance checked
+function bool ShouldABeProximalToB(int A, out Vector InVLocA[3], int B, out Vector InVLocB[3], float ProximalDistance)
+{
+	local int E[3];
+	local int EdgeFlags;
+	local bool bHasBorder;
+	local Vector CA, CB;
+	local float MinZA, MaxZA, MinZB, MaxZB;
+	local int i;
+
+	GetTriangleEdgeIndicesUnchecked(B, E[0], E[1], E[2]);
+	for(i = 0; i < 3; ++i)
+	{
+		GetEdgeFlagsUnchecked(E[i], EdgeFlags);
+		if(	(EdgeFlags & NavLib.Static.EdgeFlag_Border()) != 0
+		&&	(EdgeFlags & NavLib.Static.EdgeFlag_Impassable()) == 0)
+		{
+			bHasBorder = true;
+			break;
+		}
+	}
+
+	// For now, B has to have at least one border edge
+	if(!bHasBorder)
+	{
+		return false;
+	}
+
+	MinZA = FMin(InVLocA[0].Z, FMin(InVLocA[1].Z, InVLocA[2].Z));
+	MaxZA = FMax(InVLocA[0].Z, FMax(InVLocA[1].Z, InVLocA[2].Z));
+	MinZB = FMin(InVLocB[0].Z, FMin(InVLocB[1].Z, InVLocB[2].Z));
+	MaxZB = FMax(InVLocB[0].Z, FMax(InVLocB[1].Z, InVLocB[2].Z));
+
+	// If they intersect, then B has to be higher than A
+	if(ProximalDistance == 0.0)
+	{
+		if(MaxZB > MinZA)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	else
+	{	// Otherwise, A also needs a passable border edge
+		GetTriangleEdgeIndicesUnchecked(A, E[0], E[1], E[2]);
+		for(i = 0; i < 3; ++i)
+		{
+			GetEdgeFlagsUnchecked(E[i], EdgeFlags);
+			if(	(EdgeFlags & NavLib.Static.EdgeFlag_Border()) != 0
+			&&	(EdgeFlags & NavLib.Static.EdgeFlag_Impassable()) == 0)
+			{
+				return true;
+			}
+		}
+	}
+
+	/*
+	// For now, use center points to determine which triangle is higher / lower
+	CA = (InVLocA[0] + InVLocA[1] + InVLocA[2]) * (1.0/3.0);
+	CB = (InVLocB[0] + InVLocB[1] + InVLocB[2]) * (1.0/3.0);
+
+	if(CB.Z > CA.Z)
+	{
+		return true;
+	}
+	*/
+	
+	return false;
 }
 
 // CalcProximalCost
@@ -404,6 +589,12 @@ function GetVertexUnchecked(int Index, out Vector OutLocation)
 	OutLocation = VertexArray[Index].Location;
 }
 
+function GetEdgeVertexLocationsUnchecked(int Index, out Vector VLoc[2])
+{
+	VLoc[0] = VertexArray[EdgeArray[Index].V[0]].Location;
+	VLoc[1] = VertexArray[EdgeArray[Index].V[1]].Location;
+}
+
 function GetEdgeVertexIndicesUnchecked(int Index, out int OutV0, out int OutV1)
 {
 	OutV0 = EdgeArray[Index].V[0];
@@ -413,6 +604,11 @@ function GetEdgeVertexIndicesUnchecked(int Index, out int OutV0, out int OutV1)
 function GetEdgeFlagsUnchecked(int Index, out int OutEdgeFlags)
 {
 	OutEdgeFlags = EdgeArray[Index].Flags;
+}
+
+function GetEdgeOrientationUnchecked(int Index, out Vector OutEdgeOrientation)
+{
+	OutEdgeOrientation = EdgeArray[Index].Orientation;
 }
 
 function SetEdgePassable(int V0, int V1, bool bPassable)
