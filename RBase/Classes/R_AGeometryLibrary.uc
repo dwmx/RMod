@@ -10,6 +10,34 @@ class R_AGeometryLibrary extends R_ALibrary abstract;
 static function float MaximumDistance()	{ return 9999999.0; }
 static function float Epsilon()	{ return 0.00006; }
 
+//	DistanceLocationToLineSegment2D
+//	Given a location and a line segment, returns the shortest possible distance from the location
+//	to any point on that line segment
+static function float DistanceLocationToLineSegment2D(Vector Location, Vector VLoc[2])
+{
+	local Vector Segment, ToLoc;
+	local Vector Closest;
+	local float t;
+
+	Location *= Vect(1,1,0);
+	VLoc[0] *= Vect(1,1,0);
+	VLoc[1] *= Vect(1,1,0);
+
+	Segment = VLoc[1] - VLoc[0];
+	ToLoc = Location - VLoc[0];
+
+	if(VSize(Segment) < Epsilon())
+	{	// Degenerate line segment
+		return VSize(Location - VLoc[0]);
+	}
+
+	t = (ToLoc Dot Segment) / (Segment Dot Segment);
+	t = FClamp(t, 0.0, 1.0);
+
+	Closest = VLoc[0] + Segment * t;
+	return VSize(Location - Closest);
+}
+
 //	DistanceLineSegmentToLineSegment2D
 //	Given two line segments, returns the shortest possible distance between them
 static function float DistanceLineSegmentToLineSegment2D(Vector VLoc0[2], Vector VLoc1[2])

@@ -196,10 +196,9 @@ function bool FindRelevantBorderEdgesInRadius2D(
 			bSkip = true;
 			for(j = 0; j < 3; ++j)
 			{
-				Dist = NavLib.Static.DistanceLocationToLineSegment(
-					Vect(1,1,0) * Location,
-					Vect(1,1,0) * VLocTriangle[j],
-					Vect(1,1,0) * VLocTriangle[(j + 1) % 3]);
+				VLocEdge[0] = VLocTriangle[j];
+				VLocEdge[1] = VLocTriangle[(j+1)%3];
+				Dist = GeomLib.Static.DistanceLocationToLineSegment2D(Location, VLocEdge);
 				if(Dist <= Radius)
 				{
 					bSkip = false;
@@ -256,10 +255,7 @@ function bool FindRelevantBorderEdgesInRadius2D(
 				continue;
 			}
 
-			Dist = NavLib.Static.DistanceLocationToLineSegment(
-				Vect(1,1,0) * Location,
-				Vect(1,1,0) * VLocEdge[0],
-				Vect(1,1,0) * VLocEdge[1]);
+			Dist = GeomLib.Static.DistanceLocationToLineSegment2D(Location, VLocEdge);
 
 			if(Dist <= Radius)
 			{	// This edge is in radius, add it to output
