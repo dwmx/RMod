@@ -20,6 +20,78 @@ import uuid
 RBOTS_NAVMESH_CATEGORY = "RBots NavMesh"
 RBOTS_LAYER_NAME_POLYGROUP_ID = "polygroup_id"
 
+class RBOTS_OT_ExportNavMesh(bpy.types.Operator):
+    bl_idname = "rbots.export_navmesh"
+    bl_label = "Export NavMesh"
+    bl_description = "Export the navmesh to a text file"
+
+    filepath: bpy.props.StringProperty(
+        name="File Path",
+        subtype="FILE_PATH",
+        default="//navmesh_export.txt"
+    )
+
+    # Show file selector
+    def invoke(self, context, event):
+        blend_dir = "//"
+        self.filepath = bpy.path.abspath(blend_dir + "navmesh_export.txt")
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+    
+    def execute(self, context):
+        scene = context.scene
+        obj = context.object
+        mesh = obj.data
+        mesh.calc_loop_triangles() # not sure what this is -- triangulation?
+        
+
+        bm = bmesh.new()
+        bm.from_mesh(mesh)
+        polygroup_layer = bm.faces.layers.int.get(RBOTS_LAYER_NAME_POLYGROUP_ID)
+        vertex_indices = {v: i for i, v in enumerate(bm.verts)}
+
+        lines = []
+
+        # Write Poly Groups
+        for group in bpy.context.scene.rbots_poly_groups:
+            lines.append(f"NavMesh.CreatePolyGroup('{group.name}');")
+
+        # Write vertices
+        for i, v in enumerate(mesh.vertices):
+            co = obj.matrix_world @ v.co # world space
+            lines.append(f"NavMesh.PushVertex(Vect({co.x:.6f},{co.y:.6f},{co.z:.6F}));")
+
+        # Write triangles
+        tri_result = bmesh.ops.triangulate(bm, faces=bm.faces)
+        tri_faces = tri_result['faces']
+
+        for face in tri_faces:
+            #tris = face.calc_loop_triangles()
+            uid = face[polygroup_layer] if polygroup_layer else None
+            group_name = next((g.name for g in bpy.context.scene.rbots_poly_groups if g.uid == uid), None)
+
+            verts = list(face.verts)
+            idx0 = vertex_indices[verts[0]]
+            idx1 = vertex_indices[verts[1]]
+            idx2 = vertex_indices[verts[2]]
+
+            if group_name:
+                lines.append(f"NavMesh.PushTriangleAsVertices({idx0}, {idx1}, {idx2}, '{group_name}');")
+            else:
+                lines.append(f"NavMesh.PushTriangleAsVertices({idx0}, {idx1}, {idx2});")
+
+        bm.free()
+
+        try:
+            with open(self.filepath, 'w') as f:
+                f.write("\n".join(lines))
+        except Exception as e:
+            self.report({'ERROR'}, f"Failed to write file: {e}")
+            return {'CANCELLED'}
+        
+        self.report({'INFO'}, f"NavMesh exported to {self.filepath}")
+        return {'FINISHED'}
+
 # Polygon Groups Bool Property
 bpy.types.Scene.RBOTS_show_overlay = bpy.props.BoolProperty(
     name="Polygon Groups",
@@ -43,6 +115,7 @@ class RBOTS_PT_NavMeshPanel(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
+        layout.operator("rbots.export_navmesh", icon='EXPORT')
         #layout.operator("rbots.test_operator", text="TestButton") # Push button
         pass
 
@@ -275,6 +348,7 @@ def unregister_draw():
 
 # Registration classes
 register_classes = [
+    RBOTS_OT_ExportNavMesh,
     RBOTS_PT_NavMeshPanel,
     RBOTS_PT_NavMeshVisibilityPanel,
     RBOTS_PT_PolygonGroupsPanel,
