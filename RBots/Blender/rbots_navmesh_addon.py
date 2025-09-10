@@ -53,17 +53,22 @@ class RBOTS_PolyGroupItem(bpy.types.PropertyGroup):
     color: bpy.props.FloatVectorProperty(
         name="Color",
         subtype='COLOR',
-        size=4,
+        size=3,
         min=0.0, max=1.0,
-        default=(1.0, 0.0, 0.0, 0.5)
+        default=(1.0, 0.0, 0.0)
     )
 
 class RBOTS_UL_PolyGroupList(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_Data, active_propname, index):
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
-            row = layout.row()
-            row.prop(item, "name", text="", emboss=False, icon='GROUP_VERTEX')
-            row.label(text=str(item.uid))
+            split = layout.split(factor=0.8)
+            split.prop(item, "name", text="", emboss=False, icon='GROUP_VERTEX')    # Left column, 80%, Name
+            split.prop(item, "color", text="")  # Right column, 20%, Color
+
+            #row = layout.row()
+            #row.prop(item, "name", text="", emboss=False, icon='GROUP_VERTEX')
+            ##row.label(text=str(item.uid))
+            #row.prop(item, "color", text="")
         
         elif self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'
@@ -111,7 +116,7 @@ class RBOTS_OT_PolyGroupAdd(bpy.types.Operator):
 
         item.uid = uuid.uuid4().int & 0xFFFFFFF
 
-        item.name = f"Group {len(scene.rbots_poly_groups)} uid: {item.uid}"
+        item.name = f"Group {len(scene.rbots_poly_groups)}"
         scene.rbots_poly_groups_index = len(scene.rbots_poly_groups) - 1
         return {'FINISHED'}
 
@@ -137,9 +142,13 @@ class RBOTS_OT_PolyGroupAssign(bpy.types.Operator):
 
     def execute(self, context):
         scene = context.scene
-        polygroup_index = scene.rbots_poly_groups_index
-        #print(f"Assigning {polygroup_index}")
-        assign_selection_polygroup_id(polygroup_index)
+        
+        idx = scene.rbots_poly_groups_index
+        if 0 <= idx < len(scene.rbots_poly_groups):
+            selected_item = scene.rbots_poly_groups[idx]
+            polygroup_uid = selected_item.uid
+            assign_selection_polygroup_id(polygroup_uid)
+
         return {'FINISHED'}
 
 # Visibility Panel
@@ -165,7 +174,7 @@ class RBOTS_OT_TestOperator(bpy.types.Operator):
         assign_selection_polygroup_id(1)
         return {'FINISHED'}
 
-def assign_selection_polygroup_id(id):
+def assign_selection_polygroup_id(uid):
     obj = bpy.context.active_object
     if obj is None or obj.type != 'MESH' or obj.mode != 'EDIT':
         raise Exception("Must be in Edit Mode with a mesh selected")
@@ -178,7 +187,7 @@ def assign_selection_polygroup_id(id):
     
     for face in bm.faces:
         if face.select:
-            face[polygoup_layer] = id
+            face[polygoup_layer] = uid
     
     bmesh.update_edit_mesh(obj.data)
 
@@ -193,7 +202,7 @@ def draw_callback():
     obj = bpy.context.active_object
     if not obj or obj.type != 'MESH' or obj.mode != 'EDIT':
         return
-    
+
     # Get the polygorup id layer
     bm = bmesh.from_edit_mesh(obj.data)
     polygroup_layer = bm.faces.layers.int.get(RBOTS_LAYER_NAME_POLYGROUP_ID)
@@ -210,39 +219,46 @@ def draw_callback():
     # Draw each even-indexed face with an inset
     epsilon = 1.0
     inset_dist = -2.0
+
     for face in bm.faces:
-        group = scene.rbots_poly_groups[face[polygroup_layer]]
+        #group = scene.rbots_poly_groups[face[polygroup_layer]]
+        assigned_group = None
+        polygroup_uid = face[polygroup_layer]
+        for group in bpy.context.scene.rbots_poly_groups:
+            if group.uid == polygroup_uid:
+                assigned_group = group
+                break
+        if assigned_group:
+            shader.uniform_float("color", (*assigned_group.color, 1.0))
 
-        shader.uniform_float("color", group.color)
+            coords = []
+            verts = face.verts[:]
 
-        coords = []
-        verts = face.verts[:]
+            for i, v in enumerate(verts):
+                # adjacent vertices (previous and next in the loop)
+                v_prev = verts[i - 1].co
+                v_curr = v.co
+                v_next = verts[(i + 1) % len(verts)].co
 
-        for i, v in enumerate(verts):
-            # adjacent vertices (previous and next in the loop)
-            v_prev = verts[i - 1].co
-            v_curr = v.co
-            v_next = verts[(i + 1) % len(verts)].co
+                # edge directions
+                e0 = (v_curr - v_prev).normalized()
+                e1 = (v_next - v_curr).normalized()
 
-            # edge directions
-            e0 = (v_curr - v_prev).normalized()
-            e1 = (v_next - v_curr).normalized()
+                # bisector (pointing inward)
+                bisector = (e0 + (-e1)).normalized()
 
-            # bisector (pointing inward)
-            bisector = (e0 + (-e1)).normalized()
+                # angle between edges
+                angle = math.acos(max(-1.0, min(1.0, -e0.dot(e1))))
 
-            # angle between edges
-            angle = math.acos(max(-1.0, min(1.0, -e0.dot(e1))))
+                # scale along bisector so inset distance is constant
+                move_len = inset_dist / math.sin(angle / 2.0)
+                move = bisector * move_len
 
-            # scale along bisector so inset distance is constant
-            move_len = inset_dist / math.sin(angle / 2.0)
-            move = bisector * move_len
+                # final position: inset inward + lift slightly (epsilon)
+                coords.append(v_curr + move + face.normal * epsilon)
 
-            # final position: inset inward + lift slightly (epsilon)
-            coords.append(v_curr + move + face.normal * epsilon)
-
-        batch = batch_for_shader(shader, 'TRI_FAN', {"pos": coords})
-        batch.draw(shader)
+            batch = batch_for_shader(shader, 'TRI_FAN', {"pos": coords})
+            batch.draw(shader)
     
     gpu.state.face_culling_set('NONE')
     gpu.state.depth_test_set('NONE')
@@ -262,6 +278,7 @@ register_classes = [
     RBOTS_PT_NavMeshPanel,
     RBOTS_PT_NavMeshVisibilityPanel,
     RBOTS_PT_PolygonGroupsPanel,
+    RBOTS_UL_PolyGroupList,
     RBOTS_PolyGroupItem,
     RBOTS_OT_PolyGroupAdd,
     RBOTS_OT_PolyGroupRemove,
