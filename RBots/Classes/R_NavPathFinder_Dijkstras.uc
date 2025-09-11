@@ -12,8 +12,8 @@ const NavLib = Class'RBots.R_NavLibrary';
 function bool FindPath(
 	R_NavMesh NavMesh,
 	int StartIndex, int EndIndex,
-	R_NavPath NavPath,
-	optional R_NavPathObserver OptionalNavPathObserver)
+	R_NavContext NavContext,
+	optional R_NavContextObserver OptionalNavPathObserver)
 {
 	local int Dist[1024];
     local int Prev[1024];
@@ -119,10 +119,10 @@ function bool FindPath(
         PathIndices[PathIndexCount - 1 - i] = j;
     }
 
-	// Push all to navpath
+	// Push all to NavContext
 	for(i = 0; i < PathIndexCount; ++i)
 	{
-		NavPath.PushPathNodeIndex(PathIndices[i]);
+		NavContext.PushPathNodeIndex(PathIndices[i]);
 	}
 
 	// If a NavPathObserver object was provided, add relevant data

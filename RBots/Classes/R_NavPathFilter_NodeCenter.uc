@@ -8,21 +8,21 @@ class R_NavPathFilter_NodeCenter extends R_NavPathFilter;
 function bool PostProcessPath(
 	R_NavMesh NavMesh,
 	Vector StartLocation, Vector EndLocation,
-	R_NavPath NavPath,
-	optional R_NavPathObserver OptionalNavPathObserver)
+	R_NavContext NavContext,
+	optional R_NavContextObserver OptionalNavPathObserver)
 {
 	local int i;
 	local Vector Normal, Center;
 	local int PathIndexCount;
 	local int Index;
 
-	PathIndexCount = NavPath.GetNumPathNodeIndices();
+	PathIndexCount = NavContext.GetNumPathNodeIndices();
 
 	for(i = 0; i < PathIndexCount; ++i)
 	{
-		NavPath.GetPathNodeIndex(i, Index);
+		NavContext.GetPathNodeIndex(i, Index);
 		NavMesh.GetTriangleNormalAndCenterUnchecked(Index, Normal, Center);
-		NavPath.PushPathLocation(Center);
+		NavContext.PushPathLocation(Center);
 	}
 
 	return true;

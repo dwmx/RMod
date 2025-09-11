@@ -9,8 +9,8 @@ const DebugLib = Class'RBots.R_RBots_DebugLibrary';
 const CanvasLib = Class'RBots.R_RBots_CanvasLibrary';
 const DebugPathFindingCategory = 'PathFinding';
 
-var private R_NavPathObserver NavPathObserver;
-const NavPathObserverClass = Class'RBots.R_NavPathObserver';
+var private R_NavContextObserver NavPathObserver;
+const NavPathObserverClass = Class'RBots.R_NavContextObserver';
 
 const NODE_DRAW_ELEVATION = 4.0;		// Pushes node drawing up on the Z axis
 const PATH_DRAW_ELEVATION = 32.0;		// Pushes path drawing up on the Z axis
@@ -83,7 +83,7 @@ function DebugTargetChanged(R_Bot OldDebugTarget, R_Bot NewDebugTarget)
 			}
 		}
 
-		NavPathObserver.Clear();
+		NavPathObserver.ClearPath();
 		if(Utilities.Static.IsValidActor(NewDebugTarget))
 		{
 			NewDebugTarget.AttachNavPathObserver(NavPathObserver);

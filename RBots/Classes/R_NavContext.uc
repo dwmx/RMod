@@ -1,26 +1,34 @@
 //==============================================================================
-//	R_NavPath
-//	Contains and manages the results of a FindPath nav query
+//	R_NavContext
+//	Contains and manages information relevant to environment navigation
 //==============================================================================
-class R_NavPath extends R_NavObject;
+class R_NavContext extends R_NavObject;
 
 const Utilities = Class'RBots.R_BotUtilities';
-const LogCategory = 'NavPath';
+const LogCategory = 'NavContext';
 
 const NavLib = Class'RBots.R_NavLibrary';
 
+// Path finding and path following arrays
 var private int PathNodeIndices[128];
 var private int NumPathNodeIndices;
 
 var private Vector PathLocations[128];
 var private int NumPathLocations;
 
-function InitNavPath()
+// Border edges
+var private int BorderEdgeIndices[128];
+var private int NumBorderEdgeIndices;
+
+function InitializeNavContext()
 {
-	Clear();
+	ClearPath();
+	ClearBorderEdges();
 }
 
-function Clear()
+//------------------------------------------------------------------------------
+//	PathFinding
+function ClearPath()
 {
 	NumPathNodeIndices = 0;
 	NumPathLocations = 0;
@@ -113,4 +121,22 @@ function int GetClosestPathLocationIndex2D(out Vector InLocation)
 	}
 
 	return ClosestIndex;
+}
+
+//------------------------------------------------------------------------------
+//	BorderEdges
+function ClearBorderEdges()
+{
+	NumBorderEdgeIndices = 0;
+}
+
+function PushBorderEdgeIndex(int EdgeIndex)
+{
+	if(NumBorderEdgeIndices < 0 || NumBorderEdgeIndices >= ArrayCount(BorderEdgeIndices))
+	{
+		Utilities.Static.RLog("PushBorderEdgeIndex failed -- Bad NumBorderEdgeIndices:" @ NumBorderEdgeIndices, LogCategory);
+		return;
+	}
+	BorderEdgeIndices[NumBorderEdgeIndices] = EdgeIndex;
+	++NumBorderEdgeIndices;
 }

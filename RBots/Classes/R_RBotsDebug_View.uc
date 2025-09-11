@@ -34,6 +34,21 @@ simulated function R_NavMesh GetNavMesh()
 	}
 }
 
+function R_NavMeshActorTracker GetNavMeshActorTracker()
+{
+	local R_RBotsDebug RBotsDebug;
+
+	if(Owner != None)
+	{
+		RBotsDebug = R_RBotsDebug(Owner);
+		if(RBotsDebug != None)
+		{
+			return RBotsDebug.GetNavMeshActorTracker();
+		}
+	}
+	return None;
+}
+
 defaultproperties
 {
 	RemoteRole=ROLE_None

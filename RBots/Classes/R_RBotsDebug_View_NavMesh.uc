@@ -9,7 +9,13 @@ const CanvasLib = Class'RBots.R_RBots_CanvasLibrary';
 const DebugLib = Class'RBots.R_RBots_DebugLibrary';
 const NavLib = Class'RBots.R_NavLibrary';
 const NavTranslator = Class'RBots.R_RBotsDebug_NavObjectTranslator';
-const DebugNavMeshCategory = 'NavMesh';
+
+const DebugCategory_NavMesh = 'NavMesh';
+const DebugCategory_NavMeshPolygon = 'NavMeshPolygons';
+const DebugCategory_NavMeshEdges = 'NavMeshEdges';
+const DebugCategory_NavMeshPolyGroup = 'NavMeshPolyGroups';
+const DebugCategory_NavMeshNeighbors = 'NavMeshNeighbors';
+const DebugCategory_NavMeshPlayerBorders = 'NavMeshPlayerBorders';
 
 // Vertical offset for drawing to avoid z fighting and invisible lines
 const VERTICAL_DRAW_OFFSET = 2.0;
@@ -17,11 +23,18 @@ const VERTICAL_DRAW_OFFSET = 2.0;
 const VertexSize = 6.0;
 const NormalSize = 16.0;
 
+enum R_NavMeshDrawMode
+{
+	DrawMode_None,
+	DrawMode_Polygons,
+	DrawMode_Edges,
+	DrawMode_PolyGroups
+};
+var config private R_NavMeshDrawMode DrawMode;
+
 var config private bool bDrawNormals;
 var config private bool bDrawVertices;
-var config private bool bDrawEdges;
 var config private bool bDrawEdgeOrientations;
-var config private bool bDrawTriangles;
 var config private bool bDrawNeighbors;
 var config private bool bDrawNeighborCosts;
 var config private bool bDrawAdjacents;
@@ -43,6 +56,44 @@ var Color TriangleColor_Adjacent;
 var Color TriangleColor_Proximity;
 
 var Color PlayerColor_Borders;
+var Color PlayerColor_BorderAvoidance;
+
+var Color PolyGroupColor_ActivePolygons;
+var Color PolyGroupColor_InactivePolygons;
+var Color PolyGroupColor_InvalidPolygons;
+var Color PolyGroupColor_Actors;
+
+function SwitchToOrDisableDrawMode(R_NavMeshDrawMode NewDrawMode)
+{
+	if(DrawMode == NewDrawMode)
+	{
+		NewDrawMode = DrawMode_None;
+	}
+	if(DrawMode == NewDrawMode)
+	{
+		return;
+	}
+
+	DrawMode = NewDrawMode;
+	SaveConfig();
+}
+
+function ToggleTriangles()
+{
+	SwitchToOrDisableDrawMode(DrawMode_Polygons);
+}
+
+function ToggleEdges()
+{
+	SwitchToOrDisableDrawMode(DrawMode_Edges);
+}
+
+function TogglePolyGroupInfo()
+{
+	SwitchToOrDisableDrawMode(DrawMode_PolyGroups);
+}
+
+
 
 function ToggleNormals()
 {
@@ -56,15 +107,7 @@ function ToggleVertices()
 	SaveConfig();
 }
 
-function ToggleEdges()
-{
-	bDrawEdges = !bDrawEdges;
-	if(bDrawEdges && bDrawTriangles)
-	{	// Can't really see edges and triangles together
-		bDrawTriangles = false;
-	}
-	SaveConfig();
-}
+
 
 function ToggleEdgeOrientations()
 {
@@ -72,15 +115,7 @@ function ToggleEdgeOrientations()
 	SaveConfig();
 }
 
-function ToggleTriangles()
-{
-	bDrawTriangles = !bDrawTriangles;
-	if(bDrawTriangles && bDrawEdges)
-	{	// Can't really see edges and triangles together
-		bDrawEdges = false;
-	}
-	SaveConfig();
-}
+
 
 function ToggleNeighbors()
 {
@@ -112,6 +147,8 @@ function TogglePlayerBorders()
 	SaveConfig();
 }
 
+
+
 function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
 {
 	local R_NavMesh NavMesh;
@@ -121,14 +158,14 @@ function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
 	// Add debug strings
 	if(NavMesh != None)
 	{
-		StringManager.AddClass(DebugNavMeshCategory, "NavMesh Class", NavMesh.Class);
-		StringManager.AddInt(DebugNavMeshCategory, "NumVertices", NavMesh.GetVertexCount());
-		StringManager.AddInt(DebugNavMeshCategory, "NumEdges", NavMesh.GetEdgeCount());
-		StringManager.AddInt(DebugNavMeshCategory, "NumTriangles", NavMesh.GetTriangleCount());
+		StringManager.AddClass(DebugCategory_NavMesh, "NavMesh Class", NavMesh.Class);
+		StringManager.AddInt(DebugCategory_NavMesh, "NumVertices", NavMesh.GetVertexCount());
+		StringManager.AddInt(DebugCategory_NavMesh, "NumEdges", NavMesh.GetEdgeCount());
+		StringManager.AddInt(DebugCategory_NavMesh, "NumTriangles", NavMesh.GetTriangleCount());
 	}
 	else
 	{
-		StringManager.AddWarning(DebugNavMeshCategory, "Invalid NavMesh");
+		StringManager.AddWarning(DebugCategory_NavMesh, "Invalid NavMesh");
 	}
 
 	if(NavMesh != None)
@@ -139,41 +176,35 @@ function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
 
 function DrawNavMesh(Canvas C, R_RbotsDebug_StringManager StringManager, R_NavMesh NavMesh)
 {
-	if(bDrawEdges)
-	{	// Drawing Edges
-		StringManager.AddString(DebugNavMeshCategory, "Edges", "Draw Type");
-		DrawNavMeshEdges(C, StringManager, NavMesh);
-	}
-	else if(bDrawTriangles)
-	{	// Drawing Triangles
-		StringManager.AddString(DebugNavMeshCategory, "Triangles", "Draw Type");
-		DrawNavMeshTriangles(C, StringManager, NavMesh);
-	}
-	else
-	{	// Not drawing edges or triangles
-		StringManager.AddString(DebugNavMeshCategory, "None", "Draw Type");
+	// Draw Mode
+	StringManager.AddString(DebugCategory_NavMesh, String(GetEnum(Enum'R_NavMeshDrawMode', DrawMode)), "Draw Mode");
+	switch(DrawMode)
+	{
+	case DrawMode_Polygons:		DrawNavMeshTriangles(C, StringManager, NavMesh);	break;
+	case DrawMode_Edges:		DrawNavMeshEdges(C, StringManager, NavMesh);		break;
+	case DrawMode_PolyGroups:	DrawPolyGroupInfo(C, StringManager, NavMesh);		break;
 	}
 
-	StringManager.AddBool(DebugNavMeshCategory, "Draw Vertices", bDrawVertices);
+	// Vertices -- Available in any draw mode
+	StringManager.AddBool(DebugCategory_NavMesh, "Draw Vertices", bDrawVertices);
 	if(bDrawVertices)
 	{
 		DrawNavMeshVertices(C, StringManager, NavMesh);
 	}
 
-	StringManager.AddBool(DebugNavMeshCategory, "Draw Neighbors", bDrawNeighbors);
+	// Neighbors -- Available in any draw mode
+	StringManager.AddBool(DebugCategory_NavMesh, "Draw Neighbors", bDrawNeighbors);
 	if(bDrawNeighbors)
 	{
 		DrawNavMeshNeighbors(C, StringManager, NavMesh);
 	}
 
-	StringManager.AddBool(DebugNavMeshCategory, "Draw Player Borders", bDrawPlayerBorders);
+	// Player Borders -- Available in any draw mode
+	StringManager.AddBool(DebugCategory_NavMesh, "Draw Player Borders", bDrawPlayerBorders);
 	if(bDrawPlayerBorders)
 	{
 		DrawNavMeshPlayerBorders(C, StringManager, NavMesh);
 	}
-	
-	// This will draw the node containing the player, and that node's adjacencies
-	//DrawPlayerContainedNavMeshTriangle(C, NavMesh);
 }
 
 function DrawNavMeshVertices(Canvas C, R_RbotsDebug_StringManager StringManager, R_NavMesh NavMesh)
@@ -184,7 +215,7 @@ function DrawNavMeshVertices(Canvas C, R_RbotsDebug_StringManager StringManager,
 	local int VertexCount;
 	local int i;
 
-	StringManager.AddColor(DebugNavMeshCategory, "NavMesh Vertices", VertexColor);
+	StringManager.AddColor(DebugCategory_NavMesh, "NavMesh Vertices", VertexColor);
 
 	DrawExtents = Vect(1.0,1.0,0.5) * VertexSize;
 	DrawVerticalOffset = Vect(0,0,1) * VERTICAL_DRAW_OFFSET;
@@ -210,9 +241,9 @@ function DrawNavMeshEdges(Canvas C, R_RbotsDebug_StringManager StringManager, R_
 	local bool bImpassable, bBorder;
 	local int i;
 
-	StringManager.AddColor(DebugNavMeshCategory, "Edges", EdgeColor_Normal);
-	StringManager.AddColor(DebugNavMeshCategory, "Passable Border Edges", EdgeColor_Border);
-	StringManager.AddColor(DebugNavMeshCategory, "Impassable Edges", EdgeColor_Impassable);
+	StringManager.AddColor(DebugCategory_NavMeshEdges, "Edges", EdgeColor_Normal);
+	StringManager.AddColor(DebugCategory_NavMeshEdges, "Passable Border Edges", EdgeColor_Border);
+	StringManager.AddColor(DebugCategory_NavMeshEdges, "Impassable Edges", EdgeColor_Impassable);
 
 	EdgeCount = NavMesh.GetEdgeCount();
 
@@ -222,7 +253,7 @@ function DrawNavMeshEdges(Canvas C, R_RbotsDebug_StringManager StringManager, R_
 
 	if(bDrawEdgeOrientations)
 	{
-		StringManager.AddColor(DebugNavMeshCategory, "Edge Orientations", EdgeColor_Orientation);
+		StringManager.AddColor(DebugCategory_NavMeshEdges, "Edge Orientations", EdgeColor_Orientation);
 		Utilities.Static.ColorToFloats(EdgeColor_Orientation, OrientationRGB[0], OrientationRGB[1], OrientationRGB[2]);
 	}
 
@@ -291,10 +322,10 @@ function DrawNavMeshTriangles(Canvas C, R_RbotsDebug_StringManager StringManager
 	local int TriangleCount;
 	local int i;
 
-	StringManager.AddColor(DebugNavMeshCategory, "NavMesh Nodes", TriangleColor);
+	StringManager.AddColor(DebugCategory_NavMeshPolygon, "NavMesh Nodes", TriangleColor);
 	if(bDrawNormals)
 	{
-		StringManager.AddColor(DebugNavMeshCategory, "Normals", NormalColor);
+		StringManager.AddColor(DebugCategory_NavMeshPolygon, "Normals", NormalColor);
 	}
 
 	TriangleCount = NavMesh.GetTriangleCount();
@@ -347,20 +378,20 @@ function DrawNavMeshNeighbors(Canvas C, R_RbotsDebug_StringManager StringManager
 		PlayerLocation = Owner.Owner.Location;
 		NodeIndex = NavMesh.FindContainingNodeIndex(PlayerLocation);
 
-		StringManager.AddColor(DebugNavMeshCategory, "Current Index", TriangleColor_Contained);
-		StringManager.AddInt(DebugNavMeshCategory, "Current Index", NodeIndex);
+		StringManager.AddColor(DebugCategory_NavMeshNeighbors, "Current Index", TriangleColor_Contained);
+		StringManager.AddInt(DebugCategory_NavMeshNeighbors, "Current Index", NodeIndex);
 
 		// Draw node the player is standing on
 		NavMesh.GetTriangleVertexLocationsUnchecked(NodeIndex, VLoc);
 		DrawTriangle(C, VLoc, RGBActive, 0.75, 8.0);
 
 		// Draw adjacent nodes
-		StringManager.AddBool(DebugNavMeshCategory, "Draw Adjacent Neighbors", bDrawAdjacents);
+		StringManager.AddBool(DebugCategory_NavMeshNeighbors, "Draw Adjacent Neighbors", bDrawAdjacents);
 		if(bDrawAdjacents)
 		{
 			// Draw all adjacent nodes
 			Utilities.Static.ColorToFloats(TriangleColor_Adjacent, RGBAdjacent[0], RGBAdjacent[1], RGBAdjacent[2]);
-			StringManager.AddColor(DebugNavMeshCategory, "Adjacent Neighbors", TriangleColor_Adjacent);
+			StringManager.AddColor(DebugCategory_NavMeshNeighbors, "Adjacent Neighbors", TriangleColor_Adjacent);
 
 			NavTranslator.Static.GetAdjacentNeighbors(NavMesh, NodeIndex, AdjacentNodes, AdjacentCosts, NumNodes);
 			for(i = 0; i < NumNodes; ++i)
@@ -382,11 +413,11 @@ function DrawNavMeshNeighbors(Canvas C, R_RbotsDebug_StringManager StringManager
 		}
 		
 		// Draw proximal nodes
-		StringManager.AddBool(DebugNavMeshCategory, "Draw Proximal Neighbors", bDrawProximity);
+		StringManager.AddBool(DebugCategory_NavMeshNeighbors, "Draw Proximal Neighbors", bDrawProximity);
 		if(bDrawProximity)
 		{
 			Utilities.Static.ColorToFloats(TriangleColor_Proximity, RGBProxy[0], RGBProxy[1], RGBProxy[2]);
-			StringManager.AddColor(DebugNavMeshCategory, "Proximal Neighbors", TriangleColor_Proximity);
+			StringManager.AddColor(DebugCategory_NavMeshNeighbors, "Proximal Neighbors", TriangleColor_Proximity);
 
 			// Draw all proxy nodes in some radius
 			NavTranslator.Static.GetProximalNeighbors(NavMesh, NodeIndex, ProximalNodes, ProximalCosts, NumNodes);
@@ -439,15 +470,18 @@ function DrawNavMeshPlayerBorders(Canvas C, R_RbotsDebug_StringManager StringMan
 	local int EdgeIndices[32], NumEdges;
 	local float EdgeDistances[32];
 	local Vector VLoc[2], EdgeCenter;
-	local float BorderRGB[3];
+	local float BorderRGB[3], AvoidanceRGB[3];
 	local String DistanceString;
+	local Vector AvoidanceDir;
 	local int i;
 
-	StringManager.AddColor(DebugNavMeshCategory, "Near Player Borders", PlayerColor_Borders);
+	StringManager.AddColor(DebugCategory_NavMeshPlayerBorders, "Near Player Borders", PlayerColor_Borders);
+	StringManager.AddColor(DebugCategory_NavMeshPlayerBorders, "Border Avoidance Dir", PlayerColor_BorderAvoidance);
 
 	if(Owner != None && Owner.Owner != None)
 	{
 		Utilities.Static.ColorToFloats(PlayerColor_Borders, BorderRGB[0], BorderRGB[1], BorderRGB[2]);
+		Utilities.Static.ColorToFloats(PlayerColor_BorderAvoidance, AvoidanceRGB[0], AvoidanceRGB[1], AvoidanceRGB[2]);
 
 		Location = Owner.Owner.Location;
 
@@ -462,6 +496,97 @@ function DrawNavMeshPlayerBorders(Canvas C, R_RbotsDebug_StringManager StringMan
 			DistanceString = Utilities.Static.FloatToString(EdgeDistances[i], 1);
 			DebugLib.Static.InitializeCanvasForDebugDrawing(C);
 			CanvasLib.Static.DrawTextAtWorldLocation(C, DistanceString, EdgeCenter, Vect(0.5, 0.5, 0.0));
+		}
+
+		// Draw the avoidance direction
+		AvoidanceDir = NavLib.Static.CalcBorderAvoidanceDirection(NavMesh, EdgeIndices, EdgeDistances, NumEdges, Location, 16.0, 64.0);
+		CanvasLib.Static.DrawLine3D(C, Location, Location + AvoidanceDir * 64.0, AvoidanceRGB[0], AvoidanceRGB[1], AvoidanceRGB[2]);
+	}
+}
+
+function DrawPolyGroupInfo(Canvas C, R_RbotsDebug_StringManager StringManager, R_NavMesh NavMesh)
+{
+	local int NumPolyGroups;
+	local Name PolyGroupName;
+	local String PolyGroupString;
+	local Vector PlayerLocation;
+	local int NodeIndex, PolyGroupIndex, OtherPolyGroupIndex;
+	local int NumTriangles, TriangleIndex;
+	local Vector VLoc[3];
+	local float PolygonRGB[3], InactiveRGB[3], InvalidRGB[3];
+	local R_NavMeshActorTracker ActorTracker;
+	local int NumActors;
+	local Actor Actors[32];
+	local Vector Extents;
+	local float ActorRGB[3];
+	local int i;
+
+	// Draw all polygroup strings
+	NumPolyGroups = NavMesh.GetPolyGroupCount();
+	for(i = 0; i < NumPolyGroups; ++i)
+	{
+		NavMesh.GetPolyGroupByIndex(i, PolyGroupName);
+
+		PolyGroupString = String(PolyGroupName);
+		StringManager.AddString(DebugCategory_NavMeshPolyGroup, PolyGroupString, "PolyGroups[" $ i $ "]");
+	}
+
+	// Draw info for the polygroup that the player is currently inside of
+	if(Owner != None && Owner.Owner != None)
+	{
+		PlayerLocation = Owner.Owner.Location;
+		NodeIndex = NavMesh.FindContainingNodeIndex(PlayerLocation);
+		NavMesh.GetTrianglePolyGroupIndexUnchecked(NodeIndex, PolyGroupIndex);
+		NavMesh.GetPolyGroupByIndex(PolyGroupIndex, PolyGroupName);
+		StringManager.AddInt(DebugCategory_NavMeshPolyGroup, "Current PolyGroup Index", PolyGroupIndex);
+		StringManager.AddString(DebugCategory_NavMeshPolyGroup, String(PolyGroupName), "Current PolyGroup Name");
+
+		StringManager.AddColor(DebugCategory_NavMeshPolyGroup, "Polygons in Current PolyGroup", PolyGroupColor_ActivePolygons);
+		StringManager.AddColor(DebugCategory_NavMeshPolyGroup, "Polygons not in Current PolyGroup", PolyGroupColor_InactivePolygons);
+		StringManager.AddColor(DebugCategory_NavMeshPolyGroup, "No PolyGroup Assigned", PolyGroupColor_InvalidPolygons);
+		Utilities.Static.ColorToFloats(PolyGroupColor_ActivePolygons, PolygonRGB[0], PolygonRGB[1], PolygonRGB[2]);
+		Utilities.Static.ColorToFloats(PolyGroupColor_InactivePolygons, InactiveRGB[0], InactiveRGB[1], InactiveRGB[2]);
+		Utilities.Static.ColorToFloats(PolyGroupColor_InvalidPolygons, InvalidRGB[0], InvalidRGB[1], InvalidRGB[2]);
+
+		// Draw all triangles
+		NumTriangles = NavMesh.GetTriangleCount();
+		for(i = 0; i < NumTriangles; ++i)
+		{
+			NavMesh.GetTriangleVertexLocationsUnchecked(i, VLoc);
+			NavMesh.GetTrianglePolyGroupIndexUnchecked(i, OtherPolyGroupIndex);
+			if(OtherPolyGroupIndex == NavLib.Static.InvalidIndex())
+			{	// Invalid polygroups
+				DrawTriangle(C, VLoc, InvalidRGB, 1.0, 1.0);
+			}
+			else if(OtherPolyGroupIndex == PolyGroupIndex)
+			{	// Polygons belonging to the polygroup the player is on
+				DrawTriangle(C, VLoc, PolygonRGB, 1.0, 1.0);
+			}
+			else
+			{	// All other polygroups
+				DrawTriangle(C, VLoc, InactiveRGB, 1.0, 1.0);
+			}
+			
+		}
+
+		// Draw all actors in the poly group
+		StringManager.AddColor(DebugCategory_NavMeshPolyGroup, "PolyGroup Actors", PolyGroupColor_Actors);
+		Utilities.Static.ColorToFloats(PolyGroupColor_Actors, ActorRGB[0], ActorRGB[1], ActorRGB[2]);
+		ActorTracker = GetNavMeshActorTracker();
+		if(ActorTracker != None)
+		{
+			//function GetActorsByPolyGroupIndex(int PolyGroupIndex, out Actor OutActors[32], out int OutNumActors);
+			ActorTracker.GetActorsByPolyGroupIndex(PolyGroupIndex, Actors, NumActors);
+			for(i = 0; i < NumActors; ++i)
+			{
+				if(Actors[i] != None)
+				{
+					Extents = Vect(0.0, 0.0, 0.0);
+					Extents += Vect(1.0, 1.0, 0.0) * Actors[i].CollisionRadius;
+					Extents += Vect(0.0, 0.0, 1.0) * Actors[i].CollisionRadius;
+					CanvasLib.Static.DrawBox3D(C, Actors[i].Location, Extents, ActorRGB[0], ActorRGB[1], ActorRGB[2]);
+				}
+			}
 		}
 	}
 }
@@ -479,9 +604,13 @@ defaultproperties
 	EdgeColor_Impassable=(R=255,G=32,B=32)
 	EdgeColor_Orientation=(R=255,G=255,B=0)
 	PlayerColor_Borders=(R=248,G=55,B=255)
+	PlayerColor_BorderAvoidance=(R=255,G=251,B=1)
+	PolyGroupColor_ActivePolygons=(R=0,G=245,B=41)
+	PolyGroupColor_InactivePolygons=(R=31,G=0,B=209)
+	PolyGroupColor_InvalidPolygons=(R=255,G=255,B=255)
+	PolyGroupColor_Actors=(R=17,G=219,B=255)
 	bDrawNormals=true
 	bDrawVertices=false
-	bDrawEdges=true
 	bDrawEdgeOrientations=true
 	bDrawNeighbors=true
 	bDrawNeighborCosts=true

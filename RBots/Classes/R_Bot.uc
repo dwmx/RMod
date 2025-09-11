@@ -30,8 +30,8 @@ var private PlayerReplicationInfo OwnedPRI;
 
 // Navigation
 var private R_NavMesh CachedNavMesh;
-var private R_NavPath NavPath;
-var private R_NavPathObserver AttachedNavPathObserver;
+var private R_NavContext NavContext;
+var private R_NavContextObserver AttachedNavPathObserver;
 const PATH_DISTANCE_TOLERANCE = 16.0;
 
 // Control
@@ -60,7 +60,7 @@ function R_NavMesh GetNavMesh()
 }
 
 // Attaches NavPathObserver object to collect additional data from FindPath
-function AttachNavPathObserver(R_NavPathObserver NewNavPathObserver)
+function AttachNavPathObserver(R_NavContextObserver NewNavPathObserver)
 {
 	DetachNavPathObserver();
 	AttachedNavPathObserver = NewNavPathObserver;
@@ -76,7 +76,7 @@ function DetachNavPathObserver()
 }
 
 // Get the currently attached NavPathObserver, or None
-function R_NavPathObserver GetNavPathObserver()
+function R_NavContextObserver GetNavPathObserver()
 {
 	return AttachedNavPathObserver;
 }
@@ -90,7 +90,7 @@ function bool TryUpdatePath(Vector Start, Vector End)
 	LocalNavMesh = GetNavMesh();
 	if(LocalNavMesh != None)
 	{
-		return LocalNavMesh.FindPath(Start, End, NavPath, AttachedNavPathObserver);
+		return LocalNavMesh.FindPath(Start, End, NavContext, AttachedNavPathObserver);
 	}
 
 	return false;
@@ -99,7 +99,7 @@ function bool TryUpdatePath(Vector Start, Vector End)
 // Clears this Bot's current path
 function ClearPath()
 {
-	NavPath.Clear();
+	NavContext.ClearPath();
 }
 
 // Called by BotManager when granted a PlayerPawn
@@ -147,11 +147,11 @@ function InitializeBot()
 	// Create BotObjects
 	CreateBotObject(BotObject_Perception);
 
-	// Spawn NavPath
-	if(NavPath == None)
+	// Spawn NavContext
+	if(NavContext == None)
 	{
-		NavPath = new(None) Class'RBots.R_NavPath';
-		NavPath.InitNavPath();
+		NavContext = new(None) Class'RBots.R_NavContext';
+		NavContext.InitializeNavContext();
 	}
 
 	if(InitialBehaviorClass != None)
@@ -255,7 +255,8 @@ function Class<R_BotBehavior> DetermineDesiredBehavior()
 {
 	local PlayerPawn P;
 
-	return Behavior_FindWeapon;
+	return Behavior_Wander;
+	//return Behavior_FindWeapon;
 
 	//P = GetOwnedPlayerPawn();
 	//if(P != None)
@@ -351,33 +352,33 @@ function Vector GetPathFollowMovementInputVector()
 	local int i;
 	local Vector Result;
 	
-	if(NavPath == None || OwnedPlayerPawn == None)
+	if(NavContext == None || OwnedPlayerPawn == None)
 	{
 		return Vect(0,0,0);
 	}
 
 	PawnLocation = OwnedPlayerPawn.Location;
-	ClosestIndex = NavPath.GetClosestPathLocationIndex2D(PawnLocation);
+	ClosestIndex = NavContext.GetClosestPathLocationIndex2D(PawnLocation);
 
 	if(ClosestIndex == NavLib.Static.InvalidIndex())
 	{
 		return Vect(0,0,0);
 	}
 
-	NumPathLocations = NavPath.GetNumPathLocations();
+	NumPathLocations = NavContext.GetNumPathLocations();
 
 	if(ClosestIndex == NumPathLocations - 1)
 	{
-		NavPath.GetPathLocation(NumPathLocations - 2, P0);
-		NavPath.GetPathLocation(NumPathLocations - 1, P1);
+		NavContext.GetPathLocation(NumPathLocations - 2, P0);
+		NavContext.GetPathLocation(NumPathLocations - 1, P1);
 	}
 	else
 	{
-		NavPath.GetPathLocation(ClosestIndex, P0);
-		NavPath.GetPathLocation(ClosestIndex + 1, P1);
+		NavContext.GetPathLocation(ClosestIndex, P0);
+		NavContext.GetPathLocation(ClosestIndex + 1, P1);
 	}
 
-	NavPath.GetPathLocation(NumPathLocations - 1, PathLocation);
+	NavContext.GetPathLocation(NumPathLocations - 1, PathLocation);
 	EndDistance = VSize(Vect(1,1,0) * PathLocation - Vect(1,1,0) * PawnLocation);
 	if(EndDistance <= PATH_DISTANCE_TOLERANCE)
 	{

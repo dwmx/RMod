@@ -13,8 +13,8 @@ class R_NavPathFilter extends R_NavObject abstract;
 function bool PostProcessPath(
 	R_NavMesh NavMesh,
 	Vector StartLocation, Vector EndLocation,
-	R_NavPath NavPath,
-	optional R_NavPathObserver OptionalNavPathObserver)
+	R_NavContext NavContext,
+	optional R_NavContextObserver OptionalNavPathObserver)
 {
 	// To be implemented in subclass
 	return false;

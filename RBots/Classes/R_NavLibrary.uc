@@ -6,6 +6,8 @@
 //==============================================================================
 class R_NavLibrary extends Object abstract;
 
+const GeomLib = Class'RBase.R_AGeometryLibrary';
+
 const EPSILON = 0.00006;
 
 // Invalid index used across all navmesh index types
@@ -390,4 +392,67 @@ static function float DistanceLocationToTriangle2D(Vector Location, Vector VLoc[
 		VLoc[i] *= Vect(1,1,0);
 	}
 	return DistanceLocationToTriangle(Location, VLoc);
+}
+
+
+
+
+// This should go, only here for test
+static function Vector CalcBorderAvoidanceDirection(
+	R_NavMesh NavMesh,
+	out int InEdgeIndices[32],
+	out float InEdgeDistances[32],
+	int NumEdgeIndices,
+	Vector Location,
+	float MinDist, float MaxDist,
+	optional out float OutInfluence)
+{
+	local float Temp;
+	local int i;
+	local float t;
+	local float Dist;
+	local Vector VLoc[2];
+	local Vector Orientation;
+	local Vector Result;
+
+	Temp = FMin(MinDist,MaxDist);
+	MaxDist = FMax(MinDist,MaxDist);
+	MinDist = Temp;
+
+	Result = Vect(0,0,0);
+	OutInfluence = 0.0;
+
+	for(i = 0; i < NumEdgeIndices; ++i)
+	{
+		//NavMesh.GetEdgeVertexLocationsUnchecked(InEdgeIndices[i], VLoc);
+		//Dist = GeomLib.Static.DistanceLocationToLineSegment2D(Location, VLoc);
+		Dist = InEdgeDistances[i];
+
+		//Dist = FClamp(Dist, MinDist, MaxDist);
+		if(Dist >= MaxDist)
+		{	// Ignore edge, outside of distance threshold
+			continue;
+		}
+		else if(Dist <= MinDist)
+		{	// Edge is too close, max influence
+			t = 1.0;
+		}
+		else
+		{	// Lerp
+			//t = 1.0 - (Dist / (MaxDist - MinDist));
+			t = 1.0 - ((Dist - MinDist) / (MaxDist - MinDist));
+		}
+		//t=1;
+
+		NavMesh.GetEdgeOrientationUnchecked(InEdgeIndices[i], Orientation);
+		Result += Normal(Orientation) * t;
+
+		if(t > OutInfluence)
+		{
+			OutInfluence = t;
+		}
+	}
+
+	Result = Normal(Result);
+	return Result;
 }

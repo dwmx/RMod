@@ -52,12 +52,20 @@ function GetEdgeOrientationUnchecked(int Index, out Vector OutEdgeOrientation);
 function SetEdgePassable(int V0, int V1, bool bPassable);
 
 // Triangle functions
-function PushTriangleAsVertices(int V0, int V1, int V2);
-function PushTriangleAsEdges(int E0, int E1, int E2);
+function PushTriangleAsVertices(int V0, int V1, int V2, optional Name PolyGroupName);
 function int GetTriangleCount();
 function GetTriangleVertexLocationsUnchecked(int Index, out Vector VLoc[3]);
 function GetTriangleVertexIndicesUnchecked(int Index, out int OutV0, out int OutV1, out int OutV2);
 function GetTriangleEdgeIndicesUnchecked(int Index, out int OutE0, out int OutE1, out int OutE2);
+function GetTrianglePolyGroupIndexUnchecked(int Index, out int OutPolyGroupIndex);
+
+// Polygon Groups
+function CreatePolyGroup(Name PolyGroupName);
+function int GetPolyGroupCount();
+function bool GetPolyGroupByIndex(int PolyGroupIndex, out Name OutPolyGroupName);
+function bool GetPolyGroupTriangleCount(int PolyGroupIndex, out int OutTriangleCount);
+function bool GetPolyGroupTriangleIndex(int PolyGroupIndex, int TriangleIndex, out int OutTriangleIndex);
+function bool GetPolyGroupIndexByName(Name PolyGroupName, out int OutPolyGroupIndex);
 
 // Returns the NeighborSet for the given node index
 // This includes all adjacent and proximal neighbors	
@@ -192,21 +200,21 @@ final function Class<R_NavPathFinder> GetNavPathFinderClass() { return NavPathFi
 final function Class<R_NavPathFilter> GetNavPathFilterClass() { return NavPathFilterClass; }
 
 // FindPath -- Main pathfinding function
-// Returns path data in NavPath
+// Returns path data in NavContext
 // If NavPathObserver is provided, intermmediate path finding data can be viewed
 function bool FindPath(
 	Vector StartLocation, Vector EndLocation,
-	R_NavPath NavPath,
-	optional R_NavPathObserver OptionalNavPathObserver)
+	R_NavContext NavContext,
+	optional R_NavContextObserver OptionalNavPathObserver)
 {
 	local int StartIndex, EndIndex;
 	local String FailedLogString;
 
 	FailedLogString = "FindPath failed -- ";
 
-	if(NavPath == None)
-	{	// Must have a NavPath
-		Utilities.Static.RLog(FailedLogString $ "Invalid NavPath argument:" @ NavPath, LogCategory);
+	if(NavContext == None)
+	{	// Must have a NavContext
+		Utilities.Static.RLog(FailedLogString $ "Invalid NavContext argument:" @ NavContext, LogCategory);
 		return false;
 	}
 	if(NavMeshSpatialQuery == None)
@@ -235,21 +243,21 @@ function bool FindPath(
 
 	if(OptionalNavPathObserver != None)
 	{	// If a NavPathObserver object was provided, initialize it before execution
-		OptionalNavPathObserver.Clear();
+		OptionalNavPathObserver.ClearPath();
 		OptionalNavPathObserver.SetNavPathFinderClass(NavPathFinder.Class);
 		OptionalNavPathObserver.SetNavPathFilterClass(NavPathFilter.Class);
 	}
 
-	// Initialize NavPath
-	NavPath.Clear();
+	// Initialize NavContext
+	NavContext.ClearPath();
 
-	if(!NavPathFinder.FindPath(Self, StartIndex, EndIndex, NavPath, OptionalNavPathObserver))
+	if(!NavPathFinder.FindPath(Self, StartIndex, EndIndex, NavContext, OptionalNavPathObserver))
 	{	// Find path nodes
 		Utilities.Static.RLog(FailedLogString $ "NavPathFinder failed to find path", LogCategory);
 		return false;
 	}
 
-	if(!NavPathFilter.PostProcessPath(Self, StartLocation, EndLocation, NavPath, OptionalNavPathObserver))
+	if(!NavPathFilter.PostProcessPath(Self, StartLocation, EndLocation, NavContext, OptionalNavPathObserver))
 	{	// Post process path nodes into path points
 		Utilities.Static.RLog(FailedLogString $ "NavPathFilter failed to produce path points", LogCategory);
 		return false;
@@ -257,7 +265,7 @@ function bool FindPath(
 
 	if(OptionalNavPathObserver != None)
 	{	// If a NavPathObserver was provided, copy path data over
-		OptionalNavPathObserver.CopyNavPath(NavPath);
+		OptionalNavPathObserver.CopyNavPath(NavContext);
 	}
 
 	return true;
@@ -282,6 +290,21 @@ function int FindContainingNodeIndex(Vector Location)
 
 	NavMeshSpatialQuery.FindContainingNode(Self, Location, Result);
 	return Result;
+}
+
+function int FindContainingPolyGroupIndex(Vector Location)
+{
+	local int NodeIndex;
+	local int Result;
+
+	NodeIndex = FindContainingNodeIndex(Location);
+	if(NodeIndex != NavLib.Static.InvalidIndex())
+	{
+		GetTrianglePolyGroupIndexUnchecked(NodeIndex, Result);
+		return Result;
+	}
+
+	return NavLib.Static.InvalidIndex();
 }
 
 function FindNodesInRadius(Vector Origin, float Radius, out int OutNodes[32], out int OutNumNodes)

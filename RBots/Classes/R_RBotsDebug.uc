@@ -16,6 +16,7 @@ var bool bRegisteredHUDMutator;
 
 // Cached RBot system classes
 var R_BotManager BotManager;
+var R_DynamicMapData MapData;
 var R_NavMesh NavMesh;
 
 // Command manager
@@ -36,6 +37,10 @@ const CommandManagerClass_Target		= Class'RBots.R_RBotsDebug_CommandManager_Targ
 const StringManagerClass = Class'RBots.R_RBotsDebug_StringManager';
 var R_RBotsDebug_StringManager StringManager;
 
+// Parameter manager
+const ParameterManagerClass = Class'RBots.R_RBotsDebug_ParameterManager';
+var R_RBotsDebug_ParameterManager ParameterManager;
+
 // Debug views
 const MAX_DEBUG_VIEWS = 16;
 var R_RBotsDebug_View DebugViews[16]; // Must match MAX_DEBUG_VIEWS
@@ -49,6 +54,7 @@ simulated event PreBeginPlay()
 {
 	InitializeCommandManagers();
 	InitializeStringManager();
+	InitializeParameterManager();
 }
 
 simulated function R_RBotsDebug_CommandManager CreateCommandManager(Class<R_RBotsDebug_CommandManager> CommandManagerClass, Name NameSpace)
@@ -114,6 +120,24 @@ simulated function InitializeStringManager()
 	else
 	{
 		Utilities.Static.RLog("Failed to initialized debug string manager from class" @ StringManagerClass, LogCategory);
+	}
+}
+
+function InitializeParameterManager()
+{
+	if(ParameterManager != None)
+	{
+		ParameterManager = None;
+	}
+
+	ParameterManager = new(None) ParameterManagerClass;
+	if(ParameterManager != None)
+	{
+		Utilities.Static.RLog("Initialized debug parameter manager from class" @ ParameterManagerClass, LogCategory);
+	}
+	else
+	{
+		Utilities.Static.RLog("Failed to initialized parameter string manager from class" @ ParameterManagerClass, LogCategory);
 	}
 }
 
@@ -195,20 +219,47 @@ simulated function R_BotManager GetBotManager()
 	return BotManager;
 }
 
+function R_DynamicMapData GetMapData()
+{
+	local R_DynamicMapData MapDataIt;
+
+	if(MapData == None)
+	{
+		foreach AllActors(Class'RBots.R_DynamicMapData', MapDataIt)
+		{
+			MapData = MapDataIt;
+			break;
+		}
+	}
+	return MapData;
+}
+
 simulated function R_NavMesh GetNavMesh()
 {
-	local R_DynamicMapData MapData;
+	local R_DynamicMapData LocalMapData;
 
 	if(NavMesh == None)
 	{
-		foreach AllActors(Class'RBots.R_DynamicMapData', MapData)
+		LocalMapData = GetMapData();
+		if(LocalMapData != None)
 		{
-			NavMesh = MapData.GetNavMesh();
-			break;
+			NavMesh = LocalMapData.GetNavMesh();
 		}
 	}
 
 	return NavMesh;
+}
+
+function R_NavMeshActorTracker GetNavMeshActorTracker()
+{
+	local R_DynamicMapData LocalMapData;
+
+	LocalMapData = GetMapData();
+	if(LocalMapData != None)
+	{
+		return LocalMapData.GetNavMeshActorTracker();
+	}
+	return None;
 }
 
 simulated function EnableDebugView(Class<R_RBotsDebug_View> DebugViewClass)
@@ -419,8 +470,9 @@ simulated event PostRender(Canvas C)
 		return;
 	}
 
-	// Setup string manager
+	// Setup debug draw managers
 	StringManager.Clear();
+	ParameterManager.Clear();
 
 	// Add debug strings
 	LocalBotManager = GetBotManager();
@@ -444,6 +496,7 @@ simulated event PostRender(Canvas C)
 	}
 
 	StringManager.DrawStringManager(C);
+	ParameterManager.DrawParameterManager(C);
 }
 
 function Mutate(string MutateString, PlayerPawn Sender)

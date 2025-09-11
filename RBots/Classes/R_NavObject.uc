@@ -14,8 +14,9 @@ const NavObjectClass = Class'RBots.R_NavObject';
 
 enum R_NavNeighborType
 {
-	NeighborType_Adjacent,	// Neighbors are directly connected, sharing an edge
-	NeighborType_Proximal	// Neighbors are near each other
+	NeighborType_Adjacent,	// Sharing an edge (can walk directly onto)
+	NeighborType_Proximal,	// Near each other in space (can climb or jump to)
+	NeighborType_Link		// Linked together by something (tarp, mover, etc)
 };
 
 struct R_NavNeighbor

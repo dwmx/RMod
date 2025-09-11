@@ -10,11 +10,16 @@ const LogCategory = 'DynamicMapData';
 var Class<R_NavMesh> NavMeshClass;
 var R_NavMesh NavMesh;
 
+var Class<R_NavMeshActorTracker> NavMeshActorTrackerClass;
+var R_NavMeshActorTracker NavMeshActorTracker;
+
 event PostBeginPlay()
 {
 	Super.PostBeginPlay();
 	
 	InitializeNavMesh();
+	InitializeNavMeshActorTracker();
+	AddInitialTrackedActors();
 }
 
 final function InitializeNavMesh()
@@ -52,12 +57,52 @@ final function InitializeNavMesh()
 	}
 }
 
+final function InitializeNavMeshActorTracker()
+{
+	if(NavMeshActorTrackerClass == None)
+	{
+		Utilities.Static.RLog("Failed to initialize NavMeshActorTracker -- NavMeshActorTrackerClass:" @ NavMeshActorTrackerClass, LogCategory);
+		return;
+	}
+
+	NavMeshActorTracker = new(None) NavMeshActorTrackerClass;
+	if(NavMeshActorTracker == None)
+	{
+		Utilities.Static.RLog("Failed to initialize NavMeshActorTracker -- Instantiation failed", LogCategory);
+		return;
+	}
+
+	NavMeshActorTracker.SetNavMesh(NavMesh);
+	Utilities.Static.RLog("Initialized NavMeshActorTracker", LogCategory);
+}
+
+function AddInitialTrackedActors()
+{
+	local Inventory I;
+
+	// Track all Inventorys
+	foreach AllActors(Class'Engine.Inventory', I)
+	{
+		NavMeshActorTracker.TrackActor(I);
+	}
+}
+
 function BuildNavMesh(); // To be implemented in subclasses
 
 function R_NavMesh GetNavMesh() { return NavMesh; }
+function R_NavMeshActorTracker GetNavMeshActorTracker() { return NavMeshActorTracker; }
+
+event Tick(float DeltaSeconds)
+{
+	if(NavMeshActorTracker != None)
+	{
+		NavMeshActorTracker.Update();
+	}
+}
 
 defaultproperties
 {
 	RemoteRole=ROLE_None
 	NavMeshClass=Class'RBots.R_NavMesh_Implementation'
+	NavMeshActorTrackerClass=Class'RBots.R_NavMeshActorTracker_Implementation'
 }

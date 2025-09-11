@@ -2,7 +2,7 @@
 //	R_BotBehavior
 //	Base class for all Bot behavior
 //==============================================================================
-class R_BotBehavior extends Object abstract;
+class R_BotBehavior extends R_NavObject abstract;
 
 var private R_Bot OwnerBot;
 var private PlayerPawn OwnerPlayerPawn;

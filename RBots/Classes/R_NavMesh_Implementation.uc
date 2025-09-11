@@ -32,12 +32,109 @@ struct NavMeshTriangle
 {
 	var int V[3];	// Indices into VertexArray
 	var int E[3];	// Indices into EdgeArray
+	var int PolyGroupIndex;
 };
 var private NavMeshTriangle TriangleArray[10000];
 var private int NumTriangles;
 
 var private R_NavNeighborSet NeighborSets[ArrayCount(TriangleArray)];
 
+// NavMesh poly group structure
+struct NavMeshPolyGroup
+{
+	var Name GroupName;					// This group's name
+	var int TriangleIndexArray[1024];	// Triangles in this group
+	var int NumTriangleIndices;			//
+};
+var private NavMeshPolyGroup PolyGroupArray[32];
+var private int NumPolyGroups;
+
+function CreatePolyGroup(Name PolyGroupName)
+{
+	local int i;
+
+	if(NumPolyGroups < 0 || NumPolyGroups >= ArrayCount(PolyGroupArray))
+	{	// Array overflow or invalid index
+		Utilities.Static.RLog("CreatePolyGroup failed -- Bad index:" @ NumPolyGroups);
+		return;
+	}
+
+	for(i = 0; i < ArrayCount(PolyGroupArray); ++i)
+	{	// Ensure this group has not already been added
+		if(PolyGroupArray[i].GroupName == PolyGroupName)
+		{
+			Utilities.Static.RLog("CreatePolyGroup failed -- Attempted to double-add Polygon Group:" @ PolyGroupName, LogCategory);
+			return;
+		}
+	}
+
+	PolyGroupArray[NumPolyGroups].GroupName = PolyGroupName;
+	++NumPolyGroups;
+}
+
+function int GetPolyGroupCount()
+{
+	return NumPolyGroups;
+}
+
+function bool IsValidPolyGroupIndex(int PolyGroupIndex)
+{
+	return PolyGroupIndex >= 0 && PolyGroupIndex < NumPolyGroups && PolyGroupIndex < ArrayCount(PolyGroupArray);
+}
+
+function bool GetPolyGroupByIndex(int PolyGroupIndex, out Name OutPolyGroupName)
+{
+	if(!IsValidPolyGroupIndex(PolyGroupIndex))
+	{	// Invalid index
+		OutPolyGroupName = 'None';
+		return false;
+	}
+
+	OutPolyGroupName = PolyGroupArray[PolyGroupIndex].GroupName;
+	return true;
+}
+
+function bool GetPolyGroupTriangleCount(int PolyGroupIndex, out int OutTriangleCount)
+{
+	if(!IsValidPolyGroupIndex(PolyGroupIndex))
+	{
+		OutTriangleCount = 0;
+		return false;
+	}
+
+	OutTriangleCount = PolyGroupArray[PolyGroupIndex].NumTriangleIndices;
+	return true;
+}
+
+function bool GetPolyGroupTriangleIndex(int PolyGroupIndex, int TriangleIndex, out int OutTriangleIndex)
+{
+	if(!IsValidPolyGroupIndex(PolyGroupIndex))
+	{
+		OutTriangleIndex = NavLib.Static.InvalidIndex();
+		return false;
+	}
+
+	// Not checking the polygroup triangle index, only the polygroup index
+	OutTriangleIndex = PolyGroupArray[PolyGroupIndex].TriangleIndexArray[TriangleIndex];
+	return true;
+}
+
+function bool GetPolyGroupIndexByName(Name PolyGroupName, out int OutPolyGroupIndex)
+{
+	local int i;
+
+	for(i = 0; i < NumPolyGroups; ++i)
+	{
+		if(PolyGroupArray[i].GroupName == PolyGroupName)
+		{
+			OutPolyGroupIndex = i;
+			return true;
+		}
+	}
+
+	OutPolyGroupIndex = NavLib.Static.InvalidIndex();
+	return false;
+}
 
 function InitializeNavMesh()
 {
@@ -49,6 +146,7 @@ function Clear()
 	NumVertices = 0;
 	NumEdges = 0;
 	NumTriangles = 0;
+	NumPolyGroups = 0;
 }
 
 function PushVertex(Vector VertexLocation)
@@ -129,9 +227,10 @@ function int FindEdge(int V0, int V1)
 }
 
 // Given three vertices in clockwise winding order, adds them as a triangle
-function PushTriangleAsVertices(int V0, int V1, int V2)
+function PushTriangleAsVertices(int V0, int V1, int V2, optional Name PolyGroupName)
 {
 	local int E0, E1, E2;
+	local int PolyGroupIndex;
 
 	if(NumTriangles < 0)
 	{
@@ -154,6 +253,13 @@ function PushTriangleAsVertices(int V0, int V1, int V2)
 	TriangleArray[NumTriangles].E[0] = E0;
 	TriangleArray[NumTriangles].E[1] = E1;
 	TriangleArray[NumTriangles].E[2] = E2;
+
+	if(!GetPolyGroupIndexByName(PolyGroupName, PolyGroupIndex))
+	{	// Assign poly group
+		PolyGroupIndex = NavLib.Static.InvalidIndex();
+	}
+	TriangleArray[NumTriangles].PolyGroupIndex = PolyGroupIndex;
+
 	++NumTriangles;
 }
 
@@ -251,7 +357,8 @@ function PostProcessNavMesh()
 	InitializeNeighborSets();
 	BuildAdjacentSet();
 	BuildEdgeOrientations();
-	BuildProximalSet();
+	//BuildProximalSet();
+	BuildPolyGroupInfo();
 }
 
 function InitializePostProcessEdgeFlags()
@@ -369,45 +476,6 @@ function BuildEdgeOrientations()
         }
     }
 }
-
-/*
-function BuildEdgeOrientations()
-{
-	local int EdgeIndex;
-	local Vector TCenter, ECenter;
-	local Vector Orientation;
-	local int i, j, k;
-
-	Utilities.Static.RLog("Building edge orientations", LogCategory);
-
-	for(i = 0; i < NumTriangles; ++i)
-	{
-		TCenter = Vect(0,0,0);
-		for(j = 0; j < 3; ++j)
-		{	// Calc triangle center
-			TCenter += VertexArray[TriangleArray[i].V[j]].Location;
-		}
-		TCenter = Vect(1,1,0) * (TCenter * (1.0/3.0));
-		
-		for(j = 0; j < 3; ++j)
-		{
-			EdgeIndex = TriangleArray[i].E[j];
-			if((EdgeArray[EdgeIndex].Flags & NavLib.Static.EdgeFlag_Border()) != 0)
-			{
-				ECenter = Vect(0,0,0);
-				for(k = 0; k < 2; ++k)
-				{
-					ECenter += VertexArray[EdgeArray[TriangleArray[i].E[j]].V[0]].Location;
-				}
-				ECenter = Vect(1,1,0) * (ECenter * (1.0/2.0));
-
-				Orientation = Normal(TCenter - ECenter);
-				EdgeArray[EdgeIndex].Orientation = Orientation;
-			}
-		}
-	}
-}
-	*/
 
 // If an edge is shared between the two triangles, returns the index of that edge
 // Returns InvalidIndex otherwise
@@ -580,6 +648,41 @@ function float CalcProximalNeighborCost(out Vector InVLoc0[3], out Vector InVLoc
 	return VSize(C1 - C0);
 }
 
+//	Cache all poly group related data
+function BuildPolyGroupInfo()
+{
+
+	local int PolyGroupIndex, TriangleIndex;
+	local int i;
+
+	// Init all poly groups
+	for(i = 0; i < NumPolyGroups; ++i)
+	{
+		PolyGroupArray[i].NumTriangleIndices = 0;
+	}
+
+	// Insert triangles into their groups
+	for(i = 0; i < NumTriangles; ++i)
+	{
+		PolyGroupIndex = TriangleArray[i].PolyGroupIndex;
+		if(PolyGroupIndex != NavLib.Static.InvalidIndex())
+		{
+			TriangleIndex = PolyGroupArray[PolyGroupIndex].NumTriangleIndices;
+			if(TriangleIndex >= 0 && TriangleIndex < ArrayCount(PolyGroupArray[PolyGroupIndex].TriangleIndexArray))
+			{
+				PolyGroupArray[PolyGroupIndex].TriangleIndexArray[TriangleIndex] = i;
+				++PolyGroupArray[PolyGroupIndex].NumTriangleIndices;
+			}
+			else
+			{
+				Utilities.Static.RLog("BuildPolyGroupInfo -- Failed to insert triangle to its poly group, bad index");
+			}
+		}
+	}
+
+	// Insert actors of interest into their groups
+}
+
 function int GetVertexCount() { return NumVertices; }
 function int GetEdgeCount() { return NumEdges; }
 function int GetTriangleCount() { return NumTriangles; }
@@ -652,6 +755,11 @@ function GetTriangleEdgeIndicesUnchecked(int Index, out int OutE0, out int OutE1
 	OutE0 = TriangleArray[Index].E[0];
 	OutE1 = TriangleArray[Index].E[1];
 	OutE2 = TriangleArray[Index].E[2];
+}
+
+function GetTrianglePolyGroupIndexUnchecked(int Index, out int OutPolyGroupIndex)
+{
+	OutPolyGroupIndex = TriangleArray[Index].PolyGroupIndex;
 }
 
 function GetTriangleNeighborSetUnchecked(int Index, out R_NavNeighborSet OutNodeNeighborSet)

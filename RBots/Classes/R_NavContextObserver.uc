@@ -1,11 +1,11 @@
 
 //==============================================================================
-//	R_NavPathObserver
+//	R_NavContextObserver
 //	An object which may optionally be provided to R_BotNavMesh.FindPath
 //	When provided, NavPathFinder and NavPathFilter may push details about their
 //	execution into this object (intermediate data, portals, etc)
 //==============================================================================
-class R_NavPathObserver extends R_NavPath;
+class R_NavContextObserver extends R_NavContext;
 
 var private Class<R_NavPathFinder> NavPathFinderClass;
 var private Class<R_NavPathFilter> NavPathFilterClass;
@@ -26,9 +26,9 @@ var private int BoundaryLeftCount;
 var private int BoundaryRightCount;
 
 // Clear all per-execution data, called by R_BotNavMesh.FindPath
-function Clear()
+function ClearPath()
 {
-	Super.Clear();
+	Super.ClearPath();
 	NavPathFinderClass = None;
 	NavPathFilterClass = None;
 	ClearPortals();
@@ -47,8 +47,8 @@ function ClearBoundaries()
 }
 
 // CopyNavPath
-// Copy data from the provided NavPath to this NavPathObserver
-function CopyNavPath(R_NavPath SourceNavPath)
+// Copy data from the provided NavContext to this NavPathObserver
+function CopyNavPath(R_NavContext SourceNavPath)
 {
 	local int NumPathNodeIndices, NumPathLocations;
 	local int PathNodeIndex;

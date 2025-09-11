@@ -41,6 +41,15 @@ final function PlayerPawn GetPlayerPawn()
 	return None;
 }
 
+final function R_BotPerception GetBotPerception()
+{
+	if(BotOwner != None)
+	{
+		return R_BotPerception(BotOwner.GetBotObjectByClass(Class'RBots.R_BotPerception'));
+	}
+	return None;
+}
+
 //------------------------------------------------------------------------------
 //	Sub-class extension interface
 function InitBotObject();

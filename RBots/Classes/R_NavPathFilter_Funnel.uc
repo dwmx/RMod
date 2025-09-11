@@ -11,8 +11,8 @@ const BOUNDARY_SEPARATION_DIST = 48.0;	// The distance paths will try to stay fr
 function bool PostProcessPath(
 	R_NavMesh NavMesh,
 	Vector StartLocation, Vector EndLocation,
-	R_NavPath NavPath,
-	optional R_NavPathObserver OptionalNavPathObserver)
+	R_NavContext NavContext,
+	optional R_NavContextObserver OptionalNavPathObserver)
 {
 	local Vector NodeNormal, NodeCenter;
     //local Vector PortalLeft[32], PortalRight[32];
@@ -35,7 +35,7 @@ function bool PostProcessPath(
 	local int PathIndexCount;
 	local int IndexA, IndexB;
 
-	PathIndexCount = NavPath.GetNumPathNodeIndices();
+	PathIndexCount = NavContext.GetNumPathNodeIndices();
 
     // No path, just fail
     if (PathIndexCount <= 0)
@@ -45,8 +45,8 @@ function bool PostProcessPath(
     }
 
 	// Project start and end locations onto their containing nodes
-	NavPath.GetPathNodeIndex(0, IndexA);
-	NavPath.GetPathNodeIndex(NavPath.GetNumPathNodeIndices() - 1, IndexB);
+	NavContext.GetPathNodeIndex(0, IndexA);
+	NavContext.GetPathNodeIndex(NavContext.GetNumPathNodeIndices() - 1, IndexB);
 	NavMesh.GetTriangleNormalAndCenterUnchecked(IndexA, NodeNormal, NodeCenter);
 	StartLocation = StartLocation - (NodeNormal * ((StartLocation - NodeCenter) Dot NodeNormal));
 	NavMesh.GetTriangleNormalAndCenterUnchecked(IndexB, NodeNormal, NodeCenter);
@@ -57,7 +57,7 @@ function bool PostProcessPath(
 	GetPortals(
 		NavMesh,
 		//InPathIndices, PathIndexCount, 
-		NavPath,
+		NavContext,
 		StartLocation, EndLocation,
 		BoundaryLeft, NumBoundaryLeftPoints,
 		BoundaryRight, NumBoundaryRightPoints,
@@ -65,7 +65,7 @@ function bool PostProcessPath(
 
 	//OutPathPoints[0] = StartLocation;
 	//OutPathPointCount = 1;
-	NavPath.PushPathLocation(StartLocation);
+	NavContext.PushPathLocation(StartLocation);
 
 	// Init funnel
 	Apex = StartLocation;
@@ -107,7 +107,7 @@ function bool PostProcessPath(
 				
 				//OutPathPoints[OutPathPointCount] = NewPathPoint;
 				//++OutPathPointCount;
-				NavPath.PushPathLocation(NewPathPoint);
+				NavContext.PushPathLocation(NewPathPoint);
 
 				Apex = Right;
 				Left = Apex;
@@ -143,7 +143,7 @@ function bool PostProcessPath(
 				
 				//OutPathPoints[OutPathPointCount] = NewPathPoint;
 				//++OutPathPointCount;
-				NavPath.PushPathLocation(NewPathPoint);
+				NavContext.PushPathLocation(NewPathPoint);
 
 				Apex = Left;
 				Right = Apex;
@@ -157,7 +157,7 @@ function bool PostProcessPath(
 
 	//OutPathPoints[OutPathPointCount] = EndLocation;
 	//++OutPathPointCount;
-	NavPath.PushPathLocation(EndLocation);
+	NavContext.PushPathLocation(EndLocation);
 
 	// If a NavPathObserver object was provided, add data
 	if(OptionalNavPathObserver != None)
@@ -219,7 +219,7 @@ function BoundarySeparatePathPoint2D(out Vector InOutPathPoint, out Vector InBou
 function GetPortals(
 	R_Navmesh NavMesh,
 	//out int InPathIndices[32], int NumPathIndices,
-	R_NavPath NavPath,
+	R_NavContext NavContext,
 	out Vector InPathStartLocation, out Vector InPathEndLocation,
 	out Vector OutBoundaryLeft[32], out int OutNumBoundaryLeft,
 	out Vector OutBoundaryRight[32], out int OutNumBoundaryRight,
@@ -230,7 +230,7 @@ function GetPortals(
 	local int NumPathIndices;
 	local int IndexA, IndexB;
 
-	NumPathIndices = NavPath.GetNumPathNodeIndices();
+	NumPathIndices = NavContext.GetNumPathNodeIndices();
 
 	OutNumBoundaryLeft = 0;
 	OutNumBoundaryRight = 0;
@@ -248,8 +248,8 @@ function GetPortals(
 	// Insert each shared edge along the corridor
 	for(i = 0; i < NumPathIndices - 1; ++i)
 	{
-		NavPath.GetPathNodeIndex(i, IndexA);
-		NavPath.GetPathNodeIndex(i+1, IndexB);
+		NavContext.GetPathNodeIndex(i, IndexA);
+		NavContext.GetPathNodeIndex(i+1, IndexB);
 		NavMesh.GetTriangleSharedEdgeLocationsUnchecked(IndexA, IndexB, Left, Right);
 
 		InsertPortalPoint(Left, OutBoundaryLeft, OutNumBoundaryLeft, OutPortalLeft, OutNumPortals);
@@ -310,7 +310,7 @@ function bool PostProcessPath(
     Vector StartLocation, Vector EndLocation,
     out int InPathIndices[32], int PathIndexCount,
     out Vector OutPathPoints[32], out int OutPathPointCount,
-	optional R_NavPathObserver OptionalNavPathObserver)
+	optional R_NavContextObserver OptionalNavPathObserver)
 {
 	local Vector NodeNormal, NodeCenter;
     local Vector PortalLeft[32], PortalRight[32];
