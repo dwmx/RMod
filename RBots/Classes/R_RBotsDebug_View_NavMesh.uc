@@ -59,6 +59,7 @@ var Color PlayerColor_Borders;
 var Color PlayerColor_BorderAvoidance;
 
 var Color PolyGroupColor_ActivePolygons;
+var Color PolyGroupColor_NeighboringPolygons;
 var Color PolyGroupColor_InactivePolygons;
 var Color PolyGroupColor_InvalidPolygons;
 var Color PolyGroupColor_Actors;
@@ -512,13 +513,14 @@ function DrawPolyGroupInfo(Canvas C, R_RbotsDebug_StringManager StringManager, R
 	local Vector PlayerLocation;
 	local int NodeIndex, PolyGroupIndex, OtherPolyGroupIndex;
 	local int NumTriangles, TriangleIndex;
-	local Vector VLoc[3];
-	local float PolygonRGB[3], InactiveRGB[3], InvalidRGB[3];
+	local Vector VLoc[3], Center;
+	local float PolygonRGB[3], NeighborRGB[3], InactiveRGB[3], InvalidRGB[3];
 	local R_NavMeshActorTracker ActorTracker;
 	local int NumActors;
 	local Actor Actors[32];
 	local Vector Extents;
 	local float ActorRGB[3];
+	local int PortalCount;
 	local int i;
 
 	// Draw all polygroup strings
@@ -536,15 +538,21 @@ function DrawPolyGroupInfo(Canvas C, R_RbotsDebug_StringManager StringManager, R
 	{
 		PlayerLocation = Owner.Owner.Location;
 		NodeIndex = NavMesh.FindContainingNodeIndex(PlayerLocation);
+
 		NavMesh.GetTrianglePolyGroupIndexUnchecked(NodeIndex, PolyGroupIndex);
 		NavMesh.GetPolyGroupByIndex(PolyGroupIndex, PolyGroupName);
-		StringManager.AddInt(DebugCategory_NavMeshPolyGroup, "Current PolyGroup Index", PolyGroupIndex);
+		NavMesh.GetPolyGroupPortalCount(PolyGroupIndex, PortalCount);
+
 		StringManager.AddString(DebugCategory_NavMeshPolyGroup, String(PolyGroupName), "Current PolyGroup Name");
+		StringManager.AddInt(DebugCategory_NavMeshPolyGroup, "Current PolyGroup Index", PolyGroupIndex);
+		StringManager.AddInt(DebugCategory_NavMeshPolyGroup, "Current PolyGroup Portal Count", PortalCount);
 
 		StringManager.AddColor(DebugCategory_NavMeshPolyGroup, "Polygons in Current PolyGroup", PolyGroupColor_ActivePolygons);
+		StringManager.AddColor(DebugCategory_NavMeshPolyGroup, "Polygons in Neighboring PolyGroup", PolyGroupColor_NeighboringPolygons);
 		StringManager.AddColor(DebugCategory_NavMeshPolyGroup, "Polygons not in Current PolyGroup", PolyGroupColor_InactivePolygons);
 		StringManager.AddColor(DebugCategory_NavMeshPolyGroup, "No PolyGroup Assigned", PolyGroupColor_InvalidPolygons);
 		Utilities.Static.ColorToFloats(PolyGroupColor_ActivePolygons, PolygonRGB[0], PolygonRGB[1], PolygonRGB[2]);
+		Utilities.Static.ColorToFloats(PolyGroupColor_NeighboringPolygons, NeighborRGB[0], NeighborRGB[1], NeighborRGB[2]);
 		Utilities.Static.ColorToFloats(PolyGroupColor_InactivePolygons, InactiveRGB[0], InactiveRGB[1], InactiveRGB[2]);
 		Utilities.Static.ColorToFloats(PolyGroupColor_InvalidPolygons, InvalidRGB[0], InvalidRGB[1], InvalidRGB[2]);
 
@@ -562,11 +570,25 @@ function DrawPolyGroupInfo(Canvas C, R_RbotsDebug_StringManager StringManager, R
 			{	// Polygons belonging to the polygroup the player is on
 				DrawTriangle(C, VLoc, PolygonRGB, 1.0, 1.0);
 			}
+			else if(NavMesh.DoesPolyGroupPortalExist(PolyGroupIndex, OtherPolyGroupIndex))
+			{	// Polygons belong to a neighboring polygroup
+				DrawTriangle(C, VLoc, NeighborRGB, 1.0, 1.0);
+			}
 			else
 			{	// All other polygroups
 				DrawTriangle(C, VLoc, InactiveRGB, 1.0, 1.0);
 			}
-			
+		}
+
+		// Draw sample portal costs
+		NavMesh.GetPolyGroupTriangleCount(PolyGroupIndex, NumTriangles);
+		for(i = 0; i < NumTriangles; ++i)
+		{
+			NavMesh.GetPolyGroupTriangleIndex(PolyGroupIndex, i, TriangleIndex);
+			NavMesh.GetTriangleVertexLocationsUnchecked(TriangleIndex, VLoc);
+			Center = (VLoc[0] + VLoc[1] + VLoc[2]) * (1.0/3.0);
+			DebugLib.Static.InitializeCanvasForDebugDrawing(C);
+			CanvasLib.Static.DrawTextAtWorldLocation(C, "PortalCost", Center, Vect(0.5,0.5,0.0));
 		}
 
 		// Draw all actors in the poly group
@@ -606,7 +628,8 @@ defaultproperties
 	PlayerColor_Borders=(R=248,G=55,B=255)
 	PlayerColor_BorderAvoidance=(R=255,G=251,B=1)
 	PolyGroupColor_ActivePolygons=(R=0,G=245,B=41)
-	PolyGroupColor_InactivePolygons=(R=31,G=0,B=209)
+	PolyGroupColor_NeighboringPolygons=(R=245,G=241,B=0)
+	PolyGroupColor_InactivePolygons=(R=202,G=0,B=0)
 	PolyGroupColor_InvalidPolygons=(R=255,G=255,B=255)
 	PolyGroupColor_Actors=(R=17,G=219,B=255)
 	bDrawNormals=true

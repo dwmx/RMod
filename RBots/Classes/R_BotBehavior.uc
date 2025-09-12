@@ -4,6 +4,8 @@
 //==============================================================================
 class R_BotBehavior extends R_NavObject abstract;
 
+const NavLib = Class'RBots.R_NavLibrary';
+
 var private R_Bot OwnerBot;
 var private PlayerPawn OwnerPlayerPawn;
 
@@ -21,6 +23,16 @@ final function InitializeBehavior(R_Bot NewOwnerBot, PlayerPawn NewOwnerPlayerPa
 
 final function R_Bot GetBot() { return OwnerBot; }
 final function PlayerPawn GetPlayerPawn() { return OwnerPlayerPawn; }
+final function R_BotPerception GetBotPerception()
+{
+	local R_Bot Bot;
+	Bot = GetBot();
+	if(Bot != None)
+	{
+		return R_BotPerception(Bot.GetBotObjectByClass(Class'RBots.R_BotPerception'));
+	}
+	return None;
+}
 
 // Called when this behavior is activated
 function BehaviorActivated()

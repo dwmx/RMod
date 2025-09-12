@@ -23,6 +23,7 @@ var private R_BotBehavior ActiveBehavior;
 const Behavior_Fight = Class'RBots.R_BotBehavior_Fight';
 const Behavior_FindWeapon = Class'RBots.R_BotBehavior_FindWeapon';
 const Behavior_Wander = Class'RBots.R_BotBehavior_Wander';
+const Behavior_Avoid = Class'RBots.R_BotBehavior_Avoid';
 
 // Player
 var private PlayerPawn OwnedPlayerPawn;
@@ -255,8 +256,9 @@ function Class<R_BotBehavior> DetermineDesiredBehavior()
 {
 	local PlayerPawn P;
 
-	return Behavior_Wander;
+	//return Behavior_Avoid;
 	//return Behavior_FindWeapon;
+	return Behavior_Wander;
 
 	//P = GetOwnedPlayerPawn();
 	//if(P != None)

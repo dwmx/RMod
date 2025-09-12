@@ -4,8 +4,6 @@
 //==============================================================================
 class R_BotBehavior_Wander extends R_BotBehavior;
 
-const NavLib = Class'RBots.R_NavLibrary';
-
 var private int CurrentNodeIndex;
 var private Vector WanderDirection;
 

@@ -66,6 +66,10 @@ function bool GetPolyGroupByIndex(int PolyGroupIndex, out Name OutPolyGroupName)
 function bool GetPolyGroupTriangleCount(int PolyGroupIndex, out int OutTriangleCount);
 function bool GetPolyGroupTriangleIndex(int PolyGroupIndex, int TriangleIndex, out int OutTriangleIndex);
 function bool GetPolyGroupIndexByName(Name PolyGroupName, out int OutPolyGroupIndex);
+function bool GetPolyGroupPortalCount(int PolyGroupIndex, out int OutPortalCount);
+
+// Returns true if there exists a portal from Source to Dest PolyGroup
+function bool DoesPolyGroupPortalExist(int SourcePolyGroupIndex, int DestPolyGroupIndex);
 
 // Returns the NeighborSet for the given node index
 // This includes all adjacent and proximal neighbors	
