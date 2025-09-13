@@ -787,6 +787,8 @@ function BuildPolyGroupInfo_Portals()
 function BuildPolyGroupInfo_PortalCosts()
 {
 	local int PolyGroupIndex, PortalIndex;
+	local float Costs[2048];
+	local int i;
 
 	Utilities.Static.RLog("Building poly group portal cost layers", LogCategory);
 
@@ -794,11 +796,19 @@ function BuildPolyGroupInfo_PortalCosts()
 	{
 		for(PortalIndex = 0; PortalIndex < PolyGroupArray[PolyGroupIndex].NumPortals; ++PortalIndex)
 		{
+			//for(i = 0; i < PolyGroupArray[PolyGroupIndex].NumTriangleIndices; ++i)
+			//{
+			//	PolyGroupArray[PolyGroupIndex].PortalCosts[PortalIndex].Data[i] = 99999.0;
+			//}
 			BuildPortalCostsForPolyGroup(
 				PolyGroupIndex,
 				PolyGroupArray[PolyGroupIndex],
 				PolyGroupArray[PolyGroupIndex].Portals[PortalIndex],
-				PolyGroupArray[PolyGroupIndex].PortalCosts[PortalIndex]);
+				Costs);
+			for(i = 0; i < PolyGroupArray[PolyGroupIndex].NumTriangleIndices; ++i)
+			{
+				PolyGroupArray[PolyGroupIndex].PortalCosts[PortalIndex].Data[i] = Costs[i];
+			}
 		}
 	}
 }
@@ -807,7 +817,8 @@ function BuildPortalCostsForPolyGroup(
 	int PolyGroupIndex,
 	out R_NavMeshPolyGroup InPolyGroup,
 	out R_NavMeshPortal InPortal,
-	out R_NavMeshPolyGroupLayer OutCostLayer)
+	//out R_NavMeshPolyGroupLayer OutCostLayer
+	out float OutCostLayer[2048])
 {
 	local R_NavNeighborSet NeighborSet;
 	local int TriangleIndex, NeighborIndex;
@@ -820,12 +831,12 @@ function BuildPortalCostsForPolyGroup(
 	local float MaxCost, TempCost;
 	local int i, j, k;
 
-	MaxCost = 99999999.0;
-
+	MaxCost = 999999.0;
+	
 	// 1: Initialize all costs to MaxCost
 	for(i = 0; i < InPolyGroup.NumTriangleIndices; ++i)
 	{
-		OutCostLayer.Data[i] = MaxCost;
+		OutCostLayer[i] = MaxCost;
 	}
 
 	// 2: Queue all triangles on the interface and calc initial cost
@@ -836,7 +847,7 @@ function BuildPortalCostsForPolyGroup(
 		TriangleIndex = InPolyGroup.TriangleIndexArray[i];
 		if(DoesTriangleContainAnyPortalEdges(TriangleIndex, InPortal))
 		{
-			OutCostLayer.Data[i] = 0.0; // TODO: This is not an accurate initial cost, will need to figure this out later
+			OutCostLayer[i] = 0.0; // TODO: This is not an accurate initial cost, will need to figure this out later
 			TriangleIndexArray[TriangleIndexCount] = TriangleIndex;
 			++TriangleIndexCount;
 			VisitedIndexArray[VisitedIndexCount] = TriangleIndex;
@@ -873,10 +884,10 @@ function BuildPortalCostsForPolyGroup(
 			}
 
 			// Calculate the candidate cost
-			TempCost = OutCostLayer.Data[TrianglePolyGroupIndex] + NeighborSet.Neighbors[j].NeighborCost;
-			if(TempCost < OutCostLayer.Data[NeighborTrianglePolyGroupIndex])
+			TempCost = OutCostLayer[TrianglePolyGroupIndex] + NeighborSet.Neighbors[j].NeighborCost;
+			if(TempCost < OutCostLayer[NeighborTrianglePolyGroupIndex])
 			{	// Update the cost if it's better than what's already there
-				OutCostLayer.Data[NeighborTrianglePolyGroupIndex] = TempCost;
+				OutCostLayer[NeighborTrianglePolyGroupIndex] = TempCost;
 			}
 
 			// Push neighbor if it has not yet been visited
