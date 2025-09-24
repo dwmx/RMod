@@ -35,6 +35,14 @@ state PlayerSpectating
     }
 }
 
+/**
+*   EncroachedBy (override)
+*   Overridden to prevent collision deaths
+*/
+event EncroachedBy( actor Other )
+{
+}
+
 defaultproperties
 {
 	SpectatorCameraClass=Class'RMod_Arena.R_Camera_ArenaSpectator'
