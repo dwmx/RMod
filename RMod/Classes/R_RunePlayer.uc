@@ -4058,6 +4058,9 @@ function ClientCloseLoadoutMenu()
 {
     CloseLoadoutMenu();
 }
+//==============================================================================
+//  End Loadout Menu Functions
+//==============================================================================
 
 /**
 *   EncroachedBy (override)
@@ -4066,10 +4069,6 @@ function ClientCloseLoadoutMenu()
 event EncroachedBy( actor Other )
 {
 }
-
-//==============================================================================
-//  End Loadout Menu Functions
-//==============================================================================
 
 defaultproperties
 {
