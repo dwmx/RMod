@@ -4059,6 +4059,14 @@ function ClientCloseLoadoutMenu()
     CloseLoadoutMenu();
 }
 
+/**
+*   EncroachedBy (override)
+*   Overridden to prevent collision kills
+*/
+event EncroachedBy( actor Other )
+{
+}
+
 //==============================================================================
 //  End Loadout Menu Functions
 //==============================================================================
