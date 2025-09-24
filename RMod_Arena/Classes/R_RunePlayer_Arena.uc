@@ -37,7 +37,7 @@ state PlayerSpectating
 
 /**
 *   EncroachedBy (override)
-*   Overridden to prevent collision deaths
+*   Overridden to prevent collision kills
 */
 event EncroachedBy( actor Other )
 {
