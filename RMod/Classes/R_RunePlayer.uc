@@ -4063,6 +4063,14 @@ function ClientCloseLoadoutMenu()
 //  End Loadout Menu Functions
 //==============================================================================
 
+/**
+*   EncroachedBy (override)
+*   Overridden to prevent collision kills
+*/
+event EncroachedBy( actor Other )
+{
+}
+
 defaultproperties
 {
     UtilitiesClass=Class'RMod.R_AUtilities'
