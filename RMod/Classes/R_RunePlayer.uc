@@ -2751,8 +2751,13 @@ function UpdateRotation(float DeltaTime, float maxPitch)
 */
 function PlayerTickEvents()
 {
-    if (Player.CurrentNetSpeed != 0 && Level.TimeSeconds - LastStuffUpdate > 500.0/Player.CurrentNetSpeed)  
-        LastStuffUpdate = CurrentTime;  
+    if(Player != None)
+	{
+		if (Player.CurrentNetSpeed != 0 && Level.TimeSeconds - LastStuffUpdate > 500.0/Player.CurrentNetSpeed) 
+		{
+        	LastStuffUpdate = CurrentTime;
+		}
+	}
 }
 
 /**
@@ -3380,7 +3385,7 @@ state PlayerWalking
             }
         }
     }
-    
+
     /**
     *   GrabEdge (override)
     *   Overridden to prevent client-side stuttering when attacking and grabbing ledge
