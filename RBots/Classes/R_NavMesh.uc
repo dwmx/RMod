@@ -49,6 +49,7 @@ function GetEdgeVertexLocationsUnchecked(int Index, out Vector VLoc[2]);
 function GetEdgeVertexIndicesUnchecked(int Index, out int OutV0, out int OutV1);
 function GetEdgeFlagsUnchecked(int Index, out int OutEdgeFlags);
 function GetEdgeOrientationUnchecked(int Index, out Vector OutEdgeOrientation);
+function int FindSharedEdgeIndex(int T0, int T1);
 function SetEdgePassable(int V0, int V1, bool bPassable);
 
 // Triangle functions
@@ -58,18 +59,6 @@ function GetTriangleVertexLocationsUnchecked(int Index, out Vector VLoc[3]);
 function GetTriangleVertexIndicesUnchecked(int Index, out int OutV0, out int OutV1, out int OutV2);
 function GetTriangleEdgeIndicesUnchecked(int Index, out int OutE0, out int OutE1, out int OutE2);
 function GetTrianglePolyGroupIndexUnchecked(int Index, out int OutPolyGroupIndex);
-
-// Polygon Groups
-function CreatePolyGroup(Name PolyGroupName);
-function int GetPolyGroupCount();
-function bool GetPolyGroupByIndex(int PolyGroupIndex, out Name OutPolyGroupName);
-function bool GetPolyGroupTriangleCount(int PolyGroupIndex, out int OutTriangleCount);
-function bool GetPolyGroupTriangleIndex(int PolyGroupIndex, int TriangleIndex, out int OutTriangleIndex);
-function bool GetPolyGroupIndexByName(Name PolyGroupName, out int OutPolyGroupIndex);
-function bool GetPolyGroupPortalCount(int PolyGroupIndex, out int OutPortalCount);
-
-// Returns true if there exists a portal from Source to Dest PolyGroup
-function bool DoesPolyGroupPortalExist(int SourcePolyGroupIndex, int DestPolyGroupIndex);
 
 // Returns the NeighborSet for the given node index
 // This includes all adjacent and proximal neighbors	
@@ -82,6 +71,12 @@ function GetTriangleNormalAndCenterUnchecked(int Index, out Vector OutNormal, ou
 // direction of travel going from A to B
 // If there is no shared edge, function returns false
 function bool GetTriangleSharedEdgeLocationsUnchecked(int IndexA, int IndexB, out Vector OutLeftLocation, out Vector OutRightLocation);
+
+// PolyGroups
+function CreatePolyGroup(Name PolyGroupName);
+function int GetPolyGroupCount();
+function R_NavMeshPolyGroup GetPolyGroupByIndex(int PolyGroupIndex);
+function R_NavMeshPolyGroup GetPolyGroupByName(Name PolyGroupName);
 
 //------------------------------------------------------------------------------
 //	Base NavMesh implementation -- Do not override

@@ -507,70 +507,77 @@ function DrawNavMeshPlayerBorders(Canvas C, R_RbotsDebug_StringManager StringMan
 
 function DrawPolyGroupInfo(Canvas C, R_RbotsDebug_StringManager StringManager, R_NavMesh NavMesh)
 {
-	local int NumPolyGroups;
-	local Name PolyGroupName;
-	local String PolyGroupString;
-	local Vector PlayerLocation;
-	local int NodeIndex, PolyGroupIndex, OtherPolyGroupIndex;
-	local int NumTriangles, TriangleIndex;
-	local Vector VLoc[3], Center;
-	local float PolygonRGB[3], NeighborRGB[3], InactiveRGB[3], InvalidRGB[3];
-	local R_NavMeshActorTracker ActorTracker;
-	local int NumActors;
-	local Actor Actors[32];
-	local Vector Extents;
-	local float ActorRGB[3];
-	local int PortalCount;
-	local int i;
+	local R_NavMeshPolyGroup PolyGroup;
+	local int NumPolyGroups, NumTriangles;
+	local int PlayerNodeIndex, PlayerPolyGroupIndex, OtherPolyGroupIndex;
+	local float ActiveRGB[3], NeighborRGB[3], InactiveRGB[3], InvalidRGB[3];
+	local Vector VLoc[3];
+	local int i, j;
+	local int PolyGroupTriangleCount;
+	local float PortalCost;
+	local int TriangleIndex;
+	local Vector DrawLocation;
 
-	// Draw all polygroup strings
 	NumPolyGroups = NavMesh.GetPolyGroupCount();
+
+	// Add strings
+	StringManager.AddInt(DebugCategory_NavMeshPolyGroup, "NumPolyGroups", NumPolyGroups);
 	for(i = 0; i < NumPolyGroups; ++i)
 	{
-		NavMesh.GetPolyGroupByIndex(i, PolyGroupName);
-
-		PolyGroupString = String(PolyGroupName);
-		StringManager.AddString(DebugCategory_NavMeshPolyGroup, PolyGroupString, "PolyGroups[" $ i $ "]");
+		PolyGroup = NavMesh.GetPolyGroupByIndex(i);
+		if(PolyGroup != None)
+		{
+			StringManager.AddName(DebugCategory_NavMeshPolyGroup, "PolyGroups[" $ i $ "]", PolyGroup.GetPolyGroupName());
+		}
 	}
 
-	// Draw info for the polygroup that the player is currently inside of
-	if(Owner != None && Owner.Owner != None)
+	// Draw PolyGroup visuals
+	if(Owner == None || Owner.Owner == None)
 	{
-		PlayerLocation = Owner.Owner.Location;
-		NodeIndex = NavMesh.FindContainingNodeIndex(PlayerLocation);
+		StringManager.AddWarning(DebugCategory_NavMeshPolyGroup, "Failed to draw PolyGroup data, Owner == None or Owner.Owner == None");
+	}
+	else
+	{
+		PlayerNodeIndex = NavMesh.FindContainingNodeIndex(Owner.Owner.Location); // Owner.Owner is Player's PlayerPawn
 
-		NavMesh.GetTrianglePolyGroupIndexUnchecked(NodeIndex, PolyGroupIndex);
-		NavMesh.GetPolyGroupByIndex(PolyGroupIndex, PolyGroupName);
-		NavMesh.GetPolyGroupPortalCount(PolyGroupIndex, PortalCount);
+		NavMesh.GetTrianglePolyGroupIndexUnchecked(PlayerNodeIndex, PlayerPolyGroupIndex);
 
-		StringManager.AddString(DebugCategory_NavMeshPolyGroup, String(PolyGroupName), "Current PolyGroup Name");
-		StringManager.AddInt(DebugCategory_NavMeshPolyGroup, "Current PolyGroup Index", PolyGroupIndex);
-		StringManager.AddInt(DebugCategory_NavMeshPolyGroup, "Current PolyGroup Portal Count", PortalCount);
+		// Info for the PolyGroup the Player is standing inside of
+		PolyGroup = NavMesh.GetPolyGroupByIndex(PlayerPolyGroupIndex);
+		StringManager.AddObject(DebugCategory_NavMeshPolyGroup, "Current PolyGroup", PolyGroup);
+		if(PolyGroup != None)
+		{
+			StringManager.AddName(DebugCategory_NavMeshPolyGroup, "Current PolyGroup Name", PolyGroup.GetPolyGroupName());
+			StringManager.AddInt(DebugCategory_NavMeshPolyGroup, "Current PolyGroup NumPortals", PolyGroup.GetPortalCount());
+			StringManager.AddInt(DebugCategory_NavMeshPolyGroup, "Current PolyGroup NumTriangles", PolyGroup.GetTriangleIndexCount());
+		}
 
+		// Color legend
 		StringManager.AddColor(DebugCategory_NavMeshPolyGroup, "Polygons in Current PolyGroup", PolyGroupColor_ActivePolygons);
 		StringManager.AddColor(DebugCategory_NavMeshPolyGroup, "Polygons in Neighboring PolyGroup", PolyGroupColor_NeighboringPolygons);
 		StringManager.AddColor(DebugCategory_NavMeshPolyGroup, "Polygons not in Current PolyGroup", PolyGroupColor_InactivePolygons);
 		StringManager.AddColor(DebugCategory_NavMeshPolyGroup, "No PolyGroup Assigned", PolyGroupColor_InvalidPolygons);
-		Utilities.Static.ColorToFloats(PolyGroupColor_ActivePolygons, PolygonRGB[0], PolygonRGB[1], PolygonRGB[2]);
+		Utilities.Static.ColorToFloats(PolyGroupColor_ActivePolygons, ActiveRGB[0], ActiveRGB[1], ActiveRGB[2]);
 		Utilities.Static.ColorToFloats(PolyGroupColor_NeighboringPolygons, NeighborRGB[0], NeighborRGB[1], NeighborRGB[2]);
 		Utilities.Static.ColorToFloats(PolyGroupColor_InactivePolygons, InactiveRGB[0], InactiveRGB[1], InactiveRGB[2]);
 		Utilities.Static.ColorToFloats(PolyGroupColor_InvalidPolygons, InvalidRGB[0], InvalidRGB[1], InvalidRGB[2]);
 
-		// Draw all triangles
+		// Draw color-coded PolyGroups
 		NumTriangles = NavMesh.GetTriangleCount();
 		for(i = 0; i < NumTriangles; ++i)
 		{
 			NavMesh.GetTriangleVertexLocationsUnchecked(i, VLoc);
 			NavMesh.GetTrianglePolyGroupIndexUnchecked(i, OtherPolyGroupIndex);
+
 			if(OtherPolyGroupIndex == NavLib.Static.InvalidIndex())
 			{	// Invalid polygroups
 				DrawTriangle(C, VLoc, InvalidRGB, 1.0, 1.0);
 			}
-			else if(OtherPolyGroupIndex == PolyGroupIndex)
+			else if(OtherPolyGroupIndex == PlayerPolyGroupIndex)
 			{	// Polygons belonging to the polygroup the player is on
-				DrawTriangle(C, VLoc, PolygonRGB, 1.0, 1.0);
+				DrawTriangle(C, VLoc, ActiveRGB, 1.0, 1.0);
 			}
-			else if(NavMesh.DoesPolyGroupPortalExist(PolyGroupIndex, OtherPolyGroupIndex))
+			else if(PolyGroup != None && PolyGroup.DoesPortalExistToDest(OtherPolyGroupIndex))
 			{	// Polygons belong to a neighboring polygroup
 				DrawTriangle(C, VLoc, NeighborRGB, 1.0, 1.0);
 			}
@@ -580,34 +587,18 @@ function DrawPolyGroupInfo(Canvas C, R_RbotsDebug_StringManager StringManager, R
 			}
 		}
 
-		// Draw sample portal costs
-		NavMesh.GetPolyGroupTriangleCount(PolyGroupIndex, NumTriangles);
-		for(i = 0; i < NumTriangles; ++i)
+		// Draw portal cost visualization
+		if(PolyGroup != None)
 		{
-			NavMesh.GetPolyGroupTriangleIndex(PolyGroupIndex, i, TriangleIndex);
-			NavMesh.GetTriangleVertexLocationsUnchecked(TriangleIndex, VLoc);
-			Center = (VLoc[0] + VLoc[1] + VLoc[2]) * (1.0/3.0);
-			DebugLib.Static.InitializeCanvasForDebugDrawing(C);
-			CanvasLib.Static.DrawTextAtWorldLocation(C, "PortalCost", Center, Vect(0.5,0.5,0.0));
-		}
-
-		// Draw all actors in the poly group
-		StringManager.AddColor(DebugCategory_NavMeshPolyGroup, "PolyGroup Actors", PolyGroupColor_Actors);
-		Utilities.Static.ColorToFloats(PolyGroupColor_Actors, ActorRGB[0], ActorRGB[1], ActorRGB[2]);
-		ActorTracker = GetNavMeshActorTracker();
-		if(ActorTracker != None)
-		{
-			//function GetActorsByPolyGroupIndex(int PolyGroupIndex, out Actor OutActors[32], out int OutNumActors);
-			ActorTracker.GetActorsByPolyGroupIndex(PolyGroupIndex, Actors, NumActors);
-			for(i = 0; i < NumActors; ++i)
+			PolyGroupTriangleCount = PolyGroup.GetTriangleIndexCount();
+			for(j = 0; j < PolyGroupTriangleCount; ++j)
 			{
-				if(Actors[i] != None)
-				{
-					Extents = Vect(0.0, 0.0, 0.0);
-					Extents += Vect(1.0, 1.0, 0.0) * Actors[i].CollisionRadius;
-					Extents += Vect(0.0, 0.0, 1.0) * Actors[i].CollisionRadius;
-					CanvasLib.Static.DrawBox3D(C, Actors[i].Location, Extents, ActorRGB[0], ActorRGB[1], ActorRGB[2]);
-				}
+				PortalCost = PolyGroup.GetPortalCostFromIndex(j, 0);
+				TriangleIndex = PolyGroup.GetTriangleIndex(j);
+				NavMesh.GetTriangleVertexLocationsUnchecked(TriangleIndex, VLoc);
+				DrawLocation = (VLoc[0] + VLoc[1] + VLoc[2]) * (1.0/3.0);
+				DebugLib.Static.InitializeCanvasForDebugDrawing(C);
+				CanvasLib.Static.DrawTextAtWorldLocation(C, "C:" $ PortalCost, DrawLocation, Vect(0.5,0.5,0.0));
 			}
 		}
 	}
