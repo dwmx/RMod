@@ -70,7 +70,7 @@ static function DrawBoxOutline(
     B = FClamp(B, 0.0, 1.0);
     A = FClamp(A, 0.0, 1.0);
     
-    C.Style = 3; // STY_Translucent
+    C.Style = 5; // STY_AlphaBlend
     C.AlphaScale = A;
     C.SetColor(R * 255.0, G * 255.0, B * 255.0);
     
@@ -109,7 +109,7 @@ static function DrawBoxSolid(
     B = FClamp(B, 0.0, 1.0);
     A = FClamp(A, 0.0, 1.0);
     
-    C.Style = 1; // STY_Translucent
+    C.Style = 5; // STY_AlphaBlend
     C.AlphaScale = A;
     C.SetColor(R * 255.0, G * 255.0, B * 255.0);
     
