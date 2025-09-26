@@ -4,7 +4,6 @@
 //==============================================================================
 class R_BotBehavior_Wander extends R_BotBehavior;
 
-var private int CurrentNodeIndex;
 var private Vector WanderDirection;
 
 struct R_RecentlyVisitedNode
@@ -23,12 +22,6 @@ function BehaviorActivated()
 	WanderDirection = Vect(1,0,0) * FRand() + Vect(0,1,0) * FRand();
 	WanderDirection.Z = 0.0;
 	WanderDirection = Normal(WanderDirection);
-
-	PP = GetPlayerPawn();
-	if(PP != None)
-	{
-		PP.bIsTyping = true;
-	}
 }
 
 function InitRecentlyVisitedNodes()
@@ -50,6 +43,7 @@ function String GetDescriptiveString()
 function BehaviorTick(float DeltaSeconds)
 {
 	local R_Bot Bot;
+	local R_BotPawnController Controller;
 	local R_NavMesh NavMesh;
 	local PlayerPawn PP;
 	local Vector Location;
@@ -62,22 +56,14 @@ function BehaviorTick(float DeltaSeconds)
 	Bot = GetBot();
 	if(Bot == None)	return;
 
+	Controller = GetBotPawnController();
+	if(Controller == None)	return;
+
 	NavMesh = Bot.GetNavMesh();
 	if(NavMesh == None)	return;
 
 	PP = Bot.GetOwnedPlayerPawn();
 	if(PP == None)	return;
-
-	// Update Node Index
-	Location = PP.Location;
-	NewNodeIndex = NavMesh.FindContainingNodeIndex(Location);
-	if(NewNodeIndex != CurrentNodeIndex)
-	{
-		OnNodeIndexUpdated(CurrentNodeIndex, NewNodeIndex);
-		CurrentNodeIndex = NewNodeIndex;
-	}
-
-
 
 
 	if(Bot != None)
@@ -89,7 +75,8 @@ function BehaviorTick(float DeltaSeconds)
 			WanderDirection = AdjustWanderForAvoidance(WanderDirection, AvoidanceDir, AvoidanceInfluence);
 		}
 		//Bot.AddMovementInput(Vect(1,0,0) * Cos(Bot.Level.TimeSeconds) + Vect(0,1,0) * Sin(Bot.Level.TimeSeconds));
-		Bot.AddMovementInput(WanderDirection);
+		//Bot.AddMovementInput(WanderDirection);
+		Controller.AddMovementInput_WorldSpace(WanderDirection);
 	}
 
 	if(PP.Physics == PHYS_Walking)
@@ -113,7 +100,7 @@ function Vector AdjustWanderForAvoidance(Vector WanderDir, Vector AvoidanceDir, 
 	return Normal(Result);
 }
 
-function OnNodeIndexUpdated(int OldNodeIndex, int NewNodeIndex)
+function OnNavMeshNodeIndexChanged(int OldNavMeshNodeIndex, int NewNavMeshNodeIndex)
 {
 	local R_Bot Bot;
 	local R_NavMesh NavMesh;
@@ -129,7 +116,7 @@ function OnNodeIndexUpdated(int OldNodeIndex, int NewNodeIndex)
 		return;
 
 	RecentlyVisitedNodeIndex = (RecentlyVisitedNodeIndex + 1) % ArrayCount(RecentlyVisitedNodes);
-	RecentlyVisitedNodes[RecentlyVisitedNodeIndex].NodeIndex = NewNodeIndex;
+	RecentlyVisitedNodes[RecentlyVisitedNodeIndex].NodeIndex = NewNavMeshNodeIndex;
 	RecentlyVisitedNodes[RecentlyVisitedNodeIndex].TimeStampSeconds = Bot.Level.TimeSeconds;
 
 	NavMesh = Bot.GetNavMesh();
@@ -139,7 +126,7 @@ function OnNodeIndexUpdated(int OldNodeIndex, int NewNodeIndex)
 	// Find a new neighbor to travel towards
 	BestScore = 0.0;
 	BestNode = NavLib.Static.InvalidIndex();
-	NavMesh.GetTriangleNeighborSetUnchecked(NewNodeIndex, NeighborSet);
+	NavMesh.GetTriangleNeighborSetUnchecked(NewNavMeshNodeIndex, NeighborSet);
 	for(i = 0; i < NeighborSet.NumNeighbors; ++i)
 	{
 		if(NeighborSet.Neighbors[i].NeighborType != NeighborType_Adjacent)
@@ -153,8 +140,6 @@ function OnNodeIndexUpdated(int OldNodeIndex, int NewNodeIndex)
 			BestNode = NeighborSet.Neighbors[i].NeighborIndex;
 		}
 	}
-
-	Utilities.Static.RLog("Taking node:" @ BestNode @ "with score" @ BestScore);
 
 	if(BestNode != NavLib.Static.InvalidIndex())
 	{

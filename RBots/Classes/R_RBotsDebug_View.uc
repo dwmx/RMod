@@ -19,6 +19,18 @@ simulated event PostRender(Canvas C) {} // To be implemented in subclasses
 // Implement in subclasses
 simulated function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager) {}
 
+// Utility function for returning the player pawn debug is being viewed from
+function PlayerPawn GetPlayerPawnOwner()
+{
+	local PlayerPawn PP;
+
+	if(Owner != None && Owner.Owner != None)
+	{
+		return PlayerPawn(Owner.Owner);
+	}
+	return None;
+}
+
 // Utility function for subclasses -- gets NavMesh from parent debug actor
 simulated function R_NavMesh GetNavMesh()
 {

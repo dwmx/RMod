@@ -35,10 +35,12 @@ const StringType_String = 'StringType_String';
 const StringType_Warning = 'StringType_Warning';
 const StringType_Bool = 'StringType_Bool';
 const StringType_Int = 'StringType_Int';
+const StringType_Float = 'StringType_Float';
 const StringType_Vector = 'StringType_Vector';
 const StringType_Actor = 'StringType_Actor';
 const StringType_Object = 'StringType_Object';
 const StringType_Class = 'StringType_Class';
+const StringType_Name = 'StringType_Name';
 
 struct DebugString
 {
@@ -60,6 +62,7 @@ var Color WarningStringColor;
 var Color BoolColorTrue;
 var Color BoolColorFalse;
 var Color IntColor;
+var Color FloatColor;
 var Color VectorColor;
 var Color ActorColor;
 var Color ActorColorNone;
@@ -67,6 +70,7 @@ var Color ObjectColor;
 var Color ObjectColorNone;
 var Color ClassColor;
 var Color ClassColorNone;
+var Color NameColor;
 
 const COLOR_LEGEND_VERTICAL_SPACING = 10.0;
 const DEBUG_STRING_VERTICAL_SPACING = 10.0;
@@ -202,6 +206,18 @@ function AddInt(Name Category, String Label, int IntValue)
 	AddString(Category, IntString, Label, StringType_Int, MetaData);
 }
 
+function AddFloat(Name Category, String Label, float FloatValue, optional int DecimalPlaces)
+{
+	local int MetaData;
+	local String FloatString;
+
+	MetaData = 0;
+	DecimalPlaces = Clamp(DecimalPlaces, 1, 6);
+	FloatString = Utilities.Static.FloatToString(FloatValue, DecimalPlaces);
+
+	AddString(Category, FloatString, Label, StringType_Float, MetaData);
+}
+
 function AddVector(Name Category, String Label, Vector VectorValue)
 {
 	local String VectorString;
@@ -272,6 +288,17 @@ function AddClass(Name Category, String Label, Class ClassRef)
 	}
 
 	AddString(Category, ClassString, Label, StringType_Class, MetaData);
+}
+
+function AddName(Name Category, String Label, Name NameValue)
+{
+	local int MetaData;
+	local String NameString;
+
+	MetaData = 0;
+	NameString = "'" $ String(NameValue) $ "'";
+
+	AddString(Category, NameString, Label, StringType_Name, MetaData);
 }
 
 function Clear()
@@ -412,6 +439,10 @@ function bool DrawDebugString(Canvas C, float XPos, float YPos, out DebugString 
 	{	// Int
 		C.DrawColor = IntColor;
 	}
+	else if(InDebugString.StringType == StringType_Float)
+	{
+		C.DrawColor = FloatColor;
+	}
 	else if(InDebugString.StringType == StringType_Vector)
 	{	// Vector
 		C.DrawColor = VectorColor;
@@ -449,6 +480,10 @@ function bool DrawDebugString(Canvas C, float XPos, float YPos, out DebugString 
 			C.DrawColor = ClassColor;
 		}
 	}
+	else if(InDebugString.StringType == StringType_Name)
+	{
+		C.DrawColor = NameColor;
+	}
 	else
 	{	// Default -- goes back to StringType_String
 		C.DrawColor = StringColor;
@@ -469,6 +504,7 @@ defaultproperties
 	BoolColorTrue=(R=80,G=255,B=80)
 	BoolColorFalse=(R=255,G=80,B=80)
 	IntColor=(R=255,G=255,B=80)
+	FloatColor=(R=23,G=255,B=243)
 	VectorColor=(R=255,G=255,B=80)
 	ActorColor=(R=80,G=80,B=255)
 	ActorColorNone=(R=255,G=80,B=80)
@@ -476,4 +512,5 @@ defaultproperties
 	ObjectColorNone=(R=255,G=80,B=80)
 	ClassColor=(R=153,G=5,B=86)
 	ClassColorNone=(R=255,G=80,B=80)
+	NameColor=(R=255,G=17,B=243)
 }

@@ -17,6 +17,10 @@ struct MapData
 var config MapData MapDataArray[128];
 
 var Class<R_DynamicMapData> LoadedMapDataClass;
+var private R_DynamicMapData LoadedMapData;
+
+var config private bool bAutoFillBots;
+var config private int AutoFillMinimumPlayers;
 
 event BeginPlay()
 {
@@ -47,7 +51,7 @@ event BeginPlay()
 		if(bLoadedMapData)
 		{
 			Utilities.Static.RLog("Spawning MapData from class" @ DynamicMapDataClass, LogCategory);
-			Spawn(DynamicMapDataClass);
+			LoadedMapData = Spawn(DynamicMapDataClass);
 			LoadedMapDataClass = DynamicMapDataClass;
 		}
 	}
@@ -123,6 +127,11 @@ function bool TryLoadMapDataClass(String DataClass, out Class<R_DynamicMapData> 
 	return true;
 }
 
+function R_DynamicMapData GetLoadedMapData()
+{
+	return LoadedMapData;
+}
+
 /**
 	SpawnBot
 	Main function for adding bots to the game
@@ -137,6 +146,8 @@ function R_Bot SpawnBot(optional bool bDeferredInitialization)
 	local R_Bot NewBot;
 	local PlayerPawn NewPlayerPawn;
 	local NavigationPoint StartPoint;
+	local GameInfo GI;
+	local String ErrorStr;
 
 	if(bDeferredInitialization)
 	{
@@ -150,7 +161,13 @@ function R_Bot SpawnBot(optional bool bDeferredInitialization)
 	StartPoint = Level.Game.FindPlayerStart(None);
 
 	NewBot = Spawn(Class'RBots.R_Bot');
-	NewPlayerPawn = Spawn(Class'RuneI.PlayerAlric',,,StartPoint.Location, StartPoint.Rotation);
+	//NewPlayerPawn = Spawn(Class'RBots.R_RBotsDebug_RunePlayer',,,StartPoint.Location, StartPoint.Rotation);
+	GI = Level.Game;
+	if(GI != None)
+	{
+		NewPlayerPawn = GI.Login("", "Name=IsABot", ErrorStr, Class'RuneI.PlayerAlric');
+		//NewPlayerPawn = GI.Login("Name=IsABot", "", ErrorStr, Class'RBots.R_RBotsDebug_RunePlayer');
+	}	
 	
 	NewPlayerPawn.SetOwner(NewBot);
 	NewBot.PossessedPlayerPawn(NewPlayerPawn);
@@ -190,9 +207,44 @@ function RemoveBot(R_Bot Bot)
 	Bot.Destroy();
 }
 
+function TickAutoFillBots()
+{
+	local Pawn P;
+	local int NumPlayers;
+	local int NumDesiredPlayers;
+	local int NumBotsToSpawn;
+	local int i;
+
+	//NumPlayers = Level.Game.NumPlayers;
+	NumPlayers = 0;
+	for(P = Level.PawnList; P != None; P = P.NextPawn)
+	{
+		++NumPlayers;
+	}
+	NumDesiredPlayers = Max(0, AutoFillMinimumPlayers);
+
+	NumBotsToSpawn = Clamp(NumDesiredPlayers - NumPlayers, 0, 12); // Need to clamp to server max, just using 12 for now
+	for(i = 0; i < NumBotsToSpawn; ++i)
+	{
+		SpawnBot();
+	}
+
+	//Log("Num Players:" @ NumPlayers);
+}
+
+event Tick(float DeltaSeconds)
+{
+	if(bAutoFillBots)
+	{
+		TickAutoFillBots();
+	}
+}
+
 defaultproperties
 {
 	RemoteRole=ROLE_None
+	bAutoFillBots=false
+	AutoFillMinimumPlayers=4
 	MapDataArray(0)=(MapName="DM-Bothvar",DataClass="RBots.R_MapData_Bothvar")
 	MapDataArray(1)=(MapName="DM-Hildir",DataClass="RBots.R_MapData_Hildir")
 	MapDataArray(2)=(MapName="DM-Hudson",DataClass="RBots.R_MapData_Hudson")

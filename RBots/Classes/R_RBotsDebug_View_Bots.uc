@@ -6,12 +6,30 @@ class R_RbotsDebug_View_Bots extends R_RbotsDebug_View;
 
 const Utilities = Class'RBots.R_BotUtilities';
 const CanvasLib = Class'RBots.R_RBots_CanvasLibrary';
+const CanvasBaseLib = Class'RBase.R_ACanvasLibrary';
 const DebugRBotsCategory = 'DebugTarget';
 
 var Color MovementInputColor;
-var Color PerceptionColor;
+var Color PerceptionColor_Idle;
+var Color PerceptionColor_Attacking;
+var Color PerceptionColor_Defending;
+var Color PerceptionColor_VulnerableMoving;
+var Color PerceptionColor_VulnerableStationary;
+var Color EngagementColor_Minimum;
+var Color EngagementColor_Maximum;
 
 var private bool bDrawPerception;
+
+// Values returned from GetPerceivedActorCombatState
+const CombatState_None = 0;
+const CombatState_Idle = 1;
+const CombatState_Attacking = 2;
+const CombatState_Defending = 3;
+const CombatState_VulnerableMoving = 4;
+const CombatState_VulnerableStationary = 5;
+
+// Parameter visualizer
+var private R_RBotsDebug_ParameterVisualizer ParameterVisualizer;
 
 function ToggleDrawPerception() { bDrawPerception = !bDrawPerception; }
 
@@ -36,6 +54,24 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 		{	// Draw debug DebugBot information
 			DrawDebugTaret_DebugBot(C, StringManager, R_RBotsDebug_DebugBot(DebugTarget));
 		}
+	}
+
+	if(ParameterVisualizer == None)
+	{
+		ParameterVisualizer = new(None) Class'RBots.R_RBotsDebug_ParameterVisualizer';
+		ParameterVisualizer.Initialize();
+		ParameterVisualizer.SetParameterNameString("Target Desirability");
+		ParameterVisualizer.SetValueLimits(-1.0, 1.0);
+	}
+	if(ParameterVisualizer != None && DebugTarget != None)
+	{
+		//ParameterVisualizer.Push(Cos(DebugTarget.Level.TimeSeconds) * 0.5 + 0.5);
+		ParameterVisualizer.DrawParameterVisualizer(
+			C,
+			(C.CLipX - 32.0) - 512.0,
+			32.0,
+			C.ClipX - 32.0,
+			32.0 + 224.0);
 	}
 }
 
@@ -76,7 +112,11 @@ function DrawDebugTarget_Perception(Canvas C, R_RBotsDebug_StringManager StringM
 	local R_BotPerception BotPerception;
 	local Actor PerceivedActor;
 	local PlayerPawn PP;
-	local float RGB[3];
+	local float RGBCombatState[3];
+	local Color EngagementColor;
+	local float RGBEngagement[3];
+	local int CombatState;
+	local float EngagementScore;
 
 	PP = BotDebugTarget.GetOwnedPlayerPawn();
 	if(PP == None)
@@ -84,8 +124,11 @@ function DrawDebugTarget_Perception(Canvas C, R_RBotsDebug_StringManager StringM
 		return;
 	}
 
-	Utilities.Static.ColorToFloats(PerceptionColor, RGB[0], RGB[1], RGB[2]);
-	StringManager.AddColor(DebugRBotsCategory, "Perception", PerceptionColor);
+	StringManager.AddColor(DebugRBotsCategory, "Perception_Idle", PerceptionColor_Idle);
+	StringManager.AddColor(DebugRBotsCategory, "Perception_Attacking", PerceptionColor_Attacking);
+	StringManager.AddColor(DebugRBotsCategory, "Perception_Defending", PerceptionColor_Defending);
+	StringManager.AddColor(DebugRBotsCategory, "Perception_VulnerableMoving", PerceptionColor_VulnerableMoving);
+	StringManager.AddColor(DebugRBotsCategory, "Perception_VulnerableStationary", PerceptionColor_VulnerableStationary);
 
 	BotPerception = R_BotPerception(BotDebugTarget.GetBotObjectByClass(Class'RBots.R_BotPerception'));
 	if(BotPerception != None)
@@ -93,7 +136,28 @@ function DrawDebugTarget_Perception(Canvas C, R_RBotsDebug_StringManager StringM
 		PerceivedActor = BotPerception.GetPerceivedActor();
 		if(PerceivedActor != None)
 		{
-			CanvasLib.Static.DrawLine3D(C, PP.Location, PerceivedActor.Location, RGB[0], RGB[1], RGB[2]);
+			// Draw a colored line indicating how much the bot wants to engage the target
+			EngagementScore = BotPerception.GetPerceivedActorEngagementScore();
+			if(ParameterVisualizer != None)
+			{	// Push score to param visualizer if it's enabled
+				ParameterVisualizer.Push(EngagementScore);
+			}
+			EngagementColor = Utilities.Static.LerpColor(EngagementColor_Minimum, EngagementColor_Maximum, EngagementScore);
+
+			Utilities.Static.ColorToFloats(EngagementColor, RGBEngagement[0], RGBEngagement[1], RGBEngagement[2]);
+			CanvasLib.Static.DrawLine3D(C, PP.Location, PerceivedActor.Location, RGBEngagement[0], RGBEngagement[1], RGBEngagement[2]);
+
+			// Draw a circle around the bot's target, indicating combat state
+			CombatState = BotPerception.GetPerceivedActorCombatState();
+			switch(CombatState)
+			{
+			case CombatState_Idle:					Utilities.Static.ColorToFloats(PerceptionColor_Idle, RGBCombatState[0], RGBCombatState[1], RGBCombatState[2]);					break;
+			case CombatState_Attacking:				Utilities.Static.ColorToFloats(PerceptionColor_Attacking, RGBCombatState[0], RGBCombatState[1], RGBCombatState[2]);				break;
+			case CombatState_Defending:				Utilities.Static.ColorToFloats(PerceptionColor_Defending, RGBCombatState[0], RGBCombatState[1], RGBCombatState[2]);				break;
+			case CombatState_VulnerableMoving:		Utilities.Static.ColorToFloats(PerceptionColor_VulnerableMoving, RGBCombatState[0], RGBCombatState[1], RGBCombatState[2]);		break;
+			case CombatState_VulnerableStationary:	Utilities.Static.ColorToFloats(PerceptionColor_VulnerableStationary, RGBCombatState[0], RGBCombatState[1], RGBCombatState[2]);	break;
+			}
+			CanvasBaseLib.Static.DrawCircle3D(C, PerceivedActor.Location, Vect(0.0,0.0,1.0), PerceivedActor.CollisionRadius, 32, RGBCombatState[0], RGBCombatState[1], RGBCombatState[2]);
 		}
 	}
 }
@@ -125,6 +189,12 @@ simulated function DrawDebugTarget_MovementInput(Canvas C, R_Bot BotDebugTarget)
 defaultproperties
 {
 	MovementInputColor=(R=214,G=38,B=38)
-	PerceptionColor=(R=255,G=255,B=0)
+	PerceptionColor_Idle=(R=219,G=255,B=15)
+	PerceptionColor_Attacking=(R=255,G=11,B=11)
+	PerceptionColor_Defending=(R=255,G=12,B=255)
+	PerceptionColor_VulnerableMoving=(R=27,G=228,B=255)
+	PerceptionColor_VulnerableStationary=(R=0,G=255,B=34)
+	EngagementColor_Minimum=(R=255,G=0,B=0)
+	EngagementColor_Maximum=(R=0,G=255,B=0)
 	bDrawPerception=true
 }

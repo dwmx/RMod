@@ -4,8 +4,10 @@
 //==============================================================================
 class R_BotBehavior_FindWeapon extends R_BotBehavior;
 
-var private Weapon WeaponTarget;
-var private float WeaponUpdateCooldownSeconds, LastWeaponUpdateTimeSeconds;
+var private Inventory InventoryTarget;
+
+const StowRange = 350.0;	// Range at which Bot will stow weapon
+const UseRange = 48.0;		// Range at which Bot will attempt to pick up
 
 function BehaviorActivated()
 {
@@ -17,7 +19,21 @@ function BehaviorActivated()
 		Bot.ClearPath();
 	}
 
-	LastWeaponUpdateTimeSeconds = 0.0;
+	SetInventoryTarget(FindDesiredInventory());
+}
+
+function OnOwnedPlayerPawnRespawned()
+{
+	local R_Bot Bot;
+	local Weapon W;
+
+	Bot = GetBot();
+	if(Bot != None)
+	{
+		Bot.ClearPath();
+	}
+
+	SetInventoryTarget(FindDesiredInventory());
 }
 
 function BehaviorTerminated()
@@ -31,43 +47,32 @@ function BehaviorTerminated()
 	}
 }
 
-function float ScoreWeapon(Weapon W)
+function SetInventoryTarget(Inventory Inv)
 {
-	return W.Damage;
-}
+	local R_Bot Bot;
+	local PlayerPawn PP;
 
-// Find weapon with highest desirability score
-function Weapon FindDesiredWeapon()
-{
-	local PlayerPawn P;
-	local Weapon BestWeapon, CurrentWeapon;
-	local float BestScore, CurrentScore;
-
-	P = GetPlayerPawn();
-	if(P != None)
+	Bot = GetBot();
+	PP = GetPlayerPawn();
+	if(Bot == None || PP == None)
 	{
-		BestWeapon = None;
-		BestScore = 0.0;
-
-		foreach P.AllActors(Class'Engine.Weapon', CurrentWeapon)
-		{
-			CurrentScore = ScoreWeapon(CurrentWeapon);
-			if(CurrentScore > BestScore)
-			{
-				BestScore = CurrentScore;
-				BestWeapon = CurrentWeapon;
-			}
-		}
+		return;
 	}
 
-	return BestWeapon;
+	InventoryTarget = Inv;
+	Bot.ClearPath();
+	if(InventoryTarget != None)
+	{
+		Bot.TryUpdatePath(PP.Location, InventoryTarget.Location);
+	}
 }
 
-function bool IsValidWeaponTarget(Weapon W)
+// Returns true if Weapon is valid to be picked up by this Bot's Pawn
+function bool IsValidInventoryTarget(Inventory Inv)
 {
 	local PlayerPawn P;
 
-	if(W.Owner != None)
+	if(Inv.Owner != None)
 	{
 		return false;
 	}
@@ -79,7 +84,7 @@ function bool IsValidWeaponTarget(Weapon W)
 	}
 
 	// CanBeUsed does most of this -- invisible check, duplicate inventory check, etc
-	if(!W.CanBeUsed(P))
+	if(!Inv.CanBeUsed(P))
 	{
 		return false;
 	}
@@ -87,119 +92,139 @@ function bool IsValidWeaponTarget(Weapon W)
 	return true;
 }
 
-// Find any random weapon in the level
-function Weapon FindRandomWeapon()
+/*
+// Scoring for each weapon
+function float ScoreWeapon(Weapon W)
 {
-	local R_Bot Bot;
-	local Weapon WeaponCandidates[64];
-	local int NumCandidates;
-	local Weapon W;
+	return W.Damage + W.Rating;
+}
+	*/
 
-	Bot = GetBot();
-	if(Bot != None)
+// Find weapon with highest desirability score
+function Inventory FindDesiredInventory()
+{
+	local R_BlackBoard BlackBoard;
+
+	BlackBoard = GetBlackBoard();
+	if(BlackBoard != None)
 	{
-		NumCandidates = 0;
-		foreach Bot.AllActors(Class'Engine.Weapon', W)
-		{
-			if(!IsValidWeaponTarget(W))
-			{
-				continue;
-			}
+		return BlackBoard.GetInventoryTarget();
+	}
+	/*
+	local PlayerPawn P;
+	local R_NavMesh NavMesh;
+	local R_NavMeshActorTracker ActorTracker;
+	local int NodeIndex, PolyGroupIndex;
+	local Actor PolyGroupActors[32];
+	local int NumPolyGroupActors;
+	local int i;
+	local Weapon BestWeapon, CurrentWeapon;
+	local float BestScore, CurrentScore;
 
-			WeaponCandidates[NumCandidates] = W;
-			++NumCandidates;
-			if(NumCandidates >= 64)
+	P = GetPlayerPawn();
+	if(P != None)
+	{
+		NavMesh = GetNavMesh();
+		ActorTracker = GetNavMeshActorTracker();
+
+		NumPolyGroupActors = 0;
+		if(NavMesh != None && ActorTracker != None)
+		{
+			NodeIndex = NavMesh.FindContainingNodeIndex(P.Location);
+			NavMesh.GetTrianglePolyGroupIndexUnchecked(NodeIndex, PolyGroupIndex);
+			ActorTracker.GetActorsByPolyGroupIndex(PolyGroupIndex, PolyGroupActors, NumPolyGroupActors);
+		}
+
+		BestWeapon = None;
+		BestScore = 0;
+
+		// Try to find a weapon in the current poly group first
+		for(i = 0; i < NumPolyGroupActors; ++i)
+		{
+			CurrentWeapon = Weapon(PolyGroupActors[i]);
+			if(CurrentWeapon != None)
 			{
-				break;
+				if(IsValidInventoryTarget(CurrentWeapon))
+				{
+					CurrentScore = ScoreWeapon(CurrentWeapon);
+					if(CurrentScore > BestScore)
+					{
+						BestScore = CurrentScore;
+						BestWeapon = CurrentWeapon;
+					}
+				}
+			}
+		}
+
+		if(BestWeapon == None)
+		{	// No weapon found, pick one anywhere on the map
+			foreach P.AllActors(Class'Engine.Weapon', CurrentWeapon)
+			{
+				if(IsValidInventoryTarget(CurrentWeapon))
+				{
+					CurrentScore = ScoreWeapon(CurrentWeapon);
+					if(CurrentScore > BestScore)
+					{
+						BestScore = CurrentScore;
+						BestWeapon = CurrentWeapon;
+					}
+				}
 			}
 		}
 	}
 
-	if(NumCandidates == 0)
-	{
-		return None;
-	}
-
-	return WeaponCandidates[Rand(NumCandidates-1)];
+	return BestWeapon;
+	*/
 }
 
 function BehaviorTick(float DeltaSeconds)
 {
-	local R_Bot Bot;
-	local PlayerPawn P;
-	local float TimeSeconds;
+	local PlayerPawn PP;
+	local R_BotPawnController Controller;
+	local float Distance;
 
-	Bot = GetBot();
-	if(Bot == None)
+	PP = GetPlayerPawn();
+	if(PP == None || InventoryTarget == None)
 	{
 		return;
 	}
 
-	P = GetPlayerPawn();
-	TimeSeconds = 0.0;
-	if(P != None)
-	{
-		TimeSeconds = P.Level.TimeSeconds;
-	}
+	SetInventoryTarget(FindDesiredInventory());
+	Distance = VSize(InventoryTarget.Location - PP.Location);
 
-	if(TimeSeconds - LastWeaponUpdateTimeSeconds >= WeaponUpdateCooldownSeconds)
+	// If within use range, try to pickup
+	if(Distance <= UseRange)
 	{
-		LastWeaponUpdateTimeSeconds = TimeSeconds;
-		//WeaponTarget = FindDesiredWeapon();
-		WeaponTarget = FindRandomWeapon();
-
-		if(WeaponTarget != None)
+		if(TryPickupWeapon())
 		{
-			Bot.TryUpdatePath(P.Location, WeaponTarget.Location);
+			return;
 		}
 	}
 
-	FollowPath();
-	TryPickupWeapon();	
+	// If within stow range, stow weapon
+	if(Weapon(InventoryTarget) != None && PP.Weapon != None && Distance <= StowRange)
+	{
+		Controller = GetBotPawnController();
+		if(Controller != None)
+		{
+			Controller.StowWeapon();
+		}
+	}
+
+	// Follow path until within UseRange
+	FollowCurrentPath();
 }
 
-function FollowPath()
+// Attempt to pick up
+function bool TryPickupWeapon()
 {
-	local R_Bot Bot;
-	local Vector MovementInput;
+	local R_BotPawnController Controller;
 
-	Bot = GetBot();
-	if(Bot != None)
+	Controller = GetBotPawnController();
+	if(Controller != None)
 	{
-		MovementInput = Bot.GetPathFollowMovementInputVector();
-		Bot.AddMovementInput(MovementInput);
-	}
-}
-
-function TryPickupWeapon()
-{
-	local PlayerPawn P;
-	local float Distance;
-
-	if(WeaponTarget == None || WeaponTarget.Owner != None)
-	{
-		return;
+		return Controller.TryUse();
 	}
 
-	P = GetPlayerPawn();
-	if(P == None)
-	{
-		return;
-	}
-
-	Distance = VSize(WeaponTarget.Location - P.Location);
-	//Log("FindWeapon distance" @ Distance);
-	if(Distance <= 32.0)
-	{
-		P.Use();
-	}
-	else if(Distance <= 350.0 && P.Weapon != None)
-	{
-		P.SwitchWeapon(1); // Stow
-	}
-}
-
-defaultproperties
-{
-	WeaponUpdateCooldownSeconds=8.0
+	return false;
 }

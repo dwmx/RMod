@@ -11,10 +11,15 @@ const NavLib = Class'RBots.R_NavLibrary';
 
 var private bool bBotInitialized;
 
+var private R_BotManager BotManager;
+
 // BotObjects
 var private R_BotObject BotObjects[16];
 
 const BotObject_Perception = Class'RBots.R_BotPerception';
+//const BotObject_AimController = Class'RBots.R_BotAimController';
+const BotObject_PawnController = Class'RBots.R_BotPawnController';
+const BotObject_BlackBoard = Class'RBots.R_BlackBoard';
 
 // Behavior
 var private Class<R_BotBehavior> InitialBehaviorClass;
@@ -27,6 +32,7 @@ const Behavior_Avoid = Class'RBots.R_BotBehavior_Avoid';
 
 // Player
 var private PlayerPawn OwnedPlayerPawn;
+var private Name OwnedPlayerPawnStateName; // Need this to respond to state changes (respawns)
 var private PlayerReplicationInfo OwnedPRI;
 
 // Navigation
@@ -44,6 +50,24 @@ event BeginPlay()
 	bBotInitialized = false;
 }
 
+function R_BotManager GetBotManager()
+{
+	local R_BotManager LocalBotManager;
+
+	if(BotManager == None)
+	{
+		foreach AllActors(Class'RBots.R_BotManager', LocalBotManager)
+		{
+			break;
+		}
+		if(LocalBotManager != None)
+		{
+			BotManager = LocalBotManager;
+		}
+	}
+	return BotManager;
+}
+
 function R_NavMesh GetNavMesh()
 {
 	local R_DynamicMapData MapData;
@@ -58,6 +82,11 @@ function R_NavMesh GetNavMesh()
 	}
 	
 	return CachedNavMesh;
+}
+
+function R_NavContext GetNavContext()
+{
+	return NavContext;
 }
 
 // Attaches NavPathObserver object to collect additional data from FindPath
@@ -127,7 +156,7 @@ function PossessedPlayerPawn(PlayerPawn NewPlayerPawn)
 		Utilities.Static.RLog("Failed to acquire reference to PRI", LogCategory);
 	}
 
-	InitPlayerReplicationInfo(OwnedPRI);
+	//InitPlayerReplicationInfo(OwnedPRI);
 }
 
 function InitPlayerReplicationInfo(PlayerReplicationInfo NewPRI)
@@ -147,6 +176,9 @@ function InitializeBot()
 
 	// Create BotObjects
 	CreateBotObject(BotObject_Perception);
+	//CreateBotObject(BotObject_AimController);
+	CreateBotObject(BotObject_PawnController);
+	CreateBotObject(BotObject_BlackBoard);
 
 	// Spawn NavContext
 	if(NavContext == None)
@@ -255,28 +287,58 @@ function SetBehavior(Class<R_BotBehavior> BehaviorClass)
 function Class<R_BotBehavior> DetermineDesiredBehavior()
 {
 	local PlayerPawn P;
+	local R_BotPerception Perception;
+	local Actor TargetActor;
+	local bool bWillingToFight;
+	local R_BlackBoard BlackBoard;
 
-	//return Behavior_Avoid;
-	//return Behavior_FindWeapon;
+	P = GetOwnedPlayerPawn();
+	if(P == None)
+	{
+		return None;
+	}
+
+	bWillingToFight = false;
+	if(P.Weapon != None && P.Weapon.Rating > 0)
+	{
+		bWillingToFight = true;
+	}
+
+	// If target is in range, fight or avoid
+	Perception = R_BotPerception(GetBotObjectByClass(Class'RBots.R_BotPerception'));
+	if(Perception != None)
+	{
+		TargetActor = Perception.GetPerceivedActor();
+		if(TargetActor != None)
+		{
+			if(VSize(TargetActor.Location - P.Location) <= 256.0)
+			{
+				if(bWillingToFight)
+				{	// Engage target
+					return Behavior_Fight;
+				}
+				else
+				{	// Don't want to fight, avoid target
+					return Behavior_Avoid;
+				}
+			}
+		}
+	}
+
+	// If not happy with weapon, find a weapon
+	if(P.Weapon == None || P.Weapon.Rating == 0)
+	{
+		return Behavior_FindWeapon;
+	}
+
+	// By default just wander around until something interesting happens
 	return Behavior_Wander;
-
-	//P = GetOwnedPlayerPawn();
-	//if(P != None)
-	//{
-	//	if(P.Weapon == None)
-	//	{
-	//		return Behavior_FindWeapon;
-	//	}
-	//	else
-	//	{
-	//		return Behavior_Fight;
-	//	}
-	//}
 }
 
 event Tick(float DeltaSeconds)
 {
 	local Class<R_BotBehavior> DesiredBehavior;
+	local Name NewStateName;
 
 	Super.Tick(DeltaSeconds);
 
@@ -285,12 +347,37 @@ event Tick(float DeltaSeconds)
 		// Spawn fire to respawn, for now
 		if(OwnedPlayerPawn.Health <= 0)
 		{
+			ClearPath();
 			OwnedPlayerPawn.Fire();
 		}
 	}
 
+	// Check for state changes
+	if(OwnedPlayerPawn != None)
+	{
+		NewStateName = OwnedPlayerPawn.GetStateName();
+		if(OwnedPlayerPawnStateName != NewStateName)
+		{
+			if(NewStateName == 'Dying')
+			{
+				OnOwnedPlayerPawnDied();
+			}
+			else if(OwnedPlayerPawnStateName == 'Dying')
+			{
+				OnOwnedPlayerPawnRespawned();
+			}
+			OwnedPlayerPawnStateName = NewStateName;
+		}
+	}
+
+	// Update navigation context
+	UpdateNavContext(DeltaSeconds);
+
 	// Tick BotObjects
 	TickBotObjects(DeltaSeconds);
+
+	// Update desired inventories
+	UpdateInventoryTarget(DeltaSeconds);
 
 	// Tick Behavior
 	DesiredBehavior = DetermineDesiredBehavior();
@@ -305,6 +392,216 @@ event Tick(float DeltaSeconds)
 	}
 
 	TickMovement(DeltaSeconds);
+}
+
+function UpdateInventoryTarget(float DeltaSeconds)
+{
+	local R_BotManager LocalBotManager;
+	local R_DynamicMapData MapData;
+	local R_NavMeshActorTracker ActorTracker;
+	local Inventory Inv;
+	local PlayerPawn PP;
+	local int BestOwnedWeaponRating;
+	local float HealthWeight, WeaponWeight, RuneWeight;
+	local Actor PolyGroupActors[32];
+	local int NumPolyGroupActors;
+	local int i;
+	local float CurrentScore, BestScore;
+	local Inventory BestInventory;
+	local R_BlackBoard BlackBoard;
+
+	if(NavContext == None)
+	{
+		return;
+	}
+
+	PP = GetOwnedPlayerPawn();
+	if(PP == None)
+	{
+		return;
+	}
+
+	ActorTracker = None;
+	LocalBotManager = GetBotManager();
+	if(LocalBotManager != None)
+	{
+		MapData = LocalBotManager.GetLoadedMapData();
+		if(MapData != None)
+		{
+			ActorTracker = MapData.GetNavMeshActorTracker();
+		}
+	}
+
+	if(ActorTracker == None)
+	{	// For now, only find inventory targets from the tracker
+		return;
+	}
+
+	// Determine what the bot needs most (weapon, health, shield, rune, etc)
+	HealthWeight = CalcHealthNeed();
+	WeaponWeight = CalcWeaponNeed();
+	RuneWeight = 0.3;
+
+	// Find the best inventory in the current poly group
+	BestInventory = None;
+	ActorTracker.GetActorsByPolyGroupIndex(NavContext.GetNavMeshPolyGroupIndex(), PolyGroupActors, NumPolyGroupActors);
+	for(i = 0; i < NumPolyGroupActors; ++i)
+	{
+		Inv = Inventory(PolyGroupActors[i]);
+		if(Inv != None)
+		{
+			CurrentScore = 0.0;
+			if(Weapon(Inv) != None)		CurrentScore = WeaponWeight * ScoreInventory_Weapon(Weapon(Inv));
+			else if(Food(Inv) != None)	CurrentScore = HealthWeight * ScoreInventory_Food(Food(Inv));
+			else if(Runes(Inv) != None)	CurrentScore = RuneWeight * ScoreInventory_Rune(Runes(Inv));
+
+			if(CurrentScore > BestScore)
+			{
+				BestInventory = Inv;
+				BestScore = CurrentScore;
+			}
+		}
+	}
+
+	// Update the target inventory in blackboard
+	BlackBoard = R_BlackBoard(GetBotObjectByClass(BotObject_BlackBoard));
+	if(BlackBoard != None)
+	{
+		BlackBoard.SetInventoryTarget(BestInventory);
+	}
+}
+
+function float CalcWeaponNeed()
+{
+	local PlayerPawn PP;
+	local int BestOwnedWeaponRating;
+	local Inventory Inv;
+
+	PP = GetOwnedPlayerPawn();
+	if(PP == None)
+	{
+		return 0.0;
+	}
+
+	BestOwnedWeaponRating = 0;
+	for(Inv = PP.Inventory; Inv != None; Inv = Inventory.Inventory)
+	{
+		if(Weapon(Inv) != None && Weapon(Inv).Rating > BestOwnedWeaponRating)
+		{
+			BestOwnedWeaponRating = Weapon(Inv).Rating;
+		}
+	}
+
+	return Utilities.Static.RemapFloatToRange(float(BestOwnedWeaponRating), 0.0, 4.0, 1.0, 0.0);
+}
+
+function float CalcHealthNeed()
+{
+	local PlayerPawn PP;
+
+	PP = GetOwnedPlayerPawn();
+	if(PP != None)
+	{
+		return Utilities.Static.RemapFloatToRange(float(PP.Health), 0.0, float(PP.MaxHealth), 1.0, 0.0);
+	}
+
+	return 0.0;
+}
+
+function float ScoreInventory_Weapon(Weapon WeaponInv)
+{
+	return Utilities.Static.RemapFloatToRange(float(WeaponInv.Rating), 0.0, 4.0, 0.2, 1.0);
+}
+
+function float ScoreInventory_Food(Food FoodInv)
+{
+	return Utilities.Static.RemapFloatToRange(float(FoodInv.Nutrition), 0.0, 35.0, 0.0, 1.0);
+}
+
+function float ScoreInventory_Rune(Runes RuneInv)
+{
+	return 1.0;
+}
+
+function UpdateNavContext(float DeltaSeconds)
+{
+	local int NodeIndex, PolyGroupIndex;
+	local int OldNodeIndex, OldPolyGroupIndex;
+	local R_NavMesh NavMesh;
+	local R_BotBehavior Behavior;
+	local int i;
+
+	if(NavContext != None)
+	{
+		NavContext.GetNavMeshNodeIndex(OldNodeIndex, OldPolyGroupIndex);
+
+		NodeIndex = NavLib.Static.InvalidIndex();
+		PolyGroupIndex = NavLib.Static.InvalidIndex();
+		if(OwnedPlayerPawn != None)
+		{
+			NavMesh = GetNavMesh();
+			if(NavMesh != None)
+			{
+				NodeIndex = NavMesh.FindContainingNodeIndex(OwnedPlayerPawn.Location);
+				if(NodeIndex != NavLib.Static.InvalidIndex())
+				{
+					NavMesh.GetTrianglePolyGroupIndexUnchecked(NodeIndex, PolyGroupIndex);
+				}
+			}
+		}
+
+		NavContext.SetNavMeshNodeIndex(NodeIndex, PolyGroupIndex);
+
+		// Fire events if necessary
+		if(ActiveBehavior != None)
+		{
+			if(NodeIndex != OldNodeIndex)
+			{
+				OnNavMeshNodeIndexChanged(OldNodeIndex, NodeIndex);
+			}
+			if(PolyGroupIndex != OldPolyGroupIndex)
+			{
+				OnNavMeshPolyGroupIndexChanged(OldPolyGroupIndex, PolyGroupIndex);
+			}
+		}
+	}
+}
+
+// Called from UpdateNavContext when a node index change is sensed
+function OnNavMeshNodeIndexChanged(int OldNodeIndex, int NewNodeIndex)
+{
+	if(ActiveBehavior != None)
+	{
+		ActiveBehavior.OnNavMeshNodeIndexChanged(OldNodeIndex, NewNodeIndex);
+	}
+}
+
+// Called from UpdateNavContext when a poly group index change is sensed
+function OnNavMeshPolyGroupIndexChanged(int OldPolyGroupIndex, int NewPolyGroupIndex)
+{
+	if(ActiveBehavior != None)
+	{
+		ActiveBehavior.OnNavMeshPolyGroupIndexChanged(OldPolyGroupIndex, NewPolyGroupIndex);
+	}
+}
+
+// Called from Tick when a death is sensed from PlayerPawn state change
+function OnOwnedPlayerPawnDied()
+{
+	ClearPath();
+	if(ActiveBehavior != None)
+	{
+		ActiveBehavior.OnOwnedPlayerPawnDied();
+	}
+}
+
+// Called from Tick when a respawn is sensed from PlayerPawn state change
+function OnOwnedPlayerPawnRespawned()
+{
+	if(ActiveBehavior != None)
+	{
+		ActiveBehavior.OnOwnedPlayerPawnRespawned();
+	}
 }
 
 //	TickBotObjects
@@ -333,14 +630,9 @@ function TickMovement(float DeltaSeconds)
 
 	if(OwnedPlayerPawn != None)
 	{
-		OwnedPlayerPawn.Acceleration = OwnedPlayerPawn.AccelRate * MovementVector;
+		//OwnedPlayerPawn.Acceleration = OwnedPlayerPawn.AccelRate * MovementVector;
 		LastInputVector = MovementVector;
 	}
-}
-
-function AddMovementInput(Vector MovementInputVector)
-{
-	AccumulatedInputVector += MovementInputVector;
 }
 
 // Returns the movement input vector which will best follow the current path

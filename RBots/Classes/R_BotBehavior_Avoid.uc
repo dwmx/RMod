@@ -13,6 +13,7 @@ function BehaviorTick(float DeltaSeconds)
 {
 	local R_Bot Bot;
 	local R_BotPerception BotPerception;
+	local R_BotPawnController BotController;
 	local Vector ActorAvoidanceDir, BorderAvoidanceDir;
 	local float ActorAvoidanceInfluence, BorderAvoidanceInfluence;
 	local Actor PerceivedActor;
@@ -24,6 +25,10 @@ function BehaviorTick(float DeltaSeconds)
 
 	BotPerception = GetBotPerception();
 	if(BotPerception == None)
+		return;
+
+	BotController = GetBotPawnController();
+	if(BotController == None)
 		return;
 
 	// Calc actor avoidance
@@ -45,7 +50,7 @@ function BehaviorTick(float DeltaSeconds)
 	NewMovementInput = (ActorAvoidanceDir * ActorAvoidanceInfluence) + (BorderAvoidanceDir * BorderAvoidanceInfluence);
 	NewMovementInput = Normal(NewMovementInput);
 
-	Bot.AddMovementInput(NewMovementInput);
+	BotController.AddMovementInput_WorldSpace(NewMovementInput);
 }
 
 function CalcAvoidanceForLocation2D(

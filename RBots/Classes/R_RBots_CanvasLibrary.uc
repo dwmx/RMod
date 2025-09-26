@@ -7,6 +7,19 @@ class R_RBots_CanvasLibrary extends Object abstract;
 
 const WhiteTexture = Texture'UWindow.WhiteTexture';
 
+static function DrawText2D(Canvas C, float PosX, float PosY, Vector Alignment, float RGB[3], String DrawString)
+{
+	local float StrW, StrH;
+	local float DrawPosX, DrawPosY;
+
+	C.StrLen(DrawString, StrW, StrH);
+	DrawPosX = PosX - StrW * Alignment.X;
+	DrawPosY = PosY - StrH * Alignment.Y;
+	C.SetPos(DrawPosX, DrawPosY);
+	C.SetColor(RGB[0] * 255.0, RGB[1] * 255.0, RGB[2] * 255.0);
+	C.DrawText(DrawString);
+}
+
 static function DrawAABB3D(Canvas C, out Vector InMin, out Vector InMax, float RGB[3])
 {
 	local Vector Delta;

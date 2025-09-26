@@ -41,11 +41,34 @@ final function PlayerPawn GetPlayerPawn()
 	return None;
 }
 
+final function AnimationProxy GetAnimProxy()
+{
+	local PlayerPawn PP;
+	if(BotOwner != None)
+	{
+		PP = BotOwner.GetOwnedPlayerPawn();
+		if(PP != None)
+		{
+			return PP.AnimProxy;
+		}
+	}
+	return None;
+}
+
 final function R_BotPerception GetBotPerception()
 {
 	if(BotOwner != None)
 	{
 		return R_BotPerception(BotOwner.GetBotObjectByClass(Class'RBots.R_BotPerception'));
+	}
+	return None;
+}
+
+final function R_BotPawnController GetBotPawnController()
+{
+	if(BotOwner != None)
+	{
+		return R_BotPawnController(BotOwner.GetBotObjectByClass(Class'RBots.R_BotPawnController'));
 	}
 	return None;
 }

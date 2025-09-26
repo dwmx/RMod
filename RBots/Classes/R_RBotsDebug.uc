@@ -33,13 +33,12 @@ const CommandManagerClass_PathFinding	= Class'RBots.R_RBotsDebug_CommandManager_
 const CommandNameSpace_Target			= 'Target'; // DebugTarget commands
 const CommandManagerClass_Target		= Class'RBots.R_RBotsDebug_CommandManager_Target';
 
+const CommandNameSpace_Player			= 'Player';
+const CommandManagerClass_Player		= Class'RBots.R_RBotsDebug_CommandManager_Player';
+
 // String manager
 const StringManagerClass = Class'RBots.R_RBotsDebug_StringManager';
 var R_RBotsDebug_StringManager StringManager;
-
-// Parameter manager
-const ParameterManagerClass = Class'RBots.R_RBotsDebug_ParameterManager';
-var R_RBotsDebug_ParameterManager ParameterManager;
 
 // Debug views
 const MAX_DEBUG_VIEWS = 16;
@@ -54,7 +53,6 @@ simulated event PreBeginPlay()
 {
 	InitializeCommandManagers();
 	InitializeStringManager();
-	InitializeParameterManager();
 }
 
 simulated function R_RBotsDebug_CommandManager CreateCommandManager(Class<R_RBotsDebug_CommandManager> CommandManagerClass, Name NameSpace)
@@ -90,15 +88,18 @@ simulated function InitializeCommandManagers()
 	local R_RBotsDebug_CommandManager CommandManager_NavMesh;
 	local R_RBotsDebug_CommandManager CommandManager_PathFinding;
 	local R_RBotsDebug_CommandManager CommandManager_Target;
+	local R_RBotsDebug_CommandManager CommandManager_Player;
 
 	CommandManager_Main = CreateCommandManager(CommandManagerClass_RBots, CommandNameSpace_RBots);
 	CommandManager_NavMesh = CreateCommandManager(CommandManagerClass_NavMesh, CommandNameSpace_NavMesh);
 	CommandManager_PathFinding = CreateCommandManager(CommandManagerClass_PathFinding, CommandNameSpace_PathFinding);
 	CommandManager_Target = CreateCommandManager(CommandManagerClass_Target, CommandNameSpace_Target);
+	CommandManager_Player = CreateCommandManager(CommandManagerClass_Player, CommandNameSpace_Player);
 
 	CommandManager_Main.AddSubCommandManager(CommandManager_NavMesh);
 	CommandManager_Main.AddSubCommandManager(CommandManager_PathFinding);
 	CommandManager_Main.AddSubCommandManager(CommandManager_Target);
+	CommandManager_Main.AddSubCommandManager(CommandManager_Player);
 
 	CommandManager = CommandManager_Main;
 
@@ -120,24 +121,6 @@ simulated function InitializeStringManager()
 	else
 	{
 		Utilities.Static.RLog("Failed to initialized debug string manager from class" @ StringManagerClass, LogCategory);
-	}
-}
-
-function InitializeParameterManager()
-{
-	if(ParameterManager != None)
-	{
-		ParameterManager = None;
-	}
-
-	ParameterManager = new(None) ParameterManagerClass;
-	if(ParameterManager != None)
-	{
-		Utilities.Static.RLog("Initialized debug parameter manager from class" @ ParameterManagerClass, LogCategory);
-	}
-	else
-	{
-		Utilities.Static.RLog("Failed to initialized parameter string manager from class" @ ParameterManagerClass, LogCategory);
 	}
 }
 
@@ -472,7 +455,6 @@ simulated event PostRender(Canvas C)
 
 	// Setup debug draw managers
 	StringManager.Clear();
-	ParameterManager.Clear();
 
 	// Add debug strings
 	LocalBotManager = GetBotManager();
@@ -496,7 +478,6 @@ simulated event PostRender(Canvas C)
 	}
 
 	StringManager.DrawStringManager(C);
-	ParameterManager.DrawParameterManager(C);
 }
 
 function Mutate(string MutateString, PlayerPawn Sender)
@@ -547,4 +528,5 @@ defaultproperties
 	DefaultViews(0)=Class'RBots.R_RBotsDebug_View_NavMesh'
 	DefaultViews(1)=Class'RBots.R_RBotsDebug_View_Bots'
 	DefaultViews(2)=Class'RBots.R_RBotsDebug_View_PathFinding'
+	DefaultViews(3)=Class'RBots.R_RBotsDebug_View_Player'
 }

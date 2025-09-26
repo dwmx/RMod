@@ -343,6 +343,6 @@ defaultproperties
 	bInitialized=false
 	NavMeshSpatialQueryClass=Class'RBots.R_NavMeshSpatialQuery_Linear'
 	NavPathFinderClass=Class'RBots.R_NavPathFinder_Dijkstras'
-	//NavPathFilterClass=Class'RBots.R_NavPathFilter_Funnel'
-	NavPathFilterClass=Class'RBots.R_NavPathFilter_NodeCenter'
+	NavPathFilterClass=Class'RBots.R_NavPathFilter_Funnel'
+	//NavPathFilterClass=Class'RBots.R_NavPathFilter_NodeCenter'
 }

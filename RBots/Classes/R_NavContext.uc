@@ -9,6 +9,10 @@ const LogCategory = 'NavContext';
 
 const NavLib = Class'RBots.R_NavLibrary';
 
+// Current node and polygroup within NavMesh
+var private int NavMeshNodeIndex;
+var private int NavMeshPolyGroupIndex;
+
 // Path finding and path following arrays
 var private int PathNodeIndices[128];
 var private int NumPathNodeIndices;
@@ -24,6 +28,25 @@ function InitializeNavContext()
 {
 	ClearPath();
 	ClearBorderEdges();
+}
+
+//------------------------------------------------------------------------------
+//	Location
+function SetNavMeshNodeIndex(int NewNavMeshNodeIndex, int NewNavMeshPolyGroupIndex)
+{
+	NavMeshNodeIndex = NewNavMeshNodeIndex;
+	NavMeshPolyGroupIndex = NewNavMeshPolyGroupIndex;
+}
+
+function GetNavMeshNodeIndex(out int OutNavMeshNodeIndex, out int OutNavMeshPolyGroupIndex)
+{
+	OutNavMeshNodeIndex = NavMeshNodeIndex;
+	OutNavMeshPolyGroupIndex = NavMeshPolyGroupIndex;
+}
+
+function int GetNavMeshPolyGroupIndex()
+{
+	return NavMeshPolyGroupIndex;
 }
 
 //------------------------------------------------------------------------------
