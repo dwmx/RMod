@@ -683,8 +683,7 @@ function BuildPolyGroupInfo()
 	// Init PolyGroups
 	for(i = 0; i < NumPolyGroups; ++i)
 	{
-		PolyGroupArray[i].ClearTriangles();
-		PolyGroupArray[i].ClearPortals();
+		PolyGroupArray[i].InitializePolyGroup();
 	}
 
 	// Insert each triangle into its PolyGroup
@@ -865,4 +864,78 @@ function GetTriangleNormalAndCenterUnchecked(int Index, out Vector OutNormal, ou
 	OutCenter.X /= 3.0;
 	OutCenter.Y /= 3.0;
 	OutCenter.Z /= 3.0;
+}
+
+
+// Kind of a test for now
+// For right now, this only works with neighboring poly groups
+function bool FindBestNeighborFromNodeTowardsPolyGroup(int NodeIndex, int PolyGroupIndex, out int OutBestNeighborIndex)
+{
+	local int NodePolyGroupIndex;
+	local R_NavMeshPolyGroup PolyGroup;
+	local int PortalIndex;
+	local R_NavNeighborSet NeighborSet;
+	local int CandidateNodes[64]; // All neighbors + self
+	local int NumCandidateNodes;
+	local int BestNode;
+	local float BestCost, CurrentCost;
+	local int i;
+
+	// Grab PolyGroup reference
+	GetTrianglePolyGroupIndexUnchecked(NodeIndex, NodePolyGroupIndex);
+	if(NodePolyGroupIndex == NavLib.Static.InvalidIndex())
+	{
+		OutBestNeighborIndex = NavLib.Static.InvalidIndex();
+		return false;
+	}
+	PolyGroup = PolyGroupArray[NodePolyGroupIndex];
+	if(PolyGroup == None)
+	{
+		OutBestNeighborIndex = NavLib.Static.InvalidIndex();
+		return false;
+	}
+
+	// Ensure PolyGroupIndex is a neighboring poly group
+	// TODO: Later, find a full path
+	PortalIndex = PolyGroup.GetPortalIndexForNeighborPolyGroupIndex(PolyGroupIndex);
+	if(PortalIndex == NavLib.Static.InvalidIndex())
+	{
+		OutBestNeighborIndex = NavLib.Static.InvalidIndex();
+		return false;
+	}
+
+	// Candidates
+	CandidateNodes[0] = NodeIndex;
+	NumCandidateNodes = 1;
+
+	GetTriangleNeighborSetUnchecked(NodeIndex, NeighborSet);
+	for(i = 0; i < NeighborSet.NumNeighbors && i < ArrayCount(CandidateNodes); ++i)
+	{
+		CandidateNodes[NumCandidateNodes] = NeighborSet.Neighbors[i].NeighborIndex;
+		++NumCandidateNodes;
+	}
+
+	// Find the lowest cost candidate
+	BestCost = 999999.0;
+	BestNode = NavLib.Static.InvalidIndex();
+	for(i = 0; i < NumCandidateNodes; ++i)
+	{
+		if(!PolyGroup.GetCostFromTriangleToNeighborPolyGroup(CandidateNodes[i], PolyGroupIndex, CurrentCost))
+		{
+			continue;
+		}
+
+		if(CurrentCost < BestCost)
+		{
+			BestCost = CurrentCost;
+			BestNode = CandidateNodes[i];
+		}
+	}
+
+	OutBestNeighborIndex = BestNode;
+	if(OutBestNeighborIndex == NavLib.Static.InvalidIndex() || OutBestNeighborIndex == NodeIndex)
+	{
+		return false;
+	}
+	return true;
 }

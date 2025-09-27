@@ -63,6 +63,7 @@ var Color PolyGroupColor_NeighboringPolygons;
 var Color PolyGroupColor_InactivePolygons;
 var Color PolyGroupColor_InvalidPolygons;
 var Color PolyGroupColor_Actors;
+var Color PolyGroupColor_PortalPathWay;
 
 function SwitchToOrDisableDrawMode(R_NavMeshDrawMode NewDrawMode)
 {
@@ -517,6 +518,7 @@ function DrawPolyGroupInfo(Canvas C, R_RbotsDebug_StringManager StringManager, R
 	local float PortalCost;
 	local int TriangleIndex;
 	local Vector DrawLocation;
+	local int DestPolyGroup;
 
 	NumPolyGroups = NavMesh.GetPolyGroupCount();
 
@@ -557,6 +559,7 @@ function DrawPolyGroupInfo(Canvas C, R_RbotsDebug_StringManager StringManager, R
 		StringManager.AddColor(DebugCategory_NavMeshPolyGroup, "Polygons in Neighboring PolyGroup", PolyGroupColor_NeighboringPolygons);
 		StringManager.AddColor(DebugCategory_NavMeshPolyGroup, "Polygons not in Current PolyGroup", PolyGroupColor_InactivePolygons);
 		StringManager.AddColor(DebugCategory_NavMeshPolyGroup, "No PolyGroup Assigned", PolyGroupColor_InvalidPolygons);
+		StringManager.AddColor(DebugCategory_NavMeshPolyGroup, "Best Path Toward Dest PolyGroup", PolyGroupColor_PortalPathWay);
 		Utilities.Static.ColorToFloats(PolyGroupColor_ActivePolygons, ActiveRGB[0], ActiveRGB[1], ActiveRGB[2]);
 		Utilities.Static.ColorToFloats(PolyGroupColor_NeighboringPolygons, NeighborRGB[0], NeighborRGB[1], NeighborRGB[2]);
 		Utilities.Static.ColorToFloats(PolyGroupColor_InactivePolygons, InactiveRGB[0], InactiveRGB[1], InactiveRGB[2]);
@@ -590,17 +593,51 @@ function DrawPolyGroupInfo(Canvas C, R_RbotsDebug_StringManager StringManager, R
 		// Draw portal cost visualization
 		if(PolyGroup != None)
 		{
-			PolyGroupTriangleCount = PolyGroup.GetTriangleIndexCount();
-			for(j = 0; j < PolyGroupTriangleCount; ++j)
+			//PolyGroupTriangleCount = PolyGroup.GetTriangleIndexCount();
+			//for(j = 0; j < PolyGroupTriangleCount; ++j)
+			//{
+			//	PortalCost = PolyGroup.GetPortalCostFromIndex(j, 0);
+			//	TriangleIndex = PolyGroup.GetTriangleNavMeshIndex(j);
+			//	NavMesh.GetTriangleVertexLocationsUnchecked(TriangleIndex, VLoc);
+			//	DrawLocation = (VLoc[0] + VLoc[1] + VLoc[2]) * (1.0/3.0);
+			//	DebugLib.Static.InitializeCanvasForDebugDrawing(C);
+			//	CanvasLib.Static.DrawTextAtWorldLocation(C, "C:" $ PortalCost, DrawLocation, Vect(0.5,0.5,0.0));
+			//}
+
+			if(PolyGroup.GetPortalCount() > 0)
 			{
-				PortalCost = PolyGroup.GetPortalCostFromIndex(j, 0);
-				TriangleIndex = PolyGroup.GetTriangleIndex(j);
-				NavMesh.GetTriangleVertexLocationsUnchecked(TriangleIndex, VLoc);
-				DrawLocation = (VLoc[0] + VLoc[1] + VLoc[2]) * (1.0/3.0);
-				DebugLib.Static.InitializeCanvasForDebugDrawing(C);
-				CanvasLib.Static.DrawTextAtWorldLocation(C, "C:" $ PortalCost, DrawLocation, Vect(0.5,0.5,0.0));
+				DestPolyGroup = PolyGroup.GetNeighborPolyGroupIndexForPortalIndex(0);
+				DrawPolyGroupInfo_PortalPathways(C, StringManager, NavMesh, PlayerNodeIndex, DestPolyGroup);
 			}
 		}
+	}
+}
+
+function DrawPolyGroupInfo_PortalPathways(
+	Canvas C,
+	R_RbotsDebug_StringManager StringManager,
+	R_NavMesh NavMesh,
+	int SrcNodeIndex,
+	int DestPolyGroupIndex)
+{
+	local int CurrentNodeIndex;
+	local Vector VLoc[3];
+	local Vector DrawA, DrawB;
+	local float PathRGB[3];
+
+	
+	Utilities.Static.ColorToFloats(PolyGroupColor_PortalPathWay, PathRGB[0], PathRGB[1], PathRGB[2]);
+
+	CurrentNodeIndex = SrcNodeIndex;
+	NavMesh.GetTriangleVertexLocationsUnchecked(CurrentNodeIndex, VLoc);
+	DrawB = (VLoc[0] + VLoc[1] + VLoc[2]) * (1.0/3.0);
+	while(NavMesh.FindBestNeighborFromNodeTowardsPolyGroup(CurrentNodeIndex, DestPolyGroupIndex, CurrentNodeIndex))
+	{
+		NavMesh.GetTriangleVertexLocationsUnchecked(CurrentNodeIndex, VLoc);
+		DrawA = DrawB;
+		DrawB = (VLoc[0] + VLoc[1] + VLoc[2]) * (1.0/3.0);
+
+		CanvasLib.Static.DrawLine3D(C, DrawA + Vect(0,0,1) * VERTICAL_DRAW_OFFSET, DrawB + Vect(0,0,1) * VERTICAL_DRAW_OFFSET, PathRGB[0], PathRGB[1], PathRGB[2]);
 	}
 }
 
@@ -623,6 +660,7 @@ defaultproperties
 	PolyGroupColor_InactivePolygons=(R=202,G=0,B=0)
 	PolyGroupColor_InvalidPolygons=(R=255,G=255,B=255)
 	PolyGroupColor_Actors=(R=17,G=219,B=255)
+	PolyGroupColor_PortalPathWay=(R=255,G=7,B=222)
 	bDrawNormals=true
 	bDrawVertices=false
 	bDrawEdgeOrientations=true

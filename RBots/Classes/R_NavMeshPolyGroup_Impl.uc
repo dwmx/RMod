@@ -39,6 +39,12 @@ var private R_NavMeshPolyGroupLayer PortalCostLayerArray[ArrayCount(PortalArray)
 
 //------------------------------------------------------------------------------
 
+function InitializePolyGroup()
+{
+	ClearTriangles();
+	ClearPortals();
+}
+
 function ClearTriangles()
 {
 	NumTriangleIndices = 0;
@@ -69,26 +75,54 @@ function int GetTriangleIndexCount()
 	return NumTriangleIndices;
 }
 
-function int GetTriangleIndex(int Index)
+function PushTriangleIndex(int TriangleNavMeshIndex)
 {
-	if(Index < 0 || Index >= NumTriangleIndices)
-	{
-		return NavLib.Static.InvalidIndex();
-	}
-	return TriangleIndexArray[Index];
-}
+	local int i;
 
-function PushTriangleIndex(int TriangleIndex)
-{
 	if(NumTriangleIndices >= ArrayCount(TriangleIndexArray))
 	{
 		Utilities.Static.RLog("PushTriangleIndex failed -- array overflow", LogCategory);
 		return;
 	}
 
-	TriangleIndexArray[NumTriangleIndices] = TriangleIndex;
+	// Triangle can be added only once
+	for(i = 0; i < NumTriangleIndices; ++i)
+	{
+		if(TriangleIndexArray[i] == TriangleNavMeshIndex)
+		{
+			Utilities.Static.RLog("Attempted to double-add triangle to PolyGroup" @ String(PolyGroupName), LogCategory);
+			return;
+		}
+	}
+
+	// Add triangle
+	TriangleIndexArray[NumTriangleIndices] = TriangleNavMeshIndex;
 	++NumTriangleIndices;
 }
+
+function int GetTriangleNavMeshIndex(int TrianglePolyGroupIndex)
+{
+	if(TrianglePolyGroupIndex < 0 || TrianglePolyGroupIndex >= NumTriangleIndices)
+	{
+		return NavLib.Static.InvalidIndex();
+	}
+	return TriangleIndexArray[TrianglePolyGroupIndex];
+}
+
+function int GetTrianglePolyGroupIndex(int TriangleNavMeshIndex)
+{
+	local int i;
+
+	for(i = 0; i < NumTriangleIndices; ++i)
+	{
+		if(TriangleIndexArray[i] == TriangleNavMeshIndex)
+		{
+			return i;
+		}
+	}
+	return NavLib.Static.InvalidIndex();
+}
+
 
 //------------------------------------------------------------------------------
 //	Portals
@@ -348,13 +382,62 @@ function bool DoesTriangleContainAnyOfPortalsEdges(R_NavMesh NavMesh, out R_NavM
 	return false;
 }
 
-function float GetPortalCostFromIndex(int Index, int PortalIndex)
+function float GetPortalCostFromIndex(int TrianglePolyGroupIndex, int PortalIndex)
 {
 	if(PortalIndex < 0 || PortalIndex >= NumPortals
-	|| Index < 0 || Index >= NumTriangleIndices)
+	|| TrianglePolyGroupIndex < 0 || TrianglePolyGroupIndex >= NumTriangleIndices)
 	{
 		return 0.0;
 	}
 
-	return PortalCostLayerArray[PortalIndex].Data[Index];
+	return PortalCostLayerArray[PortalIndex].Data[TrianglePolyGroupIndex];
+}
+
+function int GetNeighborPolyGroupIndexForPortalIndex(int PortalIndex)
+{
+	if(PortalIndex < 0 || PortalIndex >= NumPortals)
+	{
+		return NavLib.Static.InvalidIndex();
+	}
+	return PortalArray[PortalIndex].OtherPolyGroupIndex;
+}
+
+function int GetPortalIndexForNeighborPolyGroupIndex(int PolyGroupIndex)
+{
+	local int i;
+
+	for(i = 0; i < NumPortals; ++i)
+	{
+		if(PortalArray[i].OtherPolyGroupIndex == PolyGroupIndex)
+		{
+			return i;
+		}
+	}
+	return NavLib.Static.InvalidIndex();
+}
+
+function bool GetCostFromTriangleToNeighborPolyGroup(
+	int TriangleNavMeshIndex,
+	int PolyGroupIndex,
+	out float OutCost)
+{
+	local int TrianglePolyGroupIndex;
+	local int PortalIndex;
+
+	PortalIndex = GetPortalIndexForNeighborPolyGroupIndex(PolyGroupIndex);
+	if(PortalIndex == NavLib.Static.InvalidIndex())
+	{
+		OutCost = 0.0;
+		return false;
+	}
+
+	TrianglePolyGroupIndex = GetTrianglePolyGroupIndex(TriangleNavMeshIndex);
+	if(TrianglePolyGroupIndex == NavLib.Static.InvalidIndex())
+	{
+		OutCost = 0.0;
+		return false;
+	}
+
+	OutCost = PortalCostLayerArray[PortalIndex].Data[TrianglePolyGroupIndex];
+	return true;
 }

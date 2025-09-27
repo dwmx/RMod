@@ -270,6 +270,10 @@ function bool FindPath(
 	return true;
 }
 
+// Given a NodeIndex, returns the best node to travel towards to ultimately arrive at the specified PolyGroup
+// If no such node exists, returns false and InvalidIndex
+function bool FindBestNeighborFromNodeTowardsPolyGroup(int NodeIndex, int PolyGroupIndex, out int OutBestNeighborIndex);
+
 //------------------------------------------------------------------------------
 //	Spatial Query Functions
 //	All of these functions route calls to the NavMeshSpatialQuery object
