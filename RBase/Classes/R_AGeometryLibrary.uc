@@ -287,3 +287,54 @@ static function ProjectLocationZOnPlane(Vector Location, Vector PlaneOrigin, Vec
 	t = ((PlaneOrigin - Location) Dot PlaneNormal) / Denom;
 	OutProjectedLocation = Location + t * Dir;
 }
+
+// Returns true if the triangle defined by VLoc intersects with the provided AABB
+static function bool DoesTriangleIntersectAABB2D(Vector AABBMin, Vector AABBMax, Vector VLoc[3])
+{
+	local Vector Corners[4];
+	local Vector SegmentA[2], SegmentB[2];
+	local int i, j;
+
+	// Vertex inside box?
+	for(i = 0; i < 3; ++i)
+	{
+		if(VLoc[i].X >= AABBMin.X && VLoc[i].X <= AABBMax.X
+		&& VLoc[i].Y >= AABBMin.Y && VLoc[i].Y <= AABBMax.Y)
+		{
+			return true;
+		}
+	}
+
+	Corners[0] = Vect(1,0,0) * AABBMin + Vect(0,1,0) * AABBMin;
+	Corners[1] = Vect(1,0,0) * AABBMax + Vect(0,1,0) * AABBMin;
+	Corners[2] = Vect(1,0,0) * AABBMax + Vect(0,1,0) * AABBMax;
+	Corners[3] = Vect(1,0,0) * AABBMin + Vect(0,1,0) * AABBMax;
+
+	// Box corner inside triangle?
+	for(i = 0; i < 4; ++i)
+	{
+		if(IsLocationWithinTriangle2D(Corners[i], VLoc))
+		{
+			return true;
+		}
+	}
+
+	// Line segments intersect?
+	for(i = 0; i < 3; ++i)
+	{
+		SegmentA[0] = VLoc[i];
+		SegmentA[1] = VLoc[(i+1)%3];
+		for(j = 0; j < 4; ++j)
+		{
+			SegmentB[0] = Corners[j];
+			SegmentB[1] = Corners[(j+1)%4];
+
+			if(DoLineSegmentsIntersect2D(SegmentA, SegmentB))
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
