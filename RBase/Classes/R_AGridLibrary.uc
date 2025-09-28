@@ -9,6 +9,27 @@ const MathLibrary = Class'RBase.R_AMathLibrary';
 const CanvasLibrary = Class'RBase.R_ACanvasLibrary';
 
 /**
+*	GetGridArrayIndexFromGrid2DIndex
+*	Given a 2D [X,Y] grid index, return as a 1D array index
+*/
+static function int GetGridArrayIndexFromGrid2DIndex(int CellCountX, int CellCountY, int GridIndexX, int GridIndexY)
+{
+	GridIndexX = Max(0, Min(GridIndexX, CellCountX-1));
+	GridIndexY = Max(0, Min(GridIndexY, CellCountY-1));
+	return GridIndexY * CellCountX + GridIndexX;
+}
+
+/**
+*	GetGrid2DIndexFromGridArrayIndex
+*	Given a 1D array into into a grid structure, return as 2D [X,Y] index
+*/
+static function GetGrid2DIndexFromGridArrayIndex(int CellCountX, int CellCountY, int GridArrayIndex, out int OutGridIndexX, out int OutGridIndexY)
+{
+	OutGridIndexY = GridArrayIndex / CellCountX;
+	OutGridIndexX = GridArrayIndex % CellCountX;
+}
+
+/**
 *   SnapLocationToGrid
 *   Snaps a given world location to a grid with cell size = GridUnitSize
 *   Returns the grid-confined world location

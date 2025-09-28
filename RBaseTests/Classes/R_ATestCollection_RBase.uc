@@ -7,7 +7,7 @@ static function String GetTestCollectionNameString()
 
 static function int GetNumTests()
 {
-	return 32;
+	return 33;
 }
 
 static function Class<R_ATest> GetTestAtIndex(int TestIndex)
@@ -42,19 +42,20 @@ static function Class<R_ATest> GetTestAtIndex(int TestIndex)
 		// Grid tests
 		case 21: return Class'RBaseTests.R_ATest_Grid_LocationToIndex';
 		case 22: return Class'RBaseTests.R_ATest_Grid_IndexToLocation';
+		case 23: return Class'RBaseTests.R_ATest_Grid_DuplexIndexing';
 
 		// Utility library tests
-		case 23: return Class'RBaseTests.R_ATest_Utilities_BinaryString';
-		case 24: return Class'RBaseTests.R_ATest_Utilities_CompressTwoInts';
-		case 25: return Class'RBaseTests.R_ATest_Utilities_DecompressTwoInts';
-		case 26: return Class'RBaseTests.R_ATest_Utilities_CompressTwoIntsDuplex';
+		case 24: return Class'RBaseTests.R_ATest_Utilities_BinaryString';
+		case 25: return Class'RBaseTests.R_ATest_Utilities_CompressTwoInts';
+		case 26: return Class'RBaseTests.R_ATest_Utilities_DecompressTwoInts';
+		case 27: return Class'RBaseTests.R_ATest_Utilities_CompressTwoIntsDuplex';
 
 		// Geometry tests
-		case 27: return Class'RBaseTests.R_ATest_Geometry_LineSegmentIntersect';
-		case 28: return Class'RBaseTests.R_ATest_Geometry_LineSegmentDistance';
-		case 29: return Class'RBaseTests.R_ATest_Geometry_LocationWithinTriangle';
-		case 30: return Class'RBaseTests.R_ATest_Geometry_Triangle';
-		case 31: return Class'RBaseTests.R_ATest_Geometry_TriangleIntersectAABB';
+		case 28: return Class'RBaseTests.R_ATest_Geometry_LineSegmentIntersect';
+		case 29: return Class'RBaseTests.R_ATest_Geometry_LineSegmentDistance';
+		case 30: return Class'RBaseTests.R_ATest_Geometry_LocationWithinTriangle';
+		case 31: return Class'RBaseTests.R_ATest_Geometry_Triangle';
+		case 32: return Class'RBaseTests.R_ATest_Geometry_TriangleIntersectAABB';
 	}
 
 	return None;
