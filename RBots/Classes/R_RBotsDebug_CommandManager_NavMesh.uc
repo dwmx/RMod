@@ -18,6 +18,7 @@ const Command_ToggleAdjacents = "Adjacents";
 const Command_ToggleProximity = "Proximity";
 const Command_TogglePlayerBorders = "PlayerBorders";
 const Command_TogglePolyGroups = "PolyGroups";
+const Command_ToggleSpatialQuery = "SpatialQuery";
 
 function RegisterCommandList()
 {
@@ -35,6 +36,7 @@ function RegisterCommandList()
 	RegisterCommand(Command_ToggleProximity);
 	RegisterCommand(Command_TogglePlayerBorders);
 	RegisterCommand(Command_TogglePolyGroups);
+	RegisterCommand(Command_ToggleSpatialQuery);
 }
 
 function bool TryHandleCommand(String CommandString, R_RBotsDebug DebugMutator, PlayerPawn Sender)
@@ -55,12 +57,15 @@ function bool TryHandleCommand(String CommandString, R_RBotsDebug DebugMutator, 
 		case Command_ToggleProximity:			HandleCommand_ToggleProximity(DebugMutator, Sender);		return true;
 		case Command_TogglePlayerBorders:		HandleCommand_TogglePlayerBorders(DebugMutator, Sender);	return true;
 		case Command_TogglePolyGroups:			HandleCommand_TogglePolyGroups(DebugMutator, Sender);		return true;
+		case Command_ToggleSpatialQuery:		HandleCommand_ToggleSpatialQuery(DebugMutator, Sender);		return true;
 	}
 
 	return false;
 }
 
-function R_RBotsDebug_View_NavMesh GetDVNavMesh(R_RBotsDebug DebugMutator)
+//------------------------------------------------------------------------------
+
+final function R_RBotsDebug_View_NavMesh GetDVNavMesh(R_RBotsDebug DebugMutator)
 {
 	if(DebugMutator == None)
 	{
@@ -69,6 +74,18 @@ function R_RBotsDebug_View_NavMesh GetDVNavMesh(R_RBotsDebug DebugMutator)
 
 	return R_RBotsDebug_View_NavMesh(DebugMutator.GetDebugView(Class'RBots.R_RBotsDebug_View_NavMesh'));
 }
+
+final function R_RBotsDebug_View_NavMeshSpatialQuery GetDVSpatialQuery(R_RBotsDebug DebugMutator)
+{
+	if(DebugMutator == None)
+	{
+		return None;
+	}
+
+	return R_RBotsDebug_View_NavMeshSpatialQuery(DebugMutator.GetDebugView(Class'RBots.R_RBotsDebug_View_NavMeshSpatialQuery'));
+}
+
+//------------------------------------------------------------------------------
 
 function HandleCommand_Show(R_RBotsDebug DebugMutator, PlayerPawn Sender)
 {
@@ -246,4 +263,14 @@ function HandleCommand_TogglePolyGroups(R_RBotsDebug DebugMutator, PlayerPawn Se
 			DVNavMesh.TogglePolyGroupInfo();
 		}
 	} 
+}
+
+//------------------------------------------------------------------------------
+
+function HandleCommand_ToggleSpatialQuery(R_RBotsDebug DebugMutator, PlayerPawn Sender)
+{
+	if(DebugMutator != None)
+	{
+		DebugMutator.ToggleDebugView(Class'RBots.R_RBotsDebug_View_NavMeshSpatialQuery');
+	}
 }

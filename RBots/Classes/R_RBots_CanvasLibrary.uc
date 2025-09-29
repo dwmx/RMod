@@ -45,6 +45,22 @@ static function DrawAABB3D(Canvas C, out Vector InMin, out Vector InMax, float R
 	C.DrawLine3D(InMin + Vect(0,1,0) * Delta, InMin + Vect(0,1,1) * Delta, RGB[0], RGB[1], RGB[2]);
 }
 
+static function DrawRectXY3D(Canvas C, float MinX, float MinY, float MaxX, float MaxY, float Z, float RGB[3])
+{
+	local Vector Corners[4];
+	local int i;
+
+	Corners[0] = Vect(1,0,0) * MinX + Vect(0,1,0) * MinY + Vect(0,0,1) * Z;
+	Corners[1] = Vect(1,0,0) * MaxX + Vect(0,1,0) * MinY + Vect(0,0,1) * Z;
+	Corners[2] = Vect(1,0,0) * MaxX + Vect(0,1,0) * MaxY + Vect(0,0,1) * Z;
+	Corners[3] = Vect(1,0,0) * MinX + Vect(0,1,0) * MaxY + Vect(0,0,1) * Z;
+
+	for(i = 0; i < 4; ++i)
+	{
+		C.DrawLine3D(Corners[i], Corners[(i+1)%4], RGB[0], RGB[1], RGB[2]);
+	}
+}
+
 // Copy of Canvas.DrawBox3D, replacing ints with floats
 static function DrawBox3D(Canvas C, Vector Center, Vector Extents, float R, float G, float B)
 {

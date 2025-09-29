@@ -31,6 +31,18 @@ function PlayerPawn GetPlayerPawnOwner()
 	return None;
 }
 
+function Vector GetPlayerPawnOwnerLocation()
+{
+	local PlayerPawn PP;
+
+	PP = GetPlayerPawnOwner();
+	if(PP != None)
+	{
+		return PP.Location;
+	}
+	return Vect(0,0,0);
+}
+
 // Utility function for subclasses -- gets NavMesh from parent debug actor
 simulated function R_NavMesh GetNavMesh()
 {

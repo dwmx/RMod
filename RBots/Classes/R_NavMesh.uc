@@ -92,11 +92,6 @@ final function InitializeNavMeshBase()
 	Utilities.Static.RLog("Initializing NavMesh", LogCategory);
 	bInitialized = true;
 
-	// Init necessary SubObjects
-	InitNavMeshSpatialQuery();
-	InitNavPathFinder();
-	InitNavPathFilter();
-
 	// Init subclass
 	InitializeNavMesh();
 }
@@ -182,6 +177,11 @@ final function PostProcessNavMeshBase()
 {
 	PostProcessNavMesh();
 
+	// Init necessary SubObjects
+	InitNavMeshSpatialQuery();
+	InitNavPathFinder();
+	InitNavPathFilter();
+
 	if(NavMeshSpatialQuery != None)
 	{
 		Utilities.Static.RLog("NavMeshSpatialQuery post-processing NavMesh", LogCategory);
@@ -197,6 +197,11 @@ final function PostProcessNavMeshBase()
 final function Class<R_NavMeshSpatialQuery> GetNavMeshSpatialQueryClass() { return NavMeshSpatialQueryClass; }
 final function Class<R_NavPathFinder> GetNavPathFinderClass() { return NavPathFinderClass; }
 final function Class<R_NavPathFilter> GetNavPathFilterClass() { return NavPathFilterClass; }
+
+final function R_NavMeshSpatialQuery GetNavMeshSpatialQuery()
+{
+	return NavMeshSpatialQuery;
+}
 
 // FindPath -- Main pathfinding function
 // Returns path data in NavContext
@@ -340,7 +345,8 @@ function bool FindRelevantBorderEdgesInRadius2D(
 defaultproperties
 {
 	bInitialized=false
-	NavMeshSpatialQueryClass=Class'RBots.R_NavMeshSpatialQuery_Linear'
+	//NavMeshSpatialQueryClass=Class'RBots.R_NavMeshSpatialQuery_Linear'
+	NavMeshSpatialQueryClass=Class'RBots.R_NavMeshSpatialQuery_GridCache'
 	NavPathFinderClass=Class'RBots.R_NavPathFinder_Dijkstras'
 	NavPathFilterClass=Class'RBots.R_NavPathFilter_Funnel'
 	//NavPathFilterClass=Class'RBots.R_NavPathFilter_NodeCenter'
