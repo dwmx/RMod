@@ -39,41 +39,6 @@ var private int NumTriangles;
 
 var private R_NavNeighborSet NeighborSets[ArrayCount(TriangleArray)];
 
-/*
-// NavMeshPortal
-// Defines a portal between two PolyGroups
-struct R_NavMeshPortal
-{
-	var int Edges[32];	// Indices of edges defining this portal
-	var int NumEdges;	// Number of edge indices
-	var int PolyGroup;	// The PolyGroup index that this portal interfaces with
-};
-
-// NavMeshPolyGroupLayer
-// Stores per-polygon data inside of a PolyGroup
-struct R_NavMeshPolyGroupLayer
-{
-	// Per-polygon data stored in a NavMeshPolyGroup
-	// This array must match the size of R_NavMeshPolyGroup.TriangleIndexArray
-	var float Data[2048];
-};
-
-// NavMesh poly group structure
-struct R_NavMeshPolyGroup
-{
-	var Name GroupName;					// This group's name
-	var int TriangleIndexArray[2048];	// Triangles in this group
-	var int NumTriangleIndices;			// Number of triangles in this group
-
-	// Portals -- Interfaces from this polygroup into another polygroup
-	var R_NavMeshPortal Portals[32];
-	var R_NavMeshPolyGroupLayer PortalCosts[32];
-	var int NumPortals;
-};
-var private R_NavMeshPolyGroup PolyGroupArray[32];
-var private int NumPolyGroups;
-*/
-
 const PolyGroupClass = Class'RBots.R_NavMeshPolyGroup_Impl';
 var private R_NavMeshPolyGroup PolyGroupArray[32];
 var private int NumPolyGroups;
