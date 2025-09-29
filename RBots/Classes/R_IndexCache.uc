@@ -20,6 +20,11 @@ function int GetNumIndices()
 	return NumIndices;
 }
 
+function bool IsFull()
+{
+	return NumIndices >= ArrayCount(Indices);
+}
+
 function Push(int Index)
 {
 	if(NumIndices >= ArrayCount(Indices))

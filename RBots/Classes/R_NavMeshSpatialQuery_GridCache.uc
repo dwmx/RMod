@@ -21,6 +21,7 @@ const CellCountY = 256;
 var private int MaxBoundsIndexX;
 var private int MaxBoundsIndexY;
 var private R_IndexCache GridCache[65536]; // CellCountX x CellCountY
+var private bool bHadOverflowError;
 
 var private Vector BoundsMin;
 var private Vector BoundsMax;
@@ -49,6 +50,11 @@ function GetMax2DIndexInBounds(out int OutMaxX, out int OutMaxY)
 {
 	OutMaxX = MaxBoundsIndexX;
 	OutMaxY = MaxBoundsIndexY;
+}
+
+function bool GetHadOverflowError()
+{
+	return bHadOverflowError;
 }
 
 function R_IndexCache GetIndexCacheFrom2DGridIndex(int GridIndexX, int GridIndexY)
@@ -132,6 +138,8 @@ function InitGridCache()
 	local int X, Y;
 	local int Index;
 
+	bHadOverflowError = false;
+
 	// Make sure all cells are unallocated
 	for(X = 0; X < CellCountX; ++X)
 	{
@@ -145,6 +153,7 @@ function InitGridCache()
 
 function InsertNodeIndex(int GridIndexX, int GridIndexY, int NodeIndex)
 {
+	local String WarnString;
 	local int Index;
 
 	Index = GetGridArrayIndexFromGrid2DIndex(GridIndexX, GridIndexY);
@@ -153,7 +162,25 @@ function InsertNodeIndex(int GridIndexX, int GridIndexY, int NodeIndex)
 		GridCache[Index] = new(None) IndexCacheClass;
 	}
 
-	GridCache[Index].Push(Index);
+	if(GridCache[Index] == None)
+	{
+		WarnString = "InsertNodeIndex failed -- Could not allocate IndexCache";
+		Warn(WarnString);
+		Utilities.Static.RLog(WarnString, LogCategory);
+		return;
+	}
+
+	if(GridCache[Index].IsFull())
+	{
+		WarnString = "InsertNodeIndex failed -- IndexCache at index" $ Index @ "[" $ GridIndexX $ "," $ GridIndexY $ "]" @ "is already full";
+		Warn(WarnString);
+		Utilities.Static.RLog(WarnString, LogCategory);
+		bHadOverflowError = true;
+	}
+	else
+	{
+		GridCache[Index].Push(NodeIndex);
+	}
 }
 
 //------------------------------------------------------------------------------
