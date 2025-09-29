@@ -315,17 +315,6 @@ function int FindContainingPolyGroupIndex(Vector Location)
 	return NavLib.Static.InvalidIndex();
 }
 
-function FindNodesInRadius(Vector Origin, float Radius, out int OutNodes[32], out int OutNumNodes)
-{
-	if(NavMeshSpatialQuery == None)
-	{
-		OutNumNodes = 0;
-		return;
-	}
-
-	NavMeshSpatialQuery.FindNodesInRadius(Self, Origin, Radius, OutNodes, OutNumNodes);
-}
-
 function bool FindRelevantBorderEdgesInRadius2D(
 	Vector Location,
 	float Radius,
