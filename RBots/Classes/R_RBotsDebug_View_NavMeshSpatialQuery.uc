@@ -8,8 +8,26 @@ class R_RBotsDebug_View_NavMeshSpatialQuery extends R_RBotsDebug_View config(RBo
 const Utilities = Class'RBots.R_BotUtilities';
 const CanvasLib = Class'RBots.R_RBots_CanvasLibrary';
 const DebugLib = Class'RBots.R_RBots_DebugLibrary';
+const BaseCanvasLib = Class'RBase.R_ACanvasLibrary';
 
 const DebugCategory = 'SpatialQueryGrid';
+
+// Return values copied from NavMeshSpatialQuery_GridCache
+const CellInRadiusTest_Invalid = 0;
+const CellInRadiusTest_Inside = 1;		// Cell is completely inside a given radius
+const CellInRadiusTest_Outside = 2;		// Cell is completely outside a given radius
+const CellInRadiusTest_Intersect = 3;	// Cell intersects the radius perimeter
+
+enum R_SpatialQueryTest
+{
+	NodeAtLocation,
+	NodesInRadius
+};
+
+var config private R_SpatialQueryTest ActiveTest;
+
+// Draw grid options
+var config private bool bDrawCellIndexCount;
 
 var private R_NavMeshSpatialQuery_GridCache SpatialQueryGrid;
 
@@ -18,6 +36,10 @@ var config private Color Color_CellActive;
 var config private Color Color_CellInactive;
 var config private Color Color_CellPlayer;
 var config private Color Color_CellTriangles;
+
+var config private Color Color_CellInRadius;
+var config private Color Color_CellIntersectRadius;
+var config private Color Color_Radius;
 
 final function R_NavMeshSpatialQuery_GridCache GetSpatialQueryGrid()
 {
@@ -69,10 +91,17 @@ function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
 
 		if(NavMesh != None)
 		{
-			DrawSQG_PlayerIndexTriangles(C, StringManager, NavMesh, SQG);
+			StringManager.AddName(DebugCategory, "Active Test", GetEnum(Enum'R_SpatialQueryTest', ActiveTest));
+			switch(ActiveTest)
+			{
+			case NodeAtLocation:
+				DrawSQG_PlayerIndexTriangles(C, StringManager, NavMesh, SQG);
+				break;
+			case NodesInRadius:
+				DrawSQG_NodesInRadius(C, StringManager, NavMesh, SQG);
+			}
 		}
 	}
-	
 }
 
 function DrawSQG_Bounds(Canvas C, R_RBotsDebug_StringManager StringManager, R_NavMeshSpatialQuery_GridCache SQG)
@@ -100,16 +129,14 @@ function DrawSQG_GridCells(Canvas C, R_RBotsDebug_StringManager StringManager, R
 	local int PlayerX, PlayerY;
 	local Vector DrawCellLocation;
 	local int CellIndexCount, GreatestCellIndexCount;
-	local float CellActiveRGB[3], CellInactiveRGB[3], CellPlayerRGB[3];
+	local float CellActiveRGB[3], CellInactiveRGB[3];
 	local float CellRGB[3];
 
 	StringManager.AddColor(DebugCategory, "Populated Cells", Color_CellActive);
 	StringManager.AddColor(DebugCategory, "Unpopulated Cells", Color_CellInactive);
-	StringManager.AddColor(DebugCategory, "Player Cell", Color_CellPlayer);
 
 	Utilities.Static.ColorToFloats(Color_CellActive, CellActiveRGB[0], CellActiveRGB[1], CellActiveRGB[2]);
 	Utilities.Static.ColorToFloats(Color_CellInactive, CellInactiveRGB[0], CellInactiveRGB[1], CellInactiveRGB[2]);
-	Utilities.Static.ColorToFloats(Color_CellPlayer, CellPlayerRGB[0], CellPlayerRGB[1], CellPlayerRGB[2]);
 
 	StringManager.AddBool(DebugCategory, "Had Overflow Error?", SQG.GetHadOverflowError());
 
@@ -139,13 +166,7 @@ function DrawSQG_GridCells(Canvas C, R_RBotsDebug_StringManager StringManager, R
 
 			IndexCache = SQG.GetIndexCacheFrom2DGridIndex(GridX, GridY);
 
-			// Select cell draw color
-			if(GridX == PlayerX && GridY == PlayerY)
-			{	// Player standing in cell, populated or unpopulated
-				CopyFloatRGB(CellPlayerRGB, CellRGB);
-				DrawCellLocation.Z += 1.0; // Offset so it draws on top
-			}
-			else if(IndexCache != None)
+			if(IndexCache != None)
 			{	// Populated cell
 				CopyFloatRGB(CellActiveRGB, CellRGB);
 			}
@@ -163,7 +184,7 @@ function DrawSQG_GridCells(Canvas C, R_RBotsDebug_StringManager StringManager, R
 					CellRGB);
 
 			// Draw information about the cell
-			if(IndexCache != None)
+			if(bDrawCellIndexCount && IndexCache != None)
 			{
 				// Draw the number of indices contained in each cell
 				CellIndexCount = IndexCache.GetNumIndices();
@@ -223,6 +244,76 @@ function DrawSQG_PlayerIndexTriangles(Canvas C, R_RBotsDebug_StringManager Strin
 	}
 }
 
+function DrawSQG_NodesInRadius(Canvas C, R_RBotsDebug_StringManager StringManager, R_NavMesh NavMesh, R_NavMeshSpatialQuery_GridCache SQG)
+{
+	local int GridXMin, GridXMax;
+	local int GridYMin, GridYMax;
+	local int GridX, GridY;
+	local float CellSize;
+	local Vector DrawCellLocation;
+	local Vector PlayerLocation;
+	local float TestRadius;
+	local R_IndexCache IndexCache;
+	local int CellInRadiusResult;
+	local float CellInRadiusRGB[3], CellIntersectRadiusRGB[3], RadiusRGB[3];
+	local float CellDrawRGB[3];
+
+	StringManager.AddColor(DebugCategory, "Cells Within Radius", Color_CellInRadius);
+	StringManager.AddColor(DebugCategory, "Cells Intersecting Radius", Color_CellIntersectRadius);
+	StringManager.AddColor(DebugCategory, "Radius Test", Color_Radius);
+
+	Utilities.Static.ColorToFloats(Color_CellInRadius, CellInRadiusRGB[0], CellInRadiusRGB[1], CellInRadiusRGB[2]);
+	Utilities.Static.ColorToFloats(Color_CellIntersectRadius, CellIntersectRadiusRGB[0], CellIntersectRadiusRGB[1], CellIntersectRadiusRGB[2]);
+	Utilities.Static.ColorToFloats(Color_Radius, RadiusRGB[0], RadiusRGB[1], RadiusRGB[2]);
+
+	PlayerLocation = GetPlayerPawnOwnerLocation();
+	TestRadius = 256.0;
+	SQG.GetCellRangeInRadius(PlayerLocation, TestRadius, GridXMin, GridXMax, GridYMin, GridYMax);
+
+	CellSize = SQG.GetCellSize();
+
+	// Draw a circle showing the radius being tested
+	BaseCanvasLib.Static.DrawCircle3D(
+		C,
+		PlayerLocation, Vect(0,0,1),
+		TestRadius, 64,
+		RadiusRGB[0], RadiusRGB[1], RadiusRGB[2]);
+
+	// Draw all the grid cells touched by the radius
+	for(GridX = GridXMin; GridX <= GridXMax; ++GridX)
+	{
+		for(GridY = GridYMin; GridY <= GridYMax; ++GridY)
+		{
+			IndexCache = SQG.GetIndexCacheFrom2DGridIndex(GridX, GridY);
+			if(IndexCache != None)
+			{
+				SQG.Grid2DIndexToLocation(GridX, GridY, DrawCellLocation);
+				DrawCellLocation.Z = PlayerLocation.Z + 2.0;
+
+				CellInRadiusResult = SQG.GetCellInRadiusTest(PlayerLocation, TestRadius, GridX, GridY);
+				if(CellInRadiusResult == CellInRadiusTest_Inside)
+				{
+					CopyFloatRGB(CellInRadiusRGB, CellDrawRGB);
+				}
+				else if(CellInRadiusResult == CellInRadiusTest_Intersect)
+				{
+					CopyFloatRGB(CellIntersectRadiusRGB, CellDrawRGB);
+				}
+
+				if(CellInRadiusResult == CellInRadiusTest_Inside || CellInRadiusResult == CellInRadiusTest_Intersect)
+				{
+					CanvasLib.Static.DrawRectXY3D(
+						C,
+						DrawCellLocation.X, DrawCellLocation.Y,
+						DrawCellLocation.X + CellSize, DrawCellLocation.Y + CellSize,
+						DrawCellLocation.Z,
+						CellDrawRGB);
+				}
+			}
+		}
+	}
+}
+
 function DrawTriangle(Canvas C, Vector VLoc[3], float RGB[3], float Scale, optional float NormalOffset)
 {
 	local Vector Center;
@@ -248,9 +339,14 @@ function DrawTriangle(Canvas C, Vector VLoc[3], float RGB[3], float Scale, optio
 
 defaultproperties
 {
+	ActiveTest=NodesInRadius
+	bDrawCellIndexCount=false
 	Color_Bounds=(R=247,G=27,B=255)
 	Color_CellActive=(R=8,G=118,B=138)
 	Color_CellInactive=(R=129,G=20,B=20)
 	Color_CellPlayer=(R=9,G=255,B=0)
+	Color_CellInRadius=(R=11,G=255,B=23)
+	Color_CellIntersectRadius=(R=239,G=255,B=12)
 	Color_CellTriangles=(R=247,G=27,B=255)
+	Color_Radius=(R=214,G=10,B=255)
 }

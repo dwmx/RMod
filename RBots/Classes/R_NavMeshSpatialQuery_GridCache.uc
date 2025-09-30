@@ -12,6 +12,12 @@ const MathLib = Class'RBase.R_AMathLibrary';
 
 const IndexCacheClass = Class'RBots.R_IndexCache';
 
+// Values returned from GetCellRadiusTest
+const CellInRadiusTest_Invalid = 0;
+const CellInRadiusTest_Inside = 1;		// Cell is completely inside a given radius
+const CellInRadiusTest_Outside = 2;		// Cell is completely outside a given radius
+const CellInRadiusTest_Intersect = 3;	// Cell intersects the radius perimeter
+
 // CellSize * GridCacheSize will be the maximum size of the NavMesh AABB
 // that will work with this
 const CellSize = 64.0;
@@ -245,8 +251,6 @@ function bool FindContainingNode(R_NavMesh NavMesh, Vector Location, out int Out
 	local float CurrentDist, BestDist;
 	local int i;
 
-	//return false;
-
 	LocationToGrid2DIndex(Location, GridIndexX, GridIndexY);
 	ArrayIndex = GetGridArrayIndexFromGrid2DIndex(GridIndexX, GridIndexY);
 
@@ -261,6 +265,13 @@ function bool FindContainingNode(R_NavMesh NavMesh, Vector Location, out int Out
 	BestDist = 99999.0;
 
 	NumCachedIndices = IndexCache.GetNumIndices();
+
+	if(NumCachedIndices == 1)
+	{	// Only one triangle intersecting this cell, return it
+		OutNode = IndexCache.GetUnchecked(0);
+		return true;
+	}
+
 	for(i = 0; i < NumCachedIndices; ++i)
 	{
 		NodeIndex = IndexCache.GetUnchecked(i);
@@ -277,7 +288,7 @@ function bool FindContainingNode(R_NavMesh NavMesh, Vector Location, out int Out
 
 		// Check location in triangle
 		GeomLib.Static.ProjectLocationZOnPlane(Location, Center, Normal, LocationProjected);
-		if(GeomLib.Static.IsLocationWithinTriangle2D(LocationProjected, VLoc))	// TODO: This keeps returning false
+		if(GeomLib.Static.IsLocationWithinTriangle2D(LocationProjected, VLoc))
 		{
 			CurrentDist = VSize(LocationProjected - Location);
 			if(CurrentDist < BestDist)
@@ -296,7 +307,84 @@ function bool FindContainingNode(R_NavMesh NavMesh, Vector Location, out int Out
 	return true;
 }
 
-function bool FindNodesInRadius(R_NavMesh NavMesh, Vector Origin, float Radius, out int OutNodes[32], out int OutNumNodes)
+function GetCellRangeInRadius(
+	Vector Origin,
+	float Radius,
+	out int OutMinX, out int OutMaxX,
+	out int OutMinY, out int OutMaxY)
 {
+	local int OriginGridX, OriginGridY;
+	local int CellsWorth;
+
+	LocationToGrid2DIndex(Origin, OriginGridX, OriginGridY);
+	CellsWorth = int(MathLib.Static.Ceil(Radius / CellSize));
+	OutMinX = Clamp(OriginGridX - CellsWorth, 0, ArrayCount(GridCache));
+	OutMaxX = Clamp(OriginGridX + CellsWorth, 0, ArrayCount(GridCache));
+	OutMinY = Clamp(OriginGridY - CellsWorth, 0, ArrayCount(GridCache));
+	OutMaxY = Clamp(OriginGridY + CellsWorth, 0, ArrayCount(GridCache));
+}
+
+function int GetCellInRadiusTest(Vector Origin, float Radius, int GridIndexX, int GridIndexY)
+{
+	local Vector CellLocation;
+	local Vector Corners[4];
+	local Vector Delta;
+	local float RadiusSq, DistSq;
+	local int i;
+	local int Result;
+
+	Origin.Z = 0.0;
+
+	Grid2DIndexToLocation(GridIndexX, GridIndexY, CellLocation);
+	CellLocation.Z = 0.0;
+	Corners[0] = CellLocation;
+	Corners[1] = CellLocation + Vect(1,0,0) * CellSize;
+	Corners[2] = CellLocation + Vect(1,1,0) * CellSize;
+	Corners[3] = CellLocation + Vect(0,1,0) * CellSize;
+
+	Result = 0;
+	RadiusSq = Radius * Radius;
+	for(i = 0; i < 4; ++i)
+	{
+		Delta = Corners[i] - Origin;
+		DistSq = Delta.X * Delta.X + Delta.Y * Delta.Y;
+		if(DistSq <= RadiusSq)
+		{
+			Result = Result | CellInRadiusTest_Inside;
+		}
+		else
+		{
+			Result = Result | CellInRadiusTest_Outside;
+		}
+	}
+
+	return Result;
+}
+
+function bool FindNodesInRadius(
+	R_NavMesh NavMesh,
+	Vector Origin,
+	float Radius,
+	out int OutNodes[32],
+	out int OutNumNodes)
+{
+	local int OriginGridX, OriginGridY;
+	local int CellsWorth;
+	local int GridX, GridY;
+
+	LocationToGrid2DIndex(Origin, OriginGridX, OriginGridY);
+	CellsWorth = int(MathLib.Static.Ceil(Radius / CellSize));
+
+	GridX = Max(OriginGridX - CellsWorth, 0);
+	GridY = Max(OriginGridY - CellsWorth, 0);
+
+	for(GridX = GridX; GridX <= OriginGridX + CellsWorth; ++GridX)
+	{
+		for(GridY = GridY; GridY <= OriginGridY + CellsWorth; ++GridY)
+		{
+
+		}
+	}
+
 	return false;
 }
