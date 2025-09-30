@@ -27,6 +27,9 @@ const CommandManagerClass_RBots			= Class'RBots.R_RBotsDebug_CommandManager_Bot'
 const CommandNameSpace_NavMesh 			= 'NavMesh'; // NavMesh commands
 const CommandManagerClass_NavMesh		= Class'RBots.R_RBotsDebug_CommandManager_NavMesh';
 
+const CommandNameSpace_NavQuery			= 'NavQuery'; // NavQuery commands
+const CommandManagerClass_NavQuery		= Class'RBots.R_RBotsDebug_CommandManager_NavQuery';
+
 const CommandNameSpace_PathFinding 		= 'PathFinding'; // PathFinding commands
 const CommandManagerClass_PathFinding	= Class'RBots.R_RBotsDebug_CommandManager_PathFinding';
 
@@ -86,17 +89,20 @@ simulated function InitializeCommandManagers()
 {
 	local R_RBotsDebug_CommandManager CommandManager_Main;
 	local R_RBotsDebug_CommandManager CommandManager_NavMesh;
+	local R_RBotsDebug_CommandManager CommandManager_NavQuery;
 	local R_RBotsDebug_CommandManager CommandManager_PathFinding;
 	local R_RBotsDebug_CommandManager CommandManager_Target;
 	local R_RBotsDebug_CommandManager CommandManager_Player;
 
 	CommandManager_Main = CreateCommandManager(CommandManagerClass_RBots, CommandNameSpace_RBots);
 	CommandManager_NavMesh = CreateCommandManager(CommandManagerClass_NavMesh, CommandNameSpace_NavMesh);
+	CommandManager_NavQuery = CreateCommandManager(CommandManagerClass_NavQuery, CommandNameSpace_NavQuery);
 	CommandManager_PathFinding = CreateCommandManager(CommandManagerClass_PathFinding, CommandNameSpace_PathFinding);
 	CommandManager_Target = CreateCommandManager(CommandManagerClass_Target, CommandNameSpace_Target);
 	CommandManager_Player = CreateCommandManager(CommandManagerClass_Player, CommandNameSpace_Player);
 
 	CommandManager_Main.AddSubCommandManager(CommandManager_NavMesh);
+	CommandManager_Main.AddSubCommandManager(CommandManager_NavQuery);
 	CommandManager_Main.AddSubCommandManager(CommandManager_PathFinding);
 	CommandManager_Main.AddSubCommandManager(CommandManager_Target);
 	CommandManager_Main.AddSubCommandManager(CommandManager_Player);

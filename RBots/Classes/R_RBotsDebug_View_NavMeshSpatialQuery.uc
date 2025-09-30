@@ -18,15 +18,26 @@ const CellInRadiusTest_Inside = 1;		// Cell is completely inside a given radius
 const CellInRadiusTest_Outside = 2;		// Cell is completely outside a given radius
 const CellInRadiusTest_Intersect = 3;	// Cell intersects the radius perimeter
 
-enum R_SpatialQueryTest
+/*
+enum R_SpatialQueryTestDrawMode
 {
 	NodeAtLocation,
-	NodesInRadius
+	NodesInRadius,
+	TestDrawModeMax
 };
+*/
 
-var config private R_SpatialQueryTest ActiveTest;
+// Test draw modes
+const TestDrawMode_None = 0;
+const TestDrawMode_NodeAtLocation = 1;
+const TestDrawMode_NodesInRadius = 2;
+const TestDrawMode_Count = 3;
+
+var config private int ActiveTestDrawMode;
 
 // Draw grid options
+var config private bool bDrawBounds;
+var config private bool bDrawCells;
 var config private bool bDrawCellIndexCount;
 
 var private R_NavMeshSpatialQuery_GridCache SpatialQueryGrid;
@@ -40,6 +51,65 @@ var config private Color Color_CellTriangles;
 var config private Color Color_CellInRadius;
 var config private Color Color_CellIntersectRadius;
 var config private Color Color_Radius;
+
+//------------------------------------------------------------------------------
+//	Command interface
+
+function ToggleDrawBounds()
+{
+	bDrawBounds = !bDrawBounds;
+	SaveConfig();
+}
+
+function ToggleDrawCells()
+{
+	bDrawCells = !bDrawCells;
+	SaveConfig();
+}
+
+function ToggleDrawCellIndexCount()
+{
+	bDrawCellIndexCount = !bDrawCellIndexCount;
+	SaveConfig();
+}
+
+function SetActiveTestDrawMode(int NewTestDrawMode)
+{
+	if(NewTestDrawMode < 0 || NewTestDrawMode >= TestDrawMode_Count)
+	{
+		return;
+	}
+	ActiveTestDrawMode = NewTestDrawMode;
+	SaveConfig();
+}
+
+function EnableTestDrawMode_NodeAtLocation()
+{
+	SetActiveTestDrawMode(TestDrawMode_NodeAtLocation);
+}
+
+function EnableTestDrawMode_NodesInRadius()
+{
+	SetActiveTestDrawMode(TestDrawMode_NodesInRadius);
+}
+
+function CycleTestDrawMode()
+{
+	SetActiveTestDrawMode((ActiveTestDrawMode + 1) % TestDrawMode_Count);
+}
+
+function Name GetTestDrawModeName(int TestDrawMode)
+{
+	switch(TestDrawMode)
+	{
+	case TestDrawMode_None:				return 'None';
+	case TestDrawMode_NodeAtLocation:	return 'NodeAtLocation';
+	case TestDrawMode_NodesInRadius:	return 'NodesInRadius';
+	}
+	return 'Invalid';
+}
+
+//------------------------------------------------------------------------------
 
 final function R_NavMeshSpatialQuery_GridCache GetSpatialQueryGrid()
 {
@@ -86,18 +156,25 @@ function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
 	{
 		DebugLib.Static.InitializeCanvasForDebugDrawing(C);
 
-		DrawSQG_Bounds(C, StringManager, SQG);		// Draw bounds calculated by the AABB
-		DrawSQG_GridCells(C, StringManager, SQG);	// Draw each grid cell
-
+		if(bDrawBounds)
+		{	// Draw bounds calculated by the AABB
+			DrawSQG_Bounds(C, StringManager, SQG);		
+		}
+		
+		if(bDrawCells)
+		{	// Draw each grid cell
+			DrawSQG_GridCells(C, StringManager, SQG);
+		}
+		
 		if(NavMesh != None)
 		{
-			StringManager.AddName(DebugCategory, "Active Test", GetEnum(Enum'R_SpatialQueryTest', ActiveTest));
-			switch(ActiveTest)
+			StringManager.AddName(DebugCategory, "Active Draw Mode", GetTestDrawModeName(ActiveTestDrawMode));
+			switch(ActiveTestDrawMode)
 			{
-			case NodeAtLocation:
+			case TestDrawMode_NodeAtLocation:
 				DrawSQG_PlayerIndexTriangles(C, StringManager, NavMesh, SQG);
 				break;
-			case NodesInRadius:
+			case TestDrawMode_NodesInRadius:
 				DrawSQG_NodesInRadius(C, StringManager, NavMesh, SQG);
 			}
 		}
@@ -339,7 +416,7 @@ function DrawTriangle(Canvas C, Vector VLoc[3], float RGB[3], float Scale, optio
 
 defaultproperties
 {
-	ActiveTest=NodesInRadius
+	ActiveTestDrawMode=NodesInRadius
 	bDrawCellIndexCount=false
 	Color_Bounds=(R=247,G=27,B=255)
 	Color_CellActive=(R=8,G=118,B=138)
