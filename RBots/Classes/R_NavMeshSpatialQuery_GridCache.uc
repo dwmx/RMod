@@ -307,6 +307,9 @@ function bool FindContainingNode(R_NavMesh NavMesh, Vector Location, out int Out
 	return true;
 }
 
+//------------------------------------------------------------------------------
+//	FindNodesInRadius functions
+
 function GetCellRangeInRadius(
 	Vector Origin,
 	float Radius,
@@ -361,6 +364,79 @@ function int GetCellInRadiusTest(Vector Origin, float Radius, int GridIndexX, in
 	return Result;
 }
 
+function bool DoesArrayContainIndex(int NodeIndex, out int InNodes[32], int NumNodes)
+{
+	local int i;
+
+	for(i = 0; i < NumNodes; ++i)
+	{
+		if(InNodes[i] == NodeIndex)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+function AddIndexCacheToArrayUnique_NoTest(
+	R_IndexCache IndexCache,
+	out int InOutNodes[32],
+	out int InOutNumNodes)
+{
+	local int NumCachedIndices;
+	local int NodeIndex;
+	local int i;
+
+	NumCachedIndices = IndexCache.GetNumIndices();
+	for(i = 0; i < NumCachedIndices; ++i)
+	{
+		if(InOutNumNodes >= ArrayCount(InOutNodes))
+		{
+			return;
+		}
+
+		NodeIndex = IndexCache.GetUnchecked(i);
+		if(!DoesArrayContainIndex(NodeIndex, InOutNodes, InOutNumNodes))
+		{
+			InOutNodes[InOutNumNodes] = NodeIndex;
+			++InOutNumNodes;
+		}
+	}
+}
+
+function AddIndexCacheToArrayUnique_WithTest(
+	R_NavMesh NavMesh,
+	R_IndexCache IndexCache,
+	Vector Origin, float Radius,
+	out int InOutNodes[32],
+	out int InOutNumNodes)
+{
+	local int NumCachedIndices;
+	local int NodeIndex;
+	local Vector VLoc[3];
+	local int i;
+
+	NumCachedIndices = IndexCache.GetNumIndices();
+	for(i = 0; i < NumCachedIndices; ++i)
+	{
+		if(InOutNumNodes >= ArrayCount(InOutNodes))
+		{
+			return;
+		}
+
+		NodeIndex = IndexCache.GetUnchecked(i);
+		if(!DoesArrayContainIndex(NodeIndex, InOutNodes, InOutNumNodes))
+		{
+			NavMesh.GetTriangleVertexLocationsUnchecked(NodeIndex, VLoc);
+			if(GeomLib.Static.IsTriangleWithinRadius2D(Origin, Radius, VLoc))
+			{
+				InOutNodes[InOutNumNodes] = NodeIndex;
+				++InOutNumNodes;
+			}
+		}
+	}
+}
+
 function bool FindNodesInRadius(
 	R_NavMesh NavMesh,
 	Vector Origin,
@@ -368,23 +444,40 @@ function bool FindNodesInRadius(
 	out int OutNodes[32],
 	out int OutNumNodes)
 {
-	local int OriginGridX, OriginGridY;
-	local int CellsWorth;
+	local int GridXMin, GridXMax;
+	local int GridYMin, GridYMax;
 	local int GridX, GridY;
+	local int CellInRadiusResult;
+	local R_IndexCache IndexCache;
 
-	LocationToGrid2DIndex(Origin, OriginGridX, OriginGridY);
-	CellsWorth = int(MathLib.Static.Ceil(Radius / CellSize));
-
-	GridX = Max(OriginGridX - CellsWorth, 0);
-	GridY = Max(OriginGridY - CellsWorth, 0);
-
-	for(GridX = GridX; GridX <= OriginGridX + CellsWorth; ++GridX)
+	GetCellRangeInRadius(Origin, Radius, GridXMin, GridXMax, GridYMin, GridYMax);
+	for(GridX = GridXMin; GridX <= GridXMax; ++GridX)
 	{
-		for(GridY = GridY; GridY <= OriginGridY + CellsWorth; ++GridY)
+		for(GridY = GridYMin; GridY <= GridYMax; ++GridY)
 		{
+			// IndexCache indicates that the cell is populated
+			IndexCache = GetIndexCacheFrom2DGridIndex(GridX, GridY);
+			if(IndexCache != None)
+			{
+				CellInRadiusResult = GetCellInRadiusTest(Origin, Radius, GridX, GridY);
 
+				if(CellInRadiusResult == CellInRadiusTest_Inside)
+				{	// Cell fully inside radius, add all nodes without testing triangle-circle test
+					AddIndexCacheToArrayUnique_NoTest(
+						IndexCache,
+						OutNodes,
+						OutNumNodes);
+				}
+				else if(CellInRadiusResult == CellInRadiusTest_Intersect)
+				{	// Cell is on radius perimeter, must check all nodes
+					AddIndexCacheToArrayUnique_WithTest(
+						NavMesh,
+						IndexCache,
+						Origin, Radius,
+						OutNodes,
+						OutNumNodes);
+				}
+			}
 		}
 	}
-
-	return false;
 }

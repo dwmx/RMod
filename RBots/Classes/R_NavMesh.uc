@@ -300,6 +300,17 @@ function int FindContainingNodeIndex(Vector Location)
 	return Result;
 }
 
+function FindNodesInRadius(Vector Origin, float Radius, out int OutNodes[32], out int OutNumNodes)
+{
+	if(NavMeshSpatialQuery == None)
+	{
+		OutNumNodes = 0;
+		return;
+	}
+
+	NavMeshSpatialQuery.FindNodesInRadius(Self, Origin, Radius, OutNodes, OutNumNodes);
+}
+
 function int FindContainingPolyGroupIndex(Vector Location)
 {
 	local int NodeIndex;

@@ -18,15 +18,6 @@ const CellInRadiusTest_Inside = 1;		// Cell is completely inside a given radius
 const CellInRadiusTest_Outside = 2;		// Cell is completely outside a given radius
 const CellInRadiusTest_Intersect = 3;	// Cell intersects the radius perimeter
 
-/*
-enum R_SpatialQueryTestDrawMode
-{
-	NodeAtLocation,
-	NodesInRadius,
-	TestDrawModeMax
-};
-*/
-
 // Test draw modes
 const TestDrawMode_None = 0;
 const TestDrawMode_NodeAtLocation = 1;
@@ -332,19 +323,24 @@ function DrawSQG_NodesInRadius(Canvas C, R_RBotsDebug_StringManager StringManage
 	local float TestRadius;
 	local R_IndexCache IndexCache;
 	local int CellInRadiusResult;
-	local float CellInRadiusRGB[3], CellIntersectRadiusRGB[3], RadiusRGB[3];
+	local float CellInRadiusRGB[3], CellIntersectRadiusRGB[3], RadiusRGB[3], TriangleRGB[3];
 	local float CellDrawRGB[3];
+	local int Nodes[32], NumNodes;
+	local Vector VLoc[3];
+	local int i;
 
+	StringManager.AddColor(DebugCategory, "Cell Triangles", Color_CellTriangles);
 	StringManager.AddColor(DebugCategory, "Cells Within Radius", Color_CellInRadius);
 	StringManager.AddColor(DebugCategory, "Cells Intersecting Radius", Color_CellIntersectRadius);
 	StringManager.AddColor(DebugCategory, "Radius Test", Color_Radius);
-
+	
+	Utilities.Static.ColorToFloats(Color_CellTriangles, TriangleRGB[0], TriangleRGB[1], TriangleRGB[2]);
 	Utilities.Static.ColorToFloats(Color_CellInRadius, CellInRadiusRGB[0], CellInRadiusRGB[1], CellInRadiusRGB[2]);
 	Utilities.Static.ColorToFloats(Color_CellIntersectRadius, CellIntersectRadiusRGB[0], CellIntersectRadiusRGB[1], CellIntersectRadiusRGB[2]);
 	Utilities.Static.ColorToFloats(Color_Radius, RadiusRGB[0], RadiusRGB[1], RadiusRGB[2]);
 
 	PlayerLocation = GetPlayerPawnOwnerLocation();
-	TestRadius = 256.0;
+	TestRadius = 128.0;
 	SQG.GetCellRangeInRadius(PlayerLocation, TestRadius, GridXMin, GridXMax, GridYMin, GridYMax);
 
 	CellSize = SQG.GetCellSize();
@@ -389,6 +385,16 @@ function DrawSQG_NodesInRadius(Canvas C, R_RBotsDebug_StringManager StringManage
 			}
 		}
 	}
+
+	// Call the relevant function
+	NavMesh.FindNodesInRadius(PlayerLocation, TestRadius, Nodes, NumNodes);
+	for(i = 0; i < NumNodes; ++i)
+	{
+		NavMesh.GetTriangleVertexLocationsUnchecked(Nodes[i], VLoc);
+		DrawTriangle(C, VLoc, TriangleRGB, 0.975, 1.0);
+	}
+
+	StringManager.AddInt(DebugCategory, "Nodes In Radius", NumNodes);
 }
 
 function DrawTriangle(Canvas C, Vector VLoc[3], float RGB[3], float Scale, optional float NormalOffset)

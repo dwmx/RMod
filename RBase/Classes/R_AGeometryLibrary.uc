@@ -338,3 +338,58 @@ static function bool DoesTriangleIntersectAABB2D(Vector AABBMin, Vector AABBMax,
 
 	return false;
 }
+
+// Returns true if a triangle intersects or lies within a circle (2D, XY plane).
+static function bool IsTriangleWithinRadius2D(Vector Origin, float Radius, Vector VLoc[3])
+{
+	local Vector Delta;
+    local float RadiusSq;
+    local int i, j;
+    local Vector A, B, Edge, ToOrigin, Projection;
+    local float t, DistSq;
+
+    RadiusSq = Radius * Radius;
+
+    // Any vertex inside circle
+    for(i = 0; i < 3; ++i)
+    {
+		Delta = VLoc[i] - Origin;
+		DistSq = Delta.X * Delta.X + Delta.Y * Delta.Y;
+        if(DistSq <= RadiusSq)
+		{
+			return true;
+		}
+    }
+
+    // Circle center inside triangle
+	if(IsLocationWithinTriangle2D(Origin, VLoc))
+	{
+		return true;
+	}
+
+    // Circle intersects an edge
+    for(i = 0; i < 3; ++i)
+    {
+        j = (i + 1) % 3;
+        A = VLoc[i];
+        B = VLoc[j];
+
+        Edge = B - A;
+        ToOrigin = Origin - A;
+
+        // Project Origin onto AB, clamp to segment
+        t = (ToOrigin.X * Edge.X + ToOrigin.Y * Edge.Y) / (Edge.X * Edge.X + Edge.Y * Edge.Y);
+        t = FClamp(t, 0.0, 1.0);
+
+        Projection = A + t * Edge;
+		Delta = Projection - Origin;
+		DistSq = Delta.X * Delta.X + Delta.Y * Delta.Y;
+
+        if(DistSq <= RadiusSq)
+		{
+			return true;
+		}
+    }
+
+    return false;
+}
