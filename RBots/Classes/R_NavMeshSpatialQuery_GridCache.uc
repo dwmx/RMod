@@ -10,7 +10,7 @@ const GeomLib = Class'RBase.R_AGeometryLibrary';
 const GridLib = Class'RBase.R_AGridLibrary';
 const MathLib = Class'RBase.R_AMathLibrary';
 
-const IndexCacheClass = Class'RBots.R_IndexCache';
+const IndexCacheClass = Class'RBots.R_IndexCache_Linear';
 
 // Values returned from GetCellRadiusTest
 const CellInRadiusTest_Invalid = 0;

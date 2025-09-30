@@ -1,43 +1,17 @@
 //==============================================================================
 //	R_IndexCache
-//	Stores a list of indices
+//	Stores a list of integers intended to represent indices
 //==============================================================================
-class R_IndexCache extends Object;
+class R_IndexCache extends Object abstract;
 
 const Utilities = Class'RBots.R_BotUtilities';
+const NavLib = Class'RBots.R_NavLibrary';
+
 const LogCategory = 'IndexCache';
 
-var private int Indices[64];
-var private int NumIndices;
-
-function InitIndexCache()
-{
-	NumIndices = 0;
-}
-
-function int GetNumIndices()
-{
-	return NumIndices;
-}
-
-function bool IsFull()
-{
-	return NumIndices >= ArrayCount(Indices);
-}
-
-function Push(int Index)
-{
-	if(NumIndices >= ArrayCount(Indices))
-	{
-		Utilities.Static.RLog("Push failed -- array overflow", LogCategory);
-		return;
-	}
-
-	Indices[NumIndices] = Index;
-	++NumIndices;
-}
-
-function int GetUnchecked(int CacheIndex)
-{
-	return Indices[CacheIndex];
-}
+function InitIndexCache();
+function int GetNumIndices();
+function bool IsFull();
+function Push(int Index);
+function int Get(int CacheIndex);
+function int GetUnchecked(int CacheIndex);
