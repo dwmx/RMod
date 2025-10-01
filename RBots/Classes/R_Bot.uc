@@ -11,7 +11,7 @@ const NavLib = Class'RBots.R_NavLibrary';
 
 var private bool bBotInitialized;
 
-var private R_BotManager BotManager;
+var private R_RBotsServerActor RBots;
 
 // Index caches to remember recently visited polygroups and nodes
 const IndexCacheClass = Class'RBots.R_IndexCache_Circular';
@@ -58,22 +58,22 @@ event BeginPlay()
 	bBotInitialized = false;
 }
 
-function R_BotManager GetBotManager()
+function R_RBotsServerActor GetRBotsServerActor()
 {
-	local R_BotManager LocalBotManager;
+	local R_RBotsServerActor LocalRBots;
 
-	if(BotManager == None)
+	if(RBots == None)
 	{
-		foreach AllActors(Class'RBots.R_BotManager', LocalBotManager)
+		foreach AllActors(Class'RBots.R_RBotsServerActor', LocalRBots)
 		{
 			break;
 		}
-		if(LocalBotManager != None)
+		if(LocalRBots != None)
 		{
-			BotManager = LocalBotManager;
+			RBots = LocalRBots;
 		}
 	}
-	return BotManager;
+	return RBots;
 }
 
 function R_NavMesh GetNavMesh()
@@ -140,7 +140,7 @@ function ClearPath()
 	NavContext.ClearPath();
 }
 
-// Called by BotManager when granted a PlayerPawn
+// Called by RBots when granted a PlayerPawn
 function PossessedPlayerPawn(PlayerPawn NewPlayerPawn)
 {
 	local PlayerReplicationInfo PRI;
@@ -411,7 +411,7 @@ event Tick(float DeltaSeconds)
 
 function UpdateInventoryTarget(float DeltaSeconds)
 {
-	local R_BotManager LocalBotManager;
+	local R_RBotsServerActor LocalRBots;
 	local R_DynamicMapData MapData;
 	local R_NavMeshActorTracker ActorTracker;
 	local Inventory Inv;
@@ -437,10 +437,10 @@ function UpdateInventoryTarget(float DeltaSeconds)
 	}
 
 	ActorTracker = None;
-	LocalBotManager = GetBotManager();
-	if(LocalBotManager != None)
+	LocalRBots = GetRBotsServerActor();
+	if(LocalRBots != None)
 	{
-		MapData = LocalBotManager.GetLoadedMapData();
+		MapData = LocalRBots.GetLoadedMapData();
 		if(MapData != None)
 		{
 			ActorTracker = MapData.GetNavMeshActorTracker();

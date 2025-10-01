@@ -15,6 +15,7 @@ var bool bDrawDebugVisualization;
 var bool bRegisteredHUDMutator;
 
 // Cached RBot system classes
+var R_RBotsServerActor RBots;
 var R_BotManager BotManager;
 var R_DynamicMapData MapData;
 var R_NavMesh NavMesh;
@@ -188,36 +189,51 @@ simulated function RegisterHUDMutator()
 	}
 }
 
-simulated function R_BotManager GetBotManager()
+final function R_RBotsServerActor GetRBotsServerActor()
 {
-	local R_BotManager LocalBotManager;
+	local R_RBotsServerActor LocalRBots;
 
-	if(BotManager == None)
+	if(RBots == None)
 	{
-		foreach AllActors(Class'RBots.R_BotManager', LocalBotManager)
+		foreach AllActors(Class'RBots.R_RBotsServerActor', LocalRBots)
 		{
 			break;
 		}
 	}
 
-	if(LocalBotManager != None)
+	if(LocalRBots != None)
 	{
-		BotManager = LocalBotManager;
+		RBots = LocalRBots;
 	}
 
+	return RBots;
+}
+
+final function R_BotManager GetBotManager()
+{
+	local R_RBotsServerActor LocalRBots;
+
+	if(BotManager == None)
+	{
+		LocalRBots = GetRBotsServerActor();
+		if(LocalRBots != None)
+		{
+			BotManager = LocalRBots.GetBotManager();
+		}
+	}
 	return BotManager;
 }
 
-function R_DynamicMapData GetMapData()
+final function R_DynamicMapData GetMapData()
 {
-	local R_DynamicMapData MapDataIt;
+	local R_RBotsServerActor LocalRBots;
 
 	if(MapData == None)
 	{
-		foreach AllActors(Class'RBots.R_DynamicMapData', MapDataIt)
+		LocalRBots = GetRBotsServerActor();
+		if(LocalRBots != None)
 		{
-			MapData = MapDataIt;
-			break;
+			MapData = LocalRBots.GetMapData();
 		}
 	}
 	return MapData;
@@ -452,7 +468,7 @@ simulated event Tick(float DeltaSeconds)
 simulated event PostRender(Canvas C)
 {
 	local int i;
-	local R_BotManager LocalBotManager;
+	local R_RBotsServerActor LocalRBots;
 
 	if(!bDrawDebugVisualization)
 	{
@@ -463,14 +479,14 @@ simulated event PostRender(Canvas C)
 	StringManager.Clear();
 
 	// Add debug strings
-	LocalBotManager = GetBotManager();
-	if(LocalBotManager != None)
+	LocalRBots = GetRBotsServerActor();
+	if(LocalRBots != None)
 	{
-		StringManager.AddClass(DebugRBotsCategory, "LoadedMapDataClass", LocalBotManager.LoadedMapDataClass);
+		StringManager.AddClass(DebugRBotsCategory, "LoadedMapDataClass", LocalRBots.LoadedMapDataClass);
 	}
 	else
 	{
-		StringManager.AddWarning(DebugRBotsCategory, "Invalid BotManager reference");
+		StringManager.AddWarning(DebugRBotsCategory, "Invalid RBots reference");
 	}
 
 	StringManager.AddActor(DebugRBotsCategory, "DebugTarget", DebugTarget);

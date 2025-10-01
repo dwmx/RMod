@@ -8,7 +8,7 @@ const NavLib = Class'RBots.R_NavLibrary';
 
 var private R_Bot OwnerBot;
 var private PlayerPawn OwnerPlayerPawn;
-var private R_BotManager BotManager;
+var private R_RBotsServerActor RBots;
 
 var private R_BotPerception OwnerPerception;
 var private R_BotPawnController OwnerController;
@@ -35,18 +35,18 @@ final function InitializeBehavior(R_Bot NewOwnerBot, PlayerPawn NewOwnerPlayerPa
 final function R_Bot GetBot() { return OwnerBot; }
 final function PlayerPawn GetPlayerPawn() { return OwnerPlayerPawn; }
 
-final function R_BotManager GetBotManager()
+final function R_RBotsServerActor GetRBotsServerActor()
 {
 	local R_Bot Bot;
-	if(BotManager == None)
+	if(RBots == None)
 	{
 		Bot = GetBot();
 		if(Bot != None)
 		{
-			BotManager = Bot.GetBotManager();
+			RBots = Bot.GetRBotsServerActor();
 		}
 	}
-	return BotManager;
+	return RBots;
 }
 
 final function R_NavContext GetNavContext()
@@ -121,14 +121,14 @@ final function R_NavMesh GetNavMesh()
 
 final function R_NavMeshActorTracker GetNavMeshActorTracker()
 {
-	local R_BotManager LocalBotManager;
+	local R_RBotsServerActor LocalRBots;
 	local R_DynamicMapData MapData;
 	if(CachedNavMeshActorTracker == None)
 	{
-		LocalBotManager = GetBotManager();
-		if(LocalBotManager != None)
+		LocalRBots = GetRBotsServerActor();
+		if(LocalRBots != None)
 		{
-			MapData = LocalBotManager.GetLoadedMapData();
+			MapData = LocalRBots.GetLoadedMapData();
 			if(MapData != None)
 			{
 				CachedNavMeshActorTracker = MapData.GetNavMeshActorTracker();

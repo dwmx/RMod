@@ -46,7 +46,6 @@ function HandleCommand_SpawnBot(R_RBotsDebug DebugMutator, PlayerPawn Sender)
 	{
 		BotManager = DebugMutator.GetBotManager();
 	}
-
 	if(BotManager == None)
 	{
 		return;
@@ -91,7 +90,6 @@ function HandleCommand_RemoveAllBots(R_RBotsDebug DebugMutator, PlayerPawn Sende
 	{
 		BotManager = DebugMutator.GetBotManager();
 	}
-
 	if(BotManager == None)
 	{
 		return;
