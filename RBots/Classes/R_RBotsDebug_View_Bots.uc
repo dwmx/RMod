@@ -7,7 +7,10 @@ class R_RbotsDebug_View_Bots extends R_RbotsDebug_View;
 const Utilities = Class'RBots.R_BotUtilities';
 const CanvasLib = Class'RBots.R_RBots_CanvasLibrary';
 const CanvasBaseLib = Class'RBase.R_ACanvasLibrary';
+const NavLib = Class'RBots.R_NavLibrary';
+
 const DebugRBotsCategory = 'DebugTarget';
+const DebugNavigation = 'DebugTargetNavigation';
 
 var Color MovementInputColor;
 var Color PerceptionColor_Idle;
@@ -54,6 +57,13 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 		{	// Draw debug DebugBot information
 			DrawDebugTaret_DebugBot(C, StringManager, R_RBotsDebug_DebugBot(DebugTarget));
 		}
+
+		// Draw Nav information
+		DrawDebugTarget_Navigation(C, StringManager, DebugTarget);
+	}
+	else
+	{
+		StringManager.AddString(DebugRBotsCategory, "No Debug Target selected");
 	}
 
 	if(ParameterVisualizer == None)
@@ -183,6 +193,64 @@ simulated function DrawDebugTarget_MovementInput(Canvas C, R_Bot BotDebugTarget)
 
 		Utilities.Static.ColorToFloats(MovementInputColor, MovementRGB[0], MovementRGB[1], MovementRGB[2]);
 		CanvasLib.Static.DrawLine3D(C, P.Location, (P.Location + DrawVector), MovementRGB[0], MovementRGB[1], MovementRGB[2]);
+	}
+}
+
+function DrawDebugTarget_Navigation(Canvas C, R_RBotsDebug_StringManager StringManager, R_Bot BotDebugTarget)
+{
+	local R_IndexCache RecentlyVisitedNodes;
+	local R_IndexCache RecentlyVisitedPolyGroups;
+	local int MaxArrayIndicesToDraw;
+	local int IndexCount;
+	local int Index;
+	local int i;
+
+	MaxArrayIndicesToDraw = 8;
+
+	// Recently Visited Nodes
+	RecentlyVisitedNodes = BotDebugTarget.GetRecentlyVisitedNodes();
+	if(RecentlyVisitedNodes == None)
+	{
+		StringManager.AddWarning(DebugNavigation, "RecentlyVisitedNodes IndexCache is None");
+	}
+	else
+	{
+		IndexCount = RecentlyVisitedNodes.GetNumIndices();
+		StringManager.AddInt(DebugNavigation, "RecentNodes Count", IndexCount);
+
+		IndexCount = Clamp(IndexCount, 0, MaxArrayIndicesToDraw);
+		for(i = 0; i < IndexCount; ++i)
+		{
+			Index = RecentlyVisitedNodes.Get(i);
+			StringManager.AddInt(DebugNavigation, "RecentNodes[" $ i $ "]", Index);
+		}
+		for(i = i; i < MaxArrayIndicesToDraw; ++i)
+		{
+			StringManager.AddName(DebugNavigation, "RecentNodes[" $ i $ "]", 'Empty');
+		}
+	}
+
+	// Recently Visited Poly Groups
+	RecentlyVisitedPolyGroups = BotDebugTarget.GetRecentlyVisitedPolyGroups();
+	if(RecentlyVisitedPolyGroups == None)
+	{
+		StringManager.AddWarning(DebugNavigation, "RecentlyVisitedPolyGroups IndexCache is None");
+	}
+	else
+	{
+		IndexCount = RecentlyVisitedPolyGroups.GetNumIndices();
+		StringManager.AddInt(DebugNavigation, "RecentPolyGroups Count", IndexCount);
+
+		IndexCount = Clamp(IndexCount, 0, MaxArrayIndicesToDraw);
+		for(i = 0; i < IndexCount; ++i)
+		{
+			Index = RecentlyVisitedPolyGroups.Get(i);
+			StringManager.AddInt(DebugNavigation, "RecentPolyGroups[" $ i $ "]", Index);
+		}
+		for(i = i; i < MaxArrayIndicesToDraw; ++i)
+		{
+			StringManager.AddName(DebugNavigation, "RecentPolyGroups[" $ i $ "]", 'Empty');
+		}
 	}
 }
 

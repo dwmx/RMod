@@ -13,6 +13,11 @@ var private bool bBotInitialized;
 
 var private R_BotManager BotManager;
 
+// Index caches to remember recently visited polygroups and nodes
+const IndexCacheClass = Class'RBots.R_IndexCache_Circular';
+var private R_IndexCache RecentlyVisitedNodes;
+var private R_IndexCache RecentlyVisitedPolyGroups;
+
 // BotObjects
 var private R_BotObject BotObjects[16];
 
@@ -44,6 +49,9 @@ const PATH_DISTANCE_TOLERANCE = 16.0;
 // Control
 var private Vector AccumulatedInputVector;
 var private Vector LastInputVector;
+
+function R_IndexCache GetRecentlyVisitedNodes()	{ return RecentlyVisitedNodes; }
+function R_IndexCache GetRecentlyVisitedPolyGroups() { return RecentlyVisitedPolyGroups; }
 
 event BeginPlay()
 {
@@ -186,6 +194,13 @@ function InitializeBot()
 		NavContext = new(None) Class'RBots.R_NavContext';
 		NavContext.InitializeNavContext();
 	}
+
+	// Create index caches for tracking navigation
+	RecentlyVisitedNodes = new(None) IndexCacheClass;
+	RecentlyVisitedNodes.InitIndexCache();
+
+	RecentlyVisitedPolyGroups = new(None) IndexCacheClass;
+	RecentlyVisitedPolyGroups.InitIndexCache();
 
 	if(InitialBehaviorClass != None)
 	{
@@ -570,6 +585,11 @@ function UpdateNavContext(float DeltaSeconds)
 // Called from UpdateNavContext when a node index change is sensed
 function OnNavMeshNodeIndexChanged(int OldNodeIndex, int NewNodeIndex)
 {
+	if(RecentlyVisitedNodes != None)
+	{
+		RecentlyVisitedNodes.Push(NewNodeIndex);
+	}
+
 	if(ActiveBehavior != None)
 	{
 		ActiveBehavior.OnNavMeshNodeIndexChanged(OldNodeIndex, NewNodeIndex);
@@ -579,6 +599,11 @@ function OnNavMeshNodeIndexChanged(int OldNodeIndex, int NewNodeIndex)
 // Called from UpdateNavContext when a poly group index change is sensed
 function OnNavMeshPolyGroupIndexChanged(int OldPolyGroupIndex, int NewPolyGroupIndex)
 {
+	if(RecentlyVisitedPolyGroups != None)
+	{
+		RecentlyVisitedPolyGroups.Push(NewPolyGroupIndex);
+	}
+
 	if(ActiveBehavior != None)
 	{
 		ActiveBehavior.OnNavMeshPolyGroupIndexChanged(OldPolyGroupIndex, NewPolyGroupIndex);
