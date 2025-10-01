@@ -22,10 +22,14 @@ var private R_BotManager BotManager;
 var Class<R_DynamicMapData> LoadedMapDataClass;
 var private R_DynamicMapData LoadedMapData;
 
+const NavQueryInterfaceClass = Class'RBots.R_NavQueryInterface_Impl';
+var private R_NavQueryInterface NavQueryInterface;
+
 //------------------------------------------------------------------------------
 
-final function R_BotManager GetBotManager()		{ return BotManager; }
-final function R_DynamicMapData GetMapData()	{ return LoadedMapData; }
+final function R_BotManager GetBotManager()					{ return BotManager; }
+final function R_DynamicMapData GetMapData()				{ return LoadedMapData; }
+final function R_NavQueryInterface GetNavQueryInterface()	{ return NavQueryInterface; }
 
 //------------------------------------------------------------------------------
 
@@ -65,6 +69,9 @@ event BeginPlay()
 
 	// Initialize BotManager
 	InitializeBotManager();
+
+	// Initialize NavQueryInterface
+	InitializeNavQueryInterface();
 }
 
 function String GetCurrentMapName()
@@ -156,6 +163,35 @@ function InitializeBotManager()
 	}
 
 	BotManager = Spawn(BotManagerClass, Self);
+}
+
+function InitializeNavQueryInterface()
+{
+	local String InitFailedString;
+	local R_NavQueryInterface_Impl Impl;
+
+	Utilities.Static.RLog("Initializing NavQueryInterface from class" @ NavQueryInterfaceClass, LogCategory);
+	NavQueryInterface = new(None) NavQueryInterfaceClass;
+	if(NavQueryInterface == None)
+	{
+		InitFailedString = "Failed to initialize NavQueryInterface from class" @ NavQueryInterfaceClass;
+		Warn(InitFailedString);
+		Utilities.Static.RLog(InitFailedString, LogCategory);
+		return;
+	}
+
+	Impl = R_NavQueryInterface_Impl(NavQueryInterface);
+	if(Impl == None)
+	{
+		InitFailedString = "Failed to initialize NavQueryInterface -- must be derived from Impl class";
+		Warn(InitFailedString);
+		Utilities.Static.RLog(InitFailedString, LogCategory);
+		NavQueryInterface = None;
+		return;
+	}
+
+	Impl.SetRBotsServerActor(Self);
+	Impl.InitializeNavQueryInterface();
 }
 
 defaultproperties

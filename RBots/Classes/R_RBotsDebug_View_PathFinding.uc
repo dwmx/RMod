@@ -9,8 +9,8 @@ const DebugLib = Class'RBots.R_RBots_DebugLibrary';
 const CanvasLib = Class'RBots.R_RBots_CanvasLibrary';
 const DebugPathFindingCategory = 'PathFinding';
 
-var private R_NavContextObserver NavPathObserver;
-const NavPathObserverClass = Class'RBots.R_NavContextObserver';
+var private R_NavContextObserver NavContextObserver;
+const NavContextObserverClass = Class'RBots.R_NavContextObserver';
 
 const NODE_DRAW_ELEVATION = 4.0;		// Pushes node drawing up on the Z axis
 const PATH_DRAW_ELEVATION = 32.0;		// Pushes path drawing up on the Z axis
@@ -61,32 +61,32 @@ function ToggleBoundaryPushDirs()
 	SaveConfig();
 }
 
-function InitNavPathObserver()
+function InitNavContextObserver()
 {
-	if((NavPathObserver == None))
+	if((NavContextObserver == None))
 	{
-		NavPathObserver = new(None) NavPathObserverClass;
+		NavContextObserver = new(None) NavContextObserverClass;
 	}
 }
 
 function DebugTargetChanged(R_Bot OldDebugTarget, R_Bot NewDebugTarget)
 {
-	InitNavPathObserver();
+	InitNavContextObserver();
 
-	if(NavPathObserver != None)
+	if(NavContextObserver != None)
 	{
 		if(OldDebugTarget != None)
 		{
-			if(OldDebugTarget.GetNavPathObserver() == NavPathObserver)
+			if(OldDebugTarget.GetNavContextObserver() == NavContextObserver)
 			{
-				OldDebugTarget.DetachNavPathObserver();
+				OldDebugTarget.DetachNavContextObserver();
 			}
 		}
 
-		NavPathObserver.ClearPath();
+		NavContextObserver.ClearPath();
 		if(Utilities.Static.IsValidActor(NewDebugTarget))
 		{
-			NewDebugTarget.AttachNavPathObserver(NavPathObserver);
+			NewDebugTarget.AttachNavContextObserver(NavContextObserver);
 		}
 	}
 }
@@ -106,13 +106,13 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 
 	if(DebugTarget != None)
 	{
-		// Make sure NavPathObserver is attached
-		if(NavPathObserver == None)
+		// Make sure NavContextObserver is attached
+		if(NavContextObserver == None)
 		{
-			InitNavPathObserver();
+			InitNavContextObserver();
 		}
 
-		DebugTarget.AttachNavPathObserver(NavPathObserver);
+		DebugTarget.AttachNavContextObserver(NavContextObserver);
 	}
 
 	//--------------------------------------------------------------------------
@@ -120,13 +120,13 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 	StringManager.AddActor(DebugPathFindingCategory, "DebugTarget", DebugTarget);
 
 	//--------------------------------------------------------------------------
-	// Add data retrieved by NavPathObserver
-	StringManager.AddClass(DebugPathFindingCategory, "NavPathObserverClass", NavPathObserverClass);
-	StringManager.AddObject(DebugPathFindingCategory, "NavPathObserver", NavPathObserver);
-	if(NavPathObserver != None)
+	// Add data retrieved by NavContextObserver
+	StringManager.AddClass(DebugPathFindingCategory, "NavContextObserverClass", NavContextObserverClass);
+	StringManager.AddObject(DebugPathFindingCategory, "NavContextObserver", NavContextObserver);
+	if(NavContextObserver != None)
 	{
-		StringManager.AddClass(DebugPathFindingCategory, "NavPathFinder Class", NavPathObserver.GetNavPathFinderClass());
-		StringManager.AddClass(DebugPathFindingCategory, "NavPathFilter Class", NavPathObserver.GetNavPathFilterClass());
+		StringManager.AddClass(DebugPathFindingCategory, "NavPathFinder Class", NavContextObserver.GetNavPathFinderClass());
+		StringManager.AddClass(DebugPathFindingCategory, "NavPathFilter Class", NavContextObserver.GetNavPathFilterClass());
 	}
 
 	//--------------------------------------------------------------------------
@@ -162,13 +162,13 @@ simulated function DrawPathNodes(Canvas C, R_Bot DebugTarget, R_RBotsDebug_Strin
 	local Vector DrawElevation;
 
 	NavMesh = GetNavMesh();
-	if(NavPathObserver == None || NavMesh == None)
+	if(NavContextObserver == None || NavMesh == None)
 	{
-		StringManager.AddWarning(DebugPathFindingCategory, "DrawPathNodes failed" @ "NavPathObserver:" @ NavPathObserver @ "NavMesh:" @ NavMesh);
+		StringManager.AddWarning(DebugPathFindingCategory, "DrawPathNodes failed" @ "NavContextObserver:" @ NavContextObserver @ "NavMesh:" @ NavMesh);
 		return;
 	}
 
-	NumPathNodeIndices = NavPathObserver.GetNumPathNodeIndices();
+	NumPathNodeIndices = NavContextObserver.GetNumPathNodeIndices();
 
 	// Color legend and strings
 	StringManager.AddColor(DebugPathFindingCategory, "Path Nodes", PathNodeColor);
@@ -180,7 +180,7 @@ simulated function DrawPathNodes(Canvas C, R_Bot DebugTarget, R_RBotsDebug_Strin
 	// Draw all nodes
 	for(i = 0; i < NumPathNodeIndices; ++i)
 	{
-		if(NavPathObserver.GetPathNodeIndex(i, PathNodeIndex))
+		if(NavContextObserver.GetPathNodeIndex(i, PathNodeIndex))
 		{
 			NavMesh.GetTriangleVertexIndicesUnchecked(PathNodeIndex, VertexIndices[0], VertexIndices[1], VertexIndices[2]);
 			for(j = 0; j < 3; ++j)
@@ -216,9 +216,9 @@ simulated function DrawPathPoints(Canvas C, R_Bot DebugTarget, R_RBotsDebug_Stri
 	local float EdgeR, EdgeG, EdgeB;
 	local Vector DrawElevation;
 
-	if(DebugTarget == None || NavPathObserver == None)
+	if(DebugTarget == None || NavContextObserver == None)
 	{
-		StringManager.AddWarning(DebugPathFindingCategory, "DrawPathPoints failed" @ "DebugTarget:" @ DebugTarget @ "NavPathObserver:" @ NavPathObserver);
+		StringManager.AddWarning(DebugPathFindingCategory, "DrawPathPoints failed" @ "DebugTarget:" @ DebugTarget @ "NavContextObserver:" @ NavContextObserver);
 		return;
 	}
 
@@ -235,7 +235,7 @@ simulated function DrawPathPoints(Canvas C, R_Bot DebugTarget, R_RBotsDebug_Stri
 	PathPointExtents = Vect(1.0,1.0,0.5) * PATH_POINT_DRAW_SIZE;
 	GoalPointExtents = Vect(1.0,1.0,0.5) * GOAL_POINT_DRAW_SIZE;
 	//NumPathPoints = DebugTarget.GetNumPathPoints();
-	NumPathPoints = NavPathObserver.GetNumPathLocations();
+	NumPathPoints = NavContextObserver.GetNumPathLocations();
 
 	DrawElevation = Vect(0,0,0);
 	DrawElevation.Z = PATH_DRAW_ELEVATION;
@@ -243,7 +243,7 @@ simulated function DrawPathPoints(Canvas C, R_Bot DebugTarget, R_RBotsDebug_Stri
 	for(i = 0; i < NumPathPoints; ++i)
 	{
 		PrevPathPoint = PathPoint;
-		if(NavPathObserver.GetPathLocation(i, PathPoint))
+		if(NavContextObserver.GetPathLocation(i, PathPoint))
 		{
 			if(i == 0)
 			{	// Start location
@@ -276,17 +276,17 @@ simulated function DrawPathPortals(Canvas C, R_Bot DebugTarget, R_RBotsDebug_Str
 	local Vector PortalExtents;
 	local Vector DrawElevation;
 
-	if(NavPathObserver == None)
+	if(NavContextObserver == None)
 	{
-		StringManager.AddWarning(DebugPathFindingCategory, "DrawPathPortals failed" @ "NavPathObserver:" @ NavPathObserver);
+		StringManager.AddWarning(DebugPathFindingCategory, "DrawPathPortals failed" @ "NavContextObserver:" @ NavContextObserver);
 		return;
 	}
 
 	StringManager.AddColor(DebugPathFindingCategory, "Left Portal Vertex", LeftPortalColor);
 	StringManager.AddColor(DebugPathFindingCategory, "Right Portal Vertex", RightPortalColor);
-	StringManager.AddInt(DebugPathFindingCategory, "PortalsCount", NavPathObserver.GetPortalsCount());
-	StringManager.AddInt(DebugPathFindingCategory, "BoundaryLeftCount", NavPathObserver.GetBoundaryLeftCount());
-	StringManager.AddInt(DebugPathFindingCategory, "BoundaryRightCount", NavPathObserver.GetBoundaryRightCount());
+	StringManager.AddInt(DebugPathFindingCategory, "PortalsCount", NavContextObserver.GetPortalsCount());
+	StringManager.AddInt(DebugPathFindingCategory, "BoundaryLeftCount", NavContextObserver.GetBoundaryLeftCount());
+	StringManager.AddInt(DebugPathFindingCategory, "BoundaryRightCount", NavContextObserver.GetBoundaryRightCount());
 
 	Utilities.Static.ColorToFloats(LeftPortalColor, LeftPortalRGB[0], LeftPortalRGB[1], LeftPortalRGB[2]);
 	Utilities.Static.ColorToFloats(RightPortalColor, RightPortalRGB[0], RightPortalRGB[1], RightPortalRGB[2]);
@@ -296,10 +296,10 @@ simulated function DrawPathPortals(Canvas C, R_Bot DebugTarget, R_RBotsDebug_Str
 
 	PortalExtents = Vect(1.0,1.0,0.5) * PORTAL_DRAW_SIZE;
 
-	PortalsCount = NavPathObserver.GetPortalsCount();
+	PortalsCount = NavContextObserver.GetPortalsCount();
 	for(i = 0; i < PortalsCount; ++i)
 	{
-		if(NavPathObserver.GetPortal(i, PortalLeft, PortalRight))
+		if(NavContextObserver.GetPortal(i, PortalLeft, PortalRight))
 		{
 			CanvasLib.Static.DrawBox3D(C, PortalLeft + DrawElevation, PortalExtents, LeftPortalRGB[0], LeftPortalRGB[1], LeftPortalRGB[2]);
 			CanvasLib.Static.DrawBox3D(C, PortalRight + DrawElevation, PortalExtents, RightPortalRGB[0], RightPortalRGB[1], RightPortalRGB[2]);
@@ -316,9 +316,9 @@ simulated function DrawBoundaryPushDirs(Canvas C, R_Bot DebugTarget, R_RBotsDebu
 	local int BoundaryCount;
 	local int i;
 
-	if(NavPathObserver == None)
+	if(NavContextObserver == None)
 	{
-		StringManager.AddWarning(DebugPathFindingCategory, "DrawBoundaryPushDirs failed" @ "NavPathObserver:" @ NavPathObserver);
+		StringManager.AddWarning(DebugPathFindingCategory, "DrawBoundaryPushDirs failed" @ "NavContextObserver:" @ NavContextObserver);
 		return;
 	}
 
@@ -329,10 +329,10 @@ simulated function DrawBoundaryPushDirs(Canvas C, R_Bot DebugTarget, R_RBotsDebu
 	DrawOffset = Vect(0,0,1) * BOUNDARY_PUSH_ELEVATION;
 
 	// Draw all left boundary push dirs
-	BoundaryCount = NavPathObserver.GetBoundaryLeftCount();
+	BoundaryCount = NavContextObserver.GetBoundaryLeftCount();
 	for(i = 0; i < BoundaryCount; ++i)
 	{
-		NavPathObserver.GetBoundaryLeftVector(i, BoundaryVector, PushDir);
+		NavContextObserver.GetBoundaryLeftVector(i, BoundaryVector, PushDir);
 		if(PushDir != Vect(0,0,0))
 		{
 			CanvasLib.Static.DrawLine3D(
@@ -344,10 +344,10 @@ simulated function DrawBoundaryPushDirs(Canvas C, R_Bot DebugTarget, R_RBotsDebu
 	}
 
 	// Draw all right boundary push dirs
-	BoundaryCount = NavPathObserver.GetBoundaryRightCount();
+	BoundaryCount = NavContextObserver.GetBoundaryRightCount();
 	for(i = 0; i < BoundaryCount; ++i)
 	{
-		NavPathObserver.GetBoundaryRightVector(i, BoundaryVector, PushDir);
+		NavContextObserver.GetBoundaryRightVector(i, BoundaryVector, PushDir);
 		if(PushDir != Vect(0,0,0))
 		{
 			CanvasLib.Static.DrawLine3D(

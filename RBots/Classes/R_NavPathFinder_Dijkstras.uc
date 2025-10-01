@@ -13,7 +13,7 @@ function bool FindPath(
 	R_NavMesh NavMesh,
 	int StartIndex, int EndIndex,
 	R_NavContext NavContext,
-	optional R_NavContextObserver OptionalNavPathObserver)
+	optional R_NavContextObserver OptionalNavContextObserver)
 {
 	local int Dist[1024];
     local int Prev[1024];
@@ -125,11 +125,160 @@ function bool FindPath(
 		NavContext.PushPathNodeIndex(PathIndices[i]);
 	}
 
-	// If a NavPathObserver object was provided, add relevant data
-	if(OptionalNavPathObserver != None)
+	// If a NavContextObserver object was provided, add relevant data
+	if(OptionalNavContextObserver != None)
 	{
 		// Only add data specifically relevant to Dijkstra's
 	}
 
 	return true;
+}
+
+//------------------------------------------------------------------------------
+
+function bool FindPolyGroupPath(
+    R_NavMesh NavMesh,
+    int StartPolyGroupIndex, int EndPolyGroupIndex,
+    out int OutPolyGroupIndexPath[32],
+    out int OutNumPathIndices)
+{
+    local int i, j;
+    local int Current, Next;
+    local int PolyGroupNeighbors[32];
+    local float PolyGroupCosts[32];
+    local int NumPolyGroupNeighbors;
+
+    // bookkeeping
+    local float Dist[256];        // tentative costs (size depends on max groups)
+    local int Prev[256];          // predecessors
+    local byte Visited[256];
+
+    local float BestDist;
+    local int BestIndex;
+    local int Path[32];
+    local int PathLength;
+
+    // quick checks
+    if (StartPolyGroupIndex == EndPolyGroupIndex)
+    {
+        OutNumPathIndices = 0;
+        return true;
+    }
+    if (StartPolyGroupIndex == NavLib.Static.InvalidIndex() || EndPolyGroupIndex == NavLib.Static.InvalidIndex())
+    {
+        OutNumPathIndices = 0;
+        return false;
+    }
+
+    // init distances
+    for (i = 0; i < ArrayCount(Dist); i++)
+    {
+        Dist[i] = 9999999.0;
+        Prev[i] = NavLib.Static.InvalidIndex();
+        Visited[i] = 0;
+    }
+    Dist[StartPolyGroupIndex] = 0.0;
+
+    // main loop
+    while (true)
+    {
+        // find unvisited node with smallest distance
+        BestDist = 9999999.0;
+        BestIndex = NavLib.Static.InvalidIndex();
+        for (i = 0; i < ArrayCount(Dist); i++)
+        {
+            if (Visited[i] == 0 && Dist[i] < BestDist)
+            {
+                BestDist = Dist[i];
+                BestIndex = i;
+            }
+        }
+
+        // nothing left or unreachable
+        if (BestIndex == NavLib.Static.InvalidIndex())
+        {
+            OutNumPathIndices = 0;
+            return false;
+        }
+
+        Current = BestIndex;
+        Visited[Current] = 1;
+
+        // reached goal
+        if (Current == EndPolyGroupIndex)
+        {
+            // reconstruct path
+            PathLength = 0;
+            Next = EndPolyGroupIndex;
+            while (Next != NavLib.Static.InvalidIndex() && Next != StartPolyGroupIndex && PathLength < ArrayCount(Path))
+            {
+                Path[PathLength] = Next;
+                PathLength++;
+                Next = Prev[Next];
+            }
+            // add the start
+            if (PathLength < ArrayCount(Path))
+            {
+                Path[PathLength] = StartPolyGroupIndex;
+                PathLength++;
+            }
+
+            // reverse into output
+            OutNumPathIndices = 0;
+            for (i = PathLength - 1; i >= 0; i--)
+            {
+                OutPolyGroupIndexPath[OutNumPathIndices] = Path[i];
+                OutNumPathIndices++;
+                if (OutNumPathIndices >= ArrayCount(OutPolyGroupIndexPath))
+                    break;
+            }
+            return true;
+        }
+
+        // relax neighbors
+        GetPolyGroupNeighbors(NavMesh, Current, PolyGroupNeighbors, PolyGroupCosts, NumPolyGroupNeighbors);
+        for (j = 0; j < NumPolyGroupNeighbors; j++)
+        {
+            if (Visited[PolyGroupNeighbors[j]] == 0 && Dist[Current] + PolyGroupCosts[j] < Dist[PolyGroupNeighbors[j]])
+            {
+                Dist[PolyGroupNeighbors[j]] = Dist[Current] + PolyGroupCosts[j];
+                Prev[PolyGroupNeighbors[j]] = Current;
+            }
+        }
+    }
+
+    return false;
+}
+
+
+function GetPolyGroupNeighbors(
+	R_NavMesh NavMesh,
+	int PolyGroupIndex,
+	out int OutNeighborIndices[32],
+	out float OutNeighborCosts[32],
+	out int OutNumIndices)
+{
+	local R_NavMeshPolyGroup PolyGroup;
+	local int PortalCount;
+	local int i;
+
+	PolyGroup = NavMesh.GetPolyGroupByIndex(PolyGroupIndex);
+	if(PolyGroup == None)
+	{
+		OutNumIndices = 0;
+		return;
+	}
+
+	PortalCount = PolyGroup.GetPortalCount();
+	OutNumIndices = 0;
+	for(i = 0; i < PortalCount; ++i)
+	{
+		if(OutNumIndices >= ArrayCount(OutNeighborIndices))
+		{
+			break;
+		}
+		OutNeighborIndices[OutNumIndices] = PolyGroup.GetNeighborPolyGroupIndexForPortalIndex(i);
+		OutNeighborCosts[OutNumIndices] = 1.0; // TODO: Calc portal costs here
+		++OutNumIndices;
+	}
 }

@@ -9,7 +9,7 @@ function bool PostProcessPath(
 	R_NavMesh NavMesh,
 	Vector StartLocation, Vector EndLocation,
 	R_NavContext NavContext,
-	optional R_NavContextObserver OptionalNavPathObserver)
+	optional R_NavContextObserver OptionalNavContextObserver)
 {
 	local int i;
 	local Vector Normal, Center;

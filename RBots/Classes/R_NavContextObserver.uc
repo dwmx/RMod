@@ -47,7 +47,7 @@ function ClearBoundaries()
 }
 
 // CopyNavPath
-// Copy data from the provided NavContext to this NavPathObserver
+// Copy data from the provided NavContext to this NavContextObserver
 function CopyNavPath(R_NavContext SourceNavPath)
 {
 	local int NumPathNodeIndices, NumPathLocations;

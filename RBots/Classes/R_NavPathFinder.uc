@@ -17,8 +17,23 @@ function bool FindPath(
 	R_NavMesh NavMesh,
 	int StartIndex, int EndIndex,
 	R_NavContext NavContext,
-	optional R_NavContextObserver OptionalNavPathObserver)
+	optional R_NavContextObserver OptionalNavContextObserver)
 {
 	// To be implemented in subclass
+	return false;
+}
+
+/**
+*	FindPolyGroupPath
+*	Finds a path of PolyGroups from start to end and returns as an array
+*	of PolyGroup indices
+*	Returns false if no path could be found
+*/
+function bool FindPolyGroupPath(
+	R_NavMesh NavMesh,
+	int StartPolyGroupIndex, int EndPolyGroupIndex,
+	out int OutPolyGroupIndexPath[32],
+	out int OutNumPathIndices)
+{
 	return false;
 }

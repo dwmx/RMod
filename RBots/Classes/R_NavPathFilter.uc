@@ -14,7 +14,7 @@ function bool PostProcessPath(
 	R_NavMesh NavMesh,
 	Vector StartLocation, Vector EndLocation,
 	R_NavContext NavContext,
-	optional R_NavContextObserver OptionalNavPathObserver)
+	optional R_NavContextObserver OptionalNavContextObserver)
 {
 	// To be implemented in subclass
 	return false;

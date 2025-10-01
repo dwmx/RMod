@@ -12,7 +12,7 @@ function bool PostProcessPath(
 	R_NavMesh NavMesh,
 	Vector StartLocation, Vector EndLocation,
 	R_NavContext NavContext,
-	optional R_NavContextObserver OptionalNavPathObserver)
+	optional R_NavContextObserver OptionalNavContextObserver)
 {
 	local Vector NodeNormal, NodeCenter;
     //local Vector PortalLeft[32], PortalRight[32];
@@ -159,18 +159,18 @@ function bool PostProcessPath(
 	//++OutPathPointCount;
 	NavContext.PushPathLocation(EndLocation);
 
-	// If a NavPathObserver object was provided, add data
-	if(OptionalNavPathObserver != None)
+	// If a NavContextObserver object was provided, add data
+	if(OptionalNavContextObserver != None)
 	{
 		// Push boundaries, portals and push directions
-		OptionalNavPathObserver.ClearPortals();
+		OptionalNavContextObserver.ClearPortals();
 		for(i = 0; i < NumPortalIndices; ++i)
 		{
-			OptionalNavPathObserver.PushPortal(BoundaryLeft[PortalLeft[i]], BoundaryRight[PortalRight[i]]);
+			OptionalNavContextObserver.PushPortal(BoundaryLeft[PortalLeft[i]], BoundaryRight[PortalRight[i]]);
 		}
 
 		// Push boundaries
-		OptionalNavPathObserver.ClearBoundaries();
+		OptionalNavContextObserver.ClearBoundaries();
 		if(NumBoundaryLeftPoints >= 3)
 		{
 			for(i = 1; i < NumBoundaryLeftPoints - 1; ++i)
@@ -179,7 +179,7 @@ function bool PostProcessPath(
 				V1 = BoundaryLeft[PortalLeft[i]];
 				V2 = BoundaryLeft[PortalLeft[i]+1];
 				CalcPushDirection2D(V0, V1, V2, PushDir);
-				OptionalNavPathObserver.PushBoundaryLeft(V1, PushDir);
+				OptionalNavContextObserver.PushBoundaryLeft(V1, PushDir);
 			}
 		}
 		if(NumBoundaryRightPoints >= 3)
@@ -190,7 +190,7 @@ function bool PostProcessPath(
 				V1 = BoundaryRight[PortalRight[i]];
 				V2 = BoundaryRight[PortalRight[i]+1];
 				CalcPushDirection2D(V0, V1, V2, PushDir);
-				OptionalNavPathObserver.PushBoundaryRight(V1, PushDir);
+				OptionalNavContextObserver.PushBoundaryRight(V1, PushDir);
 			}
 		}
 	}
@@ -310,7 +310,7 @@ function bool PostProcessPath(
     Vector StartLocation, Vector EndLocation,
     out int InPathIndices[32], int PathIndexCount,
     out Vector OutPathPoints[32], out int OutPathPointCount,
-	optional R_NavContextObserver OptionalNavPathObserver)
+	optional R_NavContextObserver OptionalNavContextObserver)
 {
 	local Vector NodeNormal, NodeCenter;
     local Vector PortalLeft[32], PortalRight[32];
@@ -409,16 +409,16 @@ function bool PostProcessPath(
 	++OutPathPointCount;
 
 	// Separate the path from the boundaries (push away from walls, ledges, etc)
-	BoundarySeparation(OutPathPoints, OutPathPointCount, PortalLeft, PortalRight, PortalCount, 32.0f, OptionalNavPathObserver);
+	BoundarySeparation(OutPathPoints, OutPathPointCount, PortalLeft, PortalRight, PortalCount, 32.0f, OptionalNavContextObserver);
 
-	// If a NavPathObserver object was provided, add data
-	if(OptionalNavPathObserver != None)
+	// If a NavContextObserver object was provided, add data
+	if(OptionalNavContextObserver != None)
 	{
 		// Push portals
-		OptionalNavPathObserver.ClearPortals();
+		OptionalNavContextObserver.ClearPortals();
 		for(i = 0; i < PortalCount; ++i)
 		{
-			OptionalNavPathObserver.PushPortal(PortalLeft[i], PortalRight[i]);
+			OptionalNavContextObserver.PushPortal(PortalLeft[i], PortalRight[i]);
 		}
 	}
 

@@ -41,9 +41,10 @@ var private Name OwnedPlayerPawnStateName; // Need this to respond to state chan
 var private PlayerReplicationInfo OwnedPRI;
 
 // Navigation
+var private R_NavQueryInterface CachedNavQueryInterface;
 var private R_NavMesh CachedNavMesh;
 var private R_NavContext NavContext;
-var private R_NavContextObserver AttachedNavPathObserver;
+var private R_NavContextObserver AttachedNavContextObserver;
 const PATH_DISTANCE_TOLERANCE = 16.0;
 
 // Control
@@ -76,6 +77,21 @@ function R_RBotsServerActor GetRBotsServerActor()
 	return RBots;
 }
 
+function R_NavQueryInterface GetNavQueryInterface()
+{
+	local R_RBotsServerActor LocalRBots;
+
+	if(CachedNavQueryInterface == None)
+	{
+		LocalRBots = GetRBotsServerActor();
+		if(LocalRBots != None)
+		{
+			CachedNavQueryInterface = LocalRBots.GetNavQueryInterface();
+		}
+	}
+	return CachedNavQueryInterface;
+}
+
 function R_NavMesh GetNavMesh()
 {
 	local R_DynamicMapData MapData;
@@ -97,38 +113,38 @@ function R_NavContext GetNavContext()
 	return NavContext;
 }
 
-// Attaches NavPathObserver object to collect additional data from FindPath
-function AttachNavPathObserver(R_NavContextObserver NewNavPathObserver)
+// Attaches NavContextObserver object to collect additional data from FindPath
+function AttachNavContextObserver(R_NavContextObserver NewNavContextObserver)
 {
-	DetachNavPathObserver();
-	AttachedNavPathObserver = NewNavPathObserver;
+	DetachNavContextObserver();
+	AttachedNavContextObserver = NewNavContextObserver;
 }
 
-// Detaches, but does not destroy, current NavPathObserver object
-function DetachNavPathObserver()
+// Detaches, but does not destroy, current NavContextObserver object
+function DetachNavContextObserver()
 {
-	if(AttachedNavPathObserver != None)
+	if(AttachedNavContextObserver != None)
 	{
-		AttachedNavPathObserver = None;
+		AttachedNavContextObserver = None;
 	}
 }
 
-// Get the currently attached NavPathObserver, or None
-function R_NavContextObserver GetNavPathObserver()
+// Get the currently attached NavContextObserver, or None
+function R_NavContextObserver GetNavContextObserver()
 {
-	return AttachedNavPathObserver;
+	return AttachedNavContextObserver;
 }
 
 // Attempts to find a path between Start and End, and if successful, updates the Bot's path vars
 // Returns true if path was found and updated
 function bool TryUpdatePath(Vector Start, Vector End)
 {
-	local R_NavMesh LocalNavmesh;
+	local R_NavQueryInterface NavQuery;
 
-	LocalNavMesh = GetNavMesh();
-	if(LocalNavMesh != None)
+	NavQuery = GetNavQueryInterface();
+	if(NavQuery != None)
 	{
-		return LocalNavMesh.FindPath(Start, End, NavContext, AttachedNavPathObserver);
+		return NavQuery.FindPath(Start, End, NavContext, AttachedNavContextObserver);
 	}
 
 	return false;
