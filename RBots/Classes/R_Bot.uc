@@ -548,7 +548,7 @@ function UpdateNavContext(float DeltaSeconds)
 
 	if(NavContext != None)
 	{
-		NavContext.GetNavMeshNodeIndex(OldNodeIndex, OldPolyGroupIndex);
+		NavContext.GetNavMeshIndices(OldNodeIndex, OldPolyGroupIndex);
 
 		NodeIndex = NavLib.Static.InvalidIndex();
 		PolyGroupIndex = NavLib.Static.InvalidIndex();

@@ -38,10 +38,15 @@ function SetNavMeshNodeIndex(int NewNavMeshNodeIndex, int NewNavMeshPolyGroupInd
 	NavMeshPolyGroupIndex = NewNavMeshPolyGroupIndex;
 }
 
-function GetNavMeshNodeIndex(out int OutNavMeshNodeIndex, out int OutNavMeshPolyGroupIndex)
+function GetNavMeshIndices(out int OutNavMeshNodeIndex, out int OutNavMeshPolyGroupIndex)
 {
 	OutNavMeshNodeIndex = NavMeshNodeIndex;
 	OutNavMeshPolyGroupIndex = NavMeshPolyGroupIndex;
+}
+
+function int GetNavMeshNodeIndex()
+{
+	return NavMeshNodeIndex;
 }
 
 function int GetNavMeshPolyGroupIndex()

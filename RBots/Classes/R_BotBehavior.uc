@@ -13,6 +13,7 @@ var private R_BotManager BotManager;
 var private R_BotPerception OwnerPerception;
 var private R_BotPawnController OwnerController;
 var private R_BlackBoard OwnerBlackBoard;
+var private R_NavContext OwnerNavContext;
 var private R_NavMesh CachedNavMesh;
 var private R_NavMeshActorTracker CachedNavMeshActorTracker;
 
@@ -46,6 +47,20 @@ final function R_BotManager GetBotManager()
 		}
 	}
 	return BotManager;
+}
+
+final function R_NavContext GetNavContext()
+{
+	local R_Bot Bot;
+	if(OwnerNavContext == None)
+	{
+		Bot = GetBot();
+		if(Bot != None)
+		{
+			OwnerNavContext = Bot.GetNavContext();
+		}
+	}
+	return OwnerNavContext;
 }
 
 final function R_BotPerception GetBotPerception()
