@@ -1,6 +1,7 @@
 //==============================================================================
 //	R_IndexCache
 //	Stores a list of integers intended to represent indices
+//	Note, users of this class are expected to call InitIndexCache manually
 //==============================================================================
 class R_IndexCache extends Object abstract;
 
