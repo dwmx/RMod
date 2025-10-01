@@ -4069,6 +4069,9 @@ function ClientCloseLoadoutMenu()
 */
 event EncroachedBy( actor Other )
 {
+	Velocity += 60 * VRand();
+	Velocity.Z = 180;
+	SetPhysics(PHYS_Falling);
 }
 
 defaultproperties
