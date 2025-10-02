@@ -11,7 +11,7 @@ function int GetNodeCount()
 	LocalNavMesh = GetNavMesh();
 	if(LocalNavmesh != None)
 	{
-		return LocalNavmesh.GetTriangleCount();
+		return LocalNavMesh.GetTriangleCount();
 	}
 	return 0;
 }
