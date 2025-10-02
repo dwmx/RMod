@@ -25,6 +25,10 @@ var private R_NavMeshSpatialQuery NavMeshSpatialQuery;
 
 var private bool bInitialized;
 
+function R_NavGraphInterface GetPolygonGraphInterface();
+function R_NavGraphInterface GetPolyGroupGraphInterface();
+function R_NavGraphInterface GetPortalGraphInterface();
+
 function InitializeNavMesh();
 function bool ValidateNavMesh(out String OutFailedLogString);
 function PostProcessNavMesh();

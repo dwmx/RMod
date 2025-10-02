@@ -43,6 +43,24 @@ const PolyGroupClass = Class'RBots.R_NavMeshPolyGroup_Impl';
 var private R_NavMeshPolyGroup PolyGroupArray[32];
 var private int NumPolyGroups;
 
+// Graph Interfaces
+// Pathfinding may be run on any of these interfaces via R_NavPathFinder
+const PolygonGraphInterfaceClass = Class'RBots.R_NavMeshGraphInterface_Polygons';
+var private R_NavMeshGraphInterface PolygonGraphInterface;
+
+const PolyGroupGraphInterfaceClass = Class'RBots.R_NavMeshGraphInterface_PolyGroups';
+var private R_NavMeshGraphInterface PolyGroupGraphInterface;
+
+const PortalGraphInterfaceClass = Class'RBots.R_NavMeshGraphInterface_Portals';
+var private R_NavMeshGraphInterface PortalGraphInterface;
+
+//------------------------------------------------------------------------------
+//	GraphInterfaces
+
+function R_NavGraphInterface GetPolygonGraphInterface()	{ return PolygonGraphInterface; }
+function R_NavGraphInterface GetPolyGroupGraphInterface() { return PolyGroupGraphInterface; }
+function R_NavGraphInterface GetPortalGraphInterface() { return PortalGraphInterface; }
+
 //------------------------------------------------------------------------------
 //	PolyGroups
 function CreatePolyGroup(Name PolyGroupName)
@@ -117,6 +135,31 @@ function R_NavMeshPolyGroup GetPolyGroupByName(Name PolyGroupName)
 function InitializeNavMesh()
 {
 	Clear();
+
+	PolygonGraphInterface = CreateNavMeshGraphInterface(PolygonGraphInterfaceClass);
+	PolyGroupGraphInterface = CreateNavMeshGraphInterface(PolyGroupGraphInterfaceClass);
+	PortalGraphInterface = CreateNavMeshGraphInterface(PortalGraphInterfaceClass);
+}
+
+function R_NavMeshGraphInterface CreateNavMeshGraphInterface(Class<R_NavMeshGraphInterface> GraphInterfaceClass)
+{
+	local String FailedString;
+	local String WarnString;
+	local R_NavMeshGraphInterface Result;
+
+	Result = R_NavMeshGraphInterface(InitNavMeshSubObject(GraphInterfaceClass, FailedString));
+	if(Result == None)
+	{
+		WarnString = "CreateNavMeshGraphInterface failed for class" @ GraphInterfaceClass;
+		if(FailedString != "")
+		{
+			WarnString = WarnString $ " -- " $ FailedString;
+		}
+		Warn(WarnString);
+		Utilities.Static.RLog(FailedString, LogCategory);
+	}
+	Result.SetNavMesh(Self);
+	return Result;
 }
 
 function Clear()
