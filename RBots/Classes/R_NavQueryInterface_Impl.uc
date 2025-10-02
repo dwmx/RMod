@@ -141,6 +141,7 @@ function bool FindPath(
 	optional R_NavSettings OptionalNavSettings)
 {
 	local R_NavMesh NavMesh;
+	local R_NavGraphInterface PolygonGraphInterface;
 	local int StartIndex, EndIndex;
 
 	if(NavPathFinder == None || NavPathFilter == None)
@@ -150,7 +151,13 @@ function bool FindPath(
 
 	NavMesh = GetNavMesh();
 	if(NavMesh == None)
-	{
+	{	// Cannot path find without a NavMesh
+		return false;
+	}
+
+	PolygonGraphInterface = NavMesh.GetPolygonGraphInterface();
+	if(PolygonGraphInterface == None)
+	{	// Cannot path find without the polygon graph interface
 		return false;
 	}
 
@@ -171,7 +178,7 @@ function bool FindPath(
 
 	NavContext.ClearPath();
 
-	if(!NavPathFinder.FindPath(NavMesh, StartIndex, EndIndex, NavContext, OptionalNavContextObserver))
+	if(!NavPathFinder.FindPath(PolygonGraphInterface, StartIndex, EndIndex, NavContext, OptionalNavContextObserver))
 	{
 		return false;
 	}

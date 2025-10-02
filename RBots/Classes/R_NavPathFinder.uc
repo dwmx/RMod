@@ -14,7 +14,7 @@ const Utilities = Class'RBots.R_BotUtilities';
 	Returns whether or not a path was found
 */
 function bool FindPath(
-	R_NavMesh NavMesh,
+	R_NavGraphInterface NavGraphInterface,
 	int StartIndex, int EndIndex,
 	R_NavContext NavContext,
 	optional R_NavContextObserver OptionalNavContextObserver)

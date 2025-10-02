@@ -10,7 +10,7 @@ const MAX_NODES = 1024; // Adjust to match maximum number of triangles
 const NavLib = Class'RBots.R_NavLibrary';
 
 function bool FindPath(
-	R_NavMesh NavMesh,
+	R_NavGraphInterface NavGraphInterface,
 	int StartIndex, int EndIndex,
 	R_NavContext NavContext,
 	optional R_NavContextObserver OptionalNavContextObserver)
@@ -28,7 +28,7 @@ function bool FindPath(
 	local R_NavNeighborSet NeighborSet;
 
     // Safety: assume NavMesh knows its triangle count
-    TotalNodes = NavMesh.GetTriangleCount();
+	TotalNodes = NavGraphInterface.GetNodeCount();
     if (TotalNodes > MAX_NODES)
         TotalNodes = MAX_NODES;
 
@@ -69,11 +69,8 @@ function bool FindPath(
             break;
 
         // Relax neighbors
-		//NavMesh.GetTriangleAdjacentDataUnchecked(MinNode, T, E, C);
-
 		// Get full neighbor set (adjacents + proximals)
-		//GetNeighborSet(NavMesh, MinNode, T, C, NumNeighbors);
-		NavMesh.GetTriangleNeighborSetUnchecked(MinNode, NeighborSet);
+		NavGraphInterface.GetNeighborSet(MinNode, NeighborSet);
 
         //for (k = 0; k < NumNeighbors; k++)
 		for(k = 0; k < NeighborSet.NumNeighbors; ++k)
