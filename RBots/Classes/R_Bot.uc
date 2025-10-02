@@ -515,7 +515,7 @@ function float CalcWeaponNeed()
 	}
 
 	BestOwnedWeaponRating = 0;
-	for(Inv = PP.Inventory; Inv != None; Inv = Inventory.Inventory)
+	for(Inv = PP.Inventory; Inv != None; Inv = Inv.Inventory)
 	{
 		if(Weapon(Inv) != None && Weapon(Inv).Rating > BestOwnedWeaponRating)
 		{
