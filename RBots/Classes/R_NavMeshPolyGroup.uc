@@ -12,6 +12,7 @@ function SetPolyGroupName(Name NewPolyGroupName);
 function Name GetPolyGroupName();
 
 function SetPolyGroupIndex(int NewPolyGroupIndex);
+function int GetPolyGroupIndex();
 
 function InitializePolyGroup();
 function ClearTriangles();
@@ -23,6 +24,8 @@ function int GetTrianglePolyGroupIndex(int TriangleNavMeshIndex);
 function PushTriangleIndex(int TriangleNavMeshIndex);
 
 function int GetPortalCount();
+function int GetNumEdgesInPortal(int PortalIndex);
+function int GetPortalEdge(int PortalIndex, int EdgeIndex);
 
 // Given a PortalIndex into this PolyGroup, returns the neighboring PolyGroup
 // accessible through that Portal
@@ -46,3 +49,5 @@ function bool GetCostFromTriangleToNeighborPolyGroup(
 	int TriangleNavMeshIndex,
 	int PolyGroupIndex,
 	out float OutCost);
+
+function GetNeighborSet(out R_NavNeighborSet OutNeighborSet);

@@ -8,6 +8,7 @@
 class R_NavObject extends Object abstract;
 
 const Utilities = Class'RBots.R_BotUtilities';
+const NavLib = Class'RBots.R_NavLibrary';
 const LogCategory = 'NavObject';
 
 const NavObjectClass = Class'RBots.R_NavObject';
@@ -31,6 +32,11 @@ struct R_NavNeighborSet
 	var R_NavNeighbor Neighbors[32];
 	var int NumNeighbors;
 };
+
+static function NavNeighborSet_Clear(out R_NavNeighborSet InNavNeighborSet)
+{
+	InNavNeighborSet.NumNeighbors = 0;
+}
 
 static function NavNeighborSet_Copy(out R_NavNeighborSet InSource, out R_NavNeighborSet OutDest)
 {

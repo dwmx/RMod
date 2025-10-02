@@ -5,16 +5,36 @@
 //==============================================================================
 class R_NavMeshGraphInterface_PolyGroups extends R_NavMeshGraphInterface;
 
-/**
-*	TODO
-*	Need to build neighbor sets for polygroups and portal in NavMesh
-*	Once that is done, implement this class
-*/
-
 function int GetNodeCount()
 {
+	local R_NavMesh LocalNavMesh;
+
+	LocalNavMesh = GetNavMesh();
+	if(LocalNavMesh != None)
+	{
+		return LocalNavMesh.GetPolyGroupCount();
+	}
 	return 0;
 }
 
 function GetNeighborSet(int NodeIndex, out R_NavNeighborSet OutNeighborSet)
-{}
+{
+	local R_NavMesh LocalNavMesh;
+	local R_NavMeshPolyGroup LocalPolyGroup;
+
+	LocalNavMesh = GetNavMesh();
+	if(LocalNavMesh == None)
+	{
+		return;
+	}
+
+	LocalPolyGroup = LocalNavMesh.GetPolyGroupByIndex(NodeIndex);
+	if(LocalPolyGroup == None)
+	{
+		return;
+	}
+
+	NavObjectClass.Static.NavNeighborSet_Clear(OutNeighborSet);
+
+	LocalPolyGroup.GetNeighborSet(OutNeighborSet);
+}
