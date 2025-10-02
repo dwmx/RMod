@@ -549,6 +549,7 @@ function DrawPolyGroupInfo(Canvas C, R_RbotsDebug_StringManager StringManager, R
 		StringManager.AddObject(DebugCategory_NavMeshPolyGroup, "Current PolyGroup", PolyGroup);
 		if(PolyGroup != None)
 		{
+			StringManager.AddInt(DebugCategory_NavMeshPolyGroup, "Current PolyGroup Index", PolyGroup.GetPolyGroupIndex());
 			StringManager.AddName(DebugCategory_NavMeshPolyGroup, "Current PolyGroup Name", PolyGroup.GetPolyGroupName());
 			StringManager.AddInt(DebugCategory_NavMeshPolyGroup, "Current PolyGroup NumPortals", PolyGroup.GetPortalCount());
 			StringManager.AddInt(DebugCategory_NavMeshPolyGroup, "Current PolyGroup NumTriangles", PolyGroup.GetTriangleIndexCount());
@@ -593,6 +594,7 @@ function DrawPolyGroupInfo(Canvas C, R_RbotsDebug_StringManager StringManager, R
 		// Draw portal cost visualization
 		if(PolyGroup != None)
 		{
+			DrawPolyGroupInfo_Neighbors(C, StringManager, PolyGroup);
 			//PolyGroupTriangleCount = PolyGroup.GetTriangleIndexCount();
 			//for(j = 0; j < PolyGroupTriangleCount; ++j)
 			//{
@@ -611,6 +613,31 @@ function DrawPolyGroupInfo(Canvas C, R_RbotsDebug_StringManager StringManager, R
 			}
 		}
 	}
+}
+
+function DrawPolyGroupInfo_Neighbors(
+	Canvas C,
+	R_RBotsDebug_StringManager StringManager,
+	R_NavMeshPolyGroup PolyGroup)
+{
+	local int NeighborIndices[32];
+	local float NeighborCosts[32];
+	local int NumNeighbors;
+	local int NeighborIndex;
+
+	NavTranslator.Static.GetPolyGroupNeighborSet(PolyGroup, NeighborIndices, NeighborCosts, NumNeighbors);
+	for(NeighborIndex = 0; NeighborIndex < NumNeighbors; ++NeighborIndex)
+	{
+		StringManager.AddString(
+			DebugCategory_NavMeshPolyGroup,
+			GetFormattedNeighborString(NeighborIndices[NeighborIndex], NeighborCosts[NeighborIndex]),
+			"PolyGroup Neighbor[" $ NeighborIndex $ "]");
+	}
+}
+
+function String GetFormattedNeighborString(int NeighborIndex, float NeighborCost)
+{
+	return "{Index:" $ NeighborIndex $ ", Cost:" @ Utilities.Static.FloatToString(NeighborCost, 2) $ "}";
 }
 
 function DrawPolyGroupInfo_PortalPathways(

@@ -8,9 +8,12 @@ const Utilities = Class'RBots.R_BotUtilities';
 const DebugLib = Class'RBots.R_RBots_DebugLibrary';
 const CanvasLib = Class'RBots.R_RBots_CanvasLibrary';
 const DebugPathFindingCategory = 'PathFinding';
+const DebugPolyGroupPathFindCategory = 'PathFindingPolyGroups';
 
 var private R_NavContextObserver NavContextObserver;
 const NavContextObserverClass = Class'RBots.R_NavContextObserver';
+
+var private R_NavContext PolyGroupNavContext; // For testing poly group paths
 
 const NODE_DRAW_ELEVATION = 4.0;		// Pushes node drawing up on the Z axis
 const PATH_DRAW_ELEVATION = 32.0;		// Pushes path drawing up on the Z axis
@@ -147,6 +150,9 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 	{
 		DrawBoundaryPushDirs(C, DebugTarget, StringManager);
 	}
+
+	// Draw the polygroup path
+	DrawPolyGroupPathInfo(C, DebugTarget, StringManager);
 }
 
 simulated function DrawPathNodes(Canvas C, R_Bot DebugTarget, R_RBotsDebug_StringManager StringManager)
@@ -357,6 +363,142 @@ simulated function DrawBoundaryPushDirs(Canvas C, R_Bot DebugTarget, R_RBotsDebu
 			DrawRGB[0], DrawRGB[1], DrawRGB[2]);
 		}
 	}
+}
+
+function DrawPolyGroupPathInfo(Canvas C, R_Bot DebugTarget, R_RBotsDebug_StringManager StringManager)
+{
+	local bool bHadError;
+	local R_NavMesh NavMesh;
+	local R_NavGraphInterface PolyGroupGraphInterface;
+	local R_NavQueryInterface NavQuery;
+	local R_NavPathFinder PathFinder;
+	local int NumIndices;
+	local int StartPolyIndex, EndPolyIndex;
+	local int StartPolyGroupIndex, EndPolyGroupIndex;
+	local int NumPolyGroupPathIndices;
+	local int CurrentPolyGroupPathNodeIndex;
+	local int i;
+
+	bHadError = false;
+
+	StringManager.AddWarning(DebugPolyGroupPathFindCategory, "This is wrong, fix this -- PolyGroup path nodes are wrong");
+
+	if(NavContextObserver == None)
+	{
+		StringManager.AddWarning(DebugPolyGroupPathFindCategory, "NavContextObserver is None");
+		bHadError = true;
+	}
+
+	NavMesh = GetNavMesh();
+	if(NavMesh == None)
+	{
+		StringManager.AddWarning(DebugPolyGroupPathFindCategory, "NavMesh is None");
+		bHadError = true;
+	}
+
+	PolyGroupGraphInterface = NavMesh.GetPolyGroupGraphInterface();
+	if(PolyGroupGraphInterface == None)
+	{
+		StringManager.AddWarning(DebugPolyGroupPathFindCategory, "PolyGroupGraphInterface is None");
+		bHadError = true;
+	}
+
+	NavQuery = GetDebugMutator().GetRBotsServerActor().GetNavQueryInterface();
+	if(NavQuery == None)
+	{
+		StringManager.AddWarning(DebugPolyGroupPathFindCategory, "NavQueryInterface is None");
+		bHadError = true;
+	}
+
+	PathFinder = NavQuery.GetNavPathFinder();
+	if(PathFinder == None)
+	{
+		StringManager.AddWarning(DebugPolyGroupPathFindCategory, "NavPathFinder is None");
+		bHadError = true;
+	}
+
+	if(PolyGroupNavContext == None)
+	{
+		PolyGroupNavContext = new(None) Class'RBots.R_NavContext';
+		if(PolyGroupNavContext == None)
+		{
+			StringManager.AddWarning(DebugPolyGroupPathFindCategory, "PolyGroupNavContext is None");
+			bHadError = true;
+		}
+		else
+		{
+			PolyGroupNavContext.InitializeNavContext();
+		}
+	}
+
+	if(bHadError)
+	{
+		return;
+	}
+	
+	NumIndices = NavContextObserver.GetNumPathNodeIndices();
+	NavContextObserver.GetPathNodeIndex(0, StartPolyIndex);
+	NavContextObserver.GetPathNodeIndex(NumIndices - 1, EndPolyIndex);
+
+	NavMesh.GetTrianglePolyGroupIndexUnchecked(StartPolyIndex, StartPolyGroupIndex);
+	NavMesh.GetTrianglePolyGroupIndexUnchecked(EndPolyIndex, EndPolyGroupIndex);
+
+	StringManager.AddInt(DebugPolyGroupPathFindCategory, "PolyGroup Start", StartPolyGroupIndex);
+	StringManager.AddInt(DebugPolyGroupPathFindCategory, "PolyGroup End", EndPolyGroupIndex);
+
+	PolyGroupNavContext.ClearPath();
+	if(PathFinder.FindPath(PolyGroupGraphInterface, StartPolyGroupIndex, EndPolyGroupIndex, PolyGroupNavContext))
+	{
+		NumPolyGroupPathIndices = PolyGroupNavContext.GetNumPathNodeIndices();
+		StringManager.AddInt(DebugPolyGroupPathFindCategory, "Num PolyGroup Path Indices", NumPolyGroupPathIndices);
+
+		for(i = 0; i < NumPolyGroupPathIndices; ++i)
+		{
+			PolyGroupNavContext.GetPathNodeIndex(i, CurrentPolyGroupPathNodeIndex);
+			StringManager.AddInt(DebugPolyGroupPathFindCategory, "PolyGroup Path Index [" $ i $ "]", CurrentPolyGroupPathNodeIndex);
+		}
+	}
+	else
+	{
+		StringManager.AddWarning(DebugPolyGroupPathFindCategory, "Could not find PolyGroup path between PolyGroups" @ StartPolyGroupIndex @ "and" @ EndPolyGroupIndex);
+	}
+	
+
+	/*
+	// TODO: Fix all this
+	local R_NavQueryInterface NavQuery;
+	local R_NavMesh NavMesh;
+	local R_NavPathFinder PathFinder;
+	local int StartIndex, EndIndex;
+	local int NumIndices;
+	local int PolyGroupPath[32];
+	local int NumPolyGroupIndices;
+	local int i;
+
+	NavMesh = GetNavMesh();
+	NavQuery = GetDebugMutator().GetRBotsServerActor().GetNavQueryInterface();
+	PathFinder = NavQuery.GetNavPathFinder();
+
+	NumIndices = NavContextObserver.GetNumPathNodeIndices();
+	
+	if(NumIndices > 0)
+	{
+		NavContextObserver.GetPathNodeIndex(0, StartIndex);
+		NavContextObserver.GetPathNodeIndex(NumIndices - 1, EndIndex);
+
+		//PathFinder.FindPolyGroupPath(NavMesh, StartIndex, EndIndex, PolyGroupPath, NumPolyGroupIndices);
+		
+		StringManager.AddInt(DebugPathFindingCategory, "Num PolyGroup Path Nodes", NumPolyGroupIndices);
+		for(i = 0; i < NumPolyGroupIndices; ++i)
+		{
+			StringManager.AddInt(DebugPathFindingCategory, "PolyGroupPath[" $ i $ "]", PolyGroupPath[i]);
+		}
+	}
+	else
+	{
+		StringManager.AddInt(DebugPathFindingCategory, "Num PolyGroup Path Nodes", 0);
+	}
+		*/
 }
 
 defaultproperties
