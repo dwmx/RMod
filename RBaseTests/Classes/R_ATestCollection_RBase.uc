@@ -7,7 +7,7 @@ static function String GetTestCollectionNameString()
 
 static function int GetNumTests()
 {
-	return 33;
+	return 34;
 }
 
 static function Class<R_ATest> GetTestAtIndex(int TestIndex)
@@ -56,6 +56,7 @@ static function Class<R_ATest> GetTestAtIndex(int TestIndex)
 		case 30: return Class'RBaseTests.R_ATest_Geometry_LocationWithinTriangle';
 		case 31: return Class'RBaseTests.R_ATest_Geometry_Triangle';
 		case 32: return Class'RBaseTests.R_ATest_Geometry_TriangleIntersectAABB';
+		case 33: return Class'RBaseTests.R_ATest_Geometry_LineStrip';
 	}
 
 	return None;

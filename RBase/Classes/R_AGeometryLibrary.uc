@@ -393,3 +393,56 @@ static function bool IsTriangleWithinRadius2D(Vector Origin, float Radius, Vecto
 
     return false;
 }
+
+// Given a line strip defined by a sequential array of vertices, returns the full length of that line strip
+static function float LineStripLength(out Vector InVLoc[64], int NumVertices)
+{
+	local float Result;
+	local int i;
+
+	NumVertices = Clamp(NumVertices, 0, ArrayCount(InVLoc));
+	Result = 0.0;
+
+	for(i = 1; i < NumVertices; ++i)
+	{
+		Result += VSize(InVLoc[i] - InVLoc[i-1]);
+	}
+	return Result;
+}
+
+// Given a line strip defined by a sequential array of vertices, returns a location on that line strip
+// Distance units from the first vertex, clamped to first and last vertex locations
+static function Vector LocationAlongLineStrip(out Vector InVLoc[64], int NumVertices, float Distance)
+{
+	local float CurrentDistance, NextDistance;
+	local int i;
+	local Vector Delta;
+	local float t;
+
+	NumVertices = Clamp(NumVertices, 0, ArrayCount(InVLoc));
+	if(NumVertices == 0)
+	{
+		return Vect(0,0,0);
+	}
+
+	Distance = FMax(0.0, Distance);
+	if(Distance == 0.0)
+	{
+		return InVLoc[0];
+	}
+
+	CurrentDistance = 0.0;
+
+	for(i = 1; i < NumVertices; ++i)
+	{
+		Delta = InVLoc[i] - InVLoc[i-1];
+		NextDistance = CurrentDistance + VSize(Delta);
+		if(NextDistance > Distance)
+		{
+			t = (Distance - CurrentDistance) / (NextDistance - CurrentDistance);
+			return InVLoc[i-1] + Delta * t;
+		}
+		CurrentDistance = NextDistance;
+	}
+	return InVLoc[NumVertices - 1];
+}
