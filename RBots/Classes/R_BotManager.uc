@@ -23,13 +23,31 @@ event BeginPlay()
 	NOTE: If caller provides bDeferredInitialization = true, they are responsible for calling
 	R_Bot.InitializeBot
 */
-function R_Bot SpawnBot(optional bool bDeferredInitialization)
+unction R_Bot SpawnBot(optional bool bDeferredInitialization)
 {
 	local R_Bot NewBot;
 	local PlayerPawn NewPlayerPawn;
 	local NavigationPoint StartPoint;
 	local GameInfo GI;
 	local String ErrorStr;
+	local int CurrentPlayers;
+	local PlayerPawn P;
+
+	GI = Level.Game;
+
+	foreach AllActors(class'PlayerPawn', P)
+	{
+		if (!P.bDeleteMe)
+		{
+			CurrentPlayers++;
+		}
+	}
+
+	if (GI != None && CurrentPlayers >= GI.MaxPlayers)
+	{
+		Utilities.Static.RLog("Spawning Bot failed: MaxPlayers limit reached (" $ CurrentPlayers $ "/" $ GI.MaxPlayers $ ")", LogCategory);
+		return None;
+	}
 
 	if(bDeferredInitialization)
 	{
@@ -44,7 +62,7 @@ function R_Bot SpawnBot(optional bool bDeferredInitialization)
 
 	NewBot = Spawn(Class'RBots.R_Bot');
 	//NewPlayerPawn = Spawn(Class'RBots.R_RBotsDebug_RunePlayer',,,StartPoint.Location, StartPoint.Rotation);
-	GI = Level.Game;
+
 	if(GI != None)
 	{
 		NewPlayerPawn = GI.Login("", "Name=IsABot", ErrorStr, Class'RuneI.PlayerAlric');
