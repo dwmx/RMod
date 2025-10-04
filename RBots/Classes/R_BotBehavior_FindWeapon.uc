@@ -184,14 +184,18 @@ function BehaviorTick(float DeltaSeconds)
 	local float Distance;
 
 	PP = GetPlayerPawn();
-	if(PP == None || InventoryTarget == None)
+	if(PP == None)
 	{
 		return;
 	}
 
 	SetInventoryTarget(FindDesiredInventory());
-	Distance = VSize(InventoryTarget.Location - PP.Location);
+	if(InventoryTarget == None)
+	{
+		return;
+	}
 
+	Distance = VSize(InventoryTarget.Location - PP.Location);
 	// If within use range, try to pickup
 	if(Distance <= UseRange)
 	{
