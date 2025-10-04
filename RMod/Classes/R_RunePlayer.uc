@@ -3405,23 +3405,28 @@ state PlayerSpectating
         }
     }
 
-    event EndState()
-    {
-        Self.SetCollision(true, true, true);
-        Self.bCollideWorld = Self.Default.bCollideWorld;
-        Self.DrawType = Self.Default.DrawType;
-        //Self.bHidden = Self.Default.bHidden;
-        Self.bAlwaysRelevant = Self.Default.bAlwaysRelevant;
-        //Self.PlayerReplicationInfo.bIsSpectator = false;
+	event EndState()
+	{
+		Self.SetCollision(true, true, true);
+		Self.bCollideWorld = Self.Default.bCollideWorld;
+		Self.DrawType = Self.Default.DrawType;
+		Self.bHidden = Self.Default.bHidden;
+		Self.bAlwaysRelevant = Self.Default.bAlwaysRelevant;
+		Self.PlayerReplicationInfo.bIsSpectator = false;
 
-        if(Role == ROLE_Authority)
-        {
-            if(Camera != None)
-            {
-                Camera.Destroy();
-            }
-        }
-    }
+		if (Role == ROLE_Authority)
+		{
+			if (Camera != None && !Camera.bDeleteMe)
+			{
+				Camera.Destroy();
+				Camera = None;
+			}
+			else
+			{
+				Camera = None;
+			}
+		}
+	}
     
     event PlayerCalcView(
         out Actor ViewActor,
