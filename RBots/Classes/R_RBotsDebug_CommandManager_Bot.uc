@@ -57,8 +57,8 @@ function HandleCommand_SpawnBot(R_RBotsDebug DebugMutator, PlayerPawn Sender)
 	if(NewBot != None)
 	{
 		DebugMutator.SetDebugTarget(NewBot);
+		NewBot.InitializeBot();
 	}
-	NewBot.InitializeBot();
 }
 
 function HandleCommand_SpawnDebugBot(R_RBotsDebug DebugMutator, PlayerPawn Sender)
