@@ -23,7 +23,7 @@ event BeginPlay()
 	NOTE: If caller provides bDeferredInitialization = true, they are responsible for calling
 	R_Bot.InitializeBot
 */
-unction R_Bot SpawnBot(optional bool bDeferredInitialization)
+function R_Bot SpawnBot(optional bool bDeferredInitialization)
 {
 	local R_Bot NewBot;
 	local PlayerPawn NewPlayerPawn;
