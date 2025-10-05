@@ -43,6 +43,10 @@ const PolyGroupClass = Class'RBots.R_NavMeshPolyGroup_Impl';
 var private R_NavMeshPolyGroup PolyGroupArray[32];
 var private int NumPolyGroups;
 
+const PortalClass = Class'RBots.R_NavMeshPortal_Impl';
+var private R_NavMeshPortal PortalArray[128];
+var private int NumPortals;
+
 // Graph Interfaces
 // Pathfinding may be run on any of these interfaces via R_NavPathFinder
 const PolygonGraphInterfaceClass = Class'RBots.R_NavMeshGraphInterface_Polygons';
@@ -63,7 +67,15 @@ function R_NavGraphInterface GetPortalGraphInterface() { return PortalGraphInter
 
 //------------------------------------------------------------------------------
 //	PolyGroups
-function CreatePolyGroup(Name PolyGroupName)
+
+/**
+*	CreatePolyGroup
+*	Main function for creating a new PolyGroup
+*	If PolyGroupName is provided, then this PolyGroup may be looked up via
+*	GetPolyGroupByName
+*	If no PolyGroupName is provided, this will create an 'Anonymous' PolyGroup
+*/
+function CreatePolyGroup(optional Name OptionalPolyGroupName)
 {
 	local int i;
 	local bool bAnonymousPolyGroup;
@@ -82,7 +94,7 @@ function CreatePolyGroup(Name PolyGroupName)
 	}
 
 	bAnonymousPolyGroup = false;
-	if(PolyGroupName == '')
+	if(OptionalPolyGroupName == '')
 	{
 		bAnonymousPolyGroup = true;
 	}
@@ -92,9 +104,9 @@ function CreatePolyGroup(Name PolyGroupName)
 	{
 		for(i = 0; i < NumPolyGroups; ++i)
 		{
-			if(PolyGroupArray[i] != None && PolyGroupArray[i].GetPolyGroupName() == PolyGroupName)
+			if(PolyGroupArray[i] != None && PolyGroupArray[i].GetPolyGroupName() == OptionalPolyGroupName)
 			{
-				Utilities.Static.RLog("CreatePolyGroup failed -- Attempted to double-add Polygon Group:" @ PolyGroupName, LogCategory);
+				Utilities.Static.RLog("CreatePolyGroup failed -- Attempted to double-add Polygon Group:" @ OptionalPolyGroupName, LogCategory);
 				return;
 			}
 		}
@@ -110,7 +122,7 @@ function CreatePolyGroup(Name PolyGroupName)
 	}
 
 	PolyGroupArray[NumPolyGroups].SetPolyGroupIndex(NumPolyGroups);
-	PolyGroupArray[NumPolyGroups].SetPolyGroupName(PolyGroupName);
+	PolyGroupArray[NumPolyGroups].SetPolyGroupName(OptionalPolyGroupName);
 	++NumPolyGroups;
 }
 
@@ -145,6 +157,11 @@ function R_NavMeshPolyGroup GetPolyGroupByName(Name PolyGroupName)
 		}
 	}
 	return None;
+}
+
+function bool IsValidPolyGroupIndex(int PolyGroupIndex)
+{
+	return PolyGroupIndex >= 0 && PolyGroupIndex < NumPolyGroups;
 }
 //------------------------------------------------------------------------------
 
@@ -407,6 +424,29 @@ function PostProcessNavMesh()
 	BuildEdgeOrientations();
 	//BuildProximalSet();
 	BuildPolyGroupInfo();
+	BuildPortals();
+	FinalizePolyGroups();
+	FinalizePortals();
+}
+
+function FinalizePolyGroups()
+{
+	local int i;
+
+	for(i = 0; i < NumPolyGroups; ++i)
+	{
+		PolyGroupArray[i].FinalizePolyGroup(Self);
+	}
+}
+
+function FinalizePortals()
+{
+	local int i;
+
+	for(i = 0; i < NumPortals; ++i)
+	{
+		PortalArray[i].FinalizePortal(Self);
+	}
 }
 
 function InitializePostProcessEdgeFlags()
@@ -696,6 +736,9 @@ function float CalcProximalNeighborCost(out Vector InVLoc0[3], out Vector InVLoc
 	return VSize(C1 - C0);
 }
 
+//------------------------------------------------------------------------------
+//	PolyGroups
+
 // Build all PolyGroup objects
 function BuildPolyGroupInfo()
 {
@@ -710,7 +753,7 @@ function BuildPolyGroupInfo()
 	// Init PolyGroups
 	for(i = 0; i < NumPolyGroups; ++i)
 	{
-		PolyGroupArray[i].InitializePolyGroup();
+		PolyGroupArray[i].InitializePolyGroup(Self);
 	}
 
 	// Insert each triangle into its PolyGroup
@@ -723,11 +766,11 @@ function BuildPolyGroupInfo()
 		}
 	}
 
-	// Build PolyGroup Portals
-	for(i = 0; i < NumPolyGroups; ++i)
-	{
-		PolyGroupArray[i].BuildPortals(Self);
-	}
+	//// Build PolyGroup Portals
+	//for(i = 0; i < NumPolyGroups; ++i)
+	//{
+	//	PolyGroupArray[i].BuildPortals(Self);
+	//}
 }
 
 // Collects adjacent groups of polygons that were never assigned a PolyGroup and automatically
@@ -804,6 +847,181 @@ function CreateAndAssignAnonymousPolyGroups()
 	}
 }
 
+//------------------------------------------------------------------------------
+//	Portals
+
+function BuildPortals()
+{
+	local String LogWarning;
+	local byte LocalVisited[ArrayCount(TriangleArray)];
+	local int LocalPolygons[ArrayCount(TriangleArray)];
+	local int NumLocalPolygons;
+	local int i, j, k;
+	local R_NavMeshPolyGroup PolyGroup;
+	local int NumPolyGroupPolygons;
+	local int CurrentPolygonIndex, CurrentNeighborIndex;
+	local int PolyGroupIndexA, PolyGroupIndexB;
+	local int SharedEdgeIndex;
+	local R_NavMeshPortal Portal;
+
+	// Init main Portal array
+	for(i = 0; i < ArrayCount(PortalArray); ++i)
+	{
+		PortalArray[i] = None;
+	}
+	NumPortals = 0;
+
+	// Init visited array
+	for(i = 0; i < ArrayCount(LocalVisited); ++i)
+	{
+		LocalVisited[i] = 0;
+	}
+
+	// Build portals for each PolyGroup
+	for(i = 0; i < NumPolyGroups; ++i)
+	{
+		PolyGroup = PolyGroupArray[i];
+		if(PolyGroup == None)
+		{
+			LogWarning = "BuildPortals error -- PolyGroupArray[" $ i $ "] was None when it should not have been";
+			Warn(LogWarning);
+			Utilities.Static.RLog(LogWarning, LogCategory);
+			continue;
+		}
+
+		// For each Polygon
+		NumPolyGroupPolygons = PolyGroup.GetTriangleIndexCount();
+		for(j = 0; j < NumPolyGroupPolygons; ++j)
+		{
+			CurrentPolygonIndex = PolyGroup.GetTriangleNavMeshIndex(j);
+			if(LocalVisited[CurrentPolygonIndex] == 1)
+			{
+				continue;
+			}
+
+			LocalVisited[CurrentPolygonIndex] = 1;
+			LocalPolygons[0] = CurrentPolygonIndex;
+			NumLocalPolygons = 1;
+			while(NumLocalPolygons > 0)
+			{
+				--NumLocalPolygons;
+				CurrentPolygonIndex = LocalPolygons[NumLocalPolygons];
+				PolyGroupIndexA = TriangleArray[CurrentPolygonIndex].PolyGroupIndex;
+
+				// For each Neighbor
+				for(k = 0; k < NeighborSets[CurrentPolygonIndex].NumNeighbors; ++k)
+				{
+					CurrentNeighborIndex = NeighborSets[CurrentPolygonIndex].Neighbors[k].NeighborIndex;
+					if(LocalVisited[CurrentNeighborIndex] == 1)
+					{
+						continue;
+					}
+
+					PolyGroupIndexB = TriangleArray[CurrentNeighborIndex].PolyGroupIndex;
+
+					// Same PolyGroup neighbor, add to search
+					if(PolyGroupIndexA ==  PolyGroupIndexB)
+					{
+						LocalVisited[CurrentNeighborIndex] = 1;
+						LocalPolygons[NumLocalPolygons] = CurrentNeighborIndex;
+						++NumLocalPolygons;
+					}
+					// Different PolyGroup neighbor, build portal
+					else
+					{
+						Portal = FindOrCreatePortalForPolyGroups(PolyGroupIndexA, PolyGroupIndexB);
+						if(Portal == None)
+						{
+							LogWarning = "BuildPortals error -- FindOrCreatePortalForPolyGroups returned None for PolyGroup indices {" $ PolyGroupIndexA $ "," $ PolyGroupIndexB $ "}";
+							Warn(LogWarning);
+							Utilities.Static.RLog(LogWarning, LogCategory);
+							continue;
+						}
+
+						SharedEdgeIndex = FindSharedEdgeIndex(CurrentPolygonIndex, CurrentNeighborIndex);
+						if(SharedEdgeIndex == NavLib.Static.InvalidIndex())
+						{
+							LogWarning = "BuildPortals error -- FindSharedEdgeIndex returned InvalidIndex when it should not have";
+							Warn(LogWarning);
+							Utilities.Static.RLog(LogWarning, LogCategory);
+							continue;
+						}
+
+						Portal.AddEdgeUnique(SharedEdgeIndex);
+						Portal.AddPolygonUnique(CurrentPolygonIndex);
+						Portal.AddPolygonUnique(CurrentNeighborIndex);
+					}
+				}
+			}
+		}
+	}
+}
+
+function R_NavMeshPortal FindOrCreatePortalForPolyGroups(int PolyGroupIndexA, int PolyGroupIndexB)
+{
+	local String LogWarning;
+	local int PortalIndex;
+	local R_NavMeshPortal Portal;
+
+	if(PolyGroupIndexA == PolyGroupIndexB)
+	{
+		return None;
+	}
+
+	// Try to find an existing portal between these PolyGroups
+	for(PortalIndex = 0; PortalIndex < NumPortals; ++PortalIndex)
+	{
+		Portal = PortalArray[PortalIndex];
+		if(Portal.IsPortalBetween(PolyGroupIndexA, PolyGroupIndexB))
+		{
+			return Portal;
+		}
+	}
+
+	// No existing portal, create new one
+	if(NumPortals >= ArrayCount(PortalArray))
+	{
+		LogWarning = "FindOrCreatePortalForPolyGroups failed -- PortalArray overflow";
+		Warn(LogWarning);
+		Utilities.Static.RLog(LogWarning, LogCategory);
+		return None;
+	}
+
+	Portal = new(None) PortalClass;
+	if(Portal == None)
+	{
+		LogWarning = "FindOrCreatePortalForPolyGroups failed -- Failed to create Portal";
+		Warn(LogWarning);
+		Utilities.Static.RLog(LogWarning, LogCategory);
+		return None;
+	}
+
+	PortalIndex = NumPortals;
+	++NumPortals;
+
+	PortalArray[PortalIndex] = Portal;
+	Portal.SetPortalIndex(PortalIndex);
+	Portal.InitializePortal(Self);
+	
+	Portal.SetAdjacentPolyGroupIndices(PolyGroupIndexA, PolyGroupIndexB);
+	PolyGroupArray[PolyGroupIndexA].AddPortalUnique(PortalIndex);
+	PolyGroupArray[PolyGroupIndexB].AddPortalUnique(PortalIndex);
+
+	return Portal;
+}
+
+function bool IsValidPortalIndex(int PortalIndex)
+{
+	return PortalIndex >= 0 && PortalIndex < NumPortals;
+}
+
+function R_NavMeshPortal GetPortalByIndex(int PortalIndex)
+{
+	return PortalArray[PortalIndex];
+}
+
+//------------------------------------------------------------------------------
+
 function int GetVertexCount() { return NumVertices; }
 function int GetEdgeCount() { return NumEdges; }
 function int GetTriangleCount() { return NumTriangles; }
@@ -878,9 +1096,36 @@ function GetTriangleEdgeIndicesUnchecked(int Index, out int OutE0, out int OutE1
 	OutE2 = TriangleArray[Index].E[2];
 }
 
+function bool IsValidVertexIndex(int Index)
+{
+	return Index >= 0 && Index < NumVertices;
+}
+
+function bool IsValidEdgeIndex(int Index)
+{
+	return Index >= 0 && Index < NumEdges;
+}
+
+function bool IsValidTriangleIndex(int Index)
+{
+	return Index >= 0 && Index < NumTriangles;
+}
+
 function GetTrianglePolyGroupIndexUnchecked(int Index, out int OutPolyGroupIndex)
 {
 	OutPolyGroupIndex = TriangleArray[Index].PolyGroupIndex;
+}
+
+function GetTrianglePolyGroupIndexChecked(int Index, out int OutPolyGroupIndex)
+{
+	if(!IsValidTriangleIndex(Index))
+	{
+		OutPolyGroupIndex = NavLib.Static.InvalidIndex();
+	}
+	else
+	{
+		OutPolyGroupIndex = TriangleArray[Index].PolyGroupIndex;
+	}
 }
 
 function GetTriangleNeighborSetUnchecked(int Index, out R_NavNeighborSet OutNodeNeighborSet)

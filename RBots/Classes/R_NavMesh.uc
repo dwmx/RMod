@@ -11,7 +11,6 @@
 //	- R_NavMesh.ValidateNavMesh()
 //	- R_NavMesh.PostProcessNavMesh()
 //==============================================================================
-//class R_NavMesh extends Actor abstract;
 class R_NavMesh extends R_NavObject abstract;
 
 const Utilities = Class'RBots.R_BotUtilities';
@@ -34,11 +33,13 @@ function bool ValidateNavMesh(out String OutFailedLogString);
 function PostProcessNavMesh();
 
 // Vertex functions
+function bool IsValidVertexIndex(int Index);
 function PushVertex(Vector Location);
 function int GetVertexCount();
 function GetVertexUnchecked(int Index, out Vector OutLocation);
 
 // Edge functions
+function bool IsValidEdgeIndex(int Index);
 function PushEdge(int V0, int V1);
 function int GetEdgeCount();
 function GetEdgeVertexLocationsUnchecked(int Index, out Vector VLoc[2]);
@@ -49,12 +50,14 @@ function int FindSharedEdgeIndex(int T0, int T1);
 function SetEdgePassable(int V0, int V1, bool bPassable);
 
 // Triangle functions
+function bool IsValidTriangleIndex(int Index);
 function PushTriangleAsVertices(int V0, int V1, int V2, optional Name PolyGroupName);
 function int GetTriangleCount();
 function GetTriangleVertexLocationsUnchecked(int Index, out Vector VLoc[3]);
 function GetTriangleVertexIndicesUnchecked(int Index, out int OutV0, out int OutV1, out int OutV2);
 function GetTriangleEdgeIndicesUnchecked(int Index, out int OutE0, out int OutE1, out int OutE2);
 function GetTrianglePolyGroupIndexUnchecked(int Index, out int OutPolyGroupIndex);
+function GetTrianglePolyGroupIndexChecked(int Index, out int OutPolyGroupIndex);
 
 // Returns the NeighborSet for the given node index
 // This includes all adjacent and proximal neighbors	
@@ -73,6 +76,11 @@ function CreatePolyGroup(Name PolyGroupName);
 function int GetPolyGroupCount();
 function R_NavMeshPolyGroup GetPolyGroupByIndex(int PolyGroupIndex);
 function R_NavMeshPolyGroup GetPolyGroupByName(Name PolyGroupName);
+function bool IsValidPolyGroupIndex(int PolyGroupIndex);
+
+// Portals
+function bool IsValidPortalIndex(int PortalIndex);
+function R_NavMeshPortal GetPortalByIndex(int PortalIndex);
 
 //------------------------------------------------------------------------------
 //	Base NavMesh implementation -- Do not override

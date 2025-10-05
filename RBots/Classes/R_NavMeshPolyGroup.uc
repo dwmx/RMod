@@ -14,7 +14,9 @@ function Name GetPolyGroupName();
 function SetPolyGroupIndex(int NewPolyGroupIndex);
 function int GetPolyGroupIndex();
 
-function InitializePolyGroup();
+function InitializePolyGroup(R_NavMesh NavMesh);
+function FinalizePolyGroup(R_NavMesh NavMesh);
+
 function ClearTriangles();
 function ClearPortals();
 
@@ -35,7 +37,7 @@ function int GetNeighborPolyGroupIndexForPortalIndex(int PortalIndex);
 // Given a neighboring PolyGroup index, returns the Portal index which
 // interfaces with that neighboring PolyGroup
 // Returns InvalidIndex if no such Portal exists
-function int GetPortalIndexForNeighborPolyGroupIndex(int PolyGroupIndex);
+function int GetPortalIndexForNeighborPolyGroupIndex(int NeighborPolyGroupIndex);
 
 function bool DoesPortalExistToDest(int DestPolyGroupIndex);
 function BuildPortals(R_NavMesh NavMesh);
@@ -51,3 +53,5 @@ function bool GetCostFromTriangleToNeighborPolyGroup(
 	out float OutCost);
 
 function GetNeighborSet(out R_NavNeighborSet OutNeighborSet);
+
+function AddPortalUnique(int PortalNavMeshIndex);
