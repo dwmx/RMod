@@ -33,7 +33,7 @@ function R_Bot SpawnBot(optional bool bDeferredInitialization)
 	local int CurrentPlayers;
 	local PlayerPawn P;
 
-	// Count current PlayerPawns
+	CurrentPlayers = 0;
 	foreach AllActors(class'PlayerPawn', P)
 	{
 		if (!P.bDeleteMe)
@@ -46,6 +46,12 @@ function R_Bot SpawnBot(optional bool bDeferredInitialization)
 	if (GI != None && CurrentPlayers >= GI.MaxPlayers)
 	{
 		Utilities.Static.RLog("Spawning Bot failed: MaxPlayers limit reached (" $ CurrentPlayers $ "/" $ GI.MaxPlayers $ ")", LogCategory);
+		return None;
+	}
+
+	if (CurrentPlayers >= 64)
+	{
+		Utilities.Static.RLog("Spawning Bot failed: PlayerPawns limit reached (" $ CurrentPlayers $ "/" $ GI.MaxPlayers $ ")", LogCategory);
 		return None;
 	}
 
