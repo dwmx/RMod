@@ -66,6 +66,7 @@ function R_NavGraphInterface GetPortalGraphInterface() { return PortalGraphInter
 function CreatePolyGroup(Name PolyGroupName)
 {
 	local int i;
+	local bool bAnonymousPolyGroup;
 
 	if(NumPolyGroups < 0 || NumPolyGroups >= ArrayCount(PolyGroupArray))
 	{	// Array overflow or invalid index
@@ -80,15 +81,25 @@ function CreatePolyGroup(Name PolyGroupName)
 		return;
 	}
 
-	// Ensure this poly group has not already been created
-	for(i = 0; i < NumPolyGroups; ++i)
+	bAnonymousPolyGroup = false;
+	if(PolyGroupName == '')
 	{
-		if(PolyGroupArray[i] != None && PolyGroupArray[i].GetPolyGroupName() == PolyGroupName)
+		bAnonymousPolyGroup = true;
+	}
+
+	// For non-anonymous PolyGroups, ensure this group has not already been created
+	if(!bAnonymousPolyGroup)
+	{
+		for(i = 0; i < NumPolyGroups; ++i)
 		{
-			Utilities.Static.RLog("CreatePolyGroup failed -- Attempted to double-add Polygon Group:" @ PolyGroupName, LogCategory);
-			return;
+			if(PolyGroupArray[i] != None && PolyGroupArray[i].GetPolyGroupName() == PolyGroupName)
+			{
+				Utilities.Static.RLog("CreatePolyGroup failed -- Attempted to double-add Polygon Group:" @ PolyGroupName, LogCategory);
+				return;
+			}
 		}
 	}
+	
 
 	// Insert the PolyGroup
 	PolyGroupArray[NumPolyGroups] = new(None) PolyGroupClass;
@@ -120,6 +131,11 @@ function R_NavMeshPolyGroup GetPolyGroupByIndex(int PolyGroupIndex)
 function R_NavMeshPolyGroup GetPolyGroupByName(Name PolyGroupName)
 {
 	local int i;
+
+	if(PolyGroupName == '')
+	{	// Cannot access anon PolyGroups by Name
+		return None;
+	}
 
 	for(i = 0; i < NumPolyGroups; ++i)
 	{
@@ -680,13 +696,16 @@ function float CalcProximalNeighborCost(out Vector InVLoc0[3], out Vector InVLoc
 	return VSize(C1 - C0);
 }
 
-//	Cache all poly group related data
+// Build all PolyGroup objects
 function BuildPolyGroupInfo()
 {
 	local int PolyGroupIndex;
 	local int i;
 
 	Utilities.Static.RLog("Building PolyGroup info", LogCategory);
+
+	// Create anonymous PolyGroups for any unassigned polygons
+	CreateAndAssignAnonymousPolyGroups();
 
 	// Init PolyGroups
 	for(i = 0; i < NumPolyGroups; ++i)
@@ -708,6 +727,80 @@ function BuildPolyGroupInfo()
 	for(i = 0; i < NumPolyGroups; ++i)
 	{
 		PolyGroupArray[i].BuildPortals(Self);
+	}
+}
+
+// Collects adjacent groups of polygons that were never assigned a PolyGroup and automatically
+// assigns them a new PolyGroup, referred to as an Anonymous PolyGroup
+function CreateAndAssignAnonymousPolyGroups()
+{
+	local String LogWarning;
+	local byte LocalVisited[ArrayCount(TriangleArray)];
+	local int LocalPolygons[ArrayCount(TriangleArray)];
+	local int NumLocalPolygons;
+	local int i, j;
+	local int CurrentIndex, NeighborIndex;
+	local R_NavMeshPolyGroup PolyGroup;
+
+	Utilities.Static.RLog("Creating and assigning anonymous PolyGroups", LogCategory);
+
+	for(i = 0; i < ArrayCount(TriangleArray); ++i)
+	{	// Init visited array
+		LocalVisited[i] = 0;
+	}
+
+	for(i = 0; i < NumTriangles; ++i)
+	{
+		if(TriangleArray[i].PolyGroupIndex != NavLib.Static.InvalidIndex() || LocalVisited[i] == 1)
+		{
+			continue;
+		}
+
+		if(NumLocalPolygons >= ArrayCount(LocalPolygons))
+		{
+			LogWarning = "CreateAndAssignAnonymousPolyGroups failed -- LocalPolygons array overflow";
+			Warn(LogWarning);
+			Utilities.Static.RLog(LogWarning, LogCategory);
+			break;
+		}
+
+		// Create an anonymous PolyGroup
+		CreatePolyGroup('');
+		PolyGroup = PolyGroupArray[NumPolyGroups - 1];
+		if(PolyGroup == None)
+		{
+			LogWarning = "CreateAndAssignAnonymousPolyGroups error -- Failed to create anonymous PolyGroup";
+			Warn(LogWarning);
+			Utilities.Static.RLog(LogWarning, LogCategory);
+			continue;
+		}
+
+		// Collect all adjacent unassigned triangles and add them
+		LocalVisited[i] = 1;
+		LocalPolygons[0] = i;
+		NumLocalPolygons = 1;
+		
+		while(NumLocalPolygons > 0)
+		{
+			--NumLocalPolygons;
+			CurrentIndex = LocalPolygons[NumLocalPolygons];
+			
+			TriangleArray[CurrentIndex].PolyGroupIndex = PolyGroup.GetPolyGroupIndex();
+			PolyGroup.PushTriangleIndex(CurrentIndex);
+			for(j = 0; j < NeighborSets[CurrentIndex].NumNeighbors; ++j)
+			{
+				if(NeighborSets[CurrentIndex].Neighbors[j].NeighborType == R_NavNeighborType.NeighborType_Adjacent)
+				{
+					NeighborIndex = NeighborSets[CurrentIndex].Neighbors[j].NeighborIndex;
+					if(LocalVisited[NeighborIndex] == 0 && TriangleArray[NeighborIndex].PolyGroupIndex == NavLib.Static.InvalidIndex())
+					{
+						LocalVisited[NeighborIndex] = 1;
+						LocalPolygons[NumLocalPolygons] = NeighborIndex;
+						++NumLocalPolygons;
+					}
+				}
+			}
+		}
 	}
 }
 
