@@ -30,6 +30,30 @@ function R_Bot SpawnBot(optional bool bDeferredInitialization)
 	local NavigationPoint StartPoint;
 	local GameInfo GI;
 	local String ErrorStr;
+	local int CurrentPlayers;
+	local PlayerPawn P;
+
+	CurrentPlayers = 0;
+	foreach AllActors(class'PlayerPawn', P)
+	{
+		if (!P.bDeleteMe)
+		{
+			CurrentPlayers++;
+		}
+	}
+
+	GI = Level.Game;
+	if (GI != None && CurrentPlayers >= GI.MaxPlayers)
+	{
+		Utilities.Static.RLog("Spawning Bot failed: MaxPlayers limit reached (" $ CurrentPlayers $ "/" $ GI.MaxPlayers $ ")", LogCategory);
+		return None;
+	}
+
+	if (CurrentPlayers >= 64)
+	{
+		Utilities.Static.RLog("Spawning Bot failed: PlayerPawns limit reached (" $ CurrentPlayers $ "/" $ GI.MaxPlayers $ ")", LogCategory);
+		return None;
+	}
 
 	if(bDeferredInitialization)
 	{
@@ -44,7 +68,7 @@ function R_Bot SpawnBot(optional bool bDeferredInitialization)
 
 	NewBot = Spawn(Class'RBots.R_Bot');
 	//NewPlayerPawn = Spawn(Class'RBots.R_RBotsDebug_RunePlayer',,,StartPoint.Location, StartPoint.Rotation);
-	GI = Level.Game;
+
 	if(GI != None)
 	{
 		NewPlayerPawn = GI.Login("", "Name=IsABot", ErrorStr, Class'RuneI.PlayerAlric');
