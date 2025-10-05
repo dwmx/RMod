@@ -440,8 +440,8 @@ function DrawPolyGroupPathInfo(Canvas C, R_Bot DebugTarget, R_RBotsDebug_StringM
 	NavContextObserver.GetPathNodeIndex(0, StartPolyIndex);
 	NavContextObserver.GetPathNodeIndex(NumIndices - 1, EndPolyIndex);
 
-	NavMesh.GetTrianglePolyGroupIndexUnchecked(StartPolyIndex, StartPolyGroupIndex);
-	NavMesh.GetTrianglePolyGroupIndexUnchecked(EndPolyIndex, EndPolyGroupIndex);
+	NavMesh.GetTrianglePolyGroupIndexChecked(StartPolyIndex, StartPolyGroupIndex);
+	NavMesh.GetTrianglePolyGroupIndexChecked(EndPolyIndex, EndPolyGroupIndex);
 
 	StringManager.AddInt(DebugPolyGroupPathFindCategory, "PolyGroup Start", StartPolyGroupIndex);
 	StringManager.AddInt(DebugPolyGroupPathFindCategory, "PolyGroup End", EndPolyGroupIndex);
