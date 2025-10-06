@@ -24,6 +24,12 @@ var private int NumPolygonIndices;
 var private int AdjacentPolyGroupIndices[2];
 var private R_NavMeshPolyGroup AdjacentPolyGroupReferences[ArrayCount(AdjacentPolyGroupIndices)];
 
+// This Portal's NeighborSet
+// A Portal is neighbors with every Portal inside both of its associated PolyGroups, where the
+// Portals are nodes, and the PolyGroups are edges
+// Costs between Portals are pulled from the associated PolyGroup's cost layers
+var private R_NavNeighborSet NeighborSet;
+
 //------------------------------------------------------------------------------
 
 function InitializePortal(R_NavMesh NavMesh)
@@ -41,6 +47,7 @@ function InitializePortal(R_NavMesh NavMesh)
 function FinalizePortal(R_NavMesh NavMesh)
 {
 	UpdateCachedPolyGroupReferences(NavMesh);
+	BuildNeighborSet();
 }
 
 function ClearCachedPolyGroupReferences()
@@ -252,4 +259,47 @@ function bool ContainsPolygon(int PolygonNavMeshIndex)
 		}
 	}
 	return false;
+}
+
+//------------------------------------------------------------------------------
+
+function BuildNeighborSet()
+{
+	local R_NavMeshPolyGroup PolyGroup;
+	local int NumNeighborPortals;
+	local int NeighborPortalIndex;
+	local float NeighborCost;
+	local int i, j;
+
+	NavObjectClass.Static.NavNeighborSet_Clear(NeighborSet);
+
+	for(i = 0; i < ArrayCount(AdjacentPolyGroupIndices); ++i)
+	{
+		PolyGroup = AdjacentPolyGroupReferences[i];
+		if(PolyGroup == None)
+		{
+			continue;
+		}
+
+		NumNeighborPortals = PolyGroup.GetPortalCount();
+		for(j = 0; j < NumNeighborPortals; ++j)
+		{
+			NeighborPortalIndex = PolyGroup.GetPortalNavMeshIndex(j);
+			NeighborCost = 10.0; // TODO: Get cost from Self to Neighbor from the PolyGroup
+
+			if(!NavObjectClass.Static.NavNeighborSet_AddNeighbor(
+				NeighborSet,
+				R_NavNeighborType.NeighborType_Adjacent,
+				NeighborCost,
+				NeighborPortalIndex))
+			{
+				break;
+			}
+		}
+	}
+}
+
+function GetNeighborSet(out R_NavNeighborSet OutNeighborSet)
+{
+	NavObjectClass.Static.NavNeighborSet_Copy(NeighborSet, OutNeighborSet);
 }

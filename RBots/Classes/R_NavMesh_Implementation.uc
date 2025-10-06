@@ -1020,6 +1020,11 @@ function R_NavMeshPortal GetPortalByIndex(int PortalIndex)
 	return PortalArray[PortalIndex];
 }
 
+function int GetPortalCount()
+{
+	return NumPortals;
+}
+
 //------------------------------------------------------------------------------
 
 function int GetVertexCount() { return NumVertices; }

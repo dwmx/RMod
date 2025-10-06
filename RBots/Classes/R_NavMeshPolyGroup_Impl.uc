@@ -172,6 +172,11 @@ function int GetPortalCount()
 	return NumPortals;
 }
 
+function int GetPortalNavMeshIndex(int PortalPolyGroupIndex)
+{
+	return PortalIndexArray[PortalPolyGroupIndex];
+}
+
 function int GetNumEdgesInPortal(int PortalIndex)
 {
 	return PortalArray[PortalIndex].GetEdgeCount();

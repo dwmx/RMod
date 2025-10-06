@@ -81,6 +81,7 @@ function bool IsValidPolyGroupIndex(int PolyGroupIndex);
 // Portals
 function bool IsValidPortalIndex(int PortalIndex);
 function R_NavMeshPortal GetPortalByIndex(int PortalIndex);
+function int GetPortalCount();
 
 //------------------------------------------------------------------------------
 //	Base NavMesh implementation -- Do not override

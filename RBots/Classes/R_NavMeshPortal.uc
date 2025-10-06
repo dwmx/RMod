@@ -28,3 +28,5 @@ function int GetPolygonPortalIndex(int PolygonNavMeshIndex);
 function AddPolygonUnique(int PolygonNavMeshIndex);
 function int GetPolygonCount();
 function bool ContainsPolygon(int PolygonNavMeshIndex);
+
+function GetNeighborSet(out R_NavNeighborSet OutNeighborSet);

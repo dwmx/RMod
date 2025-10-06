@@ -26,6 +26,7 @@ function int GetTrianglePolyGroupIndex(int TriangleNavMeshIndex);
 function PushTriangleIndex(int TriangleNavMeshIndex);
 
 function int GetPortalCount();
+function int GetPortalNavMeshIndex(int PortalPolyGroupIndex);
 function int GetNumEdgesInPortal(int PortalIndex);
 function int GetPortalEdge(int PortalIndex, int EdgeIndex);
 

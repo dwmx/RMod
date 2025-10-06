@@ -370,6 +370,7 @@ function DrawPolyGroupPathInfo(Canvas C, R_Bot DebugTarget, R_RBotsDebug_StringM
 	local bool bHadError;
 	local R_NavMesh NavMesh;
 	local R_NavGraphInterface PolyGroupGraphInterface;
+	local R_NavGraphInterface PortalGraphInterface;
 	local R_NavQueryInterface NavQuery;
 	local R_NavPathFinder PathFinder;
 	local int NumIndices;
@@ -400,6 +401,13 @@ function DrawPolyGroupPathInfo(Canvas C, R_Bot DebugTarget, R_RBotsDebug_StringM
 	if(PolyGroupGraphInterface == None)
 	{
 		StringManager.AddWarning(DebugPolyGroupPathFindCategory, "PolyGroupGraphInterface is None");
+		bHadError = true;
+	}
+
+	PortalGraphInterface = NavMesh.GetPortalGraphInterface();
+	if(PortalGraphInterface == None)
+	{
+		StringManager.AddWarning(DebugPolyGroupPathFindCategory, "PortalGraphInterface is None");
 		bHadError = true;
 	}
 
@@ -440,65 +448,38 @@ function DrawPolyGroupPathInfo(Canvas C, R_Bot DebugTarget, R_RBotsDebug_StringM
 	NavContextObserver.GetPathNodeIndex(0, StartPolyIndex);
 	NavContextObserver.GetPathNodeIndex(NumIndices - 1, EndPolyIndex);
 
-	NavMesh.GetTrianglePolyGroupIndexChecked(StartPolyIndex, StartPolyGroupIndex);
-	NavMesh.GetTrianglePolyGroupIndexChecked(EndPolyIndex, EndPolyGroupIndex);
-
-	StringManager.AddInt(DebugPolyGroupPathFindCategory, "PolyGroup Start", StartPolyGroupIndex);
-	StringManager.AddInt(DebugPolyGroupPathFindCategory, "PolyGroup End", EndPolyGroupIndex);
-
-	PolyGroupNavContext.ClearPath();
-	if(PathFinder.FindPath(PolyGroupGraphInterface, StartPolyGroupIndex, EndPolyGroupIndex, PolyGroupNavContext))
+	// Draw PolyGroup path in the StringManager
+	if(PolyGroupGraphInterface != None)
 	{
-		NumPolyGroupPathIndices = PolyGroupNavContext.GetNumPathNodeIndices();
-		StringManager.AddInt(DebugPolyGroupPathFindCategory, "Num PolyGroup Path Indices", NumPolyGroupPathIndices);
+		NavMesh.GetTrianglePolyGroupIndexChecked(StartPolyIndex, StartPolyGroupIndex);
+		NavMesh.GetTrianglePolyGroupIndexChecked(EndPolyIndex, EndPolyGroupIndex);
 
-		for(i = 0; i < NumPolyGroupPathIndices; ++i)
+		StringManager.AddInt(DebugPolyGroupPathFindCategory, "PolyGroup Start", StartPolyGroupIndex);
+		StringManager.AddInt(DebugPolyGroupPathFindCategory, "PolyGroup End", EndPolyGroupIndex);
+
+		PolyGroupNavContext.ClearPath();
+		if(PathFinder.FindPath(PolyGroupGraphInterface, StartPolyGroupIndex, EndPolyGroupIndex, PolyGroupNavContext))
 		{
-			PolyGroupNavContext.GetPathNodeIndex(i, CurrentPolyGroupPathNodeIndex);
-			StringManager.AddInt(DebugPolyGroupPathFindCategory, "PolyGroup Path Index [" $ i $ "]", CurrentPolyGroupPathNodeIndex);
+			NumPolyGroupPathIndices = PolyGroupNavContext.GetNumPathNodeIndices();
+			StringManager.AddInt(DebugPolyGroupPathFindCategory, "Num PolyGroup Path Indices", NumPolyGroupPathIndices);
+
+			for(i = 0; i < NumPolyGroupPathIndices; ++i)
+			{
+				PolyGroupNavContext.GetPathNodeIndex(i, CurrentPolyGroupPathNodeIndex);
+				StringManager.AddInt(DebugPolyGroupPathFindCategory, "PolyGroup Path Index [" $ i $ "]", CurrentPolyGroupPathNodeIndex);
+			}
+		}
+		else
+		{
+			StringManager.AddWarning(DebugPolyGroupPathFindCategory, "Could not find PolyGroup path between PolyGroups" @ StartPolyGroupIndex @ "and" @ EndPolyGroupIndex);
 		}
 	}
-	else
-	{
-		StringManager.AddWarning(DebugPolyGroupPathFindCategory, "Could not find PolyGroup path between PolyGroups" @ StartPolyGroupIndex @ "and" @ EndPolyGroupIndex);
-	}
 	
-
-	/*
-	// TODO: Fix all this
-	local R_NavQueryInterface NavQuery;
-	local R_NavMesh NavMesh;
-	local R_NavPathFinder PathFinder;
-	local int StartIndex, EndIndex;
-	local int NumIndices;
-	local int PolyGroupPath[32];
-	local int NumPolyGroupIndices;
-	local int i;
-
-	NavMesh = GetNavMesh();
-	NavQuery = GetDebugMutator().GetRBotsServerActor().GetNavQueryInterface();
-	PathFinder = NavQuery.GetNavPathFinder();
-
-	NumIndices = NavContextObserver.GetNumPathNodeIndices();
-	
-	if(NumIndices > 0)
+	// Draw Portal path in the StringManager
+	if(PortalGraphInterface != None)
 	{
-		NavContextObserver.GetPathNodeIndex(0, StartIndex);
-		NavContextObserver.GetPathNodeIndex(NumIndices - 1, EndIndex);
-
-		//PathFinder.FindPolyGroupPath(NavMesh, StartIndex, EndIndex, PolyGroupPath, NumPolyGroupIndices);
 		
-		StringManager.AddInt(DebugPathFindingCategory, "Num PolyGroup Path Nodes", NumPolyGroupIndices);
-		for(i = 0; i < NumPolyGroupIndices; ++i)
-		{
-			StringManager.AddInt(DebugPathFindingCategory, "PolyGroupPath[" $ i $ "]", PolyGroupPath[i]);
-		}
 	}
-	else
-	{
-		StringManager.AddInt(DebugPathFindingCategory, "Num PolyGroup Path Nodes", 0);
-	}
-		*/
 }
 
 defaultproperties
