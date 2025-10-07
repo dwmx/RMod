@@ -39,8 +39,10 @@ var private int NumTriangles;
 
 var private R_NavNeighborSet NeighborSets[ArrayCount(TriangleArray)];
 
+// PolyGroup Array
+// NOTE: R_NavMeshPortal PolyGroupCost array needs to match this size
 const PolyGroupClass = Class'RBots.R_NavMeshPolyGroup_Impl';
-var private R_NavMeshPolyGroup PolyGroupArray[32];
+var private R_NavMeshPolyGroup PolyGroupArray[128];
 var private int NumPolyGroups;
 
 const PortalClass = Class'RBots.R_NavMeshPortal_Impl';
@@ -427,6 +429,7 @@ function PostProcessNavMesh()
 	BuildPortals();
 	FinalizePolyGroups();
 	FinalizePortals();
+	BuildPortalToPolyGroupCosts();
 }
 
 function FinalizePolyGroups()
@@ -446,6 +449,77 @@ function FinalizePortals()
 	for(i = 0; i < NumPortals; ++i)
 	{
 		PortalArray[i].FinalizePortal(Self);
+	}
+}
+
+// Calculate the cost from every Portal to every PolyGroup
+function BuildPortalToPolyGroupCosts()
+{
+	local int PolyGroupIndex;
+	local int PortalIndex, NeighborPortalIndex;
+	local float MaxCost;
+	local int PolyGroupPortalCount;
+	local int LocalPortalIndexArray[ArrayCount(PortalArray)];
+	local int NumLocalPortalIndices;
+	local R_NavNeighborSet NeighborSet;
+	local R_NavMeshPortal Portal, NeighborPortal;
+	local float TempCost;
+	local int i;
+
+	Utilities.Static.RLog("Building Portal cost layers", LogCategory);
+
+	MaxCost = 999999.0;
+
+	for(PolyGroupIndex = 0; PolyGroupIndex < NumPolyGroups; ++PolyGroupIndex)
+	{
+		// Initialize all Portals cost to this PolyGroup as MaxCost (unreachable)
+		for(PortalIndex = 0; PortalIndex < NumPortals; ++PortalIndex)
+		{
+			PortalArray[PortalIndex].SetCostToPolyGroup(PolyGroupIndex, MaxCost);
+		}
+
+		NumLocalPortalIndices = 0;
+
+		// Initialize cost of all Portals in this PolyGroup to 0 and queue them
+		PolyGroupPortalCount = PolyGroupArray[PolyGroupIndex].GetPortalCount();
+		for(i = 0; i < PolyGroupPortalCount; ++i)
+		{
+			PortalIndex = PolyGroupArray[PolyGroupIndex].GetPortalNavMeshIndex(i);
+			Portal = PortalArray[PortalIndex];
+			if(Portal != None)
+			{
+				Portal.SetCostToPolyGroup(PolyGroupIndex, 0.0);
+				LocalPortalIndexArray[NumLocalPortalIndices] = PortalIndex;
+				++NumLocalPortalIndices;
+			}
+		}
+
+		// Build the costs outward from PolyGroup
+		while(NumLocalPortalIndices > 0)
+		{
+			--NumLocalPortalIndices;
+			PortalIndex = LocalPortalIndexArray[NumLocalPortalIndices];
+			Portal = PortalArray[PortalIndex];
+			if(Portal != None)
+			{
+				PortalArray[PortalIndex].GetNeighborSet(NeighborSet);
+				for(i = 0; i < NeighborSet.NumNeighbors; ++i)
+				{
+					NeighborPortalIndex = NeighborSet.Neighbors[i].NeighborIndex;
+					NeighborPortal = PortalArray[NeighborPortalIndex];
+					if(NeighborPortal != None)
+					{
+						TempCost = Portal.GetCostToPolyGroup(PolyGroupIndex) + NeighborSet.Neighbors[i].NeighborCost;
+						if(TempCost < NeighborPortal.GetCostToPolyGroup(PolyGroupIndex))
+						{
+							NeighborPortal.SetCostToPolyGroup(PolyGroupIndex, TempCost);
+							LocalPortalIndexArray[NumLocalPortalIndices] = NeighborPortalIndex;
+							++NumLocalPortalIndices;
+						}
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -948,8 +1022,8 @@ function BuildPortals()
 						}
 
 						Portal.AddEdgeUnique(SharedEdgeIndex);
-						Portal.AddPolygonUnique(CurrentPolygonIndex);
-						Portal.AddPolygonUnique(CurrentNeighborIndex);
+						Portal.AddPolygonUniqueForPolyGroupA(CurrentPolygonIndex);
+						Portal.AddPolygonUniqueForPolyGroupB(CurrentNeighborIndex);
 					}
 				}
 			}

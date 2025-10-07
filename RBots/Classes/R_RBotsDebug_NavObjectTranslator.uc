@@ -74,3 +74,22 @@ static function GetPolyGroupNeighborSet(
 		OutNeighborCosts[i] = NeighborSet.Neighbors[i].NeighborCost;
 	}
 }
+
+static function GetPortalNeighborSet(
+	R_NavMeshPortal Portal,
+	out int OutNeighborIndices[32],
+	out float OutNeighborCosts[32],
+	out int OutNumNeighbors)
+{
+	local R_NavNeighborSet NeighborSet;
+	local int i;
+
+	Portal.GetNeighborSet(NeighborSet);
+	OutNumNeighbors = NeighborSet.NumNeighbors;
+
+	for(i = 0; i < OutNumNeighbors; ++i)
+	{
+		OutNeighborIndices[i] = NeighborSet.Neighbors[i].NeighborIndex;
+		OutNeighborCosts[i] = NeighborSet.Neighbors[i].NeighborCost;
+	}
+}

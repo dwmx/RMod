@@ -17,8 +17,11 @@ var private int EdgeIndexArray[32];
 var private int NumEdgeIndices;
 
 // Polygons touching this Portal
-var private int PolygonIndexArray[64];
-var private int NumPolygonIndices;
+var private int PolygonIndexArrayA[64];
+var private int NumPolygonIndicesA;
+
+var private int PolygonIndexArrayB[64];
+var private int NumPolygonIndicesB;
 
 // The PolyGroup indices on either side of this portal, ordered {MinIndex,MaxIndex}
 var private int AdjacentPolyGroupIndices[2];
@@ -29,6 +32,14 @@ var private R_NavMeshPolyGroup AdjacentPolyGroupReferences[ArrayCount(AdjacentPo
 // Portals are nodes, and the PolyGroups are edges
 // Costs between Portals are pulled from the associated PolyGroup's cost layers
 var private R_NavNeighborSet NeighborSet;
+
+// Costs from this Portal to each PolyGroup in the NavMesh
+// This is set by the owning NavMesh during the precomputed cost building stage
+// NOTE: This needs to match R_NavMesh.PolyGroupArray size
+var private float PolyGroupCosts[128];
+
+// Representative location for this Portal
+var private Vector PortalLocation;
 
 //------------------------------------------------------------------------------
 
@@ -44,10 +55,14 @@ function InitializePortal(R_NavMesh NavMesh)
 	}
 }
 
+//------------------------------------------------------------------------------
+
 function FinalizePortal(R_NavMesh NavMesh)
 {
 	UpdateCachedPolyGroupReferences(NavMesh);
 	BuildNeighborSet();
+
+	PortalLocation = CalcPortalLocation(NavMesh);
 }
 
 function ClearCachedPolyGroupReferences()
@@ -80,6 +95,21 @@ function UpdateCachedPolyGroupReferences(R_NavMesh NavMesh)
 	}
 }
 
+function Vector CalcPortalLocation(R_NavMesh NavMesh)
+{
+	// TODO: Update this to return some point along the edge strip of the Portal
+	// For now, just returns the center point of the first edge
+	local Vector VLocEdge[2];
+
+	if(NumEdgeIndices <= 0)
+	{
+		return Vect(0,0,0);
+	}
+
+	NavMesh.GetEdgeVertexLocationsUnchecked(EdgeIndexArray[0], VLocEdge);
+	return (VLocEdge[0] + VLocEdge[1]) * 0.5;
+}
+
 //------------------------------------------------------------------------------
 
 function SetPortalIndex(int NewPortalIndex)
@@ -90,6 +120,13 @@ function SetPortalIndex(int NewPortalIndex)
 function int GetPortalIndex()
 {
 	return PortalIndex;
+}
+
+//------------------------------------------------------------------------------
+
+function Vector GetPortalLocation()
+{
+	return PortalLocation;
 }
 
 //------------------------------------------------------------------------------
@@ -194,22 +231,26 @@ function int GetEdgeCount()
 
 //------------------------------------------------------------------------------
 
-function int GetPolygonNavMeshIndex(int PolygonPortalIndex)
+function int GetPolygonNavMeshIndexForPolyGroup(int PolyGroupNavMeshIndex, int PolygonPortalIndex)
 {
-	if(PolygonPortalIndex >= 0 && PolygonPortalIndex < NumPolygonIndices)
+	if(AdjacentPolyGroupIndices[0] == PolyGroupNavMeshIndex)
 	{
-		return PolygonIndexArray[PolygonPortalIndex];
+		return PolygonIndexArrayA[PolygonPortalIndex];
+	}
+	else if(AdjacentPolyGroupIndices[1] == PolyGroupNavMeshIndex)
+	{
+		return PolygonIndexArrayB[PolygonPortalIndex];
 	}
 	return NavLib.Static.InvalidIndex();
 }
 
-function int GetPolygonPortalIndex(int PolygonNavMeshIndex)
+function int InternalGetPolygonPortalIndex(out int InPolygonIndexArray[ArrayCount(PolygonIndexArrayA)], out int InNumPolygonIndices, int PolygonNavMeshIndex)
 {
 	local int i;
 
-	for(i = 0; i < NumPolygonIndices; ++i)
+	for(i = 0; i < InNumPolygonIndices; ++i)
 	{
-		if(PolygonIndexArray[i] == PolygonNavMeshIndex)
+		if(InPolygonIndexArray[i] == PolygonNavMeshIndex)
 		{
 			return i;
 		}
@@ -217,47 +258,90 @@ function int GetPolygonPortalIndex(int PolygonNavMeshIndex)
 	return NavLib.Static.InvalidIndex();
 }
 
-function AddPolygonUnique(int PolygonNavMeshIndex)
+function int GetPolygonPortalIndexForPolyGroup(int PolyGroupNavMeshIndex, int PolygonNavMeshIndex)
+{
+	if(AdjacentPolyGroupIndices[0] == PolyGroupNavMeshIndex)
+	{
+		return InternalGetPolygonPortalIndex(PolygonIndexArrayA, NumPolygonIndicesA, PolygonNavMeshIndex);
+	}
+	else if(AdjacentPolyGroupIndices[1] == PolyGroupNavMeshIndex)
+	{
+		return InternalGetPolygonPortalIndex(PolygonIndexArrayB, NumPolygonIndicesB, PolygonNavMeshIndex);
+	}
+	return NavLib.Static.InvalidIndex();
+}
+
+function InternalAddPolygonUnique(out int OutPolygonIndexArray[ArrayCount(PolygonIndexArrayA)], out int OutNumPolygonIndices, int PolygonNavMeshIndex)
 {
 	local String LogWarning;
 	local int i;
 
-	if(NumPolygonIndices >= ArrayCount(PolygonIndexArray))
+	if(OutNumPolygonIndices >= ArrayCount(OutPolygonIndexArray))
 	{
-		LogWarning = "AddPolygonUnique failed -- Array overflow";
+		LogWarning = "InternalAddPolygonUnique failed -- Array overflow";
 		Warn(LogWarning);
 		Utilities.Static.RLog(LogWarning, LogCategory);
 		return;
 	}
 
-	for(i = 0; i < NumPolygonIndices; ++i)
+	for(i = 0; i < OutNumPolygonIndices; ++i)
 	{
-		if(PolygonIndexArray[i] == PolygonNavMeshIndex)
+		if(OutPolygonIndexArray[i] == PolygonNavMeshIndex)
 		{
 			return;
 		}
 	}
 
-	PolygonIndexArray[NumPolygonIndices] = PolygonNavMeshIndex;
-	++NumPolygonIndices;
+	OutPolygonIndexArray[OutNumPolygonIndices] = PolygonNavMeshIndex;
+	++OutNumPolygonIndices;
 }
 
-function int GetPolygonCount()
+function AddPolygonUniqueForPolyGroupA(int PolygonNavMeshIndex)
 {
-	return NumPolygonIndices;
+	InternalAddPolygonUnique(PolygonIndexArrayA, NumPolygonIndicesA, PolygonNavMeshIndex);
+}
+
+function AddPolygonUniqueForPolyGroupB(int PolygonNavMeshIndex)
+{
+	InternalAddPolygonUnique(PolygonIndexArrayB, NumPolygonIndicesB, PolygonNavMeshIndex);
+}
+
+function int GetPolygonCountForPolyGroupA() { return NumPolygonIndicesA; }
+function int GetPolygonCountForPolyGroupB() { return NumPolygonIndicesB; }
+
+function int GetPolygonCountForPolyGroup(int PolyGroupNavMeshIndex)
+{
+	if(AdjacentPolyGroupIndices[0] == PolyGroupNavMeshIndex)
+	{
+		return GetPolygonCountForPolyGroupA();
+	}
+	if(AdjacentPolyGroupIndices[1] == PolyGroupNavMeshIndex)
+	{
+		return GetPolygonCountForPolyGroupB();
+	}
+	return 0;
 }
 
 function bool ContainsPolygon(int PolygonNavMeshIndex)
 {
 	local int i;
 
-	for(i = 0; i < NumPolygonIndices; ++i)
+	for(i = 0; i < NumPolygonIndicesA; ++i)
 	{
-		if(PolygonIndexArray[i] == PolygonNavMeshIndex)
+		if(PolygonIndexArrayA[i] == PolygonNavMeshIndex)
 		{
 			return true;
 		}
 	}
+
+	for(i = 0; i < NumPolygonIndicesB; ++i)
+	{
+		if(PolygonIndexArrayB[i] == PolygonNavMeshIndex)
+		{
+			return true;
+		}
+	}
+
 	return false;
 }
 
@@ -285,7 +369,12 @@ function BuildNeighborSet()
 		for(j = 0; j < NumNeighborPortals; ++j)
 		{
 			NeighborPortalIndex = PolyGroup.GetPortalNavMeshIndex(j);
-			NeighborCost = 10.0; // TODO: Get cost from Self to Neighbor from the PolyGroup
+			if(NeighborPortalIndex == PortalIndex)
+			{
+				continue;
+			}
+
+			NeighborCost = PolyGroup.GetCostBetweenLocalPortals(NeighborPortalIndex, PortalIndex);
 
 			if(!NavObjectClass.Static.NavNeighborSet_AddNeighbor(
 				NeighborSet,
@@ -297,6 +386,16 @@ function BuildNeighborSet()
 			}
 		}
 	}
+}
+
+function SetCostToPolyGroup(int PolyGroupIndex, float Cost)
+{
+	PolyGroupCosts[PolyGroupIndex] = Cost;
+}
+
+function float GetCostToPolyGroup(int PolyGroupIndex)
+{
+	return PolyGroupCosts[PolyGroupIndex];
 }
 
 function GetNeighborSet(out R_NavNeighborSet OutNeighborSet)

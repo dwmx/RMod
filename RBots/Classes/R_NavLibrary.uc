@@ -12,6 +12,7 @@ const EPSILON = 0.00006;
 
 // Invalid index used across all navmesh index types
 static function int InvalidIndex() 			{ return -1; }
+static function float MaxDistance()			{ return 999999.0; }
 
 // Edge Flags
 static function int EdgeFlag_Border()		{ return 0x01; }

@@ -27,6 +27,7 @@ function PushTriangleIndex(int TriangleNavMeshIndex);
 
 function int GetPortalCount();
 function int GetPortalNavMeshIndex(int PortalPolyGroupIndex);
+function int GetPortalPolyGroupIndex(int PortalNavMeshIndex);
 function int GetNumEdgesInPortal(int PortalIndex);
 function int GetPortalEdge(int PortalIndex, int EdgeIndex);
 
@@ -44,6 +45,10 @@ function bool DoesPortalExistToDest(int DestPolyGroupIndex);
 function BuildPortals(R_NavMesh NavMesh);
 
 function float GetPortalCostFromIndex(int TrianglePolyGroupIndex, int PortalIndex);
+
+// Given two Portals as NavMesh indices, returns the precomputed travel cost between them
+// Assumes both Portals are local to this PolyGroup, returning MaxDistance otherwise
+function float GetCostBetweenLocalPortals(int PortalNavMeshIndexA, int PortalNavMeshIndexB);
 
 // Given a TriangleNavMeshIndex, returns the distance from that triangle to the portal
 // between this PolyGroup and the specified PolyGroup

@@ -10,18 +10,25 @@ const DebugLib = Class'RBots.R_RBots_DebugLibrary';
 const NavLib = Class'RBots.R_NavLibrary';
 const NavTranslator = Class'RBots.R_RBotsDebug_NavObjectTranslator';
 
+const GeomLib = Class'RBase.R_AGeometryLibrary';
+
 const DebugCategory_NavMesh = 'NavMesh';
 const DebugCategory_NavMeshPolygon = 'NavMeshPolygons';
 const DebugCategory_NavMeshEdges = 'NavMeshEdges';
 const DebugCategory_NavMeshPolyGroup = 'NavMeshPolyGroups';
 const DebugCategory_NavMeshNeighbors = 'NavMeshNeighbors';
 const DebugCategory_NavMeshPlayerBorders = 'NavMeshPlayerBorders';
+const DebugCategory_NavMeshPortals = 'NavMeshPortals';
+const DebugCategory_NavMeshPortals_SelectedPortal = 'NavMeshPortalSelected';
 
 // Vertical offset for drawing to avoid z fighting and invisible lines
 const VERTICAL_DRAW_OFFSET = 2.0;
 
 const VertexSize = 6.0;
 const NormalSize = 16.0;
+
+const PortalDrawZOffset = 1.0;
+const PortalDrawHeight = 96.0;
 
 enum R_NavMeshDrawMode
 {
@@ -40,6 +47,7 @@ var config private bool bDrawNeighborCosts;
 var config private bool bDrawAdjacents;
 var config private bool bDrawProximity;
 var config private bool bDrawPlayerBorders;
+var config private bool bDrawPortals;
 
 // Colors
 var Color VertexColor;
@@ -64,6 +72,10 @@ var Color PolyGroupColor_InactivePolygons;
 var Color PolyGroupColor_InvalidPolygons;
 var Color PolyGroupColor_Actors;
 var Color PolyGroupColor_PortalPathWay;
+
+var Color PortalColor_Edge;
+var Color PortalColor_EdgeSelected;
+var Color PortalColor_Neighbors;
 
 function SwitchToOrDisableDrawMode(R_NavMeshDrawMode NewDrawMode)
 {
@@ -149,6 +161,12 @@ function TogglePlayerBorders()
 	SaveConfig();
 }
 
+function TogglePortals()
+{
+	bDrawPortals = !bDrawPortals;
+	SaveConfig();
+}
+
 
 
 function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
@@ -206,6 +224,12 @@ function DrawNavMesh(Canvas C, R_RbotsDebug_StringManager StringManager, R_NavMe
 	if(bDrawPlayerBorders)
 	{
 		DrawNavMeshPlayerBorders(C, StringManager, NavMesh);
+	}
+
+	// Portals -- Available in any draw mode
+	if(bDrawPortals)
+	{
+		DrawPortals(C, StringManager, NavMesh);
 	}
 }
 
@@ -668,6 +692,211 @@ function DrawPolyGroupInfo_PortalPathways(
 	}
 }
 
+function DrawPortals(Canvas C, R_RBotsDebug_StringManager StringManager, R_NavMesh NavMesh)
+{
+	local int PortalCount;
+	local R_NavMeshPortal Portal;
+	local int PortalIndex;
+	local int PortalEdgeCount;
+	local int EdgeIndex;
+	local Vector VLocEdge[2];
+	local int SelectedPortalIndex;
+	local int i;
+	local float EdgeRGB[3], EdgeSelectedRGB[3];
+
+	StringManager.AddCategory(DebugCategory_NavMeshPortals);
+
+	StringManager.AddColor(DebugCategory_NavMeshPortals, "Portal Edge", PortalColor_Edge);
+	StringManager.AddColor(DebugCategory_NavMeshPortals, "Selected Portal", PortalColor_EdgeSelected);
+	StringManager.AddColor(DebugCategory_NavMeshPortals, "Selected Portal Neighbors", PortalColor_Neighbors);
+	Utilities.Static.ColorToFloats(PortalColor_Edge, EdgeRGB[0], EdgeRGB[1], EdgeRGB[2]);
+	Utilities.Static.ColorToFloats(PortalColor_EdgeSelected, EdgeSelectedRGB[0], EdgeSelectedRGB[1], EdgeSelectedRGB[2]);
+
+	PortalCount = NavMesh.GetPortalCount();
+	StringManager.AddInt(DebugCategory_NavMeshPortals, "Portal Count", PortalCount);
+
+	SelectedPortalIndex = FindSelectedPortalIndex(NavMesh);
+
+	for(PortalIndex = 0; PortalIndex < PortalCount; ++PortalIndex)
+	{
+		Portal = NavMesh.GetPortalByIndex(PortalIndex);
+		if(Portal == None)
+		{
+			StringManager.AddWarning(DebugCategory_NavMeshPortals, "NavMesh.GetPortalByIndex returned None for index" @ PortalIndex);
+			continue;
+		}
+
+		if(PortalIndex == SelectedPortalIndex)
+		{
+			DrawPortal(C, NavMesh, Portal, EdgeSelectedRGB);
+			DrawPortalNeighborConnections(C, NavMesh, Portal);
+			DrawPortalInfo(C, StringManager, NavMesh, Portal);
+		}
+		else
+		{
+			DrawPortal(C, NavMesh, Portal, EdgeRGB);
+		}
+	}
+}
+
+// Returns the closest Portal to the Player
+function int FindSelectedPortalIndex(R_NavMesh NavMesh)
+{
+	local Vector PlayerLocation;
+	local float BestDistance, CurrentDistance, TempDistance;
+	local int BestIndex;
+	local int PortalCount;
+	local int PortalIndex;
+	local R_NavMeshPortal Portal;
+	local int PortalEdgeCount;
+	local int PortalEdgeIndex;
+	local int EdgeIndex;
+	local Vector VLocEdge[2];
+
+	PlayerLocation = GetPlayerPawnOwnerLocation();
+	if(PlayerLocation == Vect(0,0,0))
+	{
+		return NavLib.Static.InvalidIndex();
+	}
+
+	PortalCount = NavMesh.GetPortalCount();
+	BestDistance = 999999.0;
+	BestIndex = NavLib.Static.InvalidIndex();
+	for(PortalIndex = 0; PortalIndex < PortalCount; ++PortalIndex)
+	{
+		Portal = NavMesh.GetPortalByIndex(PortalIndex);
+		if(Portal != None)
+		{
+			PortalEdgeCount = Portal.GetEdgeCount();
+			if(PortalEdgeCount > 0)
+			{
+				CurrentDistance = 999999.0;
+				for(PortalEdgeIndex = 0; PortalEdgeIndex < PortalEdgeCount; ++PortalEdgeIndex)
+				{
+					EdgeIndex = Portal.GetEdgeNavMeshIndex(PortalEdgeIndex);
+					NavMesh.GetEdgeVertexLocationsUnchecked(EdgeIndex, VLocEdge);
+					TempDistance = GeomLib.Static.DistanceLocationToLineSegment2D(PlayerLocation, VLocEdge);
+					TempDistance += Abs(FMin(PlayerLocation.Z - VLocEdge[0].Z, PlayerLocation.Z - VLocEdge[1].Z));
+					if(TempDistance < CurrentDistance)
+					{
+						CurrentDistance = TempDistance;
+					}
+				}
+			}
+
+			if(CurrentDistance < BestDistance && CurrentDistance <= 256.0)
+			{
+				BestDistance = CurrentDistance;
+				BestIndex = PortalIndex;
+			}
+		}
+	}
+
+	return BestIndex;
+}
+
+function DrawPortal(Canvas C, R_NavMesh NavMesh, R_NavMeshPortal Portal, float RGB[3])
+{
+	local int EdgeCount;
+	local int EdgeIndex;
+	local Vector VLocEdge[2];
+	local Vector Corners[4];
+	local Vector DrawOffset;
+	local int i, j;
+
+	DrawOffset = Vect(0,0,1) * PortalDrawZOffset;
+
+	EdgeCount = Portal.GetEdgeCount();
+	for(i = 0; i < EdgeCount; ++i)
+	{
+		EdgeIndex = Portal.GetEdgeNavMeshIndex(i);
+		NavMesh.GetEdgeVertexLocationsUnchecked(EdgeIndex, VLocEdge);
+		Corners[0] = VLocEdge[0] + DrawOffset;
+		Corners[1] = VLocEdge[0] + DrawOffset + Vect(0,0,1) * PortalDrawHeight;
+		Corners[2] = VLocEdge[1] + DrawOffset + Vect(0,0,1) * PortalDrawHeight;
+		Corners[3] = VLocEdge[1] + DrawOffset;
+
+		for(j = 0; j < ArrayCount(Corners); ++j)
+		{
+			CanvasLib.Static.DrawLine3D(C, Corners[j], Corners[(j+1) % ArrayCount(Corners)], RGB[0], RGB[1], RGB[2]);
+		}
+	}
+}
+
+function DrawPortalNeighborConnections(Canvas C, R_NavMesh NavMesh, R_NavMeshPortal Portal)
+{
+	local float NeighborRGB[3];
+	local int PortalNeighborIndices[32];
+	local float PortalNeighborCosts[32];
+	local int PortalNeighborCount;
+	local R_NavMeshPortal NeighborPortal;
+	local Vector DrawStart, DrawEnd;
+	local Vector DrawCenter;
+	local int i;
+
+	Utilities.Static.ColorToFloats(PortalColor_Neighbors, NeighborRGB[0], NeighborRGB[1], NeighborRGB[2]);
+	DrawStart = Portal.GetPortalLocation() + Vect(0,0,1) * PortalDrawZOffset + Vect(0,0,1) * PortalDrawHeight * 0.5;
+
+	DebugLib.Static.InitializeCanvasForDebugDrawing(C);
+
+	NavTranslator.Static.GetPortalNeighborSet(Portal, PortalNeighborIndices, PortalNeighborCosts, PortalNeighborCount);
+	for(i = 0; i < PortalNeighborCount; ++i)
+	{
+		NeighborPortal = NavMesh.GetPortalByIndex(PortalNeighborIndices[i]);
+		if(NeighborPortal != None)
+		{
+			DrawEnd = NeighborPortal.GetPortalLocation() + Vect(0,0,1) * PortalDrawZOffset + Vect(0,0,1) * PortalDrawHeight * 0.5;
+
+			CanvasLib.Static.DrawLine3D(C, DrawStart, DrawEnd, NeighborRGB[0], NeighborRGB[1], NeighborRGB[2]);
+			DrawCenter = (DrawStart + DrawEnd) * 0.5;
+			CanvasLib.Static.DrawTextAtWorldLocation(C, Utilities.Static.FloatToString(PortalNeighborCosts[i], 2), DrawCenter, Vect(0.5, 1.0, 0.0));
+		}
+	}
+}
+
+function DrawPortalInfo(Canvas C, R_RBotsDebug_StringManager StringManager, R_NavMesh NavMesh, R_NavMeshPortal Portal)
+{
+	local int PolyGroupIndexA, PolyGroupIndexB;
+	local int PortalNeighborIndices[32];
+	local float PortalNeighborCosts[32];
+	local int PortalNeighborCount;
+	local int PolyGroupCount;
+	local String DrawString;
+	local int i;
+
+	//--------------------------------------------------------------------------
+	// Collect info
+	Portal.GetAdjacentPolyGroupIndices(PolyGroupIndexA, PolyGroupIndexB);
+	NavTranslator.Static.GetPortalNeighborSet(Portal, PortalNeighborIndices, PortalNeighborCosts, PortalNeighborCount);
+	PolyGroupCount = NavMesh.GetPolyGroupCount();
+
+	//--------------------------------------------------------------------------
+	// Draw strings
+	StringManager.AddCategory(DebugCategory_NavMeshPortals_SelectedPortal);
+
+	StringManager.AddInt(DebugCategory_NavMeshPortals_SelectedPortal, "Portal Index", Portal.GetPortalIndex());
+	StringManager.AddInt(DebugCategory_NavMeshPortals_SelectedPortal, "Portal Edge Count", Portal.GetEdgeCount());
+
+	DrawString = "{" $ PolyGroupIndexA $ "," $ PolyGroupIndexB $ "}";
+	StringManager.AddString(DebugCategory_NavMeshPortals_SelectedPortal, DrawString, "Portal PolyGroups");
+
+	// Neighbors
+	StringManager.AddString(DebugCategory_NavMeshPortals_SelectedPortal, "--------------------------------");
+	StringManager.AddInt(DebugCategory_NavMeshPortals_SelectedPortal, "Neighbor Count", PortalNeighborCount);
+	for(i = 0; i < PortalNeighborCount; ++i)
+	{
+		DrawString = "{Index:" @ PortalNeighborIndices[i] $ ", Cost:" @ PortalNeighborCosts[i] $ "}";
+		StringManager.AddString(DebugCategory_NavMeshPortals_SelectedPortal, DrawString, "- Neighbor[" $ i $ "]");
+	}
+
+	// PolyGroup distances
+	StringManager.AddString(DebugCategory_NavMeshPortals_SelectedPortal, "--------------------------------");
+	for(i = 0; i < PolyGroupCount; ++i)
+	{
+		StringManager.AddFloat(DebugCategory_NavMeshPortals_SelectedPortal, "- Cost to PolyGroup[" $ i $ "]", Portal.GetCostToPolyGroup(i), 3);
+	}
+}
+
 defaultproperties
 {
 	VertexColor=(R=252,G=207,B=91)
@@ -688,6 +917,9 @@ defaultproperties
 	PolyGroupColor_InvalidPolygons=(R=255,G=255,B=255)
 	PolyGroupColor_Actors=(R=17,G=219,B=255)
 	PolyGroupColor_PortalPathWay=(R=255,G=7,B=222)
+	PortalColor_Edge=(R=255,G=7,B=222)
+	PortalColor_EdgeSelected=(R=251,G=255,B=3)
+	PortalColor_Neighbors=(R=255,G=163,B=163)
 	bDrawNormals=true
 	bDrawVertices=false
 	bDrawEdgeOrientations=true
@@ -696,4 +928,5 @@ defaultproperties
 	bDrawAdjacents=true
 	bDrawProximity=true
 	bDrawPlayerBorders=true
+	bDrawPortals=true
 }

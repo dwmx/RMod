@@ -18,6 +18,7 @@ const Command_ToggleAdjacents = "Adjacents";
 const Command_ToggleProximity = "Proximity";
 const Command_TogglePlayerBorders = "PlayerBorders";
 const Command_TogglePolyGroups = "PolyGroups";
+const Command_TogglePortals = "Portals";
 
 function RegisterCommandList()
 {
@@ -35,6 +36,7 @@ function RegisterCommandList()
 	RegisterCommand(Command_ToggleProximity);
 	RegisterCommand(Command_TogglePlayerBorders);
 	RegisterCommand(Command_TogglePolyGroups);
+	RegisterCommand(Command_TogglePortals);
 }
 
 function bool TryHandleCommand(String CommandString, R_RBotsDebug DebugMutator, PlayerPawn Sender)
@@ -55,6 +57,7 @@ function bool TryHandleCommand(String CommandString, R_RBotsDebug DebugMutator, 
 		case Command_ToggleProximity:			HandleCommand_ToggleProximity(DebugMutator, Sender);		return true;
 		case Command_TogglePlayerBorders:		HandleCommand_TogglePlayerBorders(DebugMutator, Sender);	return true;
 		case Command_TogglePolyGroups:			HandleCommand_TogglePolyGroups(DebugMutator, Sender);		return true;
+		case Command_TogglePortals:				HandleCommand_TogglePortals(DebugMutator, Sender);			return true;
 	}
 
 	return false;
@@ -248,6 +251,20 @@ function HandleCommand_TogglePolyGroups(R_RBotsDebug DebugMutator, PlayerPawn Se
 		if(DVNavMesh != None)
 		{
 			DVNavMesh.TogglePolyGroupInfo();
+		}
+	} 
+}
+
+function HandleCommand_TogglePortals(R_RBotsDebug DebugMutator, PlayerPawn Sender)
+{
+	local R_RBotsDebug_View_NavMesh DVNavMesh;
+
+	if(DebugMutator != None)
+	{
+		DVNavMesh = GetDVNavMesh(DebugMutator);
+		if(DVNavMesh != None)
+		{
+			DVNavMesh.TogglePortals();
 		}
 	} 
 }
