@@ -11,6 +11,20 @@ function R_NavPathFinder GetNavPathFinder();
 function R_NavPathFilter GetNavPathFilter();
 
 //------------------------------------------------------------------------------
+//	NavZones
+//	NavZones are abstract partitions of some underlying navigation structure,
+//	cutting the map into multiple different zones
+//	In the context of a NavMesh, a NavZone is a PolyGroup
+//	Note that these are not in any way tied to the concept of Engine.ZoneInfo
+
+// Returns the number of available navigable zones
+function int GetNavZoneCount();
+
+// Returns the index of the navigable zone associated with the given name
+// Returns InvalidIndex if no zone could be found
+function int GetNavZoneIndexByName(Name NavZoneName);
+
+//------------------------------------------------------------------------------
 
 /**
 *	FindRandomNavigableLocationInRadius
@@ -37,33 +51,16 @@ function bool FindPath(
 	optional R_NavSettings OptionalNavSettings);
 
 /**
-*	FindDirectionTowardsLocation
-*	Given a start and end location, performs a broad search to find only
-*	the instantaneous direction that would progress you closer to end,
-*	without finding a full path
+*	FindDirectionTowardsNavZoneByIndex
+*	Given a start location and a NavZone index, returns the instantaneous direction
+*	that would progress you towards that NavZone, without performing full path-finding
+*	Very fast, fine to use inside of Tick
 *
 *	Returns false if no direction could be found
 */
-function bool FindDirectionTowardsLocation(
+function bool FindDirectionTowardsNavZoneByIndex(
 	Vector StartLocation,
-	Vector EndLocation,
-	out Vector OutDirection,
-	optional R_NavSettings OptionalNavSettings);
-
-/**
-*	FindDirectionTowardsPolyGroup
-*	Given a location and a PolyGroup index, performs a broad search to find
-*	only the instantaneous direction that would progress you closer to the
-*	specified polygroup, without finding a full path
-*
-*	Slightly faster than DirectionTowardsLocation, but less accurate if know
-*	specifically where you want to be in some room
-*
-*	Returns false if no direction could be found
-*/
-function bool FindDirectionTowardsPolyGroup(
-	Vector Location,
-	int PolyGroupIndex,
+	int NavZoneIndex,
 	out Vector OutDirection,
 	optional R_NavSettings OptionalNavSettings);
 

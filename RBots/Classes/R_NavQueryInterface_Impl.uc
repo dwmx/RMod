@@ -131,7 +131,40 @@ function R_NavPathFilter GetNavPathFilter()
 }
 
 //------------------------------------------------------------------------------
-//	Implementation
+//	NavZones
+//	In the context of a NavMesh, NavZones are PolyGroups
+
+function int GetNavZoneCount()
+{
+	local R_NavMesh NavMesh;
+
+	NavMesh = GetNavMesh();
+	if(NavMesh != None)
+	{
+		return NavMesh.GetPolyGroupCount();
+	}
+	return 0;
+}
+
+function int GetNavZoneIndexByName(Name NavZoneName)
+{
+	local R_NavMesh NavMesh;
+	local int NavZoneIndex;
+
+	NavMesh = GetNavMesh();
+	if(NavMesh != None)
+	{
+		NavZoneIndex = NavMesh.GetPolyGroupIndexByName(NavZoneName);
+		if(NavZoneIndex != NavLib.Static.InvalidIndex())
+		{
+			return NavZoneIndex;
+		}
+	}
+	return NavLib.Static.InvalidIndex();
+}
+
+//------------------------------------------------------------------------------
+//	FindPath
 
 function bool FindPath(
 	Vector StartLocation,
@@ -193,5 +226,111 @@ function bool FindPath(
 		OptionalNavContextObserver.CopyNavPath(NavContext);
 	}
 
+	return true;
+}
+
+//------------------------------------------------------------------------------
+//	FindDirectionTowardsAreaByIndex
+
+function bool FindDirectionTowardsNavZoneByIndex(
+	Vector StartLocation,
+	int NavZoneIndex,
+	out Vector OutDirection,
+	optional R_NavSettings OptionalNavSettings)
+{
+	local R_NavMesh NavMesh;
+	local int StartPolygonNavMeshIndex, StartPolygonPolyGroupIndex;
+	local int StartPolyGroupIndex;
+	local int NextPolygonIndex;
+	local R_NavMeshPolyGroup StartPolyGroup, EndPolyGroup;
+	local R_NavMeshPortal Portal;
+	local int PortalCount;
+	local int PortalIndex;
+	local int i;
+	local float CurrentCost, BestCost;
+	local int BestPortalIndex;
+	local Vector VLocStart[3], VLocNext[3];
+	local Vector CenterStart, CenterNext;
+
+	OutDirection = Vect(0,0,0);
+	
+	NavMesh = GetNavMesh();
+	if(NavMesh == None)
+	{
+		return false;
+	}
+
+	// Get Polygon and PolyGroup start indices
+	StartPolygonNavMeshIndex = NavMesh.FindContainingNodeIndex(StartLocation);
+	StartPolyGroupIndex = NavMesh.FindContainingPolyGroupIndex(StartLocation);
+	if(StartPolygonNavMeshIndex == NavLib.Static.InvalidIndex() || StartPolyGroupIndex == NavLib.Static.InvalidIndex())
+	{
+		return false;
+	}
+
+	// Get PolyGroup references
+	StartPolyGroup = NavMesh.GetPolyGroupByIndex(StartPolyGroupIndex);
+	EndPolyGroup = NavMesh.GetPolyGroupByIndex(NavZoneIndex);
+	if(StartPolyGroup == None || EndPolyGroup == None)
+	{
+		return false;
+	}
+
+	// If start and end polygroups are the same, return success with no direction
+	if(StartPolyGroup.GetPolyGroupIndex() == EndPolyGroup.GetPolyGroupIndex())
+	{
+		OutDirection = Vect(0,0,0);
+		return true;
+	}
+
+	// Need Polygon's PolyGroup index
+	StartPolygonPolyGroupIndex = StartPolyGroup.GetTrianglePolyGroupIndex(StartPolygonNavMeshIndex);
+
+	// Find the lowest cost Portal to the destination PolyGroup
+	// Cost = (Cost from location to Portal) + (Cost from Portal to PolyGroup)
+	BestCost = NavLib.Static.MaxDistance();
+	BestPortalIndex = NavLib.Static.InvalidIndex();
+	PortalCount = StartPolyGroup.GetPortalCount();
+	for(i = 0; i < PortalCount; ++i)
+	{
+		PortalIndex = StartPolyGroup.GetPortalNavMeshIndex(i);
+		Portal = NavMesh.GetPortalByIndex(PortalIndex);
+		if(Portal == None)
+		{
+			continue;
+		}
+
+		//CurrentCost = StartPolyGroup.GetPortalCostFromIndex(StartPolygonPolyGroupIndex, i);
+		CurrentCost = Portal.GetCostToPolyGroup(EndPolyGroup.GetPolyGroupIndex());
+		if(CurrentCost < BestCost)
+		{
+			BestCost = CurrentCost;
+			BestPortalIndex = PortalIndex;
+		}
+	}
+
+	// If no Portal found, there's no Path to that PolyGroup from the current
+	if(BestPortalIndex == NavLib.Static.InvalidIndex())
+	{
+		OutDirection = Vect(0,0,0);
+		return false;
+	}
+
+	// Get the best neighbor towards the Portal
+	NextPolygonIndex = StartPolyGroup.GetNextPolygonNeighborTowardsPortal(StartPolygonNavMeshIndex, BestPortalIndex);
+	if(NextPolygonIndex == NavLib.Static.InvalidIndex())
+	{
+		OutDirection = Vect(0,0,0);
+		return false;
+	}
+
+	// Return direction from here to there
+	NavMesh.GetTriangleVertexLocationsUnchecked(StartPolygonNavMeshIndex, VLocStart);
+	NavMesh.GetTriangleVertexLocationsUnchecked(NextPolygonIndex, VLocNext);
+
+	CenterStart = (VLocStart[0] + VLocStart[1] + VLocStart[2]) * (1.0/3.0);
+	CenterNext = (VLocNext[0] + VLocNext[1] + VLocNext[2]) * (1.0/3.0);
+
+	OutDirection = Normal(Vect(1,1,0) * (CenterNext - CenterStart));
 	return true;
 }

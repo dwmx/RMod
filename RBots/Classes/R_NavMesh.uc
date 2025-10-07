@@ -76,6 +76,7 @@ function CreatePolyGroup(Name PolyGroupName);
 function int GetPolyGroupCount();
 function R_NavMeshPolyGroup GetPolyGroupByIndex(int PolyGroupIndex);
 function R_NavMeshPolyGroup GetPolyGroupByName(Name PolyGroupName);
+function int GetPolyGroupIndexByName(Name PolyGroupName);
 function bool IsValidPolyGroupIndex(int PolyGroupIndex);
 
 // Portals

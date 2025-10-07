@@ -1341,7 +1341,7 @@ function bool FindBestNeighborFromNodeTowardsPolyGroup(int NodeIndex, int PolyGr
 	}
 
 	// Find the lowest cost candidate
-	BestCost = 999999.0;
+	BestCost = NavLib.Static.MaxDistance();
 	BestNode = NavLib.Static.InvalidIndex();
 	for(i = 0; i < NumCandidateNodes; ++i)
 	{

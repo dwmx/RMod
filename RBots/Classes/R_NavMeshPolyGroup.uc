@@ -61,3 +61,7 @@ function bool GetCostFromTriangleToNeighborPolyGroup(
 function GetNeighborSet(out R_NavNeighborSet OutNeighborSet);
 
 function AddPortalUnique(int PortalNavMeshIndex);
+
+// Given a Polygon index contained in this PolyGroup, and a Portal index contained in this PolyGroup,
+// returns the lowest cost neighbor of the current polygon which progresses towards that Portal
+function int GetNextPolygonNeighborTowardsPortal(int CurrentPolygonNavMeshIndex, int PortalNavMeshIndex);

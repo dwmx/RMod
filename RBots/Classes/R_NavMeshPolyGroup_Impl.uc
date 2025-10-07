@@ -11,6 +11,8 @@ const LogCategory = 'NavMeshPolyGroup';
 
 const MaxCost = 999999.0;
 
+var private R_NavMesh CachedNavMesh;
+
 var private Name PolyGroupName;				// This polygroup's name
 var private int PolyGroupIndex;				// Index as assigned by the owning NavMesh
 var private int TriangleIndexArray[2048];	// Indices of triangles in this group
@@ -34,8 +36,14 @@ var private R_NavMeshPolyGroupLayer PortalCostLayerArray[ArrayCount(PortalIndexA
 
 function InitializePolyGroup(R_NavMesh NavMesh)
 {
+	CachedNavMesh = NavMesh;
 	ClearTriangles();
 	ClearPortals();
+}
+
+function R_NavMesh GetNavMesh()
+{
+	return CachedNavMesh;
 }
 
 function ClearTriangles()
@@ -500,4 +508,85 @@ function AddPortalUnique(int PortalNavMeshIndex)
 
 	PortalIndexArray[NumPortals] = PortalNavMeshIndex;
 	++NumPortals;
+}
+
+
+function int GetNextPolygonNeighborTowardsPortal(int CurrentPolygonNavMeshIndex, int PortalNavMeshIndex)
+{
+	local int InvalidIndex;
+	local R_NavMesh NavMesh;
+	local R_NavMeshPortal Portal;
+	local R_NavNeighborSet NeighborSet;
+	local int CurrentPolygonPolyGroupIndex;
+	local int PortalPolyGroupIndex;
+	local int OtherPolyGroupIndex;
+	local int NeighborPolygonNavMeshIndex, NeighborPolygonPolyGroupIndex;
+	local int NeighborPolyGroupIndex;
+	local int i;
+	local float CurrentCost, BestCost;
+	local int BestPolygonNavMeshIndex;
+
+	// Validate input args
+	InvalidIndex = NavLib.Static.InvalidIndex();
+	if(CurrentPolygonNavMeshIndex == InvalidIndex || PortalNavMeshIndex == InvalidIndex)
+	{
+		return InvalidIndex;
+	}
+
+	// Need NavMesh for neighbor look-up
+	NavMesh = GetNavMesh();
+	if(NavMesh == None)
+	{
+		return InvalidIndex;
+	}
+
+	// Get the CurrentPolygon and Portal indices as local indices to this PolyGroup
+	CurrentPolygonPolyGroupIndex = GetTrianglePolyGroupIndex(CurrentPolygonNavMeshIndex);
+	PortalPolyGroupIndex = GetPortalPolyGroupIndex(PortalNavMeshIndex);
+	if(CurrentPolygonPolyGroupIndex == InvalidIndex || PortalPolyGroupIndex == InvalidIndex)
+	{
+		return InvalidIndex;
+	}
+
+	// Get reference to the Portal object
+	Portal = PortalArray[PortalPolyGroupIndex];
+	if(Portal == None)
+	{
+		return InvalidIndex;
+	}
+
+	// Get the index of the PolyGroup on the other side of this Portal
+	OtherPolyGroupIndex = Portal.GetOtherPolyGroupIndex(PolyGroupIndex);
+
+	// Get the NeighborSet of the passed in Polygon
+	NavMesh.GetTriangleNeighborSetUnchecked(CurrentPolygonNavMeshIndex, NeighborSet);
+
+	BestCost = PortalCostLayerArray[PortalPolyGroupIndex].Data[CurrentPolygonPolyGroupIndex];
+	BestPolygonNavMeshIndex = CurrentPolygonNavMeshIndex;
+	for(i = 0; i < NeighborSet.NumNeighbors; ++i)
+	{
+		NeighborPolygonNavMeshIndex = NeighborSet.Neighbors[i].NeighborIndex;
+
+		// If the neighbor is in the PolyGroup on the other side of this Portal, select it
+		NavMesh.GetTrianglePolyGroupIndexUnchecked(NeighborPolygonNavMeshIndex, NeighborPolyGroupIndex);
+
+		if(NeighborPolyGroupIndex == OtherPolyGroupIndex)
+		{
+			return NeighborPolygonNavMeshIndex;
+		}
+
+		// Otherwise, check its cost to the portal from inside this PolyGroup
+		NeighborPolygonPolyGroupIndex = GetTrianglePolyGroupIndex(NeighborPolygonNavMeshIndex);
+		if(NeighborPolygonPolyGroupIndex != InvalidIndex)
+		{
+			CurrentCost = PortalCostLayerArray[PortalPolyGroupIndex].Data[NeighborPolygonPolyGroupIndex];
+			if(CurrentCost < BestCost)
+			{
+				BestCost = CurrentCost;
+				BestPolygonNavMeshIndex = NeighborPolygonNavMeshIndex;
+			}
+		}
+	}
+
+	return BestPolygonNavMeshIndex;
 }

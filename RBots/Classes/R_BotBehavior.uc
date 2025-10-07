@@ -35,6 +35,18 @@ final function InitializeBehavior(R_Bot NewOwnerBot, PlayerPawn NewOwnerPlayerPa
 final function R_Bot GetBot() { return OwnerBot; }
 final function PlayerPawn GetPlayerPawn() { return OwnerPlayerPawn; }
 
+final function Vector GetPlayerPawnLocation()
+{
+	local PlayerPawn PP;
+
+	PP = GetPlayerPawn();
+	if(PP != None)
+	{
+		return PP.Location;
+	}
+	return Vect(0,0,0);
+}
+
 final function R_RBotsServerActor GetRBotsServerActor()
 {
 	local R_Bot Bot;
@@ -136,6 +148,18 @@ final function R_NavMeshActorTracker GetNavMeshActorTracker()
 		}
 	}
 	return CachedNavMeshActorTracker;
+}
+
+final function R_NavQueryInterface GetNavQueryInterface()
+{
+	local R_Bot Bot;
+
+	Bot = GetBot();
+	if(Bot != None)
+	{
+		return Bot.GetNavQueryInterface();
+	}
+	return None;
 }
 
 //------------------------------------------------------------------------------
