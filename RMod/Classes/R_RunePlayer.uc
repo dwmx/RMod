@@ -1133,8 +1133,25 @@ function DiscardInventory()
 */
 function ChangeName(coerce String S)
 {
-    // Last arg = true causes GameInfo to broadcast a message
-    Level.Game.ChangeName(Self, S, true);
+	local String OldName;
+
+	OldName = PlayerReplicationInfo.PlayerName;
+	if (Level.TimeSeconds - (OddsOfAppearing - 1.0) < 15.0)
+	{
+		if (S != OldName)
+		{
+			ClientMessage("You must wait 15 seconds before changing your name again.");
+		}
+		return;
+	}
+
+	// Last arg = true causes GameInfo to broadcast a message
+	Level.Game.ChangeName(Self, S, True);
+
+	if (PlayerReplicationInfo.PlayerName != OldName)
+	{
+		OddsOfAppearing = Level.TimeSeconds + 1.0;
+	}
 }
 
 //==============================================================================
