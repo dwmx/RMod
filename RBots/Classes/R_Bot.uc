@@ -30,6 +30,10 @@ var private R_BotPerception Perception;
 const BotObjectClass_PawnController = Class'RBots.R_BotPawnController';
 var private R_BotPawnController PawnController;
 
+// Brain
+const BotObjectClass_Brain = Class'RBots.R_BotBrain';
+var private R_BotBrain Brain;
+
 // BlackBoard
 const BotObjectClass_BlackBoard = Class'RBots.R_BlackBoard_Implementation';
 const BotObjectClass_BlackBoardReadInterface = Class'RBots.R_BlackBoardReadInterface';
@@ -39,6 +43,7 @@ var private R_BlackBoardReadInterface BlackBoardReadInterface;
 var private R_BlackBoardWriteInterface BlackBoardWriteInterface;
 
 // BlackBoard Keys
+// These need to be reflected in R_BotObject
 const BBKey_InventoryTarget 	= 'InventoryTarget';	// Actor
 const BBKey_WantWeapon 			= 'WantWeapon';			// Float
 const BBKey_WantShield			= 'WantShield';			// Float
@@ -135,9 +140,9 @@ function R_NavContext GetNavContext()
 	return NavContext;
 }
 
-function R_BlackBoard GetBlackBoard()
+function R_BlackBoardReadInterface GetBlackBoardReadInterface()
 {
-	return R_BlackBoard(GetBotObjectByClass(Class'RBots.R_BlackBoard'));
+	return BlackBoardReadInterface;
 }
 
 // Attaches NavContextObserver object to collect additional data from FindPath
@@ -230,6 +235,7 @@ function InitializeBot()
 	// Create BotObjects
 	Perception 					= R_BotPerception(CreateBotObject(BotObjectClass_Perception));
 	PawnController 				= R_BotPawnController(CreateBotObject(BotObjectClass_PawnController));
+	Brain						= R_BotBrain(CreateBotObject(BotObjectClass_Brain));
 	BlackBoard 					= R_BlackBoard(CreateBotObject(BotObjectClass_BlackBoard));
 	BlackBoardReadInterface 	= R_BlackBoardReadInterface(CreateBotObject(BotObjectClass_BlackBoardReadInterface));
 	BlackBoardWriteInterface	= R_BlackBoardWriteInterface(CreateBotObject(BotObjectClass_BlackBoardWriteInterface));
@@ -245,6 +251,9 @@ function InitializeBot()
 	// BlackBoard Read/Write Interface
 	BlackBoardReadInterface.SetBlackBoard(BlackBoard);
 	BlackBoardWriteInterface.SetBlackBoard(BlackBoard);
+
+	// Grant Brain access to Write
+	Brain.SetBlackBoardWriteInterface(BlackBoardWriteInterface);
 
 	//--------------------------------------------------------------------------
 	// Spawn NavContext

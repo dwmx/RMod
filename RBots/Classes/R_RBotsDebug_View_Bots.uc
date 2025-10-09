@@ -175,12 +175,13 @@ function DrawDebugTarget_Perception_Combat(Canvas C, R_RBotsDebug_StringManager 
 function DrawDebugTarget_Perception_Inventories(Canvas C, R_RBotsDebug_StringManager StringManager, R_Bot BotDebugTarget)
 {
 	local R_BotPerception BotPerception;
-	local R_BlackBoard BlackBoard;
+	local R_BlackBoardReadInterface BlackBoardReadInterface;
 	local PlayerPawn PP;
 	local Vector BotLocation;
 	local int InventoryCount;
 	local int i;
 	local Inventory Inv;
+	local Actor InventoryTarget;
 
 	PP = BotDebugTarget.GetOwnedPlayerPawn();
 	if(PP != None)
@@ -203,15 +204,29 @@ function DrawDebugTarget_Perception_Inventories(Canvas C, R_RBotsDebug_StringMan
 		}
 	}
 
-	BlackBoard = BotDebugTarget.GetBlackBoard();
-	if(BlackBoard != None)
+	BlackBoardReadInterface = BotDebugTarget.GetBlackBoardReadInterface();
+	if(BlackBoardReadInterface != None)
 	{
-		Inv = BlackBoard.GetInventoryTarget();
-		if(Inv != None)
+		if(BlackBoardReadInterface.GetActor('InventoryTarget', InventoryTarget))
 		{
-			CanvasBaseLib.Static.DrawCylinderAxisAligned3D(C, Inv.Location, Vect(0,0,0), Inv.CollisionRadius * 1.05, Inv.CollisionHeight * 2.0 * 1.05, 32, 1.0, 0.0, 0.0);
+			CanvasBaseLib.Static.DrawCylinderAxisAligned3D(
+				C,
+				InventoryTarget.Location,
+				Vect(0,0,0),
+				InventoryTarget.CollisionRadius * 1.05,
+				InventoryTarget.CollisionHeight * 2.0 * 1.05,
+				32, 1.0, 0.0, 0.0);
 		}
 	}
+	//BlackBoard = BotDebugTarget.GetBlackBoard();
+	//if(BlackBoard != None)
+	//{
+	//	Inv = BlackBoard.GetInventoryTarget();
+	//	if(Inv != None)
+	//	{
+	//		CanvasBaseLib.Static.DrawCylinderAxisAligned3D(C, Inv.Location, Vect(0,0,0), Inv.CollisionRadius * 1.05, Inv.CollisionHeight * 2.0 * 1.05, 32, 1.0, 0.0, 0.0);
+	//	}
+	//}
 }
 
 // Draw debug information specific to DebugBots
@@ -298,7 +313,16 @@ function DrawDebugTarget_Navigation(Canvas C, R_RBotsDebug_StringManager StringM
 
 function DrawDebugTarget_WantParameters(Canvas C, R_RBotsDebug_StringManager StringManager, R_Bot BotDebugTarget)
 {
-	local R_BlackBoard BlackBoard;
+	local R_BlackBoardReadInterface BlackBoardReadInterface;
+	local Name BlackBoardKeys[16];
+	local float Value;
+	local int i;
+
+	BlackBoardKeys[0] = 'WantWeapon';
+	BlackBoardKeys[1] = 'WantShield';
+	BlackBoardKeys[2] = 'WantHealth';
+	BlackBoardKeys[3] = 'WantStrength';
+	BlackBoardKeys[4] = 'WantRunePower';
 
 	if(ParamVisualizer == None)
 	{
@@ -306,45 +330,35 @@ function DrawDebugTarget_WantParameters(Canvas C, R_RBotsDebug_StringManager Str
 		ParamVisualizer.Initialize();
 		ParamVisualizer.Clear();
 
-		ParamVisualizer.CreateParam('WantWeapon');
-		ParamVisualizer.SetParamLimits('WantWeapon', 0.0, 1.0);
-
-		ParamVisualizer.CreateParam('WantShield');
-		ParamVisualizer.SetParamLimits('WantShield', 0.0, 1.0);
-
-		ParamVisualizer.CreateParam('WantHealth');
-		ParamVisualizer.SetParamLimits('WantHealth', 0.0, 1.0);
-
-		ParamVisualizer.CreateParam('WantStrength');
-		ParamVisualizer.SetParamLimits('WantStrength', 0.0, 1.0);
-
-		ParamVisualizer.CreateParam('WantRunePower');
-		ParamVisualizer.SetParamLimits('WantRunePower', 0.0, 1.0);
-
-		ParamVisualizer.CreateParam('OwnedWeaponScore');
-		ParamVisualizer.SetParamLimits('OwnedWeaponScore', 0.0, 1.0);
-
-		ParamVisualizer.CreateParam('OwnedShieldScore');
-		ParamVisualizer.SetParamLimits('OwnedShieldScore', 0.0, 1.0);
+		for(i = 0; i < ArrayCount(BlackBoardKeys); ++i)
+		{
+			if(BlackBoardKeys[i] != '')
+			{
+				ParamVisualizer.CreateParam(BlackBoardKeys[i]);
+				ParamVisualizer.SetParamLimits(BlackBoardKeys[i], 0.0, 1.0);
+			}
+		}
 	}
 	if(ParamVisualizer != None)
 	{
-		BlackBoard = BotDebugTarget.GetBlackBoard();
+		BlackBoardReadInterface = BotDebugTarget.GetBlackBoardReadInterface();
 
 		ParamVisualizer.Advance();
 
-		if(BlackBoard != None)
+		if(BlackBoardReadInterface != None)
 		{
-			ParamVisualizer.SetParamValue('WantWeapon', BlackBoard.GetWantWeapon());
-			ParamVisualizer.SetParamValue('WantShield', BlackBoard.GetWantShield());
-			ParamVisualizer.SetParamValue('WantHealth', BlackBoard.GetWantHealth());
-			ParamVisualizer.SetParamValue('WantStrength', BlackBoard.GetWantStrength());
-			ParamVisualizer.SetParamValue('WantRunePower', BlackBoard.GetWantRunePower());
-			ParamVisualizer.SetParamValue('OwnedWeaponScore', BlackBoard.GetOwnedWeaponScore());
-			ParamVisualizer.SetParamValue('OwnedShieldScore', BlackBoard.GetOwnedShieldScore());
+			for(i = 0; i < ArrayCount(BlackBoardKeys); ++i)
+			{
+				if(BlackBoardKeys[i] != '')
+				{
+					if(BlackBoardReadInterface.GetFloat(BlackBoardKeys[i], Value))
+					{
+						ParamVisualizer.SetParamValue(BlackBoardKeys[i], Value);
+					}
+				}
+			}
 		}
 		
-
 		ParamVisualizer.DrawParamVisualizer(
 			C,
 			(C.ClipX - 32.0) - 512.0,
@@ -352,27 +366,6 @@ function DrawDebugTarget_WantParameters(Canvas C, R_RBotsDebug_StringManager Str
 			C.ClipX - 32.0,
 			32.0 + 224.0);
 	}
-	/*
-	if(ParameterVisualizer == None)
-	{
-		ParameterVisualizer = new(None) Class'RBots.R_RBotsDebug_ParameterVisualizer';
-		ParameterVisualizer.Initialize();
-		ParameterVisualizer.SetParameterNameString("Want Health");
-		ParameterVisualizer.SetValueLimits(0.0, 1.0);
-	}
-	if(ParameterVisualizer != None && BotDebugTarget != None)
-	{
-		BlackBoard = R_BlackBoard(BotDebugTarget.GetBotObjectByClass(Class'RBots.R_BlackBoard'));
-
-		ParameterVisualizer.Push(BlackBoard.GetWantHealth());
-		ParameterVisualizer.DrawParameterVisualizer(
-			C,
-			(C.CLipX - 32.0) - 512.0,
-			32.0,
-			C.ClipX - 32.0,
-			32.0 + 224.0);
-	}
-			*/
 }
 
 defaultproperties

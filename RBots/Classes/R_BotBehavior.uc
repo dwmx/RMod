@@ -12,10 +12,20 @@ var private R_RBotsServerActor RBots;
 
 var private R_BotPerception OwnerPerception;
 var private R_BotPawnController OwnerController;
-var private R_BlackBoard OwnerBlackBoard;
+var private R_BlackBoardReadInterface CachedBlackBoardReadInterface;
+//var private R_BlackBoard OwnerBlackBoard;
 var private R_NavContext OwnerNavContext;
 var private R_NavMesh CachedNavMesh;
 var private R_NavMeshActorTracker CachedNavMeshActorTracker;
+
+//------------------------------------------------------------------------------
+//	BlackBoard Keys
+const BBKey_InventoryTarget 	= 'InventoryTarget';	// Actor
+const BBKey_WantWeapon 			= 'WantWeapon';			// Float
+const BBKey_WantShield			= 'WantShield';			// Float
+const BBKey_WantHealth			= 'WantHealth';			// Float
+const BBKey_WantStrength		= 'WantStrength';		// Float
+const BBKey_WantRunePower		= 'WantRunePower';		// Float
 
 //------------------------------------------------------------------------------
 //	Base implementation -- Do not override
@@ -103,18 +113,18 @@ final function R_BotPawnController GetBotPawnController()
 	return OwnerController;
 }
 
-final function R_BlackBoard GetBlackBoard()
+final function R_BlackBoardReadInterface GetBlackBoardReadInterface()
 {
 	local R_Bot Bot;
-	if(OwnerBlackBoard == None)
+	if(CachedBlackBoardReadInterface == None)
 	{
 		Bot = GetBot();
 		if(Bot != None)
 		{
-			OwnerBlackBoard = R_BlackBoard(Bot.GetBotObjectByClass(Class'RBots.R_BlackBoard'));
+			CachedBlackBoardReadInterface = Bot.GetBlackBoardReadInterface();
 		}
 	}
-	return OwnerBlackBoard;
+	return CachedBlackBoardReadInterface;
 }
 
 final function R_NavMesh GetNavMesh()

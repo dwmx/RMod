@@ -10,6 +10,14 @@ var private R_Bot BotOwner;
 
 var private bool bTickBotObject;
 
+// BlackBoard Keys
+const BBKey_InventoryTarget 	= 'InventoryTarget';	// Actor
+const BBKey_WantWeapon 			= 'WantWeapon';			// Float
+const BBKey_WantShield			= 'WantShield';			// Float
+const BBKey_WantHealth			= 'WantHealth';			// Float
+const BBKey_WantStrength		= 'WantStrength';		// Float
+const BBKey_WantRunePower		= 'WantRunePower';		// Float
+
 final function BaseInitBotObject(R_Bot NewBotOwner)
 {
 	BotOwner = NewBotOwner;
@@ -30,6 +38,17 @@ final function SetTickBotObjectEnabled(bool bNewTickBotObject)
 }
 
 final function R_Bot GetBot() { return BotOwner; }
+
+final function R_BlackBoardReadInterface GetBlackBoardReadInterface()
+{
+	local R_Bot Bot;
+	Bot = GetBot();
+	if(Bot != None)
+	{
+		return Bot.GetBlackBoardReadInterface();
+	}
+	return None;
+}
 
 final function PlayerPawn GetPlayerPawn()
 {

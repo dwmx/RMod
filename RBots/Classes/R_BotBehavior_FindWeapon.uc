@@ -92,89 +92,21 @@ function bool IsValidInventoryTarget(Inventory Inv)
 	return true;
 }
 
-/*
-// Scoring for each weapon
-function float ScoreWeapon(Weapon W)
-{
-	return W.Damage + W.Rating;
-}
-	*/
-
 // Find weapon with highest desirability score
 function Inventory FindDesiredInventory()
 {
-	local R_BlackBoard BlackBoard;
+	local R_BlackBoardReadInterface BlackBoardReadInterface;
+	local Actor InventoryTarget;
 
-	BlackBoard = GetBlackBoard();
-	if(BlackBoard != None)
+	BlackBoardReadInterface = GetBlackBoardReadInterface();
+	if(BlackBoardReadInterface != None)
 	{
-		return BlackBoard.GetInventoryTarget();
-	}
-	/*
-	local PlayerPawn P;
-	local R_NavMesh NavMesh;
-	local R_NavMeshActorTracker ActorTracker;
-	local int NodeIndex, PolyGroupIndex;
-	local Actor PolyGroupActors[32];
-	local int NumPolyGroupActors;
-	local int i;
-	local Weapon BestWeapon, CurrentWeapon;
-	local float BestScore, CurrentScore;
-
-	P = GetPlayerPawn();
-	if(P != None)
-	{
-		NavMesh = GetNavMesh();
-		ActorTracker = GetNavMeshActorTracker();
-
-		NumPolyGroupActors = 0;
-		if(NavMesh != None && ActorTracker != None)
+		if(BlackBoardReadInterface.GetActor(BBKey_InventoryTarget, InventoryTarget))
 		{
-			NodeIndex = NavMesh.FindContainingNodeIndex(P.Location);
-			NavMesh.GetTrianglePolyGroupIndexUnchecked(NodeIndex, PolyGroupIndex);
-			ActorTracker.GetActorsByPolyGroupIndex(PolyGroupIndex, PolyGroupActors, NumPolyGroupActors);
-		}
-
-		BestWeapon = None;
-		BestScore = 0;
-
-		// Try to find a weapon in the current poly group first
-		for(i = 0; i < NumPolyGroupActors; ++i)
-		{
-			CurrentWeapon = Weapon(PolyGroupActors[i]);
-			if(CurrentWeapon != None)
-			{
-				if(IsValidInventoryTarget(CurrentWeapon))
-				{
-					CurrentScore = ScoreWeapon(CurrentWeapon);
-					if(CurrentScore > BestScore)
-					{
-						BestScore = CurrentScore;
-						BestWeapon = CurrentWeapon;
-					}
-				}
-			}
-		}
-
-		if(BestWeapon == None)
-		{	// No weapon found, pick one anywhere on the map
-			foreach P.AllActors(Class'Engine.Weapon', CurrentWeapon)
-			{
-				if(IsValidInventoryTarget(CurrentWeapon))
-				{
-					CurrentScore = ScoreWeapon(CurrentWeapon);
-					if(CurrentScore > BestScore)
-					{
-						BestScore = CurrentScore;
-						BestWeapon = CurrentWeapon;
-					}
-				}
-			}
+			return Inventory(InventoryTarget);
 		}
 	}
-
-	return BestWeapon;
-	*/
+	return None;
 }
 
 function BehaviorTick(float DeltaSeconds)
