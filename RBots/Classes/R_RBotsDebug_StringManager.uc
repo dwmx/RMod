@@ -314,6 +314,7 @@ function DrawStringManager(Canvas C)
 	local float XPos, YPos;
 	local int i, j;
 
+	C.Reset();
 	C.Font = C.MedFont;
 	
 	XPos = 16.0;
