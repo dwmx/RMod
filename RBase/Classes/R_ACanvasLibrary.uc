@@ -278,6 +278,71 @@ static function DrawRectAxisAligned3D(
 	C.DrawLine3D(LineStart, LineEnd, R, G, B);
 }
 
+static function DrawCylinderAxisAligned3D(
+	Canvas C,
+	Vector WorldOrigin, Vector Alignment, float Radius, float Height, int NumSegments,
+	float R, float G, float B)
+{
+	local float RadPerSegment;
+	local int i, j;
+	local Vector SegmentStart, SegmentEnd;
+
+	RadPerSegment = (2.0 * Pi) / NumSegments;
+	Alignment.X = FClamp(Alignment.X, -1.0, 1.0);
+	Alignment.Y = FClamp(Alignment.Y, -1.0, 1.0);
+	Alignment.Z = FClamp(Alignment.Z, -1.0, 1.0);
+
+	// Draw top and bottom circles
+	for(i = 0; i < 2; ++i)
+	{
+		for(j = 0; j < NumSegments; ++j)
+		{
+			SegmentStart.X = Cos(j * RadPerSegment) * Radius;
+			SegmentStart.Y = Sin(j * RadPerSegment) * Radius;
+			SegmentStart.Z = Height * 0.5 + (i % 2) * Height * -1.0;
+
+			SegmentEnd.X = Cos((j + 1) * RadPerSegment) * Radius;
+			SegmentEnd.Y = Sin((j + 1) * RadPerSegment) * Radius;
+			SegmentEnd.Z = SegmentStart.Z;
+
+			SegmentStart += Vect(1,1,0) * Alignment * Radius;
+			SegmentStart += Vect(0,0,1) * Alignment * Height * 0.5;
+
+			SegmentEnd += Vect(1,1,0) * Alignment * Radius;
+			SegmentEnd += Vect(0,0,1) * Alignment * Height * 0.5;
+
+			SegmentStart += WorldOrigin;
+			SegmentEnd += WorldOrigin;
+
+			C.DrawLine3D(SegmentStart, SegmentEnd, R, G, B);
+		}
+	}
+
+	// Draw four lines
+	RadPerSegment = (2.0 * Pi) / 4.0;
+	for(i = 0; i < 4; ++i)
+	{
+		SegmentStart.X = Cos(i * RadPerSegment) * Radius;
+		SegmentStart.Y = Sin(i * RadPerSegment) * Radius;
+		SegmentStart.Z = Height * 0.5 * -1.0;
+
+		SegmentEnd.X = SegmentStart.X;
+		SegmentEnd.Y = SegmentStart.Y;
+		SegmentEnd.Z = Height * 0.5;
+
+		SegmentStart += Vect(1,1,0) * Alignment * Radius;
+		SegmentStart += Vect(0,0,1) * Alignment * Height * 0.5;
+
+		SegmentEnd += Vect(1,1,0) * Alignment * Radius;
+		SegmentEnd += Vect(0,0,1) * Alignment * Height * 0.5;
+
+		SegmentStart += WorldOrigin;
+		SegmentEnd += WorldOrigin;
+
+		C.DrawLine3D(SegmentStart, SegmentEnd, R, G, B);
+	}
+}
+
 /**
 *	DrawAxes3D
 *	Draws a 3-line cross for X Y and Z axes at the specified location
