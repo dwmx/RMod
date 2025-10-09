@@ -32,7 +32,8 @@ const CombatState_VulnerableMoving = 4;
 const CombatState_VulnerableStationary = 5;
 
 // Parameter visualizer
-var private R_RBotsDebug_ParameterVisualizer ParameterVisualizer;
+//var private R_RBotsDebug_ParameterVisualizer ParameterVisualizer;
+var private R_RBotsDebug_ParamVisualizer ParamVisualizer;
 
 function ToggleDrawPerception() { bDrawPerception = !bDrawPerception; }
 
@@ -66,28 +67,13 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 		StringManager.AddString(DebugRBotsCategory, "No Debug Target selected");
 	}
 
-	if(ParameterVisualizer == None)
-	{
-		ParameterVisualizer = new(None) Class'RBots.R_RBotsDebug_ParameterVisualizer';
-		ParameterVisualizer.Initialize();
-		ParameterVisualizer.SetParameterNameString("Target Desirability");
-		ParameterVisualizer.SetValueLimits(-1.0, 1.0);
-	}
-	if(ParameterVisualizer != None && DebugTarget != None)
-	{
-		//ParameterVisualizer.Push(Cos(DebugTarget.Level.TimeSeconds) * 0.5 + 0.5);
-		ParameterVisualizer.DrawParameterVisualizer(
-			C,
-			(C.CLipX - 32.0) - 512.0,
-			32.0,
-			C.ClipX - 32.0,
-			32.0 + 224.0);
-	}
+	DrawDebugTarget_WantParameters(C, StringManager, DebugTarget);
 }
 
 simulated function DrawDebugTarget(Canvas C, R_RBotsDebug_StringManager StringManager, R_Bot BotDebugTarget)
 {
 	local R_BotBehavior ActiveBehavior;
+	local PlayerPawn PP;
 
 	// Add color legend
 	StringManager.AddColor(DebugRBotsCategory, "Movement Input", MovementInputColor);
@@ -106,10 +92,24 @@ simulated function DrawDebugTarget(Canvas C, R_RBotsDebug_StringManager StringMa
 			StringManager.AddString(DebugRBotsCategory, ActiveBehavior.GetDescriptiveString(), "ActiveBehavior Description");
 		}
 		
+		// Draw cylinder around the bot
+		PP = BotDebugTarget.GetOwnedPlayerPawn();
+		if(PP != None)
+		{
+			CanvasBaseLib.Static.DrawCylinderAxisAligned3D(
+				C,
+				PP.Location,
+				Vect(0,0,0),
+				PP.CollisionRadius,
+				PP.CollisionHeight * 2.0,
+				32, 1.0, 1.0, 0.0);
+		}
+
 		// Draw perception
 		if(bDrawPerception)
 		{
-			DrawDebugTarget_Perception(C, StringManager, BotDebugTarget);
+			DrawDebugTarget_Perception_Combat(C, StringManager, BotDebugTarget);
+			DrawDebugTarget_Perception_Inventories(C, StringManager, BotDebugTarget);
 		}
 		
 		// Draw movement input vector
@@ -117,7 +117,7 @@ simulated function DrawDebugTarget(Canvas C, R_RBotsDebug_StringManager StringMa
 	}
 }
 
-function DrawDebugTarget_Perception(Canvas C, R_RBotsDebug_StringManager StringManager, R_Bot BotDebugTarget)
+function DrawDebugTarget_Perception_Combat(Canvas C, R_RBotsDebug_StringManager StringManager, R_Bot BotDebugTarget)
 {
 	local R_BotPerception BotPerception;
 	local Actor PerceivedActor;
@@ -148,10 +148,10 @@ function DrawDebugTarget_Perception(Canvas C, R_RBotsDebug_StringManager StringM
 		{
 			// Draw a colored line indicating how much the bot wants to engage the target
 			EngagementScore = BotPerception.GetPerceivedActorEngagementScore();
-			if(ParameterVisualizer != None)
-			{	// Push score to param visualizer if it's enabled
-				ParameterVisualizer.Push(EngagementScore);
-			}
+			//if(ParameterVisualizer != None)
+			//{	// Push score to param visualizer if it's enabled
+			//	ParameterVisualizer.Push(EngagementScore);
+			//}
 			EngagementColor = Utilities.Static.LerpColor(EngagementColor_Minimum, EngagementColor_Maximum, EngagementScore);
 
 			Utilities.Static.ColorToFloats(EngagementColor, RGBEngagement[0], RGBEngagement[1], RGBEngagement[2]);
@@ -168,6 +168,48 @@ function DrawDebugTarget_Perception(Canvas C, R_RBotsDebug_StringManager StringM
 			case CombatState_VulnerableStationary:	Utilities.Static.ColorToFloats(PerceptionColor_VulnerableStationary, RGBCombatState[0], RGBCombatState[1], RGBCombatState[2]);	break;
 			}
 			CanvasBaseLib.Static.DrawCircle3D(C, PerceivedActor.Location, Vect(0.0,0.0,1.0), PerceivedActor.CollisionRadius, 32, RGBCombatState[0], RGBCombatState[1], RGBCombatState[2]);
+		}
+	}
+}
+
+function DrawDebugTarget_Perception_Inventories(Canvas C, R_RBotsDebug_StringManager StringManager, R_Bot BotDebugTarget)
+{
+	local R_BotPerception BotPerception;
+	local R_BlackBoard BlackBoard;
+	local PlayerPawn PP;
+	local Vector BotLocation;
+	local int InventoryCount;
+	local int i;
+	local Inventory Inv;
+
+	PP = BotDebugTarget.GetOwnedPlayerPawn();
+	if(PP != None)
+	{
+		BotLocation = PP.Location;
+	}
+
+	BotPerception = R_BotPerception(BotDebugTarget.GetBotObjectByClass(Class'RBots.R_BotPerception'));
+	if(BotPerception != None)
+	{
+		InventoryCount = BotPerception.GetPerceivedInventoriesCount();
+		for(i = 0; i < InventoryCount; ++i)
+		{
+			Inv = BotPerception.GetPerceivedInventory(i);
+			if(Inv != None)
+			{
+				CanvasBaseLib.Static.DrawCylinderAxisAligned3D(C, Inv.Location, Vect(0,0,0), Inv.CollisionRadius, Inv.CollisionHeight * 2.0, 32, 1.0, 1.0, 0.0);
+				CanvasLib.Static.DrawLine3D(C, BotLocation, Inv.Location, 1.0, 1.0, 0.0);
+			}
+		}
+	}
+
+	BlackBoard = BotDebugTarget.GetBlackBoard();
+	if(BlackBoard != None)
+	{
+		Inv = BlackBoard.GetInventoryTarget();
+		if(Inv != None)
+		{
+			CanvasBaseLib.Static.DrawCylinderAxisAligned3D(C, Inv.Location, Vect(0,0,0), Inv.CollisionRadius * 1.05, Inv.CollisionHeight * 2.0 * 1.05, 32, 1.0, 0.0, 0.0);
 		}
 	}
 }
@@ -252,6 +294,85 @@ function DrawDebugTarget_Navigation(Canvas C, R_RBotsDebug_StringManager StringM
 			StringManager.AddName(DebugNavigation, "RecentPolyGroups[" $ i $ "]", 'Empty');
 		}
 	}
+}
+
+function DrawDebugTarget_WantParameters(Canvas C, R_RBotsDebug_StringManager StringManager, R_Bot BotDebugTarget)
+{
+	local R_BlackBoard BlackBoard;
+
+	if(ParamVisualizer == None)
+	{
+		ParamVisualizer = new(None) Class'RBots.R_RBotsDebug_ParamVisualizer';
+		ParamVisualizer.Initialize();
+		ParamVisualizer.Clear();
+
+		ParamVisualizer.CreateParam('WantWeapon');
+		ParamVisualizer.SetParamLimits('WantWeapon', 0.0, 1.0);
+
+		ParamVisualizer.CreateParam('WantShield');
+		ParamVisualizer.SetParamLimits('WantShield', 0.0, 1.0);
+
+		ParamVisualizer.CreateParam('WantHealth');
+		ParamVisualizer.SetParamLimits('WantHealth', 0.0, 1.0);
+
+		ParamVisualizer.CreateParam('WantStrength');
+		ParamVisualizer.SetParamLimits('WantStrength', 0.0, 1.0);
+
+		ParamVisualizer.CreateParam('WantRunePower');
+		ParamVisualizer.SetParamLimits('WantRunePower', 0.0, 1.0);
+
+		ParamVisualizer.CreateParam('OwnedWeaponScore');
+		ParamVisualizer.SetParamLimits('OwnedWeaponScore', 0.0, 1.0);
+
+		ParamVisualizer.CreateParam('OwnedShieldScore');
+		ParamVisualizer.SetParamLimits('OwnedShieldScore', 0.0, 1.0);
+	}
+	if(ParamVisualizer != None)
+	{
+		BlackBoard = BotDebugTarget.GetBlackBoard();
+
+		ParamVisualizer.Advance();
+
+		if(BlackBoard != None)
+		{
+			ParamVisualizer.SetParamValue('WantWeapon', BlackBoard.GetWantWeapon());
+			ParamVisualizer.SetParamValue('WantShield', BlackBoard.GetWantShield());
+			ParamVisualizer.SetParamValue('WantHealth', BlackBoard.GetWantHealth());
+			ParamVisualizer.SetParamValue('WantStrength', BlackBoard.GetWantStrength());
+			ParamVisualizer.SetParamValue('WantRunePower', BlackBoard.GetWantRunePower());
+			ParamVisualizer.SetParamValue('OwnedWeaponScore', BlackBoard.GetOwnedWeaponScore());
+			ParamVisualizer.SetParamValue('OwnedShieldScore', BlackBoard.GetOwnedShieldScore());
+		}
+		
+
+		ParamVisualizer.DrawParamVisualizer(
+			C,
+			(C.ClipX - 32.0) - 512.0,
+			32.0,
+			C.ClipX - 32.0,
+			32.0 + 224.0);
+	}
+	/*
+	if(ParameterVisualizer == None)
+	{
+		ParameterVisualizer = new(None) Class'RBots.R_RBotsDebug_ParameterVisualizer';
+		ParameterVisualizer.Initialize();
+		ParameterVisualizer.SetParameterNameString("Want Health");
+		ParameterVisualizer.SetValueLimits(0.0, 1.0);
+	}
+	if(ParameterVisualizer != None && BotDebugTarget != None)
+	{
+		BlackBoard = R_BlackBoard(BotDebugTarget.GetBotObjectByClass(Class'RBots.R_BlackBoard'));
+
+		ParameterVisualizer.Push(BlackBoard.GetWantHealth());
+		ParameterVisualizer.DrawParameterVisualizer(
+			C,
+			(C.CLipX - 32.0) - 512.0,
+			32.0,
+			C.ClipX - 32.0,
+			32.0 + 224.0);
+	}
+			*/
 }
 
 defaultproperties

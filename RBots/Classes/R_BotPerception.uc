@@ -8,6 +8,9 @@ const LogCategory = 'BotPerception';
 
 const NavLib = Class'RBots.R_NavLibrary';
 
+var private Inventory PerceivedInventoryArray[32];
+var private int NumPerceivedInventories;
+
 var private Actor PerceivedActor;
 
 var private int BorderEdgeIndices[32];
@@ -31,6 +34,60 @@ enum R_CombatState
 	CombatState_Vulnerable,
 	CombstState_Attacking
 };
+
+//------------------------------------------------------------------------------
+//	Inventory Actors
+function ClearPerceivedInventories()
+{
+	local int i;
+
+	for(i = 0; i < ArrayCount(PerceivedInventoryArray); ++i)
+	{
+		PerceivedInventoryArray[i] = None;
+	}
+	NumPerceivedInventories = 0;
+}
+
+function int GetPerceivedInventoriesCount()
+{
+	return NumPerceivedInventories;
+}
+
+function Inventory GetPerceivedInventory(int Index)
+{
+	Index = Clamp(Index, 0, ArrayCount(PerceivedInventoryArray) - 1);
+	return PerceivedInventoryArray[Index];
+}
+
+function UpdatePerceivedInventories()
+{
+	local PlayerPawn PP;
+	local Inventory Inv;
+
+	ClearPerceivedInventories();
+
+	PP = GetPlayerPawn();
+	if(PP == None)
+	{
+		return;
+	}
+
+	foreach PP.RadiusActors(Class'Engine.Inventory', Inv, 512.0)
+	{
+		if(NumPerceivedInventories >= ArrayCount(PerceivedInventoryArray))
+		{
+			break;
+		}
+
+		if(Inv.Owner == None)
+		{
+			PerceivedInventoryArray[NumPerceivedInventories] = Inv;
+			++NumPerceivedInventories;
+		}
+	}
+}
+
+//------------------------------------------------------------------------------
 
 function SetPerceivedActor(Actor NewPerceivedActor)
 {
@@ -286,6 +343,8 @@ function TickBotObject(float DeltaSeconds)
 	SetPerceivedActor(PPBest);
 
 	UpdateBorderEdges();
+
+	UpdatePerceivedInventories();
 }
 
 function UpdateBorderEdges()

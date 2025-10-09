@@ -113,6 +113,11 @@ function R_NavContext GetNavContext()
 	return NavContext;
 }
 
+function R_BlackBoard GetBlackBoard()
+{
+	return R_BlackBoard(GetBotObjectByClass(Class'RBots.R_BlackBoard'));
+}
+
 // Attaches NavContextObserver object to collect additional data from FindPath
 function AttachNavContextObserver(R_NavContextObserver NewNavContextObserver)
 {
@@ -323,6 +328,8 @@ function Class<R_BotBehavior> DetermineDesiredBehavior()
 	local bool bWillingToFight;
 	local R_BlackBoard BlackBoard;
 
+	return Class'RBots.R_BotBehavior_Main';
+
 	P = GetOwnedPlayerPawn();
 	if(P == None)
 	{
@@ -407,8 +414,8 @@ event Tick(float DeltaSeconds)
 	// Tick BotObjects
 	TickBotObjects(DeltaSeconds);
 
-	// Update desired inventories
-	UpdateInventoryTarget(DeltaSeconds);
+	//// Update desired inventories
+	//UpdateInventoryTarget(DeltaSeconds);
 
 	// Tick Behavior
 	DesiredBehavior = DetermineDesiredBehavior();
