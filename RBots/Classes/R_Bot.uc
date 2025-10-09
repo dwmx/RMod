@@ -18,15 +18,36 @@ const IndexCacheClass = Class'RBots.R_IndexCache_Circular';
 var private R_IndexCache RecentlyVisitedNodes;
 var private R_IndexCache RecentlyVisitedPolyGroups;
 
-// BotObjects
+//------------------------------------------------------------------------------
+//	Bot Objects
 var private R_BotObject BotObjects[16];
 
-const BotObject_Perception = Class'RBots.R_BotPerception';
-//const BotObject_AimController = Class'RBots.R_BotAimController';
-const BotObject_PawnController = Class'RBots.R_BotPawnController';
-const BotObject_BlackBoard = Class'RBots.R_BlackBoard';
+// Perception
+const BotObjectClass_Perception = Class'RBots.R_BotPerception';
+var private R_BotPerception Perception;
 
-// Behavior
+// PawnController
+const BotObjectClass_PawnController = Class'RBots.R_BotPawnController';
+var private R_BotPawnController PawnController;
+
+// BlackBoard
+const BotObjectClass_BlackBoard = Class'RBots.R_BlackBoard_Implementation';
+const BotObjectClass_BlackBoardReadInterface = Class'RBots.R_BlackBoardReadInterface';
+const BotObjectClass_BlackBoardWriteInterface = Class'RBots.R_BlackBoardWriteInterface';
+var private R_BlackBoard BlackBoard;
+var private R_BlackBoardReadInterface BlackBoardReadInterface;
+var private R_BlackBoardWriteInterface BlackBoardWriteInterface;
+
+// BlackBoard Keys
+const BBKey_InventoryTarget 	= 'InventoryTarget';	// Actor
+const BBKey_WantWeapon 			= 'WantWeapon';			// Float
+const BBKey_WantShield			= 'WantShield';			// Float
+const BBKey_WantHealth			= 'WantHealth';			// Float
+const BBKey_WantStrength		= 'WantStrength';		// Float
+const BBKey_WantRunePower		= 'WantRunePower';		// Float
+
+//------------------------------------------------------------------------------
+// Behaviors
 var private Class<R_BotBehavior> InitialBehaviorClass;
 var private R_BotBehavior ActiveBehavior;
 
@@ -35,6 +56,7 @@ const Behavior_FindWeapon = Class'RBots.R_BotBehavior_FindWeapon';
 const Behavior_Wander = Class'RBots.R_BotBehavior_Wander';
 const Behavior_Avoid = Class'RBots.R_BotBehavior_Avoid';
 
+//------------------------------------------------------------------------------
 // Player
 var private PlayerPawn OwnedPlayerPawn;
 var private Name OwnedPlayerPawnStateName; // Need this to respond to state changes (respawns)
@@ -195,6 +217,7 @@ function InitPlayerReplicationInfo(PlayerReplicationInfo NewPRI)
 
 function InitializeBot()
 {
+	local Actor TestActor;
 	if(bBotInitialized)
 	{
 		return;
@@ -203,12 +226,27 @@ function InitializeBot()
 	
 	Utilities.Static.RLog("Initializing bot" @ Self, LogCategory);
 
+	//--------------------------------------------------------------------------
 	// Create BotObjects
-	CreateBotObject(BotObject_Perception);
-	//CreateBotObject(BotObject_AimController);
-	CreateBotObject(BotObject_PawnController);
-	CreateBotObject(BotObject_BlackBoard);
+	Perception 					= R_BotPerception(CreateBotObject(BotObjectClass_Perception));
+	PawnController 				= R_BotPawnController(CreateBotObject(BotObjectClass_PawnController));
+	BlackBoard 					= R_BlackBoard(CreateBotObject(BotObjectClass_BlackBoard));
+	BlackBoardReadInterface 	= R_BlackBoardReadInterface(CreateBotObject(BotObjectClass_BlackBoardReadInterface));
+	BlackBoardWriteInterface	= R_BlackBoardWriteInterface(CreateBotObject(BotObjectClass_BlackBoardWriteInterface));
 
+	// BlackBoard Keys
+	BlackBoard.AddActor(BBKey_InventoryTarget);
+	BlackBoard.AddFloat(BBKey_WantWeapon);
+	BlackBoard.AddFloat(BBKey_WantShield);
+	BlackBoard.AddFloat(BBKey_WantHealth);
+	BlackBoard.AddFloat(BBKey_WantStrength);
+	BlackBoard.AddFloat(BBKey_WantRunePower);
+
+	// BlackBoard Read/Write Interface
+	BlackBoardReadInterface.SetBlackBoard(BlackBoard);
+	BlackBoardWriteInterface.SetBlackBoard(BlackBoard);
+
+	//--------------------------------------------------------------------------
 	// Spawn NavContext
 	if(NavContext == None)
 	{
@@ -502,10 +540,9 @@ function UpdateInventoryTarget(float DeltaSeconds)
 	}
 
 	// Update the target inventory in blackboard
-	BlackBoard = R_BlackBoard(GetBotObjectByClass(BotObject_BlackBoard));
-	if(BlackBoard != None)
+	if(BlackBoardWriteInterface != None)
 	{
-		BlackBoard.SetInventoryTarget(BestInventory);
+		BlackBoardWriteInterface.SetActor(BBKey_InventoryTarget, BestInventory);
 	}
 }
 
