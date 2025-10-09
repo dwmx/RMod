@@ -162,6 +162,28 @@ final function R_NavQueryInterface GetNavQueryInterface()
 	return None;
 }
 
+final function bool GetNavDirectionTowardsNavZone(int NavZoneIndex, out Vector OutDirection)
+{
+	local R_NavQueryInterface NavQueryInterface;
+	local Vector Location;
+
+	NavQueryInterface = GetNavQueryInterface();
+	if(NavQueryInterface != None)
+	{
+		Location = GetPlayerPawnLocation();
+		if(NavQueryInterface.FindDirectionTowardsNavZoneByIndex(
+			Location,
+			NavZoneIndex,
+			OutDirection))
+		{
+			return true;
+		}
+	}
+
+	OutDirection = Vect(0,0,0);
+	return false;
+}
+
 //------------------------------------------------------------------------------
 //	Overridable utility functions
 
