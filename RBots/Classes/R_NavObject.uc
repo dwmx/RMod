@@ -5,7 +5,7 @@
 //	This is primarily here so that these classes can share a similar namespace,
 //	structs, consts, etc.
 //==============================================================================
-class R_NavObject extends Object abstract;
+class R_NavObject extends R_RBotsObject abstract;
 
 const Utilities = Class'RBots.R_BotUtilities';
 const NavLib = Class'RBots.R_NavLibrary';

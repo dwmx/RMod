@@ -2,7 +2,8 @@
 //	R_BotBehavior
 //	Base class for all Bot behavior
 //==============================================================================
-class R_BotBehavior extends R_NavObject abstract;
+//class R_BotBehavior extends R_NavObject abstract;
+class R_BotBehavior extends R_BotObject abstract;
 
 const NavLib = Class'RBots.R_NavLibrary';
 
@@ -42,8 +43,8 @@ final function InitializeBehavior(R_Bot NewOwnerBot, PlayerPawn NewOwnerPlayerPa
 	OwnerPlayerPawn = NewOwnerPlayerPawn;
 }
 
-final function R_Bot GetBot() { return OwnerBot; }
-final function PlayerPawn GetPlayerPawn() { return OwnerPlayerPawn; }
+//final function R_Bot GetBot() { return OwnerBot; }
+//final function PlayerPawn GetPlayerPawn() { return OwnerPlayerPawn; }
 
 final function Vector GetPlayerPawnLocation()
 {
@@ -85,6 +86,7 @@ final function R_NavContext GetNavContext()
 	return OwnerNavContext;
 }
 
+/*
 final function R_BotPerception GetBotPerception()
 {
 	local R_Bot Bot;
@@ -98,7 +100,9 @@ final function R_BotPerception GetBotPerception()
 	}
 	return OwnerPerception;
 }
+	*/
 
+	/*
 final function R_BotPawnController GetBotPawnController()
 {
 	local R_Bot Bot;
@@ -112,7 +116,9 @@ final function R_BotPawnController GetBotPawnController()
 	}
 	return OwnerController;
 }
+	*/
 
+	/*
 final function R_BlackBoardReadInterface GetBlackBoardReadInterface()
 {
 	local R_Bot Bot;
@@ -126,7 +132,9 @@ final function R_BlackBoardReadInterface GetBlackBoardReadInterface()
 	}
 	return CachedBlackBoardReadInterface;
 }
+	*/
 
+	/*
 final function R_NavMesh GetNavMesh()
 {
 	local R_Bot Bot;
@@ -140,7 +148,9 @@ final function R_NavMesh GetNavMesh()
 	}
 	return CachedNavMesh;
 }
+*/
 
+/*
 final function R_NavMeshActorTracker GetNavMeshActorTracker()
 {
 	local R_RBotsServerActor LocalRBots;
@@ -159,6 +169,7 @@ final function R_NavMeshActorTracker GetNavMeshActorTracker()
 	}
 	return CachedNavMeshActorTracker;
 }
+	*/
 
 final function R_NavQueryInterface GetNavQueryInterface()
 {

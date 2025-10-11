@@ -2,7 +2,7 @@
 //	R_BotObject
 //	Base class for all sub-objects contained and managed by an R_Bot
 //==============================================================================
-class R_BotObject extends Object abstract;
+class R_BotObject extends R_RBotsObject abstract;
 
 const Utilities = Class'RBots.R_BotUtilities';
 const LogCategory = 'BotObject';

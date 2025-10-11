@@ -22,19 +22,22 @@ var private R_IndexCache RecentlyVisitedPolyGroups;
 //	Bot Objects
 var private R_BotObject BotObjects[16];
 
-// Perception
+// Perception------------------------------------
 const BotObjectClass_Perception = Class'RBots.R_BotPerception';
 var private R_BotPerception Perception;
 
-// PawnController
+// PawnController--------------------------------
 const BotObjectClass_PawnController = Class'RBots.R_BotPawnController';
 var private R_BotPawnController PawnController;
 
-// Brain
+// Brain-----------------------------------------
 const BotObjectClass_Brain = Class'RBots.R_BotBrain';
 var private R_BotBrain Brain;
 
-// BlackBoard
+const LogicLayer_InventoryWants = Class'RBots.R_LogicLayer_InventoryWants';
+const LogicLayer_InventoryTarget = Class'RBots.R_LogicLayer_InventoryTarget';
+
+// BlackBoard------------------------------------
 const BotObjectClass_BlackBoard = Class'RBots.R_BlackBoard_Implementation';
 const BotObjectClass_BlackBoardReadInterface = Class'RBots.R_BlackBoardReadInterface';
 const BotObjectClass_BlackBoardWriteInterface = Class'RBots.R_BlackBoardWriteInterface';
@@ -133,6 +136,11 @@ function R_NavMesh GetNavMesh()
 	}
 	
 	return CachedNavMesh;
+}
+
+function R_BotPerception GetBotPerception()
+{
+	return Perception;
 }
 
 function R_NavContext GetNavContext()
@@ -239,6 +247,10 @@ function InitializeBot()
 	BlackBoard 					= R_BlackBoard(CreateBotObject(BotObjectClass_BlackBoard));
 	BlackBoardReadInterface 	= R_BlackBoardReadInterface(CreateBotObject(BotObjectClass_BlackBoardReadInterface));
 	BlackBoardWriteInterface	= R_BlackBoardWriteInterface(CreateBotObject(BotObjectClass_BlackBoardWriteInterface));
+
+	// Create Brain's Logic Layers
+	Brain.CreateLogicLayer(LogicLayer_InventoryWants);
+	Brain.CreateLogicLayer(LogicLayer_InventoryTarget);
 
 	// BlackBoard Keys
 	BlackBoard.AddActor(BBKey_InventoryTarget);
@@ -477,134 +489,6 @@ event Tick(float DeltaSeconds)
 	}
 
 	TickMovement(DeltaSeconds);
-}
-
-function UpdateInventoryTarget(float DeltaSeconds)
-{
-	local R_RBotsServerActor LocalRBots;
-	local R_DynamicMapData MapData;
-	local R_NavMeshActorTracker ActorTracker;
-	local Inventory Inv;
-	local PlayerPawn PP;
-	local int BestOwnedWeaponRating;
-	local float HealthWeight, WeaponWeight, RuneWeight;
-	local Actor PolyGroupActors[32];
-	local int NumPolyGroupActors;
-	local int i;
-	local float CurrentScore, BestScore;
-	local Inventory BestInventory;
-	local R_BlackBoard BlackBoard;
-
-	if(NavContext == None)
-	{
-		return;
-	}
-
-	PP = GetOwnedPlayerPawn();
-	if(PP == None)
-	{
-		return;
-	}
-
-	ActorTracker = None;
-	LocalRBots = GetRBotsServerActor();
-	if(LocalRBots != None)
-	{
-		MapData = LocalRBots.GetLoadedMapData();
-		if(MapData != None)
-		{
-			ActorTracker = MapData.GetNavMeshActorTracker();
-		}
-	}
-
-	if(ActorTracker == None)
-	{	// For now, only find inventory targets from the tracker
-		return;
-	}
-
-	// Determine what the bot needs most (weapon, health, shield, rune, etc)
-	HealthWeight = CalcHealthNeed();
-	WeaponWeight = CalcWeaponNeed();
-	RuneWeight = 0.3;
-
-	// Find the best inventory in the current poly group
-	BestInventory = None;
-	ActorTracker.GetActorsByPolyGroupIndex(NavContext.GetNavMeshPolyGroupIndex(), PolyGroupActors, NumPolyGroupActors);
-	for(i = 0; i < NumPolyGroupActors; ++i)
-	{
-		Inv = Inventory(PolyGroupActors[i]);
-		if(Inv != None)
-		{
-			CurrentScore = 0.0;
-			if(Weapon(Inv) != None)		CurrentScore = WeaponWeight * ScoreInventory_Weapon(Weapon(Inv));
-			else if(Food(Inv) != None)	CurrentScore = HealthWeight * ScoreInventory_Food(Food(Inv));
-			else if(Runes(Inv) != None)	CurrentScore = RuneWeight * ScoreInventory_Rune(Runes(Inv));
-
-			if(CurrentScore > BestScore)
-			{
-				BestInventory = Inv;
-				BestScore = CurrentScore;
-			}
-		}
-	}
-
-	// Update the target inventory in blackboard
-	if(BlackBoardWriteInterface != None)
-	{
-		BlackBoardWriteInterface.SetActor(BBKey_InventoryTarget, BestInventory);
-	}
-}
-
-function float CalcWeaponNeed()
-{
-	local PlayerPawn PP;
-	local int BestOwnedWeaponRating;
-	local Inventory Inv;
-
-	PP = GetOwnedPlayerPawn();
-	if(PP == None)
-	{
-		return 0.0;
-	}
-
-	BestOwnedWeaponRating = 0;
-	for(Inv = PP.Inventory; Inv != None; Inv = Inv.Inventory)
-	{
-		if(Weapon(Inv) != None && Weapon(Inv).Rating > BestOwnedWeaponRating)
-		{
-			BestOwnedWeaponRating = Weapon(Inv).Rating;
-		}
-	}
-
-	return Utilities.Static.RemapFloatToRange(float(BestOwnedWeaponRating), 0.0, 4.0, 1.0, 0.0);
-}
-
-function float CalcHealthNeed()
-{
-	local PlayerPawn PP;
-
-	PP = GetOwnedPlayerPawn();
-	if(PP != None)
-	{
-		return Utilities.Static.RemapFloatToRange(float(PP.Health), 0.0, float(PP.MaxHealth), 1.0, 0.0);
-	}
-
-	return 0.0;
-}
-
-function float ScoreInventory_Weapon(Weapon WeaponInv)
-{
-	return Utilities.Static.RemapFloatToRange(float(WeaponInv.Rating), 0.0, 4.0, 0.2, 1.0);
-}
-
-function float ScoreInventory_Food(Food FoodInv)
-{
-	return Utilities.Static.RemapFloatToRange(float(FoodInv.Nutrition), 0.0, 35.0, 0.0, 1.0);
-}
-
-function float ScoreInventory_Rune(Runes RuneInv)
-{
-	return 1.0;
 }
 
 function UpdateNavContext(float DeltaSeconds)

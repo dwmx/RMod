@@ -102,6 +102,7 @@ function Vector AdjustWanderForAvoidance(Vector WanderDir, Vector AvoidanceDir, 
 
 function OnNavMeshNodeIndexChanged(int OldNavMeshNodeIndex, int NewNavMeshNodeIndex)
 {
+	/*
 	local R_Bot Bot;
 	local R_NavMesh NavMesh;
 	local R_NavNeighborSet NeighborSet;
@@ -151,6 +152,7 @@ function OnNavMeshNodeIndexChanged(int OldNavMeshNodeIndex, int NewNavMeshNodeIn
 			WanderDirection = Vect(1,1,0) * (Center - PP.Location);
 		}
 	}
+		*/
 }
 
 function float ScoreNode(R_NavMesh NavMesh, int NodeIndex)
