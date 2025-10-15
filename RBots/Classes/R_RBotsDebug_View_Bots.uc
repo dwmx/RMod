@@ -11,6 +11,7 @@ const NavLib = Class'RBots.R_NavLibrary';
 
 const DebugRBotsCategory = 'DebugTarget';
 const DebugNavigation = 'DebugTargetNavigation';
+const DebugTasksCategory = 'DebugTargetTasks';
 
 var Color MovementInputColor;
 var Color PerceptionColor_Idle;
@@ -21,7 +22,7 @@ var Color PerceptionColor_VulnerableStationary;
 var Color EngagementColor_Minimum;
 var Color EngagementColor_Maximum;
 
-var private bool bDrawPerception;
+var private config bool bDrawPerception;
 
 // Values returned from GetPerceivedActorCombatState
 const CombatState_None = 0;
@@ -35,7 +36,11 @@ const CombatState_VulnerableStationary = 5;
 //var private R_RBotsDebug_ParameterVisualizer ParameterVisualizer;
 var private R_RBotsDebug_ParamVisualizer ParamVisualizer;
 
-function ToggleDrawPerception() { bDrawPerception = !bDrawPerception; }
+function ToggleDrawPerception()
+{
+	bDrawPerception = !bDrawPerception;
+	SaveConfig();
+}
 
 simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringManager)
 {
@@ -183,6 +188,11 @@ function DrawDebugTarget_Perception_Inventories(Canvas C, R_RBotsDebug_StringMan
 	local Inventory Inv;
 	local Actor InventoryTarget;
 
+	if(BotDebugTarget == None)
+	{
+		return;
+	}
+	
 	PP = BotDebugTarget.GetOwnedPlayerPawn();
 	if(PP != None)
 	{
@@ -209,13 +219,16 @@ function DrawDebugTarget_Perception_Inventories(Canvas C, R_RBotsDebug_StringMan
 	{
 		if(BlackBoardReadInterface.GetActor('InventoryTarget', InventoryTarget))
 		{
-			CanvasBaseLib.Static.DrawCylinderAxisAligned3D(
-				C,
-				InventoryTarget.Location,
-				Vect(0,0,0),
-				InventoryTarget.CollisionRadius * 1.05,
-				InventoryTarget.CollisionHeight * 2.0 * 1.05,
-				32, 1.0, 0.0, 0.0);
+			if(InventoryTarget != None)
+			{
+				CanvasBaseLib.Static.DrawCylinderAxisAligned3D(
+					C,
+					InventoryTarget.Location,
+					Vect(0,0,0),
+					InventoryTarget.CollisionRadius * 1.05,
+					InventoryTarget.CollisionHeight * 2.0 * 1.05,
+					32, 1.0, 0.0, 0.0);
+			}
 		}
 	}
 	//BlackBoard = BotDebugTarget.GetBlackBoard();
@@ -327,19 +340,22 @@ function DrawDebugTarget_WantParameters(Canvas C, R_RBotsDebug_StringManager Str
 	if(ParamVisualizer == None)
 	{
 		ParamVisualizer = new(None) Class'RBots.R_RBotsDebug_ParamVisualizer';
-		ParamVisualizer.Initialize();
-		ParamVisualizer.Clear();
-
-		for(i = 0; i < ArrayCount(BlackBoardKeys); ++i)
+		if(ParamVisualizer != None)
 		{
-			if(BlackBoardKeys[i] != '')
+			ParamVisualizer.Initialize();
+			ParamVisualizer.Clear();
+
+			for(i = 0; i < ArrayCount(BlackBoardKeys); ++i)
 			{
-				ParamVisualizer.CreateParam(BlackBoardKeys[i]);
-				ParamVisualizer.SetParamLimits(BlackBoardKeys[i], 0.0, 1.0);
+				if(BlackBoardKeys[i] != '')
+				{
+					ParamVisualizer.CreateParam(BlackBoardKeys[i]);
+					ParamVisualizer.SetParamLimits(BlackBoardKeys[i], 0.0, 1.0);
+				}
 			}
 		}
 	}
-	if(ParamVisualizer != None)
+	if(ParamVisualizer != None && BotDebugTarget != None)
 	{
 		BlackBoardReadInterface = BotDebugTarget.GetBlackBoardReadInterface();
 

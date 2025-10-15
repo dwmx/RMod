@@ -3,6 +3,3 @@
 //	Main bot behavior
 //==============================================================================
 class R_BotBehavior_Main extends R_BotBehavior;
-
-defaultproperties
-{}

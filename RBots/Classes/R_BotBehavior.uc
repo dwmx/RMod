@@ -2,8 +2,10 @@
 //	R_BotBehavior
 //	Base class for all Bot behavior
 //==============================================================================
-//class R_BotBehavior extends R_NavObject abstract;
-class R_BotBehavior extends R_BotObject abstract;
+class R_BotBehavior extends R_RBotsObject abstract;
+//class R_BotBehavior extends R_BotObject abstract;
+
+const Utilities = Class'RBots.R_BotUtilities';
 
 const NavLib = Class'RBots.R_NavLibrary';
 
@@ -14,7 +16,7 @@ var private R_RBotsServerActor RBots;
 var private R_BotPerception OwnerPerception;
 var private R_BotPawnController OwnerController;
 var private R_BlackBoardReadInterface CachedBlackBoardReadInterface;
-//var private R_BlackBoard OwnerBlackBoard;
+var private R_BlackBoard OwnerBlackBoard;
 var private R_NavContext OwnerNavContext;
 var private R_NavMesh CachedNavMesh;
 var private R_NavMeshActorTracker CachedNavMeshActorTracker;
@@ -43,8 +45,8 @@ final function InitializeBehavior(R_Bot NewOwnerBot, PlayerPawn NewOwnerPlayerPa
 	OwnerPlayerPawn = NewOwnerPlayerPawn;
 }
 
-//final function R_Bot GetBot() { return OwnerBot; }
-//final function PlayerPawn GetPlayerPawn() { return OwnerPlayerPawn; }
+final function R_Bot GetBot() { return OwnerBot; }
+final function PlayerPawn GetPlayerPawn() { return OwnerPlayerPawn; }
 
 final function Vector GetPlayerPawnLocation()
 {
@@ -86,7 +88,6 @@ final function R_NavContext GetNavContext()
 	return OwnerNavContext;
 }
 
-/*
 final function R_BotPerception GetBotPerception()
 {
 	local R_Bot Bot;
@@ -100,9 +101,7 @@ final function R_BotPerception GetBotPerception()
 	}
 	return OwnerPerception;
 }
-	*/
 
-	/*
 final function R_BotPawnController GetBotPawnController()
 {
 	local R_Bot Bot;
@@ -116,9 +115,7 @@ final function R_BotPawnController GetBotPawnController()
 	}
 	return OwnerController;
 }
-	*/
 
-	/*
 final function R_BlackBoardReadInterface GetBlackBoardReadInterface()
 {
 	local R_Bot Bot;
@@ -132,7 +129,6 @@ final function R_BlackBoardReadInterface GetBlackBoardReadInterface()
 	}
 	return CachedBlackBoardReadInterface;
 }
-	*/
 
 	/*
 final function R_NavMesh GetNavMesh()
