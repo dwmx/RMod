@@ -143,6 +143,11 @@ function R_BotPerception GetBotPerception()
 	return Perception;
 }
 
+function R_BotPawnController GetBotPawnController()
+{
+	return PawnController;
+}
+
 function R_NavContext GetNavContext()
 {
 	return NavContext;
