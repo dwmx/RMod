@@ -180,7 +180,6 @@ function DrawDebugTarget_Perception_Combat(Canvas C, R_RBotsDebug_StringManager 
 function DrawDebugTarget_Perception_Inventories(Canvas C, R_RBotsDebug_StringManager StringManager, R_Bot BotDebugTarget)
 {
 	local R_BotPerception BotPerception;
-	local R_BlackBoardReadInterface BlackBoardReadInterface;
 	local PlayerPawn PP;
 	local Vector BotLocation;
 	local int InventoryCount;
@@ -213,33 +212,6 @@ function DrawDebugTarget_Perception_Inventories(Canvas C, R_RBotsDebug_StringMan
 			}
 		}
 	}
-
-	BlackBoardReadInterface = BotDebugTarget.GetBlackBoardReadInterface();
-	if(BlackBoardReadInterface != None)
-	{
-		if(BlackBoardReadInterface.GetActor('InventoryTarget', InventoryTarget))
-		{
-			if(InventoryTarget != None)
-			{
-				CanvasBaseLib.Static.DrawCylinderAxisAligned3D(
-					C,
-					InventoryTarget.Location,
-					Vect(0,0,0),
-					InventoryTarget.CollisionRadius * 1.05,
-					InventoryTarget.CollisionHeight * 2.0 * 1.05,
-					32, 1.0, 0.0, 0.0);
-			}
-		}
-	}
-	//BlackBoard = BotDebugTarget.GetBlackBoard();
-	//if(BlackBoard != None)
-	//{
-	//	Inv = BlackBoard.GetInventoryTarget();
-	//	if(Inv != None)
-	//	{
-	//		CanvasBaseLib.Static.DrawCylinderAxisAligned3D(C, Inv.Location, Vect(0,0,0), Inv.CollisionRadius * 1.05, Inv.CollisionHeight * 2.0 * 1.05, 32, 1.0, 0.0, 0.0);
-	//	}
-	//}
 }
 
 // Draw debug information specific to DebugBots
@@ -326,7 +298,6 @@ function DrawDebugTarget_Navigation(Canvas C, R_RBotsDebug_StringManager StringM
 
 function DrawDebugTarget_WantParameters(Canvas C, R_RBotsDebug_StringManager StringManager, R_Bot BotDebugTarget)
 {
-	local R_BlackBoardReadInterface BlackBoardReadInterface;
 	local Name BlackBoardKeys[16];
 	local float Value;
 	local int i;
@@ -355,6 +326,7 @@ function DrawDebugTarget_WantParameters(Canvas C, R_RBotsDebug_StringManager Str
 			}
 		}
 	}
+	/*
 	if(ParamVisualizer != None && BotDebugTarget != None)
 	{
 		BlackBoardReadInterface = BotDebugTarget.GetBlackBoardReadInterface();
@@ -382,6 +354,7 @@ function DrawDebugTarget_WantParameters(Canvas C, R_RBotsDebug_StringManager Str
 			C.ClipX - 32.0,
 			32.0 + 224.0);
 	}
+			*/
 }
 
 defaultproperties

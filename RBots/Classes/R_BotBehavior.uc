@@ -15,7 +15,6 @@ var private R_RBotsServerActor RBots;
 
 var private R_BotPerception OwnerPerception;
 var private R_BotPawnController OwnerController;
-var private R_BlackBoardReadInterface CachedBlackBoardReadInterface;
 var private R_BlackBoard OwnerBlackBoard;
 var private R_NavContext OwnerNavContext;
 var private R_NavMesh CachedNavMesh;
@@ -133,20 +132,6 @@ final function R_BotPawnController GetBotPawnController()
 		}
 	}
 	return OwnerController;
-}
-
-final function R_BlackBoardReadInterface GetBlackBoardReadInterface()
-{
-	local R_Bot Bot;
-	if(CachedBlackBoardReadInterface == None)
-	{
-		Bot = GetBot();
-		if(Bot != None)
-		{
-			CachedBlackBoardReadInterface = Bot.GetBlackBoardReadInterface();
-		}
-	}
-	return CachedBlackBoardReadInterface;
 }
 
 final function R_BTNode GetBehaviorTree()

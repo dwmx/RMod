@@ -39,17 +39,6 @@ final function SetTickBotObjectEnabled(bool bNewTickBotObject)
 
 final function R_Bot GetBot() { return BotOwner; }
 
-final function R_BlackBoardReadInterface GetBlackBoardReadInterface()
-{
-	local R_Bot Bot;
-	Bot = GetBot();
-	if(Bot != None)
-	{
-		return Bot.GetBlackBoardReadInterface();
-	}
-	return None;
-}
-
 final function PlayerPawn GetPlayerPawn()
 {
 	if(BotOwner != None)

@@ -30,20 +30,9 @@ var private R_BotPerception Perception;
 const BotObjectClass_PawnController = Class'RBots.R_BotPawnController';
 var private R_BotPawnController PawnController;
 
-// Brain-----------------------------------------
-const BotObjectClass_Brain = Class'RBots.R_BotBrain';
-var private R_BotBrain Brain;
-
-const LogicLayer_InventoryWants = Class'RBots.R_LogicLayer_InventoryWants';
-const LogicLayer_InventoryTarget = Class'RBots.R_LogicLayer_InventoryTarget';
-
 // BlackBoard------------------------------------
 const BotObjectClass_BlackBoard = Class'RBots.R_BlackBoard_Implementation';
-const BotObjectClass_BlackBoardReadInterface = Class'RBots.R_BlackBoardReadInterface';
-const BotObjectClass_BlackBoardWriteInterface = Class'RBots.R_BlackBoardWriteInterface';
 var private R_BlackBoard BlackBoard;
-var private R_BlackBoardReadInterface BlackBoardReadInterface;
-var private R_BlackBoardWriteInterface BlackBoardWriteInterface;
 
 // BlackBoard Keys
 // These need to be reflected in R_BotObject
@@ -153,11 +142,6 @@ function R_NavContext GetNavContext()
 	return NavContext;
 }
 
-function R_BlackBoardReadInterface GetBlackBoardReadInterface()
-{
-	return BlackBoardReadInterface;
-}
-
 // Attaches NavContextObserver object to collect additional data from FindPath
 function AttachNavContextObserver(R_NavContextObserver NewNavContextObserver)
 {
@@ -248,29 +232,7 @@ function InitializeBot()
 	// Create BotObjects
 	Perception 					= R_BotPerception(CreateBotObject(BotObjectClass_Perception));
 	PawnController 				= R_BotPawnController(CreateBotObject(BotObjectClass_PawnController));
-	Brain						= R_BotBrain(CreateBotObject(BotObjectClass_Brain));
 	BlackBoard 					= R_BlackBoard(CreateBotObject(BotObjectClass_BlackBoard));
-	BlackBoardReadInterface 	= R_BlackBoardReadInterface(CreateBotObject(BotObjectClass_BlackBoardReadInterface));
-	BlackBoardWriteInterface	= R_BlackBoardWriteInterface(CreateBotObject(BotObjectClass_BlackBoardWriteInterface));
-
-	// Create Brain's Logic Layers
-	Brain.CreateLogicLayer(LogicLayer_InventoryWants);
-	Brain.CreateLogicLayer(LogicLayer_InventoryTarget);
-
-	// BlackBoard Keys
-	BlackBoard.AddActor(BBKey_InventoryTarget);
-	BlackBoard.AddFloat(BBKey_WantWeapon);
-	BlackBoard.AddFloat(BBKey_WantShield);
-	BlackBoard.AddFloat(BBKey_WantHealth);
-	BlackBoard.AddFloat(BBKey_WantStrength);
-	BlackBoard.AddFloat(BBKey_WantRunePower);
-
-	// BlackBoard Read/Write Interface
-	BlackBoardReadInterface.SetBlackBoard(BlackBoard);
-	BlackBoardWriteInterface.SetBlackBoard(BlackBoard);
-
-	// Grant Brain access to Write
-	Brain.SetBlackBoardWriteInterface(BlackBoardWriteInterface);
 
 	//--------------------------------------------------------------------------
 	// Spawn NavContext

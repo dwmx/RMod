@@ -95,18 +95,6 @@ function bool IsValidInventoryTarget(Inventory Inv)
 // Find weapon with highest desirability score
 function Inventory FindDesiredInventory()
 {
-	local R_BlackBoardReadInterface BlackBoardReadInterface;
-	local Actor InventoryTarget;
-
-	BlackBoardReadInterface = GetBlackBoardReadInterface();
-	if(BlackBoardReadInterface != None)
-	{
-		if(BlackBoardReadInterface.GetActor(BBKey_InventoryTarget, InventoryTarget))
-		{
-			return Inventory(InventoryTarget);
-		}
-	}
-	return None;
 }
 
 function BehaviorTick(float DeltaSeconds)
