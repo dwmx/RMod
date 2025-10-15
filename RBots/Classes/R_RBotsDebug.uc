@@ -40,6 +40,9 @@ const CommandManagerClass_Target		= Class'RBots.R_RBotsDebug_CommandManager_Targ
 const CommandNameSpace_Player			= 'Player';
 const CommandManagerClass_Player		= Class'RBots.R_RBotsDebug_CommandManager_Player';
 
+const CommandNameSpace_BehaviorTree		= 'BehaviorTree';
+const CommandManagerClass_BehaviorTree	= Class'RBots.R_RBotsDebug_CommandManager_BehaviorTree';
+
 // String manager
 const StringManagerClass = Class'RBots.R_RBotsDebug_StringManager';
 var R_RBotsDebug_StringManager StringManager;
@@ -94,6 +97,7 @@ simulated function InitializeCommandManagers()
 	local R_RBotsDebug_CommandManager CommandManager_PathFinding;
 	local R_RBotsDebug_CommandManager CommandManager_Target;
 	local R_RBotsDebug_CommandManager CommandManager_Player;
+	local R_RBotsDebug_CommandManager CommandManager_BehaviorTree;
 
 	CommandManager_Main = CreateCommandManager(CommandManagerClass_RBots, CommandNameSpace_RBots);
 	CommandManager_NavMesh = CreateCommandManager(CommandManagerClass_NavMesh, CommandNameSpace_NavMesh);
@@ -101,12 +105,14 @@ simulated function InitializeCommandManagers()
 	CommandManager_PathFinding = CreateCommandManager(CommandManagerClass_PathFinding, CommandNameSpace_PathFinding);
 	CommandManager_Target = CreateCommandManager(CommandManagerClass_Target, CommandNameSpace_Target);
 	CommandManager_Player = CreateCommandManager(CommandManagerClass_Player, CommandNameSpace_Player);
+	CommandManager_BehaviorTree = CreateCommandManager(CommandManagerClass_BehaviorTree, CommandNameSpace_BehaviorTree);
 
 	CommandManager_Main.AddSubCommandManager(CommandManager_NavMesh);
 	CommandManager_Main.AddSubCommandManager(CommandManager_NavQuery);
 	CommandManager_Main.AddSubCommandManager(CommandManager_PathFinding);
 	CommandManager_Main.AddSubCommandManager(CommandManager_Target);
 	CommandManager_Main.AddSubCommandManager(CommandManager_Player);
+	CommandManager_Main.AddSubCommandManager(CommandManager_BehaviorTree);
 
 	CommandManager = CommandManager_Main;
 
@@ -552,4 +558,5 @@ defaultproperties
 	DefaultViews(2)=Class'RBots.R_RBotsDebug_View_Bots'
 	DefaultViews(3)=Class'RBots.R_RBotsDebug_View_PathFinding'
 	DefaultViews(4)=Class'RBots.R_RBotsDebug_View_Player'
+	DefaultViews(5)=Class'RBots.R_RBotsDebug_View_BehaviorTree'
 }
