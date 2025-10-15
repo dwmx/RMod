@@ -56,6 +56,7 @@ final function InitializeBehaviorTree()
 	if(BT != None)
 	{
 		BT.Initialize();
+		BT.SetBotReference(GetBot());
 		BuildBehaviorTree(BT);
 	}
 
@@ -243,6 +244,17 @@ function FollowCurrentPath()
 		PathFollowInput = Bot.GetPathFollowMovementInputVector();
 		Controller.AddMovementInput_WorldSpace(PathFollowInput);
 	}
+}
+
+//------------------------------------------------------------------------------
+
+final function BaseBehaviorTick(float DeltaSeconds)
+{
+	if(BehaviorTree != None)
+	{
+		BehaviorTree.Tick(DeltaSeconds);
+	}
+	BehaviorTick(DeltaSeconds);
 }
 
 //------------------------------------------------------------------------------

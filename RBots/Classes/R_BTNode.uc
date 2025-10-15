@@ -8,8 +8,9 @@ const NodeFail = 0;
 const NodeSuccess = 1;
 const NodeRunning = 2;
 
+static function String GetNodeClassString() { return "Node"; }
+
 function Initialize();
 function OnActivated();
+function OnDeactivated();
 function int Tick(float DeltaSeconds);
-
-function int ThisIsntImplemented();

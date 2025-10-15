@@ -490,7 +490,7 @@ event Tick(float DeltaSeconds)
 
 	if(ActiveBehavior != None)
 	{
-		ActiveBehavior.BehaviorTick(DeltaSeconds);
+		ActiveBehavior.BaseBehaviorTick(DeltaSeconds);
 	}
 
 	TickMovement(DeltaSeconds);

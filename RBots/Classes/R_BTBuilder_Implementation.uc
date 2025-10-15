@@ -14,7 +14,14 @@ const ClassRootNode = Class'RBots.R_BTNode_Root';
 const ClassSequence = Class'RBots.R_BTNode_Sequence';
 const ClassSelector = Class'RBots.R_BTNode_Selector';
 
+var private R_Bot BotReference;
+
 //------------------------------------------------------------------------------
+
+function SetBotReference(R_Bot NewBotReference)
+{
+	BotReference = NewBotReference;
+}
 
 function R_BTNode GetRoot()
 {
@@ -35,6 +42,11 @@ function R_BTNode CreateBTNode(Class<R_BTNode> NodeClass)
 		Warn(LogWarning);
 		Utilities.Static.RLog(LogWarning, LogCategory);
 		return None;
+	}
+
+	if(R_BTTask(NewNode) != None)
+	{
+		R_BTTask(NewNode).SetBotReference(BotReference);
 	}
 
 	NewNode.Initialize();
@@ -82,6 +94,11 @@ function CreateSequence()
 function CreateSelector()
 {
 	CreateChildBTNodeAtStackIndex(ClassSelector);
+}
+
+function CreateTask(Class<R_BTTask> TaskClass)
+{
+	CreateChildBTNodeAtStackIndex(TaskClass);
 }
 
 //------------------------------------------------------------------------------

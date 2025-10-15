@@ -7,7 +7,19 @@ const LogCategory = 'BehaviorTreeSelector';
 
 var private int ActiveChildIndex;
 
+static function String GetNodeClassString() { return "Selector"; }
+
+function Initialize()
+{
+	ActiveChildIndex = InvalidIndex;
+}
+
 function OnActivated()
+{
+	ActiveChildIndex = InvalidIndex;
+}
+
+function OnDeactivated()
 {
 	ActiveChildIndex = InvalidIndex;
 }
@@ -48,14 +60,27 @@ function int Tick(float DeltaSeconds)
 		}
 
 		ChildTickResult = ChildNode.Tick(DeltaSeconds);
-		if(ChildTickResult == NodeSuccess)
-		{
-			return NodeSuccess;
-		}
-		else if(ChildTickResult == NodeRunning)
+		if(ChildTickResult == NodeRunning)
 		{
 			return NodeRunning;
 		}
+		else
+		{
+			ChildNode.OnDeactivated();
+			if(ChildTickResult == NodeSuccess)
+			{
+				return NodeSuccess;
+			}
+		}
 	}
 	return NodeFail;
+}
+
+function bool IsChildActive(int Index)
+{
+	if(Index == ActiveChildIndex)
+	{
+		return true;
+	}
+	return false;
 }

@@ -13,4 +13,5 @@ function CreateSequence();
 function CreateSelector();
 function CreateTask(Class<R_BTTask> TaskClass);
 
+function SetBotReference(R_Bot NewBotReference);
 function R_BTNode GetRoot();

@@ -8,3 +8,4 @@ function bool IsFull();
 function AddChild(R_BTNode ChildNode);
 function int GetChildCount();
 function R_BTNode GetChild(int Index);
+function bool IsChildActive(int Index);
