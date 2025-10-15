@@ -19,3 +19,21 @@ function bool IsFull()
 	}
 	return false;
 }
+
+function int GetChildCount()
+{
+	if(Child == None)
+	{
+		return 0;
+	}
+	return 1;
+}
+
+function R_BTNode GetChild(int Index)
+{
+	if(Index == 0)
+	{
+		return Child;
+	}
+	return None;
+}

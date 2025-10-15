@@ -41,3 +41,13 @@ function AddChild(R_BTNode ChildNode)
 	Children[NumChildren] = ChildNode;
 	++NumChildren;
 }
+
+function int GetChildCount()
+{
+	return NumChildren;
+}
+
+function R_BTNode GetChild(int Index)
+{
+	return Children[Index];
+}

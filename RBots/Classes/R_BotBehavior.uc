@@ -21,6 +21,8 @@ var private R_NavContext OwnerNavContext;
 var private R_NavMesh CachedNavMesh;
 var private R_NavMeshActorTracker CachedNavMeshActorTracker;
 
+var private R_BTNode BehaviorTree;
+
 //------------------------------------------------------------------------------
 //	BlackBoard Keys
 const BBKey_InventoryTarget 	= 'InventoryTarget';	// Actor
@@ -43,7 +45,23 @@ final function InitializeBehavior(R_Bot NewOwnerBot, PlayerPawn NewOwnerPlayerPa
 {
 	OwnerBot = NewOwnerBot;
 	OwnerPlayerPawn = NewOwnerPlayerPawn;
+	InitializeBehaviorTree();
 }
+
+final function InitializeBehaviorTree()
+{
+	local R_BTBuilder BT;
+
+	BT = new(None) Class'RBots.R_BTBuilder_Implementation';
+	if(BT != None)
+	{
+		BT.Initialize();
+		BuildBehaviorTree(BT);
+	}
+
+	BehaviorTree = BT.GetRoot();
+}
+function BuildBehaviorTree(R_BTBuilder BT);
 
 final function R_Bot GetBot() { return OwnerBot; }
 final function PlayerPawn GetPlayerPawn() { return OwnerPlayerPawn; }
@@ -128,6 +146,11 @@ final function R_BlackBoardReadInterface GetBlackBoardReadInterface()
 		}
 	}
 	return CachedBlackBoardReadInterface;
+}
+
+final function R_BTNode GetBehaviorTree()
+{
+	return BehaviorTree;
 }
 
 	/*

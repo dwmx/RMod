@@ -47,13 +47,16 @@ function CreateChildBTNodeAtStackIndex(Class<R_BTNode> NodeClass)
 	local R_BTNode_Composite ParentNode;
 	local R_BTNode NewNode;
 
-	ParentNode = R_BTNode_Composite(Nodes[NodeIndex-1]);
-	if(ParentNode == None || ParentNode.IsFull())
+	if(NodeIndex != 0)
 	{
-		LogWarning = "CreateChildBTAtStackIndex failed -- Parent is not valid";
-		Warn(LogWarning);
-		Utilities.Static.RLog(LogWarning, LogCategory);
-		return;
+		ParentNode = R_BTNode_Composite(Nodes[NodeIndex-1]);
+		if(ParentNode == None || ParentNode.IsFull())
+		{
+			LogWarning = "CreateChildBTAtStackIndex failed -- Parent is not valid";
+			Warn(LogWarning);
+			Utilities.Static.RLog(LogWarning, LogCategory);
+			return;
+		}
 	}
 
 	NewNode = CreateBTNode(NodeClass);
@@ -62,7 +65,10 @@ function CreateChildBTNodeAtStackIndex(Class<R_BTNode> NodeClass)
 		return;
 	}
 
-	ParentNode.AddChild(NewNode);
+	if(ParentNode != None)
+	{
+		ParentNode.AddChild(NewNode);
+	}
 	Nodes[NodeIndex] = NewNode;
 }
 

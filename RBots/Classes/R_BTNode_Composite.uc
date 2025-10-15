@@ -6,3 +6,5 @@ class R_BTNode_Composite extends R_BTNode abstract;
 
 function bool IsFull();
 function AddChild(R_BTNode ChildNode);
+function int GetChildCount();
+function R_BTNode GetChild(int Index);

@@ -11,3 +11,5 @@ const NodeRunning = 2;
 function Initialize();
 function OnActivated();
 function int Tick(float DeltaSeconds);
+
+function int ThisIsntImplemented();

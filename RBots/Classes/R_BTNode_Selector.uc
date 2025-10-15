@@ -1,4 +1,4 @@
 //==============================================================================
 //	R_BTNode_Selector
 //==============================================================================
-class R_BTNode_Selector extends R_BTNode_Composite;
+class R_BTNode_Selector extends R_BTNode_CompositeArray;
