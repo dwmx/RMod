@@ -21,6 +21,8 @@ var private R_NavMesh CachedNavMesh;
 var private R_NavMeshActorTracker CachedNavMeshActorTracker;
 
 var private R_BTNode BehaviorTree;
+var private R_BTContext BehaviorTreeContext;
+var private R_BlackBoard BlackBoard;
 
 //------------------------------------------------------------------------------
 //	BlackBoard Keys
@@ -49,6 +51,9 @@ final function InitializeBehavior(R_Bot NewOwnerBot, PlayerPawn NewOwnerPlayerPa
 
 final function InitializeBehaviorTree()
 {
+	// TODO: This will need to change
+	// BehaviorTrees will be shared objects, not created inside a behavior
+	// The context is what will be stored here
 	local R_BTBuilder BT;
 
 	BT = new(None) Class'RBots.R_BTBuilder_Implementation';
@@ -60,6 +65,15 @@ final function InitializeBehaviorTree()
 	}
 
 	BehaviorTree = BT.GetRoot();
+
+	// Create BlackBoard
+	BlackBoard = new(None) Class'RBots.R_BlackBoard';
+
+	// Create BT Context
+	BehaviorTreeContext = new(None) Class'RBots.R_BTContext_Implementation';
+	BehaviorTreeContext.Initialize();
+	BehaviorTreeContext.SetBot(GetBot());
+	BehaviorTreeContext.SetBlackBoard(BlackBoard);
 }
 function BuildBehaviorTree(R_BTBuilder BT);
 
@@ -237,7 +251,8 @@ final function BaseBehaviorTick(float DeltaSeconds)
 {
 	if(BehaviorTree != None)
 	{
-		BehaviorTree.Tick(DeltaSeconds);
+		BehaviorTreeContext.Tick(DeltaSeconds);
+		BehaviorTree.Tick(BehaviorTreeContext, DeltaSeconds);
 	}
 	BehaviorTick(DeltaSeconds);
 }

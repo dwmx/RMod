@@ -3,6 +3,7 @@
 //==============================================================================
 class R_BTNode_Selector extends R_BTNode_CompositeArray;
 
+/*
 const LogCategory = 'BehaviorTreeSelector';
 
 var private int ActiveChildIndex;
@@ -14,17 +15,17 @@ function Initialize()
 	ActiveChildIndex = InvalidIndex;
 }
 
-function OnActivated()
+function OnActivated(R_BTContext Context)
 {
 	ActiveChildIndex = InvalidIndex;
 }
 
-function OnDeactivated()
+function OnDeactivated(R_BTContext Context)
 {
 	ActiveChildIndex = InvalidIndex;
 }
 
-function int Tick(float DeltaSeconds)
+function int Tick(R_BTContext Context, float DeltaSeconds)
 {
 	local String LogString;
 	local int ChildCount;
@@ -55,18 +56,18 @@ function int Tick(float DeltaSeconds)
 
 		if(i != ActiveChildIndex)
 		{
-			ChildNode.OnActivated();
+			ChildNode.OnActivated(Context);
 			ActiveChildIndex = i;
 		}
 
-		ChildTickResult = ChildNode.Tick(DeltaSeconds);
+		ChildTickResult = ChildNode.Tick(Context, DeltaSeconds);
 		if(ChildTickResult == NodeRunning)
 		{
 			return NodeRunning;
 		}
 		else
 		{
-			ChildNode.OnDeactivated();
+			ChildNode.OnDeactivated(Context);
 			if(ChildTickResult == NodeSuccess)
 			{
 				return NodeSuccess;
@@ -75,12 +76,4 @@ function int Tick(float DeltaSeconds)
 	}
 	return NodeFail;
 }
-
-function bool IsChildActive(int Index)
-{
-	if(Index == ActiveChildIndex)
-	{
-		return true;
-	}
-	return false;
-}
+	*/

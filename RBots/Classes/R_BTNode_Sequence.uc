@@ -5,32 +5,38 @@ class R_BTNode_Sequence extends R_BTNode_CompositeArray;
 
 const LogCategory = 'BehaviorTreeSequence';
 
-var private int ActiveChildIndex;
-
 static function String GetNodeClassString() { return "Sequence"; }
 
 function Initialize()
+{}
+
+function BaseNodeActivated(R_BTContext Context)
 {
-	ActiveChildIndex = InvalidIndex;
+	Context.SetNodeActiveChildIndex(GetNodeUID(), InvalidIndex);
+	Super.BaseNodeActivated(Context);
 }
 
-function OnActivated()
+function BaseNodeDeactivated(R_BTContext Context)
 {
-	ActiveChildIndex = InvalidIndex;
+	Context.SetNodeActiveChildIndex(GetNodeUID(), InvalidIndex);
+	Super.BaseNodeActivated(Context);
 }
 
-function OnDeactivated()
-{
-	ActiveChildIndex = InvalidIndex;
-}
-
-function int Tick(float DeltaSeconds)
+function int Tick(R_BTContext Context, float DeltaSeconds)
 {
 	local String LogString;
 	local int ChildCount;
 	local int i;
 	local R_BTNode ChildNode;
 	local int ChildTickResult;
+	local int ActiveChildIndex;
+
+	if(Context == None)
+	{
+		return NodeFail;
+	}
+
+	ActiveChildIndex = Context.GetNodeActiveChildIndex(GetNodeUID());
 
 	if(ActiveChildIndex == InvalidIndex)
 	{
@@ -55,18 +61,18 @@ function int Tick(float DeltaSeconds)
 
 		if(i != ActiveChildIndex)
 		{
-			ChildNode.OnActivated();
-			ActiveChildIndex = i;
+			ChildNode.BaseNodeActivated(Context);
+			Context.SetNodeActiveChildIndex(GetNodeUID(), i);
 		}
 
-		ChildTickResult = ChildNode.Tick(DeltaSeconds);
+		ChildTickResult = ChildNode.Tick(Context, DeltaSeconds);
 		if(ChildTickResult == NodeRunning)
 		{
 			return NodeRunning;
 		}
 		else
 		{
-			ChildNode.OnDeactivated();
+			ChildNode.BaseNodeDeactivated(Context);
 			if(ChildTickResult == NodeFail)
 			{
 				return NodeFail;
@@ -74,13 +80,4 @@ function int Tick(float DeltaSeconds)
 		}
 	}
 	return NodeSuccess;
-}
-
-function bool IsChildActive(int Index)
-{
-	if(Index == ActiveChildIndex)
-	{
-		return true;
-	}
-	return false;
 }

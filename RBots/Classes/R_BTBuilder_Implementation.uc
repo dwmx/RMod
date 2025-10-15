@@ -44,11 +44,6 @@ function R_BTNode CreateBTNode(Class<R_BTNode> NodeClass)
 		return None;
 	}
 
-	if(R_BTTask(NewNode) != None)
-	{
-		R_BTTask(NewNode).SetBotReference(BotReference);
-	}
-
 	NewNode.Initialize();
 	return NewNode;
 }

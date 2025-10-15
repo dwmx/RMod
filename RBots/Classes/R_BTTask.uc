@@ -8,45 +8,39 @@
 //==============================================================================
 class R_BTTask extends R_BTNode abstract;
 
-var private R_Bot BotReference;
-var private R_BotPawnController PawnController;
-var private int Result;
-
 static function String GetNodeClassString() { return "Task"; }
 
-function SetBotReference(R_Bot NewBotReference) { BotReference = NewBotReference; }
-function R_Bot GetBot() { return BotReference; }
-
-function R_BotPawnController GetPawnController()
+function int Tick(R_BTContext Context, float DeltaSeconds)
 {
 	local R_Bot Bot;
-	if(PawnController == None)
-	{
-		Bot = GetBot();
-		if(Bot != None)
-		{
-			PawnController = R_BotPawnController(Bot.GetBotObjectByClass(Class'RBots.R_BotPawnController'));
-		}
-	}
-	
-	return PawnController;
-}
+	local R_BlackBoard BlackBoard;
+	local float ActiveTime;
+	local int Result;
 
-function int Tick(float DeltaSeconds)
-{
-	Result = NodeRunning;
-	TickTask(DeltaSeconds);
+	Bot = Context.GetBot();
+	BlackBoard = Context.GetBlackBoard();
+	ActiveTime = Context.GetNodeActiveTime(GetNodeUID());
+	Result = TickTask(Bot, BlackBoard, ActiveTime, DeltaSeconds);
 	return Result;
 }
 
-function EndTaskSuccess()
+//------------------------------------------------------------------------------
+
+function int TaskSuccess()
 {
-	Result = NodeSuccess;
+	return NodeSuccess;
 }
 
-function EndTaskFail()
+function int TaskFail()
 {
-	Result = NodeFail;
+	return NodeFail;
 }
 
-function TickTask(float DeltaSeconds);
+function int TaskInProgress()
+{
+	return NodeRunning;
+}
+
+//------------------------------------------------------------------------------
+
+function int TickTask(R_Bot Bot, R_BlackBoard BlackBoard, float ActiveTime, float DeltaSeconds);

@@ -1,24 +1,11 @@
-//==============================================================================
-//	R_BTTask_Delay
-//	Simple delay Node
-//==============================================================================
 class R_BTTask_Delay extends R_BTTask;
 
-var private float TimeAccumulator;
-
-static function String GetNodeClassString() { return "Delay"; }
-
-function OnActivated()
+function int TickTask(R_Bot Bot, R_BlackBoard BlackBoard, float ActiveTime, float DeltaSeconds)
 {
-	TimeAccumulator = 0.0;
-}
-
-function TickTask(float DeltaSeconds)
-{
-	TimeAccumulator += DeltaSeconds;
-	if(TimeAccumulator >= 3.0)
+	if(ActiveTime >= 5.0)
 	{
-		EndTaskSuccess();
-		return;
+		Log("HOly shit this is actually working didnt think it woudl");
+		return TaskSuccess();
 	}
+	return TaskInProgress();
 }

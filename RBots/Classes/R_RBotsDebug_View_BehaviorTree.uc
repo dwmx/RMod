@@ -100,14 +100,14 @@ function DrawBehaviorTreeValidated(Canvas C, R_BTNode BT)
 			{
 				NodeStack[NumNodes] = CurrentCompositeNode.GetChild(i);
 				NodeDepth[NumNodes] = CurrentDepth + 1;
-				if(CurrentCompositeNode.IsChildActive(i))
-				{
-					NodeActive[NumNodes] = 1;
-				}
-				else
-				{
-					NodeActive[NumNodes] = 0;
-				}
+				//if(CurrentCompositeNode.IsChildActive(i))
+				//{
+				//	NodeActive[NumNodes] = 1;
+				//}
+				//else
+				//{
+				//	NodeActive[NumNodes] = 0;
+				//}
 				++NumNodes;
 			}
 		}

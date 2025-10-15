@@ -5,14 +5,12 @@
 class R_BTNode_Root extends R_BTNode_Composite;
 
 var private R_BTNode Child;
-var private bool bActive;
 
 static function String GetNodeClassString() { return "Root"; }
 
 function Initialize()
 {
 	Child = None;
-	bActive = false;
 }
 
 function AddChild(R_BTNode ChildNode)
@@ -47,23 +45,31 @@ function R_BTNode GetChild(int Index)
 	return None;
 }
 
-function int Tick(float DeltaSeconds)
+function int Tick(R_BTContext Context, float DeltaSeconds)
 {
+	local bool bActive;
+
+	if(Context == None)
+	{
+		return NodeFail;
+	}
+
 	if(Child != None)
 	{
+		bActive = Context.GetNodeActive(GetNodeUID());
 		if(!bActive)
 		{
-			Child.OnActivated();
-			bActive = true;
+			Child.BaseNodeActivated(Context);
+			Context.SetNodeActive(GetNodeUID(), true);
 		}
-		if(Child.Tick(DeltaSeconds) != NodeRunning)
+		if(Child.Tick(Context, DeltaSeconds) != NodeRunning)
 		{
-			bActive = false;
+			Context.SetNodeActive(GetNodeUID(), false);
 		}
 	}
 	else
 	{
-		bActive = false;
+		Context.SetNodeActive(GetNodeUID(), false);
 	}
 	return NodeRunning;
 }
@@ -71,9 +77,4 @@ function int Tick(float DeltaSeconds)
 function bool IsChildActive(int Index)
 {
 	return Index == 0;
-}
-
-defaultproperties
-{
-	bActive=false
 }
