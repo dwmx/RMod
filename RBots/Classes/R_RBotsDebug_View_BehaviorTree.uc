@@ -9,12 +9,23 @@ const DebugLib = Class'RBots.R_RBots_DebugLibrary';
 const CanvasLib = Class'RBots.R_RBots_CanvasLibrary';
 
 const StringCategoryBT = 'BehaviorTree';
+const StringCategoryBB = 'BlackBoard';
+
+//------------------------------------------------------------------------------
+//	BlackBoardTypeCodes
+//	Copied from R_BlackBoard_Implementation
+const BlackBoardTypeCodeInvalid	= 0;
+const BlackBoardTypeCodeInt	 	= 1;
+const BlackBoardTypeCodeFloat 	= 2;
+const BlackBoardTypeCodeVector 	= 3;
+const BlackBoardTypeCodeActor 	= 4;
 
 function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
 {
 	local R_RBotsDebug DebugMutator;
 	local R_Bot DebugTarget;
 	local R_BotBehavior ActiveBehavior;
+	local R_BlackBoard BlackBoard;
 	local R_BehaviorTree BehaviorTree;
 	local R_BTContext BehaviorTreeContext;
 
@@ -37,6 +48,12 @@ function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
 	}
 
 	DrawBehaviorTree(C, StringManager, BehaviorTree, BehaviorTreeContext);
+
+	if(ActiveBehavior != None)
+	{
+		BlackBoard = ActiveBehavior.GetBlackBoard();
+	}
+	DrawBlackBoard(C, StringManager, BlackBoard);
 }
 
 function DrawBehaviorTree(Canvas C, R_RBotsDebug_StringManager StringManager, R_BehaviorTree BehaviorTree, R_BTContext BehaviorTreeContext)
@@ -140,4 +157,55 @@ function String GetBehaviorNodeString(R_BTNode Node)
 	}
 
 	return String(Node.Class);
+}
+
+function DrawBlackBoard(Canvas C, R_RBotsDebug_StringManager StringManager, R_BlackBoard BlackBoard)
+{
+	StringManager.AddCategory(StringCategoryBB);
+
+	if(BlackBoard == None)
+	{
+		StringManager.AddWarning(StringCategoryBB, "Invalid BlackBoard reference");
+		return;
+	}
+
+	DrawBlackBoardValidated(C, StringManager, BlackBoard);
+}
+
+function DrawBlackBoardValidated(Canvas C, R_RBotsDebug_StringManager StringManager, R_BlackBoard BlackBoard)
+{
+	local int NumKeys;
+	local Name CurrentKey;
+	local int CurrentType;
+	local int AsInt;
+	local float AsFloat;
+	local Vector AsVector;
+	local Actor AsActor;
+	local int i;
+
+	NumKeys = BlackBoard.GetNumKeys();
+	StringManager.AddInt(StringCategoryBB, "NumKeys", NumKeys);
+	for(i = 0; i < NumKeys; ++i)
+	{
+		BlackBoard.GetKeyTypeAtIndex(i, CurrentKey, CurrentType);
+		switch(CurrentType)
+		{
+			case BlackBoardTypeCodeInt:
+				BlackBoard.GetInt(CurrentKey, AsInt);
+				StringManager.AddInt(StringCategoryBB, String(CurrentKey), AsInt);
+				break;
+			case BlackBoardTypeCodeFloat:
+				BlackBoard.GetFloat(CurrentKey, AsFloat);
+				StringManager.AddFloat(StringCategoryBB, String(CurrentKey), AsFloat);
+				break;
+			case BlackBoardTypeCodeVector:
+				BlackBoard.GetVector(CurrentKey, AsVector);
+				StringManager.AddVector(StringCategoryBB, String(CurrentKey), AsVector);
+				break;
+			case BlackBoardTypeCodeActor:
+				BlackBoard.GetActor(CurrentKey, AsActor);
+				StringManager.AddActor(StringCategoryBB, String(CurrentKey), AsActor);
+				break;
+		}
+	}
 }

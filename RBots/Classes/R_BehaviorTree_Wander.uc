@@ -4,6 +4,13 @@
 //==============================================================================
 class R_BehaviorTree_Wander extends R_BehaviorTree;
 
+function AddKeySetToBlackBoard(R_BlackBoard BlackBoard)
+{
+	BlackBoard.AddFloat('WaitTime');
+	BlackBoard.AddActor('PickupTarget');
+	BlackBoard.AddActor('EquipTarget');
+}
+
 function BuildBehaviorTree(R_BTBuilder BT)
 {
 	BT.CreateSequence();
@@ -12,8 +19,18 @@ function BuildBehaviorTree(R_BTBuilder BT)
 		BT.Push();
 			BT.CreateSequence();
 			BT.Push();
+				BT.CreateTask(Class'RBots.R_BTTask_SelectWaitTime');
+				BT.Map('WaitTime', 'WaitTime');
+
 				BT.CreateTask(Class'RBots.R_BTTask_Delay');
+				BT.Map('WaitTime', 'Duration');
+
+				BT.CreateTask(Class'RBots.R_BTTask_SelectEquipTarget');
+				BT.Map('EquipTarget', 'EquipTarget');
+
 				BT.CreateTask(Class'RBots.R_BTTask_Delay');
+				BT.Map('WaitTime', 'Duration');
+
 				BT.Pop();
 			BT.CreateSelector();
 			BT.Push();

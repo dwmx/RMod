@@ -79,7 +79,11 @@ final function InitializeBehaviorTree()
 	}
 	
 	// Create BlackBoard
-	BlackBoard = new(None) Class'RBots.R_BlackBoard';
+	BlackBoard = new(None) Class'RBots.R_BlackBoard_Implementation';
+	if(BehaviorTree != None)
+	{
+		BehaviorTree.AddKeySetToBlackBoard(BlackBoard);
+	}
 
 	// Create BT Context
 	BehaviorTreeContext = new(None) Class'RBots.R_BTContext_Implementation';
@@ -162,6 +166,11 @@ final function R_BotPawnController GetBotPawnController()
 final function R_BehaviorTree GetBehaviorTree()
 {
 	return BehaviorTree;
+}
+
+final function R_BlackBoard GetBlackBoard()
+{
+	return BlackBoard;
 }
 
 final function R_BTContext GetBehaviorTreeContext()

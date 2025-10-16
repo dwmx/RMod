@@ -1,7 +1,10 @@
 //==============================================================================
 //	R_VirtualAsset
-//	Base class for any virtual asset that can be loaded at runtime by the
-//	virtual asset manager class
+//	A Virtual Asset is any object which builds itself at runtime, but gets
+//	treated as if it were an asset loaded from disk
+//
+//	Virtual Assets are created, managed, and distributed by the
+//	Virtual Asset Manager class
 //==============================================================================
 class R_VirtualAsset extends R_RBotsObject abstract;
 

@@ -30,19 +30,6 @@ var private R_BotPerception Perception;
 const BotObjectClass_PawnController = Class'RBots.R_BotPawnController';
 var private R_BotPawnController PawnController;
 
-// BlackBoard------------------------------------
-const BotObjectClass_BlackBoard = Class'RBots.R_BlackBoard_Implementation';
-var private R_BlackBoard BlackBoard;
-
-// BlackBoard Keys
-// These need to be reflected in R_BotObject
-const BBKey_InventoryTarget 	= 'InventoryTarget';	// Actor
-const BBKey_WantWeapon 			= 'WantWeapon';			// Float
-const BBKey_WantShield			= 'WantShield';			// Float
-const BBKey_WantHealth			= 'WantHealth';			// Float
-const BBKey_WantStrength		= 'WantStrength';		// Float
-const BBKey_WantRunePower		= 'WantRunePower';		// Float
-
 //------------------------------------------------------------------------------
 // Behaviors
 var private Class<R_BotBehavior> InitialBehaviorClass;
@@ -232,7 +219,6 @@ function InitializeBot()
 	// Create BotObjects
 	Perception 					= R_BotPerception(CreateBotObject(BotObjectClass_Perception));
 	PawnController 				= R_BotPawnController(CreateBotObject(BotObjectClass_PawnController));
-	BlackBoard 					= R_BlackBoard(CreateBotObject(BotObjectClass_BlackBoard));
 
 	//--------------------------------------------------------------------------
 	// Spawn NavContext

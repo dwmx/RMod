@@ -13,5 +13,6 @@ function CreateSequence();
 function CreateSelector();
 function CreateTask(Class<R_BTTask> TaskClass);
 
-function SetBotReference(R_Bot NewBotReference);
+function Map(Name BlackBoardKey, Name TaskParameter);
+
 function R_BTNode GetRoot();

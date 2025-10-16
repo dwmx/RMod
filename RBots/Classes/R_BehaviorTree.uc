@@ -22,6 +22,7 @@ function Load()
 }
 
 function BuildBehaviorTree(R_BTBuilder BT);
+function AddKeySetToBlackBoard(R_BlackBoard BlackBoard);
 
 function R_BTNode GetRoot() { return Root; }
 

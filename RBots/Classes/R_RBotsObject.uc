@@ -4,6 +4,8 @@
 //==============================================================================
 class R_RBotsObject extends Object abstract;
 
+const Utilities = Class'RBots.R_BotUtilities';
+
 const InvalidIndex = -1;
 
 struct R_EventPayload

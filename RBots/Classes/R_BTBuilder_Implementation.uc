@@ -97,6 +97,18 @@ function CreateTask(Class<R_BTTask> TaskClass)
 
 //------------------------------------------------------------------------------
 
+function Map(Name BlackBoardKey, Name TaskParameter)
+{
+	local R_BTTask Task;
+	Task = R_BTTask(Nodes[NodeIndex]);
+	if(Task != None)
+	{
+		Task.MapBlackBoardKey(BlackBoardKey, TaskParameter);
+	}
+}
+
+//------------------------------------------------------------------------------
+
 function Initialize()
 {
 	local int i;
