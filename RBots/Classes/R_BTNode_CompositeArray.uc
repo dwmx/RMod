@@ -18,7 +18,7 @@ function BaseNodeActivated(R_BTContext Context)
 function BaseNodeDeactivated(R_BTContext Context)
 {
 	Context.SetNodeActiveChildIndex(GetNodeUID(), InvalidIndex);
-	Super.BaseNodeActivated(Context);
+	Super.BaseNodeDeactivated(Context);
 }
 
 function Initialize()

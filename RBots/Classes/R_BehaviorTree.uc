@@ -16,8 +16,23 @@ function Load()
 	local R_BTBuilder BT;
 
 	BT = new(None) BTBuilderClass;
+	BT.Initialize();
 	BuildBehaviorTree(BT);
 	Root = BT.GetRoot();
 }
 
 function BuildBehaviorTree(R_BTBuilder BT);
+
+function R_BTNode GetRoot() { return Root; }
+
+//------------------------------------------------------------------------------
+
+function Tick(R_BTContext Context, float DeltaSeconds)
+{
+	if(Context == None || Root == None)
+	{
+		return;
+	}
+
+	Root.Tick(Context, DeltaSeconds);
+}

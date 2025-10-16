@@ -6,6 +6,7 @@ class R_BotBehavior extends R_RBotsObject abstract;
 //class R_BotBehavior extends R_BotObject abstract;
 
 const Utilities = Class'RBots.R_BotUtilities';
+const LogCategory = 'Behavior';
 
 const NavLib = Class'RBots.R_NavLibrary';
 
@@ -20,7 +21,10 @@ var private R_NavContext OwnerNavContext;
 var private R_NavMesh CachedNavMesh;
 var private R_NavMeshActorTracker CachedNavMeshActorTracker;
 
-var private R_BTNode BehaviorTree;
+var private Class<R_BehaviorTree> BehaviorTreeClass;
+var private R_BehaviorTree BehaviorTree;
+
+//var private R_BTNode BehaviorTree;
 var private R_BTContext BehaviorTreeContext;
 var private R_BlackBoard BlackBoard;
 
@@ -51,21 +55,29 @@ final function InitializeBehavior(R_Bot NewOwnerBot, PlayerPawn NewOwnerPlayerPa
 
 final function InitializeBehaviorTree()
 {
-	// TODO: This will need to change
-	// BehaviorTrees will be shared objects, not created inside a behavior
-	// The context is what will be stored here
-	local R_BTBuilder BT;
+	local String LogString;
+	local R_RBotsServerActor RBots;
+	local R_VirtualAssetManager AssMan; // heh
 
-	BT = new(None) Class'RBots.R_BTBuilder_Implementation';
-	if(BT != None)
+	if(BehaviorTreeClass == None)
 	{
-		BT.Initialize();
-		BT.SetBotReference(GetBot());
-		BuildBehaviorTree(BT);
+		LogString = "No BehaviorTreeClass configured for class" @ Self.Class;
+		Warn(LogString);
+		Utilities.Static.RLog(LogString, LogCategory);
 	}
-
-	BehaviorTree = BT.GetRoot();
-
+	else
+	{
+		RBots = GetRBotsServerActor();
+		if(RBots != None)
+		{
+			AssMan = RBots.GetAssetManager();
+			if(AssMan != None)
+			{
+				BehaviorTree = R_BehaviorTree(AssMan.LoadAsset(BehaviorTreeClass));
+			}
+		}
+	}
+	
 	// Create BlackBoard
 	BlackBoard = new(None) Class'RBots.R_BlackBoard';
 
@@ -75,7 +87,6 @@ final function InitializeBehaviorTree()
 	BehaviorTreeContext.SetBot(GetBot());
 	BehaviorTreeContext.SetBlackBoard(BlackBoard);
 }
-function BuildBehaviorTree(R_BTBuilder BT);
 
 final function R_Bot GetBot() { return OwnerBot; }
 final function PlayerPawn GetPlayerPawn() { return OwnerPlayerPawn; }
@@ -148,7 +159,7 @@ final function R_BotPawnController GetBotPawnController()
 	return OwnerController;
 }
 
-final function R_BTNode GetBehaviorTree()
+final function R_BehaviorTree GetBehaviorTree()
 {
 	return BehaviorTree;
 }
@@ -157,43 +168,6 @@ final function R_BTContext GetBehaviorTreeContext()
 {
 	return BehaviorTreeContext;
 }
-
-	/*
-final function R_NavMesh GetNavMesh()
-{
-	local R_Bot Bot;
-	if(CachedNavMesh == None)
-	{
-		Bot = GetBot();
-		if(Bot != None)
-		{
-			CachedNavMesh = Bot.GetNavMesh();
-		}
-	}
-	return CachedNavMesh;
-}
-*/
-
-/*
-final function R_NavMeshActorTracker GetNavMeshActorTracker()
-{
-	local R_RBotsServerActor LocalRBots;
-	local R_DynamicMapData MapData;
-	if(CachedNavMeshActorTracker == None)
-	{
-		LocalRBots = GetRBotsServerActor();
-		if(LocalRBots != None)
-		{
-			MapData = LocalRBots.GetLoadedMapData();
-			if(MapData != None)
-			{
-				CachedNavMeshActorTracker = MapData.GetNavMeshActorTracker();
-			}
-		}
-	}
-	return CachedNavMeshActorTracker;
-}
-	*/
 
 final function R_NavQueryInterface GetNavQueryInterface()
 {
@@ -254,11 +228,14 @@ function FollowCurrentPath()
 
 final function BaseBehaviorTick(float DeltaSeconds)
 {
-	if(BehaviorTree != None)
+	local R_BTNode BehaviorTreeRoot;
+
+	if(BehaviorTreeContext != None && BehaviorTree != None)
 	{
 		BehaviorTreeContext.Tick(DeltaSeconds);
 		BehaviorTree.Tick(BehaviorTreeContext, DeltaSeconds);
 	}
+	
 	BehaviorTick(DeltaSeconds);
 }
 

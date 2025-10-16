@@ -15,7 +15,7 @@ function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
 	local R_RBotsDebug DebugMutator;
 	local R_Bot DebugTarget;
 	local R_BotBehavior ActiveBehavior;
-	local R_BTNode BehaviorTree;
+	local R_BehaviorTree BehaviorTree;
 	local R_BTContext BehaviorTreeContext;
 
 	StringManager.AddCategory(StringCategoryBT);
@@ -39,7 +39,7 @@ function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
 	DrawBehaviorTree(C, StringManager, BehaviorTree, BehaviorTreeContext);
 }
 
-function DrawBehaviorTree(Canvas C, R_RBotsDebug_StringManager StringManager, R_BTNode BehaviorTree, R_BTContext BehaviorTreeContext)
+function DrawBehaviorTree(Canvas C, R_RBotsDebug_StringManager StringManager, R_BehaviorTree BehaviorTree, R_BTContext BehaviorTreeContext)
 {
 	if(BehaviorTree == None)
 	{
@@ -50,7 +50,7 @@ function DrawBehaviorTree(Canvas C, R_RBotsDebug_StringManager StringManager, R_
 	DrawBehaviorTreeValidated(C, BehaviorTree, BehaviorTreeContext);
 }
 
-function DrawBehaviorTreeValidated(Canvas C, R_BTNode BT, R_BTContext CTX)
+function DrawBehaviorTreeValidated(Canvas C, R_BehaviorTree BT, R_BTContext CTX)
 {
 	local R_BTNode NodeStack[128];
 	local int NodeDepth[128];
@@ -80,10 +80,14 @@ function DrawBehaviorTreeValidated(Canvas C, R_BTNode BT, R_BTContext CTX)
 	XPos = C.ClipX * 0.5;
 	YPos = C.ClipY * 0.1;
 
-	NodeStack[0] = BT;
+	NodeStack[0] = BT.GetRoot();
 	NodeDepth[0] = 0;
 	
-	NumNodes = 1;
+	NumNodes = 0;
+	if(NodeStack[0] != None)
+	{
+		NumNodes = 1;
+	}
 
 	while(NumNodes > 0)
 	{
@@ -132,7 +136,7 @@ function String GetBehaviorNodeString(R_BTNode Node)
 	NodeClass = Node.Class;
 	if(NodeClass != None)
 	{
-		return NodeClass.Static.GetNodeClassString();
+		return "(" $ Node.GetNodeUID() $ "):" @ NodeClass.Static.GetNodeClassString();
 	}
 
 	return String(Node.Class);

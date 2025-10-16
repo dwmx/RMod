@@ -47,7 +47,8 @@ function int Tick(R_BTContext Context, float DeltaSeconds)
 		if(i != ActiveChildIndex)
 		{
 			ChildNode.BaseNodeActivated(Context);
-			Context.SetNodeActiveChildIndex(GetNodeUID(), i);
+			ActiveChildIndex = i;
+			Context.SetNodeActiveChildIndex(GetNodeUID(), ActiveChildIndex);
 		}
 
 		ChildTickResult = ChildNode.Tick(Context, DeltaSeconds);

@@ -19,11 +19,6 @@ var private int CurrentNodeUID;
 
 //------------------------------------------------------------------------------
 
-function SetBotReference(R_Bot NewBotReference)
-{
-	BotReference = NewBotReference;
-}
-
 function R_BTNode GetRoot()
 {
 	return Nodes[0];

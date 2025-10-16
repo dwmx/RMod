@@ -87,3 +87,8 @@ function R_VirtualAsset LoadAsset(Class<R_VirtualAsset> AssetClass)
 	LoadedAssets[NumLoadedAssets] = Asset;
 	++NumLoadedAssets;
 }
+
+defaultproperties
+{
+	PreCacheAssetClasses(0)=Class'RBots.R_BehaviorTree_Wander'
+}

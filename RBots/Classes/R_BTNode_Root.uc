@@ -48,29 +48,31 @@ function R_BTNode GetChild(int Index)
 function int Tick(R_BTContext Context, float DeltaSeconds)
 {
 	local bool bActive;
+	local int TickResult;
 
-	if(Context == None)
+	if(Context == None || Child == None)
 	{
 		return NodeFail;
 	}
 
-	if(Child != None)
+	bActive = Context.GetNodeActive(GetNodeUID());
+	if(!bActive)
 	{
-		bActive = Context.GetNodeActive(GetNodeUID());
-		if(!bActive)
-		{
-			Child.BaseNodeActivated(Context);
-			Context.SetNodeActive(GetNodeUID(), true);
-		}
-		if(Child.Tick(Context, DeltaSeconds) != NodeRunning)
-		{
-			Context.SetNodeActive(GetNodeUID(), false);
-		}
+		BaseNodeActivated(Context);
 	}
-	else
+
+	bActive = Context.GetNodeActive(Child.GetNodeUID());
+	if(!bActive)
 	{
-		Context.SetNodeActive(GetNodeUID(), false);
+		Child.BaseNodeActivated(Context);
 	}
+
+	TickResult = Child.Tick(Context, DeltaSeconds);
+	if(TickResult != NodeRunning)
+	{
+		Child.BaseNodeDeactivated(Context);
+	}
+
 	return NodeRunning;
 }
 

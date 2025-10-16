@@ -46,7 +46,7 @@ final function R_RBotsDebug_View_BehaviorTree GetDVBehaviorTree(R_RBotsDebug Deb
 	return R_RBotsDebug_View_BehaviorTree(DebugMutator.GetDebugView(Class'RBots.R_RBotsDebug_View_BehaviorTree'));
 }
 
-final function R_BTNode GetDebugTargetBehaviorTree(R_RBotsDebug DebugMutator)
+final function R_BehaviorTree GetDebugTargetBehaviorTree(R_RBotsDebug DebugMutator)
 {
 	local R_Bot Bot;
 	local R_BotBehavior ActiveBehavior;
@@ -94,7 +94,7 @@ function HandleCommand_Toggle(R_RBotsDebug DebugMutator, PlayerPawn Sender)
 
 function HandleCommand_Dump(R_RBotsDebug DebugMutator, PlayerPawn Sender)
 {
-	local R_BTNode BehaviorTree;
+	local R_BehaviorTree BehaviorTree;
 	local R_BTNode Node;
 	local R_BTNode_Composite CompositeNode;
 	local R_BTNode NodeStack[128];
@@ -115,9 +115,15 @@ function HandleCommand_Dump(R_RBotsDebug DebugMutator, PlayerPawn Sender)
 	}
 	else
 	{
-		NodeStack[0] = BehaviorTree;
+		NodeStack[0] = BehaviorTree.GetRoot();
 		NodeDepth[0] = 0;
-		NumNodes = 1;
+
+		NumNodes = 0;
+		if(NodeStack[0] != None)
+		{
+			NumNodes = 1;
+		}
+
 		while(NumNodes > 0)
 		{
 			--NumNodes;
