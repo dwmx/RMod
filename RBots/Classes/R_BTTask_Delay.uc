@@ -4,7 +4,6 @@ function int TickTask(R_Bot Bot, R_BlackBoard BlackBoard, float ActiveTime, floa
 {
 	if(ActiveTime >= 5.0)
 	{
-		Log("HOly shit this is actually working didnt think it woudl");
 		return TaskSuccess();
 	}
 	return TaskInProgress();

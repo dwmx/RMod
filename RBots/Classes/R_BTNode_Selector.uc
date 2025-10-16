@@ -3,27 +3,9 @@
 //==============================================================================
 class R_BTNode_Selector extends R_BTNode_CompositeArray;
 
-/*
 const LogCategory = 'BehaviorTreeSelector';
 
-var private int ActiveChildIndex;
-
 static function String GetNodeClassString() { return "Selector"; }
-
-function Initialize()
-{
-	ActiveChildIndex = InvalidIndex;
-}
-
-function OnActivated(R_BTContext Context)
-{
-	ActiveChildIndex = InvalidIndex;
-}
-
-function OnDeactivated(R_BTContext Context)
-{
-	ActiveChildIndex = InvalidIndex;
-}
 
 function int Tick(R_BTContext Context, float DeltaSeconds)
 {
@@ -32,6 +14,14 @@ function int Tick(R_BTContext Context, float DeltaSeconds)
 	local int i;
 	local R_BTNode ChildNode;
 	local int ChildTickResult;
+	local int ActiveChildIndex;
+
+	if(Context == None)
+	{
+		return NodeFail;
+	}
+
+	ActiveChildIndex = Context.GetNodeActiveChildIndex(GetNodeUID());
 
 	if(ActiveChildIndex == InvalidIndex)
 	{
@@ -56,8 +46,8 @@ function int Tick(R_BTContext Context, float DeltaSeconds)
 
 		if(i != ActiveChildIndex)
 		{
-			ChildNode.OnActivated(Context);
-			ActiveChildIndex = i;
+			ChildNode.BaseNodeActivated(Context);
+			Context.SetNodeActiveChildIndex(GetNodeUID(), i);
 		}
 
 		ChildTickResult = ChildNode.Tick(Context, DeltaSeconds);
@@ -67,7 +57,7 @@ function int Tick(R_BTContext Context, float DeltaSeconds)
 		}
 		else
 		{
-			ChildNode.OnDeactivated(Context);
+			ChildNode.BaseNodeDeactivated(Context);
 			if(ChildTickResult == NodeSuccess)
 			{
 				return NodeSuccess;
@@ -76,4 +66,3 @@ function int Tick(R_BTContext Context, float DeltaSeconds)
 	}
 	return NodeFail;
 }
-	*/

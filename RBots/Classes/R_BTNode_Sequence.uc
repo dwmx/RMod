@@ -7,21 +7,6 @@ const LogCategory = 'BehaviorTreeSequence';
 
 static function String GetNodeClassString() { return "Sequence"; }
 
-function Initialize()
-{}
-
-function BaseNodeActivated(R_BTContext Context)
-{
-	Context.SetNodeActiveChildIndex(GetNodeUID(), InvalidIndex);
-	Super.BaseNodeActivated(Context);
-}
-
-function BaseNodeDeactivated(R_BTContext Context)
-{
-	Context.SetNodeActiveChildIndex(GetNodeUID(), InvalidIndex);
-	Super.BaseNodeActivated(Context);
-}
-
 function int Tick(R_BTContext Context, float DeltaSeconds)
 {
 	local String LogString;

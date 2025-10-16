@@ -15,6 +15,16 @@ function BuildBehaviorTree(R_BTBuilder BT)
 				BT.CreateTask(Class'RBots.R_BTTask_Delay');
 				//BT.CreateTask(Class'RBots.R_BTTask_SelectInventory');
 				BT.CreateTask(Class'RBots.R_BTTask_Delay');
+				BT.Pop();
+			BT.CreateSelector();
+			BT.Push();
+				BT.CreateTask(Class'RBots.R_BTTask_Delay');
+				BT.CreateTask(Class'RBots.R_BTTask_Delay');
+				BT.Pop();
+			BT.CreateSequence();
+			BT.Push();
+				BT.CreateTask(Class'RBots.R_BTTask_Delay');
+				BT.CreateTask(Class'RBots.R_BTTask_Delay');
 	return;
 
 

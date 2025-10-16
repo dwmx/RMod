@@ -153,6 +153,11 @@ final function R_BTNode GetBehaviorTree()
 	return BehaviorTree;
 }
 
+final function R_BTContext GetBehaviorTreeContext()
+{
+	return BehaviorTreeContext;
+}
+
 	/*
 final function R_NavMesh GetNavMesh()
 {

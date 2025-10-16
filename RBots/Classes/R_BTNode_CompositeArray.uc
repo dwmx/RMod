@@ -9,6 +9,18 @@ const LogCategory = 'BTNodeCompositeArray';
 var private R_BTNode Children[16];
 var private int NumChildren;
 
+function BaseNodeActivated(R_BTContext Context)
+{
+	Context.SetNodeActiveChildIndex(GetNodeUID(), InvalidIndex);
+	Super.BaseNodeActivated(Context);
+}
+
+function BaseNodeDeactivated(R_BTContext Context)
+{
+	Context.SetNodeActiveChildIndex(GetNodeUID(), InvalidIndex);
+	Super.BaseNodeActivated(Context);
+}
+
 function Initialize()
 {
 	local int i;

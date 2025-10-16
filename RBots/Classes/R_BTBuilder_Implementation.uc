@@ -15,6 +15,7 @@ const ClassSequence = Class'RBots.R_BTNode_Sequence';
 const ClassSelector = Class'RBots.R_BTNode_Selector';
 
 var private R_Bot BotReference;
+var private int CurrentNodeUID;
 
 //------------------------------------------------------------------------------
 
@@ -72,6 +73,9 @@ function CreateChildBTNodeAtStackIndex(Class<R_BTNode> NodeClass)
 		return;
 	}
 
+	NewNode.SetNodeUID(CurrentNodeUID);
+	++CurrentNodeUID;
+
 	if(ParentNode != None)
 	{
 		ParentNode.AddChild(NewNode);
@@ -106,6 +110,8 @@ function Initialize()
 	{
 		Nodes[i] = None;
 	}
+
+	CurrentNodeUID = 0;
 
 	NodeIndex = 0;
 	CreateChildBTNodeAtStackIndex(ClassRootNode);

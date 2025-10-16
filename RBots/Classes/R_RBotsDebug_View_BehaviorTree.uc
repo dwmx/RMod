@@ -16,6 +16,7 @@ function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
 	local R_Bot DebugTarget;
 	local R_BotBehavior ActiveBehavior;
 	local R_BTNode BehaviorTree;
+	local R_BTContext BehaviorTreeContext;
 
 	StringManager.AddCategory(StringCategoryBT);
 
@@ -31,13 +32,14 @@ function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
 		if(ActiveBehavior != None)
 		{
 			BehaviorTree = ActiveBehavior.GetBehaviorTree();
+			BehaviorTreeContext = ActiveBehavior.GetBehaviorTreeContext();
 		}
 	}
 
-	DrawBehaviorTree(C, StringManager, BehaviorTree);
+	DrawBehaviorTree(C, StringManager, BehaviorTree, BehaviorTreeContext);
 }
 
-function DrawBehaviorTree(Canvas C, R_RBotsDebug_StringManager StringManager, R_BTNode BehaviorTree)
+function DrawBehaviorTree(Canvas C, R_RBotsDebug_StringManager StringManager, R_BTNode BehaviorTree, R_BTContext BehaviorTreeContext)
 {
 	if(BehaviorTree == None)
 	{
@@ -45,14 +47,13 @@ function DrawBehaviorTree(Canvas C, R_RBotsDebug_StringManager StringManager, R_
 		return;
 	}
 
-	DrawBehaviorTreeValidated(C, BehaviorTree);
+	DrawBehaviorTreeValidated(C, BehaviorTree, BehaviorTreeContext);
 }
 
-function DrawBehaviorTreeValidated(Canvas C, R_BTNode BT)
+function DrawBehaviorTreeValidated(Canvas C, R_BTNode BT, R_BTContext CTX)
 {
 	local R_BTNode NodeStack[128];
 	local int NodeDepth[128];
-	local byte NodeActive[128];
 	local int NumNodes;
 	local R_BTNode CurrentNode;
 	local R_BTNode_Composite CurrentCompositeNode;
@@ -63,6 +64,7 @@ function DrawBehaviorTreeValidated(Canvas C, R_BTNode BT)
 	local float XPos, YPos;
 	local float XDraw;
 	local float RGBInactive[3], RGBActive[3];
+	local String DrawString;
 
 	DebugLib.Static.InitializeCanvasForDebugDrawing(C);
 	C.Style = 1;
@@ -80,7 +82,6 @@ function DrawBehaviorTreeValidated(Canvas C, R_BTNode BT)
 
 	NodeStack[0] = BT;
 	NodeDepth[0] = 0;
-	NodeActive[0] = 1;
 	
 	NumNodes = 1;
 
@@ -89,7 +90,7 @@ function DrawBehaviorTreeValidated(Canvas C, R_BTNode BT)
 		--NumNodes;
 		CurrentNode = NodeStack[NumNodes];
 		CurrentDepth = NodeDepth[NumNodes];
-		bCurrentIsActive = (NodeActive[NumNodes] == 1);
+		bCurrentIsActive = CTX.GetNodeActive(CurrentNode.GetNodeUID());
 
 		CurrentCompositeNode = R_BTNode_Composite(CurrentNode);
 		if(CurrentCompositeNode != None)
@@ -100,26 +101,20 @@ function DrawBehaviorTreeValidated(Canvas C, R_BTNode BT)
 			{
 				NodeStack[NumNodes] = CurrentCompositeNode.GetChild(i);
 				NodeDepth[NumNodes] = CurrentDepth + 1;
-				//if(CurrentCompositeNode.IsChildActive(i))
-				//{
-				//	NodeActive[NumNodes] = 1;
-				//}
-				//else
-				//{
-				//	NodeActive[NumNodes] = 0;
-				//}
 				++NumNodes;
 			}
 		}
 
 		XDraw = XPos + 16.0 * float(CurrentDepth);
+
+		DrawString = GetBehaviorNodeString(CurrentNode) @ Utilities.Static.FloatToString(CTX.GetNodeActiveTime(CurrentNode.GetNodeUID()), 1);
 		if(bCurrentIsActive)
 		{
-			CanvasLib.Static.DrawText2D(C, XDraw, YPos, Vect(0,0,0), RGBActive, GetBehaviorNodeString(CurrentNode));
+			CanvasLib.Static.DrawText2D(C, XDraw, YPos, Vect(0,0,0), RGBActive, DrawString);
 		}
 		else
 		{
-			CanvasLib.Static.DrawText2D(C, XDraw, YPos, Vect(0,0,0), RGBInactive, GetBehaviorNodeString(CurrentNode));
+			CanvasLib.Static.DrawText2D(C, XDraw, YPos, Vect(0,0,0), RGBInactive, DrawString);
 		}
 		YPos += 12.0;
 	}

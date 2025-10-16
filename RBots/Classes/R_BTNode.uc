@@ -11,6 +11,7 @@ const NodeRunning = 2;
 var private int NodeUID;
 
 function int GetNodeUID() { return NodeUID; }
+function SetNodeUID(int NewNodeUID) { NodeUID = NewNodeUID; }
 
 static function String GetNodeClassString() { return "Node"; }
 
