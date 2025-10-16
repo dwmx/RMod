@@ -11,6 +11,7 @@ function Pop();
 
 function CreateSequence();
 function CreateSelector();
+function CreateParallel();
 function CreateTask(Class<R_BTTask> TaskClass);
 
 function Map(Name BlackBoardKey, Name TaskParameter);

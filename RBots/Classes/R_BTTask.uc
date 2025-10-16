@@ -180,5 +180,25 @@ function int TaskInProgress()
 }
 
 //------------------------------------------------------------------------------
+//	Bot Utilities
+function R_BotPawnController GetPawnController(R_Bot Bot)
+{
+	if(Bot == None)
+	{
+		return None;
+	}
+	return Bot.GetBotPawnController();
+}
+
+function PlayerPawn GetPlayerPawn(R_Bot Bot)
+{
+	if(Bot == None)
+	{
+		return None;
+	}
+	return Bot.GetOwnedPlayerPawn();
+}
+
+//------------------------------------------------------------------------------
 
 function int TickTask(R_Bot Bot, R_BlackBoard BlackBoard, float ActiveTime, float DeltaSeconds);

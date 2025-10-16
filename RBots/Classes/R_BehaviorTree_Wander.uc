@@ -28,6 +28,9 @@ function BuildBehaviorTree(R_BTBuilder BT)
 				BT.CreateTask(Class'RBots.R_BTTask_SelectEquipTarget');
 				BT.Map('EquipTarget', 'EquipTarget');
 
+				BT.CreateTask(Class'RBots.R_BTTast_Equip');
+				BT.Map('EquipTarget', 'EquipTarget');
+
 				BT.CreateTask(Class'RBots.R_BTTask_Delay');
 				BT.Map('WaitTime', 'Duration');
 
@@ -40,5 +43,17 @@ function BuildBehaviorTree(R_BTBuilder BT)
 			BT.CreateSequence();
 			BT.Push();
 				BT.CreateTask(Class'RBots.R_BTTask_Delay');
+				BT.CreateTask(Class'RBots.R_BTTask_Delay');
+				BT.Pop();
+			BT.CreateParallel();
+			BT.Push();
+				BT.CreateTask(Class'RBots.R_BTTask_Delay');
+				BT.CreateTask(Class'RBots.R_BTTask_Delay');
+				BT.CreateSequence();
+				BT.Push();
+					BT.CreateTask(Class'RBots.R_BTTask_Delay');
+					BT.CreateTask(Class'RBots.R_BTTask_Delay');
+					BT.CreateTask(Class'RBots.R_BTTask_Delay');
+					BT.Pop();
 				BT.CreateTask(Class'RBots.R_BTTask_Delay');
 }

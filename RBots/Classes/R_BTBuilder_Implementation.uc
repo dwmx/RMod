@@ -13,6 +13,7 @@ var private int NodeIndex;
 const ClassRootNode = Class'RBots.R_BTNode_Root';
 const ClassSequence = Class'RBots.R_BTNode_Sequence';
 const ClassSelector = Class'RBots.R_BTNode_Selector';
+const ClassParallel = Class'RBots.R_BTNode_Parallel';
 
 var private R_Bot BotReference;
 var private int CurrentNodeUID;
@@ -88,6 +89,11 @@ function CreateSequence()
 function CreateSelector()
 {
 	CreateChildBTNodeAtStackIndex(ClassSelector);
+}
+
+function CreateParallel()
+{
+	CreateChildBTNodeAtStackIndex(ClassParallel);
 }
 
 function CreateTask(Class<R_BTTask> TaskClass)
