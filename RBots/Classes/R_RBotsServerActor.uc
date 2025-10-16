@@ -16,6 +16,9 @@ struct MapData
 };
 var config MapData MapDataArray[128];
 
+const AssetManagerClass = Class'RBots.R_VirtualAssetManager_Implementation';
+var private R_VirtualAssetManager AssetManager;
+
 const BotManagerClass = Class'RBots.R_BotManager';
 var private R_BotManager BotManager;
 
@@ -27,6 +30,7 @@ var private R_NavQueryInterface NavQueryInterface;
 
 //------------------------------------------------------------------------------
 
+final function R_VirtualAssetManager GetAssetManager()		{ return AssetManager; }
 final function R_BotManager GetBotManager()					{ return BotManager; }
 final function R_DynamicMapData GetMapData()				{ return LoadedMapData; }
 final function R_NavQueryInterface GetNavQueryInterface()	{ return NavQueryInterface; }
@@ -66,6 +70,9 @@ event BeginPlay()
 			LoadedMapDataClass = DynamicMapDataClass;
 		}
 	}
+
+	// Initialize Asset manager
+	InitializeAssetManager();
 
 	// Initialize BotManager
 	InitializeBotManager();
@@ -149,6 +156,25 @@ function R_DynamicMapData GetLoadedMapData()
 	return LoadedMapData;
 }
 
+function InitializeAssetManager()
+{
+	local String LogString;
+	Utilities.Static.RLog("Initialize VirtualAssetManager from class" @ AssetManagerClass, LogCategory);
+	if(AssetManager != None)
+	{
+		AssetManager = None;
+	}
+	AssetManager = new(None) AssetManagerClass;
+	if(AssetManager == None)
+	{
+		LogString = "Failed to initialize AssetManager from class" @ AssetManagerClass;
+		Warn(LogString);
+		Utilities.Static.RLog(LogString, LogCategory);
+		return;
+	}
+
+	AssetManager.Initialize();
+}
 
 function InitializeBotManager()
 {
