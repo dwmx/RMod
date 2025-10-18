@@ -56,7 +56,7 @@ final function InitializeBehavior(R_Bot NewOwnerBot, PlayerPawn NewOwnerPlayerPa
 final function InitializeBehaviorTree()
 {
 	local String LogString;
-	local R_RBotsServerActor RBots;
+	local R_RBotsServerActor LocalRBots;
 	local R_VirtualAssetManager AssMan; // heh
 
 	if(BehaviorTreeClass == None)
@@ -67,10 +67,10 @@ final function InitializeBehaviorTree()
 	}
 	else
 	{
-		RBots = GetRBotsServerActor();
-		if(RBots != None)
+		LocalRBots = GetRBotsServerActor();
+		if(LocalRBots != None)
 		{
-			AssMan = RBots.GetAssetManager();
+			AssMan = LocalRBots.GetAssetManager();
 			if(AssMan != None)
 			{
 				BehaviorTree = R_BehaviorTree(AssMan.LoadAsset(BehaviorTreeClass));
@@ -105,20 +105,6 @@ final function Vector GetPlayerPawnLocation()
 		return PP.Location;
 	}
 	return Vect(0,0,0);
-}
-
-final function R_RBotsServerActor GetRBotsServerActor()
-{
-	local R_Bot Bot;
-	if(RBots == None)
-	{
-		Bot = GetBot();
-		if(Bot != None)
-		{
-			RBots = Bot.GetRBotsServerActor();
-		}
-	}
-	return RBots;
 }
 
 final function R_NavContext GetNavContext()

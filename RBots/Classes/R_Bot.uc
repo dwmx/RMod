@@ -14,6 +14,7 @@ var private bool bBotInitialized;
 var private R_RBotsServerActor RBots;
 
 // Index caches to remember recently visited polygroups and nodes
+const NavContextClass = Class'RBots.R_NavContext';
 const IndexCacheClass = Class'RBots.R_IndexCache_Circular';
 var private R_IndexCache RecentlyVisitedNodes;
 var private R_IndexCache RecentlyVisitedPolyGroups;
@@ -195,8 +196,6 @@ function PossessedPlayerPawn(PlayerPawn NewPlayerPawn)
 	{
 		Utilities.Static.RLog("Failed to acquire reference to PRI", LogCategory);
 	}
-
-	//InitPlayerReplicationInfo(OwnedPRI);
 }
 
 function InitPlayerReplicationInfo(PlayerReplicationInfo NewPRI)
@@ -206,7 +205,9 @@ function InitPlayerReplicationInfo(PlayerReplicationInfo NewPRI)
 
 function InitializeBot()
 {
-	local Actor TestActor;
+	local String LogString;
+	local R_RBotsServerActor LocalRBots;
+	
 	if(bBotInitialized)
 	{
 		return;
@@ -217,23 +218,24 @@ function InitializeBot()
 
 	//--------------------------------------------------------------------------
 	// Create BotObjects
-	Perception 					= R_BotPerception(CreateBotObject(BotObjectClass_Perception));
-	PawnController 				= R_BotPawnController(CreateBotObject(BotObjectClass_PawnController));
+	Perception 		= R_BotPerception(CreateBotObject(BotObjectClass_Perception));
+	PawnController 	= R_BotPawnController(CreateBotObject(BotObjectClass_PawnController));
 
 	//--------------------------------------------------------------------------
 	// Spawn NavContext
-	if(NavContext == None)
+	LocalRBots = GetRBotsServerActor();
+	if(LocalRBots == None)
 	{
-		NavContext = new(None) Class'RBots.R_NavContext';
-		NavContext.InitializeNavContext();
+		LogString = "InitializeBot warning -- Invalid reference to RBotsServerActor";
+		Warn(LogString);
+		Utilities.Static.RLog(LogString, LogCategory);
 	}
-
-	// Create index caches for tracking navigation
-	RecentlyVisitedNodes = new(None) IndexCacheClass;
-	RecentlyVisitedNodes.InitIndexCache();
-
-	RecentlyVisitedPolyGroups = new(None) IndexCacheClass;
-	RecentlyVisitedPolyGroups.InitIndexCache();
+	else
+	{
+		NavContext = R_NavContext(LocalRBots.CreateRBotsObject(NavContextClass));
+		RecentlyVisitedNodes = R_IndexCache(LocalRBots.CreateRBotsObject(IndexCacheClass));
+		RecentlyVisitedPolyGroups = R_IndexCache(LocalRBots.CreateRBotsObject(IndexCacheClass));
+	}
 
 	if(InitialBehaviorClass != None)
 	{
@@ -260,12 +262,21 @@ function R_BotBehavior GetActiveBehavior()
 //	Main function for creating, initializating, and auto-managing bot subobjects
 function R_BotObject CreateBotObject(Class<R_BotObject> BotObjectClass)
 {
+	local String LogString;
+	local R_RBotsServerActor LocalRBots;
 	local int i;
 
 	if(BotObjectClass == None)
-	{
-		Utilities.Static.RLog("CreateBotObject failed -- BotObjectClass:" @ BotObjectClass, LogCategory);
-		return None;
+	{	// Bad class
+		LogString = "Bad BotObjectClass:" @ BotObjectClass;
+		GoTo FailedWithLogString;
+	}
+
+	LocalRBots = GetRBotsServerActor();
+	if(LocalRBots == None)
+	{	// Need RBots reference
+		LogString = "Invalid RBotsServerActor reference";
+		GoTo FailedWithLogString;
 	}
 
 	Utilities.Static.RLog("Creating BotObject from class" @ BotObjectClass, LogCategory);
@@ -279,20 +290,26 @@ function R_BotObject CreateBotObject(Class<R_BotObject> BotObjectClass)
 	}
 
 	if(i >= ArrayCount(BotObjects))
-	{
-		Utilities.Static.RLog("CreateBotObject failed -- BotObjects array overflow", LogCategory);
-		return None;
+	{	// Array overflow
+		LogString = "Array overflow";
+		GoTo FailedWithLogString;
 	}
 
-	BotObjects[i] = new(Self) BotObjectClass;
+	BotObjects[i] = R_BotObject(LocalRBots.CreateRBotsObject(BotObjectClass));
 	if(BotObjects[i] == None)
-	{
-		Utilities.Static.RLog("CreateBotObject failed -- Failed to instantiate from BotObjectClass:" @ BotObjectClass, LogCategory);
-		return None;
+	{	// Instantiation failed
+		LogString = "Failed to instantiate BotObject from class" @ BotObjectClass;
+		GoTo FailedWithLogString;
 	}
 
 	BotObjects[i].BaseInitBotObject(Self);
 	return BotObjects[i];
+
+FailedWithLogString:
+	LogString = "CreateBotObject failed --" @ LogString;
+	Warn(LogString);
+	Utilities.Static.RLog(LogString, LogCategory);
+	return None;
 }
 
 function R_BotObject GetBotObjectByClass(Class<R_BotObject> BotObjectClass)
@@ -312,6 +329,18 @@ function R_BotObject GetBotObjectByClass(Class<R_BotObject> BotObjectClass)
 
 function SetBehavior(Class<R_BotBehavior> BehaviorClass)
 {
+	local String LogString;
+	local R_RBotsServerActor LocalRBots;
+
+	LocalRBots = GetRBotsServerActor();
+	if(LocalRBots == None)
+	{
+		LogString = "SetBehavior failed -- Invalid RBotsServerActor reference";
+		Warn(LogString);
+		Utilities.Static.RLog(LogString, LogCategory);
+		return;
+	}
+
 	if(ActiveBehavior != None)
 	{
 		ActiveBehavior.BehaviorTerminated();
@@ -319,7 +348,7 @@ function SetBehavior(Class<R_BotBehavior> BehaviorClass)
 
 	if(BehaviorClass != None)
 	{
-		ActiveBehavior = new(None) BehaviorClass;
+		ActiveBehavior = R_BotBehavior(LocalRBots.CreateRBotsObject(BehaviorClass));
 		if(ActiveBehavior == None)
 		{
 			Utilities.Static.RLog("Failed to instantiate new active behavior from class" @ BehaviorClass, LogCategory);

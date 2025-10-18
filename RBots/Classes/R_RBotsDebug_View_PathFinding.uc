@@ -435,7 +435,7 @@ function DrawPolyGroupPathInfo(Canvas C, R_Bot DebugTarget, R_RBotsDebug_StringM
 		}
 		else
 		{
-			PolyGroupNavContext.InitializeNavContext();
+			PolyGroupNavContext.Initialize();
 		}
 	}
 

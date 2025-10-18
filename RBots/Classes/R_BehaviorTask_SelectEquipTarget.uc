@@ -1,8 +1,8 @@
-class R_BTTask_SelectEquipTarget extends R_BTTask;
+class R_BehaviorTask_SelectEquipTarget extends R_BehaviorTask;
 
 const TaskParam_EquipTarget = 'EquipTarget';
 
-static function String GetNodeClassString() { return "Task: Select Equip Target"; }
+static function String GetTaskDisplayString() { return "Select Equip Target"; }
 
 function int TickTask(R_Bot Bot, R_BlackBoard BlackBoard, float ActiveTime, float DeltaSeconds)
 {
@@ -16,12 +16,12 @@ function int TickTask(R_Bot Bot, R_BlackBoard BlackBoard, float ActiveTime, floa
 
 	if(PP == None)
 	{
-		return TaskFail();
+		return TaskFail;
 	}
 
 	NewEquipTarget = SelectRandomStowedInventory(PP);
 	WriteMappedActor(BlackBoard, TaskParam_EquipTarget, NewEquipTarget);
-	return TaskSuccess();
+	return TaskSuccess;
 }
 
 function Inventory SelectRandomStowedInventory(Pawn P)

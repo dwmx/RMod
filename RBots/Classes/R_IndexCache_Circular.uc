@@ -8,17 +8,17 @@ class R_IndexCache_Circular extends R_IndexCache;
 var private int CacheArray[16];
 var private int CacheIndexFront, CacheIndexBack;
 
-function InitIndexCache()
+function Initialize()
 {
-	CacheIndexFront = NavLib.Static.InvalidIndex();
-	CacheIndexBack = NavLib.Static.InvalidIndex();
+	CacheIndexFront = InvalidIndex;
+	CacheIndexBack = InvalidIndex;
 }
 
 function int GetNumIndices()
 {
 	local int FrontAdjusted;
 
-	if(CacheIndexFront == NavLib.Static.InvalidIndex())
+	if(CacheIndexFront == InvalidIndex)
 	{
 		return 0;
 	}
@@ -41,7 +41,7 @@ function Push(int Index)
 {
 	local int NewFront;
 
-	if(CacheIndexFront == NavLib.Static.InvalidIndex())
+	if(CacheIndexFront == InvalidIndex)
 	{
 		CacheArray[0] = Index;
 		CacheIndexFront = 1 % ArrayCount(CacheArray);
@@ -77,7 +77,7 @@ function int Get(int CacheIndex)
 	NumIndices = GetNumIndices();
 	if(CacheIndex >= NumIndices)
 	{
-		return NavLib.Static.InvalidIndex();
+		return InvalidIndex;
 	}
 
 	RemappedIndex = GetInternalIndex(CacheIndex);
@@ -94,6 +94,6 @@ function int GetUnchecked(int CacheIndex)
 
 defaultproperties
 {
-	CacheIndexFront=-1	// Need to match NavLib.Static.InvalidIndex()
-	CacheIndexBack=-1	// Need to match NavLib.Static.InvalidIndex()
+	CacheIndexFront=-1	// Need to match InvalidIndex
+	CacheIndexBack=-1	// Need to match InvalidIndex
 }

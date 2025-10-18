@@ -4,21 +4,43 @@
 //==============================================================================
 class R_BehaviorTree extends R_VirtualAsset abstract;
 
-const Utilities = Class'RBots.R_BotUtilities';
 const LogCategory = 'BehaviorTree';
 
 const BTBuilderClass = Class'RBots.R_BTBuilder_Implementation';
 
 var private R_BTNode Root;
 
+//------------------------------------------------------------------------------
+
 function Load()
 {
+	local String LogString;
+	local R_RBotsServerActor LocalRBots;
 	local R_BTBuilder BT;
 
-	BT = new(None) BTBuilderClass;
-	BT.Initialize();
+	LocalRBots = GetRBotsServerActor();
+	if(LocalRBots == None)
+	{	// Must have reference to RBots
+		LogString = "Invalid RBotsServerActor reference";
+		GoTo LoadFailedWithLogString;
+	}
+
+	BT = R_BTBuilder(LocalRBots.CreateRBotsObject(BTBuilderClass, Self));
+	if(BT == None)
+	{	// Can't built without a BTBuilder
+		LogString = "Failed to instantiate BTBuilder from class:" @ BTBuilderClass;
+		GoTo LoadFailedWithLogString;
+	}
+
 	BuildBehaviorTree(BT);
 	Root = BT.GetRoot();
+	return;
+
+LoadFailedWithLogString:
+	LogString = "Load failed --" @ LogString;
+	Warn(LogString);
+	Utilities.Static.RLog(LogString, LogCategory);
+	return;
 }
 
 function BuildBehaviorTree(R_BTBuilder BT);

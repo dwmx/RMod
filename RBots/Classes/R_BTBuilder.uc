@@ -4,7 +4,7 @@
 //==============================================================================
 class R_BTBuilder extends R_RBotsObject abstract;
 
-function Initialize();
+function SetOwningBehaviorTree(R_BehaviorTree NewBehaviorTree);
 
 function Push();
 function Pop();
@@ -12,8 +12,6 @@ function Pop();
 function CreateSequence();
 function CreateSelector();
 function CreateParallel();
-function CreateTask(Class<R_BTTask> TaskClass);
-
-function Map(Name BlackBoardKey, Name TaskParameter);
+function CreateTask(Class<R_BehaviorTask> TaskClass);
 
 function R_BTNode GetRoot();

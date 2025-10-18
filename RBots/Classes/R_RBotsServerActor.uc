@@ -37,6 +37,50 @@ final function R_NavQueryInterface GetNavQueryInterface()	{ return NavQueryInter
 
 //------------------------------------------------------------------------------
 
+function R_RBotsObject CreateRBotsObject(
+	Class<R_RBotsObject> RBotsObjectClass,
+	optional R_RBotsObject OptionalOuter,
+	optional bool bDeferInitialization)
+{
+	local String LogString;
+	local R_RBotsObject NewObject;
+
+	if(RBotsObjectClass == None)
+	{
+		LogString = "CreateRBotsObject failed -- Bad RBotsObjectClass" @ RBotsObjectClass;
+		Warn(LogString);
+		Utilities.Static.RLog(LogString, LogCategory);
+		return None;
+	}
+
+	if(OptionalOuter == None)
+	{
+		NewObject = new(Self) RBotsObjectClass;
+	}
+	else
+	{
+		NewObject = new(OptionalOuter) RBotsObjectClass;
+	}
+
+	if(NewObject == None)
+	{
+		LogString = "CreateRBotsObject failed -- Instantiation failed for class" @ RBotsObjectClass;
+		Warn(LogString);
+		Utilities.Static.RLog(LogString, LogCategory);
+		return None;
+	}
+
+	NewObject.SetRBotsServerActor(Self);
+	NewObject.BaseCreated();
+	if(!bDeferInitialization)
+	{
+		NewObject.Initialize();
+	}
+	return NewObject;
+}
+
+//------------------------------------------------------------------------------
+
 event BeginPlay()
 {
 	local String CurrentMapName;
@@ -71,14 +115,11 @@ event BeginPlay()
 		}
 	}
 
-	// Initialize Asset manager
-	InitializeAssetManager();
-
-	// Initialize BotManager
-	InitializeBotManager();
-
-	// Initialize NavQueryInterface
-	InitializeNavQueryInterface();
+	// Initialize manager classes
+	AssetManager = R_VirtualAssetManager(CreateRBotsObject(AssetManagerClass,,true));
+	AssetManager.Initialize(); // This is deferred because Initialize triggers PreCache assets
+	BotManager = R_BotManager(CreateRBotsObject(BotManagerClass));
+	NavQueryInterface = R_NavQueryInterface(CreateRBotsObject(NavQueryInterfaceClass));
 }
 
 function String GetCurrentMapName()
@@ -154,70 +195,6 @@ function bool TryLoadMapDataClass(String DataClass, out Class<R_DynamicMapData> 
 function R_DynamicMapData GetLoadedMapData()
 {
 	return LoadedMapData;
-}
-
-function InitializeAssetManager()
-{
-	local String LogString;
-	Utilities.Static.RLog("Initialize VirtualAssetManager from class" @ AssetManagerClass, LogCategory);
-	if(AssetManager != None)
-	{
-		AssetManager = None;
-	}
-	AssetManager = new(None) AssetManagerClass;
-	if(AssetManager == None)
-	{
-		LogString = "Failed to initialize AssetManager from class" @ AssetManagerClass;
-		Warn(LogString);
-		Utilities.Static.RLog(LogString, LogCategory);
-		return;
-	}
-
-	AssetManager.Initialize();
-}
-
-function InitializeBotManager()
-{
-	Utilities.Static.RLog("Initializing BotManager from class" @ BotManagerClass, LogCategory);
-	if(BotManager != None)
-	{
-		if(!BotManager.bDeleteMe)
-		{
-			BotManager.Destroy();
-		}
-		BotManager = None;
-	}
-
-	BotManager = Spawn(BotManagerClass, Self);
-}
-
-function InitializeNavQueryInterface()
-{
-	local String InitFailedString;
-	local R_NavQueryInterface_Impl Impl;
-
-	Utilities.Static.RLog("Initializing NavQueryInterface from class" @ NavQueryInterfaceClass, LogCategory);
-	NavQueryInterface = new(None) NavQueryInterfaceClass;
-	if(NavQueryInterface == None)
-	{
-		InitFailedString = "Failed to initialize NavQueryInterface from class" @ NavQueryInterfaceClass;
-		Warn(InitFailedString);
-		Utilities.Static.RLog(InitFailedString, LogCategory);
-		return;
-	}
-
-	Impl = R_NavQueryInterface_Impl(NavQueryInterface);
-	if(Impl == None)
-	{
-		InitFailedString = "Failed to initialize NavQueryInterface -- must be derived from Impl class";
-		Warn(InitFailedString);
-		Utilities.Static.RLog(InitFailedString, LogCategory);
-		NavQueryInterface = None;
-		return;
-	}
-
-	Impl.SetRBotsServerActor(Self);
-	Impl.InitializeNavQueryInterface();
 }
 
 defaultproperties

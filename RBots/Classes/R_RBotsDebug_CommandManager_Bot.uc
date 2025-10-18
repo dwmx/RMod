@@ -91,6 +91,7 @@ function HandleCommand_SpawnDebugBot(R_RBotsDebug DebugMutator, PlayerPawn Sende
 
 function HandleCommand_RemoveAllBots(R_RBotsDebug DebugMutator, PlayerPawn Sender)
 {
+	local R_RBotsServerActor LocalRBots;
 	local R_BotManager BotManager;
 	local R_Bot Bot;
 
@@ -104,9 +105,13 @@ function HandleCommand_RemoveAllBots(R_RBotsDebug DebugMutator, PlayerPawn Sende
 		return;
 	}
 
-	foreach BotManager.AllActors(Class'RBots.R_Bot', Bot)
+	LocalRBots = BotManager.GetRBotsServerActor();
+	if(LocalRBots != None)
 	{
-		BotManager.RemoveBot(Bot);
+		foreach LocalRBots.AllActors(Class'RBots.R_Bot', Bot)
+		{
+			BotManager.RemoveBot(Bot);
+		}
 	}
 }
 

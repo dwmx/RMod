@@ -10,12 +10,13 @@ const LogCategory = 'BehaviorTreeBuilder';
 var private R_BTNode Nodes[128];
 var private int NodeIndex;
 
-const ClassRootNode = Class'RBots.R_BTNode_Root';
-const ClassSequence = Class'RBots.R_BTNode_Sequence';
-const ClassSelector = Class'RBots.R_BTNode_Selector';
-const ClassParallel = Class'RBots.R_BTNode_Parallel';
+const NodeClassRoot 	= Class'RBots.R_BTNode_Root';
+const NodeClassSequence = Class'RBots.R_BTNode_Sequence';
+const NodeClassSelector = Class'RBots.R_BTNode_Selector';
+const NodeClassParallel = Class'RBots.R_BTNode_Parallel';
+const NodeClassTask 	= Class'RBots.R_BTNode_Task';
 
-var private R_Bot BotReference;
+var private R_BehaviorTree BehaviorTree; // The BehaviorTree this is building for
 var private int CurrentNodeUID;
 
 //------------------------------------------------------------------------------
@@ -29,25 +30,36 @@ function R_BTNode GetRoot()
 
 function R_BTNode CreateBTNode(Class<R_BTNode> NodeClass)
 {
-	local String LogWarning;
+	local String LogString;
+	local R_RBotsServerActor LocalRBots;
 	local R_BTNode NewNode;
 
-	NewNode = new(None) NodeClass;
-	if(NewNode == None)
+	LocalRBots = GetRBotsServerActor();
+	if(LocalRBots == None)
 	{
-		LogWarning = "CreateBTNode failed -- Failed to instantiate class" @ NodeClass;
-		Warn(LogWarning);
-		Utilities.Static.RLog(LogWarning, LogCategory);
-		return None;
+		LogString = "Invalid RBotsServerActor reference";
+		GoTo FailWithLogString;
 	}
 
-	NewNode.Initialize();
+	NewNode = R_BTNode(LocalRBots.CreateRBotsObject(NodeClass, BehaviorTree));
+	if(NewNode == None)
+	{
+		LogString = "Instantiation failed";
+		GoTo FailWithLogString;
+	}
+
 	return NewNode;
+
+FailWithLogString:
+	LogString = "CreateBTNode failed for class" @ NodeClass @ "--" @ LogString;
+	Warn(LogString);
+	Utilities.Static.RLog(LogString, LogCategory);
+	return None;
 }
 
-function CreateChildBTNodeAtStackIndex(Class<R_BTNode> NodeClass)
+function R_BTNode CreateChildBTNodeAtStackIndex(Class<R_BTNode> NodeClass)
 {
-	local String LogWarning;
+	local String LogString;
 	local R_BTNode_Composite ParentNode;
 	local R_BTNode NewNode;
 
@@ -56,17 +68,15 @@ function CreateChildBTNodeAtStackIndex(Class<R_BTNode> NodeClass)
 		ParentNode = R_BTNode_Composite(Nodes[NodeIndex-1]);
 		if(ParentNode == None || ParentNode.IsFull())
 		{
-			LogWarning = "CreateChildBTAtStackIndex failed -- Parent is not valid";
-			Warn(LogWarning);
-			Utilities.Static.RLog(LogWarning, LogCategory);
-			return;
+			LogString = "Parent node must be of type R_BTNode_Composite";
+			GoTo FailWithLogString;
 		}
 	}
 
 	NewNode = CreateBTNode(NodeClass);
 	if(NewNode == None)
 	{
-		return;
+		return None;
 	}
 
 	NewNode.SetNodeUID(CurrentNodeUID);
@@ -77,40 +87,77 @@ function CreateChildBTNodeAtStackIndex(Class<R_BTNode> NodeClass)
 		ParentNode.AddChild(NewNode);
 	}
 	Nodes[NodeIndex] = NewNode;
+	return NewNode;
+
+FailWithLogString:
+	LogString = "CreateChildBTNodeAtStackIndex failed --" @ LogString;
+	Warn(LogString);
+	Utilities.Static.RLog(LogString, LogCategory);
+	return None;
 }
 
 //------------------------------------------------------------------------------
 
 function CreateSequence()
 {
-	CreateChildBTNodeAtStackIndex(ClassSequence);
+	CreateChildBTNodeAtStackIndex(NodeClassSequence);
 }
 
 function CreateSelector()
 {
-	CreateChildBTNodeAtStackIndex(ClassSelector);
+	CreateChildBTNodeAtStackIndex(NodeClassSelector);
 }
 
 function CreateParallel()
 {
-	CreateChildBTNodeAtStackIndex(ClassParallel);
+	CreateChildBTNodeAtStackIndex(NodeClassParallel);
 }
 
-function CreateTask(Class<R_BTTask> TaskClass)
+function CreateTask(Class<R_BehaviorTask> TaskClass)
 {
-	CreateChildBTNodeAtStackIndex(TaskClass);
-}
+	local String LogString;
+	local R_RBotsServerActor LocalRBots;
+	local R_VirtualAssetManager AssMan;
+	local R_BehaviorTask Task;
+	local R_BTNode_Task TaskNode;
 
-//------------------------------------------------------------------------------
-
-function Map(Name BlackBoardKey, Name TaskParameter)
-{
-	local R_BTTask Task;
-	Task = R_BTTask(Nodes[NodeIndex]);
-	if(Task != None)
-	{
-		Task.MapBlackBoardKey(BlackBoardKey, TaskParameter);
+	LocalRBots = GetRBotsServerActor();
+	if(LocalRBots == None)
+	{	// Need the RBots reference
+		LogString = "Invalid RBotsServerActor reference";
+		GoTo FailWithLogString;
 	}
+
+	AssMan = LocalRBots.GetAssetManager();
+	if(AssMan == None)
+	{	// Need the asset manager
+		LogString = "Failed to get AssetManager";
+		GoTo FailWithLogString;
+	}
+
+	Task = R_BehaviorTask(AssMan.LoadAsset(TaskClass));
+	if(Task == None)
+	{	// Need to get the Task from asset manager
+		LogString = "Failed to load Task";
+		GoTo FailWithLogString;
+	}
+
+	TaskNode = R_BTNode_Task(CreateChildBTNodeAtStackIndex(NodeClassTask));
+	if(TaskNode == None)
+	{	// This shouldn't happen, but catch it if it does
+		LogString = "Invalid reference to newly created TaskNode, or cast failed";
+		GoTo FailWithLogString;
+	}
+
+	// Attach the Task to the TaskNode
+	TaskNode.SetBehaviorTask(Task);
+	return;
+
+FailWithLogString:
+	LogString = "CreateTask failed for class" @ TaskClass @ "--" @ LogString;
+	Warn(LogString);
+	Utilities.Static.RLog(LogString, LogCategory);
+	return;
 }
 
 //------------------------------------------------------------------------------
@@ -127,8 +174,13 @@ function Initialize()
 	CurrentNodeUID = 0;
 
 	NodeIndex = 0;
-	CreateChildBTNodeAtStackIndex(ClassRootNode);
+	CreateChildBTNodeAtStackIndex(NodeClassRoot);
 	Push();
+}
+
+function SetOwningBehaviorTree(R_BehaviorTree NewBehaviorTree)
+{
+	BehaviorTree = NewBehaviorTree;
 }
 
 function Push()

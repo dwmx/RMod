@@ -8,8 +8,6 @@ const Utilities = Class'RBots.R_BotUtilities';
 const NavLib = Class'RBots.R_NavLibrary';
 const LogCategory = 'NavQueryInterface';
 
-var private R_RBotsServerActor RBots;
-
 // Cached references
 var private R_DynamicMapData CachedMapData;
 var private R_NavMesh CachedNavMesh;
@@ -22,73 +20,36 @@ var private R_NavPathFilter NavPathFilter;
 
 //------------------------------------------------------------------------------
 
-function SetRBotsServerActor(R_RBotsServerActor NewRBotsServerActor)
+function Initialize()
 {
-	RBots = NewRBotsServerActor;
-}
+	local String LogString;
+	local R_RBotsServerActor LocalRBots;
 
-function InitializeNavQueryInterface()
-{
-	InitNavPathFinder();
-	InitNavPathFilter();
-}
-
-final function InitNavPathFinder()
-{
-	local String FailedLogString;
-
-	if(NavPathFinder != None)
-	{	// Already instantiated
-		return;
-	}
-
-	NavPathFinder = R_NavPathFinder(InitSubObject(NavPathFinderClass, FailedLogString));
-	if(NavPathFinder == None)
+	LocalRBots = GetRBotsServerActor();
+	if(LocalRBots == None)
 	{
-		Utilities.Static.RLog("InitNavPathFinder failed --" @ FailedLogString, LogCategory);
-		return;
+		LogString = "Failed to initialize subobjects -- Invalid RBotsServerActor reference";
+		Warn(LogString);
+		Utilities.Static.RLog(LogString, LogCategory);
 	}
-
-	Utilities.Static.RLog("Initialized NavPathFinder:" @ NavPathFinder, LogCategory);
-}
-
-final function InitNavPathFilter()
-{
-	local String FailedLogString;
-
-	if(NavPathFilter != None)
-	{	// Already instantiated
-		return;
-	}
-
-	NavPathFilter = R_NavPathFilter(InitSubObject(NavPathFilterClass, FailedLogString));
-	if(NavPathFilter == None)
+	else
 	{
-		Utilities.Static.RLog("InitNavPathFilter failed --" @ FailedLogString, LogCategory);
-		return;
+		NavPathFinder = R_NavPathFinder(LocalRBots.CreateRBotsObject(NavPathFinderClass, Self));
+		if(NavPathFinder == None)
+		{
+			LogString = "Failed to initialize NavPathFinder from class" @ NavPathFinderClass;
+			Warn(LogString);
+			Utilities.Static.RLog(LogString, LogCategory);
+		}
+
+		NavPathFilter = R_NavPathFilter(LocalRBots.CreateRBotsObject(NavPathFilterClass, Self));
+		if(NavPathFilter == None)
+		{
+			LogString = "Failed to initialize NavPathFilter from class" @ NavPathFilterClass;
+			Warn(LogString);
+			Utilities.Static.RLog(LogString, LogCategory);
+		}
 	}
-
-	Utilities.Static.RLog("Initialized NavPathFilter:" @ NavPathFilter, LogCategory);
-}
-
-final function Object InitSubObject(Class ObjectClass, out String OutFailedLogString)
-{
-	local Object Result;
-
-	if(ObjectClass == None)
-	{
-		OutFailedLogString = "Bad ObjectClass:" @ ObjectClass;
-		return None;
-	}
-
-	Result = new(None) ObjectClass;
-	if(Result == None)
-	{
-		OutFailedLogString = "Instantiation failed for ObjectClass:" @ ObjectClass;
-		return None;
-	}
-
-	return Result;
 }
 
 //------------------------------------------------------------------------------
@@ -96,9 +57,11 @@ final function Object InitSubObject(Class ObjectClass, out String OutFailedLogSt
 
 final function R_DynamicMapData GetMapData()
 {
-	if(CachedMapData == None && RBots != None)
+	local R_RBotsServerActor LocalRBots;
+	LocalRBots = GetRBotsServerActor();
+	if(CachedMapData == None && LocalRBots != None)
 	{
-		CachedMapData = RBots.GetMapData();
+		CachedMapData = LocalRBots.GetMapData();
 	}
 	return CachedMapData;
 }

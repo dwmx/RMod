@@ -75,3 +75,8 @@ function bool FindAvoidanceDirectionForBordersInRadius(
 	Vector Origin,
 	float Radius,
 	out Vector OutDirection);
+
+defaultproperties
+{
+	bLogCreation=true
+}

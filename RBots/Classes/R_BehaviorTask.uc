@@ -1,12 +1,7 @@
 //==============================================================================
-//	R_BTTask
-//	Asynchronous Behavior Task
-//	Do not override Tick -- use TickTask
-//	Tasks will continue to run until the Task calls:
-//		- EndTaskSuccess -- Finished successfully
-//		- EndTaskFail -- Task failed
+//	R_BehaviorTask
 //==============================================================================
-class R_BTTask extends R_BTNode abstract;
+class R_BehaviorTask extends R_VirtualAsset abstract;
 
 const LogCategory = 'BehaviorTask';
 
@@ -18,15 +13,11 @@ struct R_ParameterMappings
 var private R_ParameterMappings ParameterMappings[32];
 var private int NumParameterMappings;
 
-static function String GetNodeClassString() { return "Task"; }
+const TaskSuccess = 0;
+const TaskFail = 1;
+const TaskInProgress = 2;
 
-//------------------------------------------------------------------------------
-
-function Initialize()
-{
-	NumParameterMappings = 0;
-	Super.Initialize();
-}
+static function String GetTaskDisplayString() { return "Task"; }
 
 //------------------------------------------------------------------------------
 
@@ -147,39 +138,6 @@ function bool WriteMappedActor(R_BlackBoard BlackBoard, Name TaskParameter, Acto
 }
 
 //------------------------------------------------------------------------------
-
-function int Tick(R_BTContext Context, float DeltaSeconds)
-{
-	local R_Bot Bot;
-	local R_BlackBoard BlackBoard;
-	local float ActiveTime;
-	local int Result;
-
-	Bot = Context.GetBot();
-	BlackBoard = Context.GetBlackBoard();
-	ActiveTime = Context.GetNodeActiveTime(GetNodeUID());
-	Result = TickTask(Bot, BlackBoard, ActiveTime, DeltaSeconds);
-	return Result;
-}
-
-//------------------------------------------------------------------------------
-
-function int TaskSuccess()
-{
-	return NodeSuccess;
-}
-
-function int TaskFail()
-{
-	return NodeFail;
-}
-
-function int TaskInProgress()
-{
-	return NodeRunning;
-}
-
-//------------------------------------------------------------------------------
 //	Bot Utilities
 function R_BotPawnController GetPawnController(R_Bot Bot)
 {
@@ -201,4 +159,6 @@ function PlayerPawn GetPlayerPawn(R_Bot Bot)
 
 //------------------------------------------------------------------------------
 
+function TaskActivated(R_Bot Bot, R_BlackBoard BlackBoard);
+function TaskDeactivated(R_Bot Bot, R_BlackBoard BlackBoard);
 function int TickTask(R_Bot Bot, R_BlackBoard BlackBoard, float ActiveTime, float DeltaSeconds);

@@ -3,16 +3,9 @@
 //	Top level Bot manager class for RBots
 //	Spawned and managed by RBotsServerActor
 //==============================================================================
-class R_BotManager extends Actor;
+class R_BotManager extends R_RBotsObject;
 
-const Utilities = Class'RBots.R_BotUtilities';
 const LogCategory = 'BotManager';
-
-event BeginPlay()
-{
-	Super.BeginPlay();
-	Utilities.Static.RLog("BotManager spawned from class" @ Class, LogCategory);
-}
 
 /**
 	SpawnBot
@@ -25,32 +18,47 @@ event BeginPlay()
 */
 function R_Bot SpawnBot(optional bool bDeferredInitialization)
 {
+	local String LogString;
+	local R_RBotsServerActor LocalRBots;
 	local R_Bot NewBot;
 	local PlayerPawn NewPlayerPawn;
 	local NavigationPoint StartPoint;
 	local GameInfo GI;
 	local String ErrorStr;
 
-	if(bDeferredInitialization)
+	LocalRBots = GetRBotsServerActor();
+	if(LocalRBots == None)
+	{	// Invalid RBotsServerActor check
+		LogString = "SpawnBot failed -- Invalid RBotsServerActor reference";
+		GoTo SpawnBotFailedWithLogString;
+	}
+
+	NewBot = LocalRBots.Spawn(Class'RBots.R_Bot');
+	if(NewBot == None)
 	{
+		LogString = "SpawnBot failed -- Failed to instantiate Bot";
+		GoTo SpawnBotFailedWithLogString;
+	}
+	
+	StartPoint = LocalRBots.Level.Game.FindPlayerStart(None);
+
+	GI = LocalRBots.Level.Game;
+	if(GI == None)
+	{
+		LogString = "SpawnBot failed -- Failed to get GameInfo reference from RBotsServerActor";
+		GoTo SpawnBotFailedWithLogString;
+	}
+
+	if(bDeferredInitialization)
+	{	// Spawn bot with deferred initialization
 		Utilities.Static.RLog("Spawning Bot with deferred initialization", LogCategory);
 	}
 	else
-	{
+	{	// Spawn bot normally
 		Utilities.Static.RLog("Spawning Bot", LogCategory);
 	}
-	
-	StartPoint = Level.Game.FindPlayerStart(None);
 
-	NewBot = Spawn(Class'RBots.R_Bot');
-	//NewPlayerPawn = Spawn(Class'RBots.R_RBotsDebug_RunePlayer',,,StartPoint.Location, StartPoint.Rotation);
-	GI = Level.Game;
-	if(GI != None)
-	{
-		NewPlayerPawn = GI.Login("", "Name=IsABot", ErrorStr, Class'RuneI.PlayerAlric');
-		//NewPlayerPawn = GI.Login("Name=IsABot", "", ErrorStr, Class'RBots.R_RBotsDebug_RunePlayer');
-	}	
-	
+	NewPlayerPawn = GI.Login("", "Name=IsABot", ErrorStr, Class'RuneI.PlayerAlric');
 	NewPlayerPawn.SetOwner(NewBot);
 	NewBot.PossessedPlayerPawn(NewPlayerPawn);
 
@@ -60,6 +68,11 @@ function R_Bot SpawnBot(optional bool bDeferredInitialization)
 	}
 
 	return NewBot;
+
+SpawnBotFailedWithLogString:
+	Warn(LogString);
+	Utilities.Static.RLog(LogString, LogCategory);
+	return None;
 }
 
 function RemoveBot(R_Bot Bot)
@@ -91,5 +104,5 @@ function RemoveBot(R_Bot Bot)
 
 defaultproperties
 {
-	RemoteRole=ROLE_None
+	bLogCreation=true
 }

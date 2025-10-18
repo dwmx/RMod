@@ -1,12 +1,12 @@
 //==============================================================================
-//	R_BTTask_SelectWaitTime
+//	R_BehaviorTask_SelectWaitTime
 //	Selects some random amount of time to wait and outputs it to 'WaitTime'
 //==============================================================================
-class R_BTTask_SelectWaitTime extends R_BTTask;
+class R_BehaviorTask_SelectWaitTime extends R_BehaviorTask;
 
 const TaskParam_WaitTime = 'WaitTime';
 
-static function String GetNodeClassString() { return "Task: Select Wait Time"; }
+static function String GetTaskDisplayString() { return "Select Wait Time"; }
 
 function int TickTask(R_Bot Bot, R_BlackBoard BlackBoard, float ActiveTime, float DeltaSeconds)
 {
@@ -15,5 +15,5 @@ function int TickTask(R_Bot Bot, R_BlackBoard BlackBoard, float ActiveTime, floa
 	NewWaitTime = FRand() * 5.0 + 5.0;
 
 	WriteMappedFloat(BlackBoard, TaskParam_WaitTime, NewWaitTime);
-	return TaskSuccess();
+	return TaskSuccess;
 }

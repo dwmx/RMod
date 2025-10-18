@@ -1,7 +1,7 @@
 //==============================================================================
 //	R_VirtualAssetManager_Implementation
 //==============================================================================
-class R_VirtualAssetManager_Implementation extends R_VirtualAssetManager;
+class R_VirtualAssetManager_Implementation extends R_VirtualAssetManager config(RBots);
 
 const Utilities = Class'RBots.R_BotUtilities';
 const LogCategory = 'VirtualAssetManager';
@@ -9,7 +9,7 @@ const LogCategory = 'VirtualAssetManager';
 var private R_VirtualAsset LoadedAssets[256];
 var private int NumLoadedAssets;
 
-var private Class<R_VirtualAsset> PreCacheAssetClasses[128];
+var private config Class<R_VirtualAsset> PreCacheAssetClasses[128];
 
 function Initialize()
 {
@@ -52,11 +52,13 @@ function R_VirtualAsset FindLoadedVirtualAsset(Class<R_VirtualAsset> AssetClass)
 function R_VirtualAsset LoadAsset(Class<R_VirtualAsset> AssetClass)
 {
 	local String LogString;
+	local R_RBotsServerActor LocalRBots;
 	local R_VirtualAsset Asset;
 
 	if(AssetClass == None)
-	{
-		return None;
+	{	// Invalid AssetClass check
+		LogString = "Invalid AssetClass:" @ AssetClass;
+		GoTo LoadFailWithLogString;
 	}
 
 	Asset = FindLoadedVirtualAsset(AssetClass);
@@ -65,27 +67,37 @@ function R_VirtualAsset LoadAsset(Class<R_VirtualAsset> AssetClass)
 		return Asset;
 	}
 
+	LocalRBots = GetRBotsServerActor();
+	if(LocalRBots == None)
+	{	// Cannot load assets without access to RBotsServerActor
+		LogString = "Invalid RBotsServerActor reference";
+		GoTo LoadFailWithLogString;
+	}
+
 	if(NumLoadedAssets >= ArrayCount(LoadedAssets))
-	{
-		LogString = "LoadAsset failed to load asset from class" @ AssetClass @ "-- array overflow";
-		Warn(LogString);
-		Utilities.Static.RLog(LogString, LogCategory);
-		return None;
+	{	// Array overflow
+		LogString = "Array overflow";
+		GoTo LoadFailWithLogString;
 	}
 
 	Utilities.Static.RLog("Loading asset from class" @ AssetClass, LogCategory);
-	Asset = new(None) AssetClass;
+	Asset = R_VirtualAsset(LocalRBots.CreateRBotsObject(AssetClass, Self));
 	if(Asset == None)
 	{
-		LogString = "LoadAsset failed to load asset from class" @ AssetClass @"-- instantiation failed";
-		Warn(LogString);
-		Utilities.Static.RLog(LogString, LogCategory);
-		return None;
+		LogString = "Instantiation failed";
+		GoTo LoadFailWithLogString;
 	}
 
 	Asset.Load();
 	LoadedAssets[NumLoadedAssets] = Asset;
 	++NumLoadedAssets;
+	return Asset;
+
+LoadFailWithLogString:
+	LogString = "LoadAsset failed for class" @ AssetClass @ "--" @ LogString;
+	Warn(LogString);
+	Utilities.Static.RLog(LogString, LogCategory);
+	return None;
 }
 
 defaultproperties

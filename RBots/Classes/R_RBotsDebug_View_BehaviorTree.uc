@@ -47,12 +47,19 @@ function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
 		}
 	}
 
+	if(DebugTarget == None)			StringManager.AddWarning(StringCategoryBT, "Invalid DebugTarget reference");
+	if(BehaviorTree == None)		StringManager.AddWarning(StringCategoryBT, "Invalid BehaviorTree reference");
+	if(BehaviorTreeContext == None)	StringManager.AddWarning(StringCategoryBT, "Invalid BehaviorTreeContext reference");
+
 	DrawBehaviorTree(C, StringManager, BehaviorTree, BehaviorTreeContext);
 
 	if(ActiveBehavior != None)
 	{
 		BlackBoard = ActiveBehavior.GetBlackBoard();
 	}
+
+	if(BlackBoard == None)	StringManager.AddWarning(StringCategoryBB, "Invalid BlackBoard reference");
+
 	DrawBlackBoard(C, StringManager, BlackBoard);
 }
 
@@ -60,7 +67,6 @@ function DrawBehaviorTree(Canvas C, R_RBotsDebug_StringManager StringManager, R_
 {
 	if(BehaviorTree == None)
 	{
-		StringManager.AddWarning(StringCategoryBT, "No Behavior Tree reference available -- select a Bot DebugTarget");
 		return;
 	}
 
@@ -144,19 +150,29 @@ function DrawBehaviorTreeValidated(Canvas C, R_BehaviorTree BT, R_BTContext CTX)
 function String GetBehaviorNodeString(R_BTNode Node)
 {
 	local Class<R_BTNode> NodeClass;
+	local int NodeUID;
+	local String NodeDisplayString;
+	local String NodeClassString;
 
 	if(Node == None)
 	{
 		return "None";
 	}
 
+	NodeUID = Node.GetNodeUID();
+	NodeDisplayString = Node.GetNodeDisplayString();
+
 	NodeClass = Node.Class;
 	if(NodeClass != None)
 	{
-		return "(" $ Node.GetNodeUID() $ "):" @ NodeClass.Static.GetNodeClassString();
+		NodeClassString = NodeClass.Static.GetNodeClassString();
+		if(NodeClassString == "")
+		{
+			NodeClassString = String(NodeClass);
+		}
 	}
-
-	return String(Node.Class);
+	
+	return "[" $ NodeUID $ "]:" @ NodeDisplayString @ "(" $ NodeClassString $ ")";
 }
 
 function DrawBlackBoard(Canvas C, R_RBotsDebug_StringManager StringManager, R_BlackBoard BlackBoard)
@@ -165,7 +181,6 @@ function DrawBlackBoard(Canvas C, R_RBotsDebug_StringManager StringManager, R_Bl
 
 	if(BlackBoard == None)
 	{
-		StringManager.AddWarning(StringCategoryBB, "Invalid BlackBoard reference");
 		return;
 	}
 

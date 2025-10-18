@@ -24,7 +24,7 @@ var private int NumPathLocations;
 var private int BorderEdgeIndices[128];
 var private int NumBorderEdgeIndices;
 
-function InitializeNavContext()
+function Initialize()
 {
 	ClearPath();
 	ClearBorderEdges();

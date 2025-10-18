@@ -9,12 +9,17 @@ const NodeSuccess = 1;
 const NodeRunning = 2;
 
 var private int NodeUID;
+var private Name NodeName;
 
 function int GetNodeUID() { return NodeUID; }
 function SetNodeUID(int NewNodeUID) { NodeUID = NewNodeUID; }
 
-static function String GetNodeClassString() { return "Node"; }
+function Name GetNodeName() { return NodeName; }
+function SetNodeName(Name NewNodeName) { NodeName = NewNodeName; }
 
+function String GetNodeDisplayString() { return String(NodeName); }
+
+static function String GetNodeClassString() { return "Node"; }
 
 //------------------------------------------------------------------------------
 
@@ -48,3 +53,8 @@ function Initialize();
 function OnActivated(R_Bot Bot, R_BlackBoard BlackBoard);
 function OnDeactivated(R_Bot Bot, R_BlackBoard BlackBoard);
 function int Tick(R_BTContext Context, float DeltaSeconds);
+
+defaultproperties
+{
+	NodeName='Node'
+}

@@ -7,7 +7,7 @@ class R_IndexCache_Linear extends R_IndexCache;
 var private int Indices[64];
 var private int NumIndices;
 
-function InitIndexCache()
+function Initialize()
 {
 	NumIndices = 0;
 }
@@ -38,7 +38,7 @@ function int Get(int CacheIndex)
 {
 	if(CacheIndex < 0 || CacheIndex >= NumIndices)
 	{
-		return NavLib.Static.InvalidIndex();
+		return InvalidIndex;
 	}
 	return Indices[CacheIndex];
 }
