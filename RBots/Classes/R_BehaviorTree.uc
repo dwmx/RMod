@@ -25,12 +25,16 @@ function Load()
 		GoTo LoadFailedWithLogString;
 	}
 
-	BT = R_BTBuilder(LocalRBots.CreateRBotsObject(BTBuilderClass, Self));
+	// Defer initialization on BTBuilder so that we can set the owning BehaviorTree first
+	BT = R_BTBuilder(LocalRBots.CreateRBotsObject(BTBuilderClass, Self, true));
 	if(BT == None)
 	{	// Can't built without a BTBuilder
 		LogString = "Failed to instantiate BTBuilder from class:" @ BTBuilderClass;
 		GoTo LoadFailedWithLogString;
 	}
+
+	BT.SetOwningBehaviorTree(Self);
+	BT.Initialize(); // Resolve deferred initialization
 
 	BuildBehaviorTree(BT);
 	Root = BT.GetRoot();

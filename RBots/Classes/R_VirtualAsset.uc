@@ -8,4 +8,9 @@
 //==============================================================================
 class R_VirtualAsset extends R_RBotsObject abstract;
 
+var private int AssetUID;
+
+final function int GetAssetUID() { return AssetUID; }
+final function SetAssetUID(int NewAssetUID) { AssetUID = NewAssetUID; }
+
 function Load();

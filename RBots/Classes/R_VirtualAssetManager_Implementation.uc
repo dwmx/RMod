@@ -9,11 +9,14 @@ const LogCategory = 'VirtualAssetManager';
 var private R_VirtualAsset LoadedAssets[256];
 var private int NumLoadedAssets;
 
+var private int CurrentAssetUID;
+
 var private config Class<R_VirtualAsset> PreCacheAssetClasses[128];
 
 function Initialize()
 {
 	NumLoadedAssets = 0;
+	CurrentAssetUID = 1;
 	LoadPreCacheAssets();
 }
 
@@ -88,9 +91,14 @@ function R_VirtualAsset LoadAsset(Class<R_VirtualAsset> AssetClass)
 		GoTo LoadFailWithLogString;
 	}
 
-	Asset.Load();
+	Asset.SetAssetUID(CurrentAssetUID);
+	++CurrentAssetUID;
+
 	LoadedAssets[NumLoadedAssets] = Asset;
 	++NumLoadedAssets;
+
+	Asset.Load();
+	
 	return Asset;
 
 LoadFailWithLogString:

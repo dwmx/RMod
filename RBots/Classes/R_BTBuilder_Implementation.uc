@@ -62,6 +62,7 @@ function R_BTNode CreateChildBTNodeAtStackIndex(Class<R_BTNode> NodeClass)
 	local String LogString;
 	local R_BTNode_Composite ParentNode;
 	local R_BTNode NewNode;
+	local int NewNodeUID;
 
 	if(NodeIndex != 0)
 	{
@@ -79,9 +80,24 @@ function R_BTNode CreateChildBTNodeAtStackIndex(Class<R_BTNode> NodeClass)
 		return None;
 	}
 
-	NewNode.SetNodeUID(CurrentNodeUID);
+	// Set Node UID
+	if(BehaviorTree == None)
+	{
+		LogString = "CreateChildBTNodeAtStackIndex warning -- BehaviorTree == None, Nodes may not have universally unique UIDs";
+		Warn(LogString);
+		Utilities.Static.RLog(LogString, LogCategory);
+		NewNodeUID = CurrentNodeUID;
+	}
+	else
+	{
+		NewNodeUID = BehaviorTree.GetAssetUID();
+		NewNodeUID = (NewNodeUID << 20) | CurrentNodeUID;
+	}
+
+	NewNode.SetNodeUID(NewNodeUID);
 	++CurrentNodeUID;
 
+	// Add child
 	if(ParentNode != None)
 	{
 		ParentNode.AddChild(NewNode);
