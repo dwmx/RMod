@@ -8,7 +8,7 @@ const TaskParam_WaitTime = 'WaitTime';
 
 static function String GetTaskDisplayString() { return "Select Wait Time"; }
 
-function int TickTask(R_Bot Bot, R_BlackBoard BlackBoard, float ActiveTime, float DeltaSeconds)
+function int TickTask(R_BehaviorTaskInstance TaskInstance, R_Bot Bot, R_BlackBoard BlackBoard, float ActiveTime, float DeltaSeconds)
 {
 	local float NewWaitTime;
 

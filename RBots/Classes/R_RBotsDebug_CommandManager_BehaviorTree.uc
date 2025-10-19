@@ -11,14 +11,16 @@ const Utilities = Class'RBots.R_BotUtilities';
 const Command_Show = "Show";
 const Command_Hide = "Hide";
 const Command_Toggle = "Toggle";
-const Command_Dump = "Dump";
+const Command_DumpBT = "DumpBT";
+const Command_DumpBB = "DumpBB";
 
 function RegisterCommandList()
 {
 	RegisterCommand(Command_Show);
 	RegisterCommand(Command_Hide);
 	RegisterCommand(Command_Toggle);
-	RegisterCommand(Command_Dump);
+	RegisterCommand(Command_DumpBT);
+	RegisterCommand(Command_DumpBB);
 }
 
 function bool TryHandleCommand(String CommandString, R_RBotsDebug DebugMutator, PlayerPawn Sender)
@@ -28,7 +30,8 @@ function bool TryHandleCommand(String CommandString, R_RBotsDebug DebugMutator, 
 		case Command_Show:		HandleCommand_Show(DebugMutator, Sender);		return true;
 		case Command_Hide:		HandleCommand_Hide(DebugMutator, Sender);		return true;
 		case Command_Toggle:	HandleCommand_Toggle(DebugMutator, Sender);		return true;
-		case Command_Dump:		HandleCommand_Dump(DebugMutator, Sender);		return true;
+		case Command_DumpBT:	HandleCommand_DumpBT(DebugMutator, Sender);		return true;
+		case Command_DumpBB:	HandleCommand_DumpBB(DebugMutator, Sender);		return true;
 	}
 
 	return false;
@@ -66,6 +69,26 @@ final function R_BehaviorTree GetDebugTargetBehaviorTree(R_RBotsDebug DebugMutat
 	return None;
 }
 
+final function R_BlackBoard GetDebugTargetBlackBoard(R_RBotsDebug DebugMutator)
+{
+	local R_Bot Bot;
+	local R_BotBehavior ActiveBehavior;
+
+	if(DebugMutator != None)
+	{
+		Bot = DebugMutator.GetDebugTarget();
+		if(Bot != None)
+		{
+			ActiveBehavior = Bot.GetActiveBehavior();
+			if(ActiveBehavior != None)
+			{
+				return ActiveBehavior.GetBlackBoard();
+			}
+		}
+	}
+	return None;
+}
+
 //------------------------------------------------------------------------------
 
 function HandleCommand_Show(R_RBotsDebug DebugMutator, PlayerPawn Sender)
@@ -92,7 +115,9 @@ function HandleCommand_Toggle(R_RBotsDebug DebugMutator, PlayerPawn Sender)
 	}
 }
 
-function HandleCommand_Dump(R_RBotsDebug DebugMutator, PlayerPawn Sender)
+//------------------------------------------------------------------------------
+//	Dump BehaviorTree
+function HandleCommand_DumpBT(R_RBotsDebug DebugMutator, PlayerPawn Sender)
 {
 	local R_BehaviorTree BehaviorTree;
 	local R_BTNode Node;
@@ -162,4 +187,25 @@ function String GetNodeLogString(R_BTNode Node, int Depth)
 	}
 	Result = Result @ Node.Class;
 	return Result;
+}
+
+//------------------------------------------------------------------------------
+//	Dump BlackBoard
+function HandleCommand_DumpBB(R_RBotsDebug DebugMutator, PlayerPawn Sender)
+{
+	local R_BlackBoard BlackBoard;
+	local R_KeyValueStore KeyValueStore;
+
+	BlackBoard = GetDebugTargetBlackBoard(DebugMutator);
+	if(BlackBoard != None)
+	{
+		KeyValueStore = BlackBoard.GetKeyValueStore();
+		if(KeyValueStore != None)
+		{
+			KeyValueStore.DumpToLog();
+			return;
+		}
+	}
+
+	Utilities.Static.RLog("Failed to dump BlackBoard to log");
 }

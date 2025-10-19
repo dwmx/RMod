@@ -15,6 +15,7 @@ const NodeClassSequence = Class'RBots.R_BTNode_Sequence';
 const NodeClassSelector = Class'RBots.R_BTNode_Selector';
 const NodeClassParallel = Class'RBots.R_BTNode_Parallel';
 const NodeClassTask 	= Class'RBots.R_BTNode_Task';
+const NodeClassSubTree	= Class'RBots.R_BTNode_SubTree';
 
 var private R_BehaviorTree BehaviorTree; // The BehaviorTree this is building for
 var private int CurrentNodeUID;
@@ -24,6 +25,11 @@ var private int CurrentNodeUID;
 function R_BTNode GetRoot()
 {
 	return Nodes[0];
+}
+
+function R_BTNode GetCurrent()
+{
+	return Nodes[NodeIndex];
 }
 
 //------------------------------------------------------------------------------
@@ -129,25 +135,39 @@ function CreateParallel()
 	CreateChildBTNodeAtStackIndex(NodeClassParallel);
 }
 
-function CreateTask(Class<R_BehaviorTask> TaskClass)
+function R_VirtualAssetManager InternalTryGetAssetManager(out String OutErrorString)
 {
-	local String LogString;
 	local R_RBotsServerActor LocalRBots;
 	local R_VirtualAssetManager AssMan;
-	local R_BehaviorTask Task;
-	local R_BTNode_Task TaskNode;
 
 	LocalRBots = GetRBotsServerActor();
 	if(LocalRBots == None)
-	{	// Need the RBots reference
-		LogString = "Invalid RBotsServerActor reference";
-		GoTo FailWithLogString;
+	{
+		OutErrorString = "Invalid RBotsServerActor reference";
+		return None;
 	}
 
 	AssMan = LocalRBots.GetAssetManager();
 	if(AssMan == None)
-	{	// Need the asset manager
-		LogString = "Failed to get AssetManager";
+	{
+		OutErrorString = "Invalid AssetManager reference";
+		return None;
+	}
+
+	return AssMan;
+}
+
+function CreateTask(Class<R_BehaviorTask> TaskClass)
+{
+	local String LogString;
+	local R_VirtualAssetManager AssMan;
+	local R_BehaviorTask Task;
+	local R_BehaviorTaskInstance TaskInstance;
+	local R_BTNode_Task TaskNode;
+
+	AssMan = InternalTryGetAssetManager(LogString);
+	if(AssMan == None)
+	{	// Need access to the AssMan
 		GoTo FailWithLogString;
 	}
 
@@ -155,6 +175,13 @@ function CreateTask(Class<R_BehaviorTask> TaskClass)
 	if(Task == None)
 	{	// Need to get the Task from asset manager
 		LogString = "Failed to load Task";
+		GoTo FailWithLogString;
+	}
+
+	TaskInstance = Task.CreateInstance();
+	if(TaskInstance == None)
+	{	// Task instance will live on the node
+		LogString = "Failed to create TaskInstance";
 		GoTo FailWithLogString;
 	}
 
@@ -166,7 +193,7 @@ function CreateTask(Class<R_BehaviorTask> TaskClass)
 	}
 
 	// Attach the Task to the TaskNode
-	TaskNode.SetBehaviorTask(Task);
+	TaskNode.SetBehaviorTaskInstance(TaskInstance);
 	return;
 
 FailWithLogString:
@@ -174,6 +201,64 @@ FailWithLogString:
 	Warn(LogString);
 	Utilities.Static.RLog(LogString, LogCategory);
 	return;
+}
+
+function CreateSubTree(Class<R_BehaviorTree> BehaviorTreeClass)
+{
+	local String LogString;
+	local R_VirtualAssetManager AssMan;
+	local R_BehaviorTree BehaviorTree;
+	local R_BTNode_SubTree SubTreeNode;
+
+	AssMan = InternalTryGetAssetManager(LogString);
+	if(AssMan == None)
+	{	// Need access to the AssMan
+		GoTo FailWithLogString;
+	}
+
+	BehaviorTree = R_BehaviorTree(AssMan.LoadAsset(BehaviorTreeClass));
+	if(BehaviorTree == None)
+	{	// Must have access to the asset
+		LogString = "Failed to load BehaviorTree";
+		GoTo FailWithLogString;
+	}
+
+	SubTreeNode = R_BTNode_SubTree(CreateChildBTNodeAtStackIndex(NodeClassSubTree));
+	if(SubTreeNode == None)
+	{	// Shouldn't happen, but catch it if it does
+		LogString = "Invalid reference to newly created SubTreeNode, or cast failed";
+		GoTo FailWithLogString;
+	}
+
+	// Attach the BehaviorTree to the SubTree Node
+	SubTreeNode.SetSubTree(BehaviorTree);
+	return;
+
+FailWithLogString:
+	LogString = "CreateSubTree failed for class" @ BehaviorTreeClass @ "--" @ LogString;
+	Warn(LogString);
+	Utilities.Static.RLog(LogString, LogCategory);
+	return;
+}
+
+//------------------------------------------------------------------------------
+//	Task Parameters
+//	These calls are only valid in the reference of a Task node
+
+function SetTaskFloat(Name Key, float Value)
+{
+	local R_BTNode_Task TaskNode;
+	local R_BehaviorTaskInstance TaskInstance;
+
+	TaskNode = R_BTNode_Task(GetCurrent());
+	if(TaskNode != None)
+	{
+		TaskInstance = TaskNode.GetBehaviorTaskInstance();
+		if(TaskInstance != None)
+		{
+			TaskInstance.SetTaskFloat(Key, Value);
+		}
+	}
 }
 
 //------------------------------------------------------------------------------

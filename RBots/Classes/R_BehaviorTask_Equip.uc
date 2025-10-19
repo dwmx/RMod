@@ -4,7 +4,7 @@ const TaskParam_EquipTarget = 'EquipTarget';
 
 static function String GetTaskDisplayString() { return "Equip"; }
 
-function int TickTask(R_Bot Bot, R_BlackBoard BlackBoard, float ActiveTime, float DeltaSeconds)
+function int TickTask(R_BehaviorTaskInstance TaskInstance, R_Bot Bot, R_BlackBoard BlackBoard, float ActiveTime, float DeltaSeconds)
 {
 	local R_BotPawnController PawnController;
 	local PlayerPawn PP;

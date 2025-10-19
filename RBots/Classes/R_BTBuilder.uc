@@ -13,5 +13,8 @@ function CreateSequence();
 function CreateSelector();
 function CreateParallel();
 function CreateTask(Class<R_BehaviorTask> TaskClass);
+function CreateSubTree(Class<R_BehaviorTree> BehaviorTreeClass);
+
+function SetTaskFloat(Name Key, float Value);
 
 function R_BTNode GetRoot();

@@ -25,13 +25,6 @@ const BBKey_MoveDirection = 'MoveDirection';
 
 function BuildBlackBoard(R_BlackBoard BB)
 {
-	BB.AddActor(BBKey_InventoryTarget);
-
-	BB.AddFloat(BBKey_WantHealth);
-	BB.AddFloat(BBKey_WantRunePower);
-	BB.AddFloat(BBKey_WantStrength);
-
-	BB.AddVector(BBKey_MoveDirection);
 }
 
 function BehaviorActivated()

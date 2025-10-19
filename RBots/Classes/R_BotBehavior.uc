@@ -3,12 +3,13 @@
 //	Base class for all Bot behavior
 //==============================================================================
 class R_BotBehavior extends R_RBotsObject abstract;
-//class R_BotBehavior extends R_BotObject abstract;
 
-const Utilities = Class'RBots.R_BotUtilities';
 const LogCategory = 'Behavior';
 
 const NavLib = Class'RBots.R_NavLibrary';
+
+const BlackBoardClass = Class'RBots.R_BlackBoard_Implementation';
+const BehaviorTreeContextClass = Class'RBots.R_BTContext_Implementation';
 
 var private R_Bot OwnerBot;
 var private PlayerPawn OwnerPlayerPawn;
@@ -75,21 +76,24 @@ final function InitializeBehaviorTree()
 			{
 				BehaviorTree = R_BehaviorTree(AssMan.LoadAsset(BehaviorTreeClass));
 			}
+
+			if(BehaviorTree != None)
+			{
+				BlackBoard = R_BlackBoard(LocalRBots.CreateRBotsObject(BlackBoardClass, Self));
+				if(BlackBoard != None)
+				{
+					BehaviorTree.AddKeySetToBlackBoard(BlackBoard);
+				}
+
+				BehaviorTreeContext = R_BTContext(LocalRBots.CreateRBotsObject(BehaviorTreeContextClass, Self));
+				if(BehaviorTreeContext != None)
+				{
+					BehaviorTreeContext.SetBot(GetBot());
+					BehaviorTreeContext.SetBlackBoard(BlackBoard);
+				}
+			}
 		}
 	}
-	
-	// Create BlackBoard
-	BlackBoard = new(None) Class'RBots.R_BlackBoard_Implementation';
-	if(BehaviorTree != None)
-	{
-		BehaviorTree.AddKeySetToBlackBoard(BlackBoard);
-	}
-
-	// Create BT Context
-	BehaviorTreeContext = new(None) Class'RBots.R_BTContext_Implementation';
-	BehaviorTreeContext.Initialize();
-	BehaviorTreeContext.SetBot(GetBot());
-	BehaviorTreeContext.SetBlackBoard(BlackBoard);
 }
 
 final function R_Bot GetBot() { return OwnerBot; }

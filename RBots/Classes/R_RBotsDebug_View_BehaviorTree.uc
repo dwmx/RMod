@@ -12,13 +12,15 @@ const StringCategoryBT = 'BehaviorTree';
 const StringCategoryBB = 'BlackBoard';
 
 //------------------------------------------------------------------------------
-//	BlackBoardTypeCodes
-//	Copied from R_BlackBoard_Implementation
-const BlackBoardTypeCodeInvalid	= 0;
-const BlackBoardTypeCodeInt	 	= 1;
-const BlackBoardTypeCodeFloat 	= 2;
-const BlackBoardTypeCodeVector 	= 3;
-const BlackBoardTypeCodeActor 	= 4;
+//	TypeCodes
+//	Copied from R_KeyValueStore_Implementation
+const TypeCodeBool		= 1;
+const TypeCodeInt 		= 2;
+const TypeCodeFloat 	= 3;
+const TypeCodeVector 	= 4;
+const TypeCodeActor 	= 5;
+const TypeCodeObject 	= 6;
+const TypeCodeClass 	= 7;
 
 function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
 {
@@ -189,38 +191,63 @@ function DrawBlackBoard(Canvas C, R_RBotsDebug_StringManager StringManager, R_Bl
 
 function DrawBlackBoardValidated(Canvas C, R_RBotsDebug_StringManager StringManager, R_BlackBoard BlackBoard)
 {
+	local R_KeyValueStore KeyValueStore;
 	local int NumKeys;
 	local Name CurrentKey;
 	local int CurrentType;
+	local byte AsBoolByte;
+	local bool AsBool;
 	local int AsInt;
 	local float AsFloat;
 	local Vector AsVector;
 	local Actor AsActor;
+	local Object AsObject;
+	local Class AsClass;
 	local int i;
 
-	NumKeys = BlackBoard.GetNumKeys();
+	KeyValueStore = BlackBoard.GetKeyValueStore();
+	if(KeyValueStore == None)
+	{
+		StringManager.AddWarning(StringCategoryBB, "BlackBoard's KeyValueStore is invalid");
+		return;
+	}
+
+	NumKeys = KeyValueStore.GetNumKeys();
 	StringManager.AddInt(StringCategoryBB, "NumKeys", NumKeys);
 	for(i = 0; i < NumKeys; ++i)
 	{
-		BlackBoard.GetKeyTypeAtIndex(i, CurrentKey, CurrentType);
+		KeyValueStore.GetKeyTypeAtIndex(i, CurrentKey, CurrentType);
 		switch(CurrentType)
 		{
-			case BlackBoardTypeCodeInt:
-				BlackBoard.GetInt(CurrentKey, AsInt);
+			case TypeCodeBool:
+				KeyValueStore.GetBool(CurrentKey, AsBoolByte);
+				if(AsBoolByte == 0)	AsBool = false;
+				else				AsBool = true;
+				StringManager.AddBool(StringCategoryBB, String(CurrentKey), AsBool);
+			case TypeCodeInt:
+				KeyValueStore.GetInt(CurrentKey, AsInt);
 				StringManager.AddInt(StringCategoryBB, String(CurrentKey), AsInt);
 				break;
-			case BlackBoardTypeCodeFloat:
-				BlackBoard.GetFloat(CurrentKey, AsFloat);
+			case TypeCodeFloat:
+				KeyValueStore.GetFloat(CurrentKey, AsFloat);
 				StringManager.AddFloat(StringCategoryBB, String(CurrentKey), AsFloat);
 				break;
-			case BlackBoardTypeCodeVector:
-				BlackBoard.GetVector(CurrentKey, AsVector);
+			case TypeCodeVector:
+				KeyValueStore.GetVector(CurrentKey, AsVector);
 				StringManager.AddVector(StringCategoryBB, String(CurrentKey), AsVector);
 				break;
-			case BlackBoardTypeCodeActor:
-				BlackBoard.GetActor(CurrentKey, AsActor);
+			case TypeCodeActor:
+				KeyValueStore.GetActor(CurrentKey, AsActor);
 				StringManager.AddActor(StringCategoryBB, String(CurrentKey), AsActor);
 				break;
+			case TypeCodeObject:
+				KeyValueStore.GetObject(CurrentKey, AsObject);
+				StringManager.AddObject(StringCategoryBB, String(CurrentKey), AsObject);
+			case TypeCodeClass:
+				KeyValueStore.GetClass(CurrentKey, AsClass);
+				StringManager.AddClass(StringCategoryBB, String(CurrentKey), AsClass);
+			default:
+				StringManager.AddWarning(StringCategoryBB, "Failed to get Key:Value for '" $ CurrentKey $ "' {TypeCode: " $ CurrentType $ "}");
 		}
 	}
 }
