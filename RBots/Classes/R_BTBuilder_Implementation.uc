@@ -217,8 +217,14 @@ function CreateSubTree(Class<R_BehaviorTree> BehaviorTreeClass)
 {
 	local String LogString;
 	local R_VirtualAssetManager AssMan;
-	local R_BehaviorTree BehaviorTree;
+	local R_BehaviorTree SubBehaviorTree;
 	local R_BTNode_SubTree SubTreeNode;
+
+	if(BehaviorTree == None)
+	{	// Shouldn't happen, but have to check
+		LogString = "Invalid reference to build-context BehaviorTree";
+		GoTo FailWithLogString;
+	}
 
 	AssMan = InternalTryGetAssetManager(LogString);
 	if(AssMan == None)
@@ -226,10 +232,16 @@ function CreateSubTree(Class<R_BehaviorTree> BehaviorTreeClass)
 		GoTo FailWithLogString;
 	}
 
-	BehaviorTree = R_BehaviorTree(AssMan.LoadAsset(BehaviorTreeClass));
-	if(BehaviorTree == None)
+	SubBehaviorTree = R_BehaviorTree(AssMan.LoadAsset(BehaviorTreeClass));
+	if(SubBehaviorTree == None)
 	{	// Must have access to the asset
 		LogString = "Failed to load BehaviorTree";
+		GoTo FailWithLogString;
+	}
+
+	if(SubBehaviorTree.ContainsSubTree(BehaviorTree.Class))
+	{	// Cyclic trees bad
+		LogString = "Cyclic SubTree inclusion detected between" @ BehaviorTree.Class @ "and" @ BehaviorTreeClass;
 		GoTo FailWithLogString;
 	}
 
@@ -241,7 +253,7 @@ function CreateSubTree(Class<R_BehaviorTree> BehaviorTreeClass)
 	}
 
 	// Attach the BehaviorTree to the SubTree Node
-	SubTreeNode.SetSubTree(BehaviorTree);
+	SubTreeNode.SetSubTree(SubBehaviorTree);
 	return;
 
 FailWithLogString:

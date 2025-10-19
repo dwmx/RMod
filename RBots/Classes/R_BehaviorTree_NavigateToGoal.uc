@@ -9,8 +9,7 @@ function BuildBehaviorTree(R_BTBuilder BT)
 {
 	BT.CreateSequence();
 	BT.Push();
-
-		//BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
-		//BT.CreateTask(Class'RBots.R_BehaviorTask_SelectEquipTarget');
-		//BT.CreateTask(Class'RBots.R_BehaviorTask_Equip');
+		BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
+		BT.CreateTask(Class'RBots.R_BehaviorTask_SelectEquipTarget');
+		BT.CreateTask(Class'RBots.R_BehaviorTask_Equip');
 }

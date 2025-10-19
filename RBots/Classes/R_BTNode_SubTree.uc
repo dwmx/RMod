@@ -36,6 +36,15 @@ function R_BehaviorTree GetSubTree()
 	return SubTree;
 }
 
+function Class<R_BehaviorTree> GetSubTreeClass()
+{
+	if(SubTree != None)
+	{
+		return SubTree.Class;
+	}
+	return None;
+}
+
 function AddChild(R_BTNode ChildNode)
 {
 	local String LogString;

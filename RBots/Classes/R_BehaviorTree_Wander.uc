@@ -24,12 +24,21 @@ function BuildBehaviorTree(R_BTBuilder BT)
 {
 	BT.CreateSequence();
 	BT.Push();
+		//BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
+		//BT.SetTaskFloat('Duration', 4.0);
+
+		BT.CreateSubTree(Class'RBots.R_BehaviorTree_NavigateToGoal');
+
 		BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
-		BT.SetTaskFloat('Duration', 4.0);
+		BT.SetTaskFloat('Duration', 5.0);
+
+		return;
 
 		BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
 		BT.SetTaskFloat('Duration', 10.0);
 
+
+		return;
 		BT.CreateSequence();
 		BT.Push();
 			BT.CreateSequence();
