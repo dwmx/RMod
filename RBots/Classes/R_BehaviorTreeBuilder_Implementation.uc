@@ -1,8 +1,8 @@
 //==============================================================================
-//	R_BTBuilder_Implementation
+//	R_BehaviorTreeBuilder_Implementation
 //	Object for building a Behavior Tree
 //==============================================================================
-class R_BTBuilder_Implementation extends R_BTBuilder;
+class R_BehaviorTreeBuilder_Implementation extends R_BehaviorTreeBuilder;
 
 const Utilities = Class'RBots.R_BotUtilities';
 const LogCategory = 'BehaviorTreeBuilder';

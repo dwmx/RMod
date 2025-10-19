@@ -6,7 +6,7 @@ class R_BehaviorTree extends R_VirtualAsset abstract;
 
 const LogCategory = 'BehaviorTree';
 
-const BTBuilderClass = Class'RBots.R_BTBuilder_Implementation';
+const BTBuilderClass = Class'RBots.R_BehaviorTreeBuilder_Implementation';
 
 var private R_BTNode Root;
 
@@ -16,7 +16,7 @@ function Load()
 {
 	local String LogString;
 	local R_RBotsServerActor LocalRBots;
-	local R_BTBuilder BT;
+	local R_BehaviorTreeBuilder BT;
 
 	LocalRBots = GetRBotsServerActor();
 	if(LocalRBots == None)
@@ -26,7 +26,7 @@ function Load()
 	}
 
 	// Defer initialization on BTBuilder so that we can set the owning BehaviorTree first
-	BT = R_BTBuilder(LocalRBots.CreateRBotsObject(BTBuilderClass, Self, true));
+	BT = R_BehaviorTreeBuilder(LocalRBots.CreateRBotsObject(BTBuilderClass, Self, true));
 	if(BT == None)
 	{	// Can't built without a BTBuilder
 		LogString = "Failed to instantiate BTBuilder from class:" @ BTBuilderClass;
@@ -47,7 +47,7 @@ LoadFailedWithLogString:
 	return;
 }
 
-function BuildBehaviorTree(R_BTBuilder BT);
+function BuildBehaviorTree(R_BehaviorTreeBuilder BT);
 function AddKeySetToBlackBoard(R_BlackBoard BlackBoard);
 
 function R_BTNode GetRoot() { return Root; }

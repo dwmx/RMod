@@ -20,7 +20,7 @@ function AddKeySetToBlackBoard(R_BlackBoard BlackBoard)
 	}
 }
 
-function BuildBehaviorTree(R_BTBuilder BT)
+function BuildBehaviorTree(R_BehaviorTreeBuilder BT)
 {
 	BT.CreateSequence();
 	BT.Push();

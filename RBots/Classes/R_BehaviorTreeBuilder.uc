@@ -1,8 +1,8 @@
 //==============================================================================
-//	R_BTBuilder
+//	R_BehaviorTreeBuilder
 //	Object for building a Behavior Tree
 //==============================================================================
-class R_BTBuilder extends R_RBotsObject abstract;
+class R_BehaviorTreeBuilder extends R_RBotsObject abstract;
 
 function SetOwningBehaviorTree(R_BehaviorTree NewBehaviorTree);
 

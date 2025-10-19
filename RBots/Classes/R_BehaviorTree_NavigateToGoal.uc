@@ -5,7 +5,7 @@
 //==============================================================================
 class R_BehaviorTree_NavigateToGoal extends R_BehaviorTree;
 
-function BuildBehaviorTree(R_BTBuilder BT)
+function BuildBehaviorTree(R_BehaviorTreeBuilder BT)
 {
 	BT.CreateSequence();
 	BT.Push();
