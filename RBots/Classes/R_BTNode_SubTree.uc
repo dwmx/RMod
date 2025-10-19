@@ -94,7 +94,7 @@ function R_BTNode GetChild(int Index)
 	return SubTreeRoot.GetChild(Index);
 }
 
-function BaseNodeActivated(R_BTContext Context)
+function BaseNodeActivated(R_BehaviorTreeContext Context)
 {
 	local R_BTNode_Root SubTreeRoot;
 	local R_BTNode SubTreeChild;
@@ -117,7 +117,7 @@ function BaseNodeActivated(R_BTContext Context)
 	}
 }
 
-function BaseNodeDeactivated(R_BTContext Context)
+function BaseNodeDeactivated(R_BehaviorTreeContext Context)
 {
 	local R_BTNode_Root SubTreeRoot;
 	local R_BTNode SubTreeChild;
@@ -140,7 +140,7 @@ function BaseNodeDeactivated(R_BTContext Context)
 	}
 }
 
-function int Tick(R_BTContext Context, float DeltaSeconds)
+function int Tick(R_BehaviorTreeContext Context, float DeltaSeconds)
 {
 	local R_BTNode_Root SubTreeRoot;
 	local R_BTNode SubTreeChild;

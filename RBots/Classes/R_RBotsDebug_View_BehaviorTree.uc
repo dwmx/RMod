@@ -29,7 +29,7 @@ function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
 	local R_BotBehavior ActiveBehavior;
 	local R_BlackBoard BlackBoard;
 	local R_BehaviorTree BehaviorTree;
-	local R_BTContext BehaviorTreeContext;
+	local R_BehaviorTreeContext BehaviorTreeContext;
 
 	StringManager.AddCategory(StringCategoryBT);
 
@@ -65,7 +65,7 @@ function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
 	DrawBlackBoard(C, StringManager, BlackBoard);
 }
 
-function DrawBehaviorTree(Canvas C, R_RBotsDebug_StringManager StringManager, R_BehaviorTree BehaviorTree, R_BTContext BehaviorTreeContext)
+function DrawBehaviorTree(Canvas C, R_RBotsDebug_StringManager StringManager, R_BehaviorTree BehaviorTree, R_BehaviorTreeContext BehaviorTreeContext)
 {
 	if(BehaviorTree == None)
 	{
@@ -75,7 +75,7 @@ function DrawBehaviorTree(Canvas C, R_RBotsDebug_StringManager StringManager, R_
 	DrawBehaviorTreeValidated(C, BehaviorTree, BehaviorTreeContext);
 }
 
-function DrawBehaviorTreeValidated(Canvas C, R_BehaviorTree BT, R_BTContext CTX)
+function DrawBehaviorTreeValidated(Canvas C, R_BehaviorTree BT, R_BehaviorTreeContext CTX)
 {
 	local R_BTNode NodeStack[128];
 	local int NodeDepth[128];

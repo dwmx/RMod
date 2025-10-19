@@ -7,7 +7,7 @@ const LogCategory = 'BehaviorTreeSequence';
 
 static function String GetNodeClassString() { return "Sequence"; }
 
-function int Tick(R_BTContext Context, float DeltaSeconds)
+function int Tick(R_BehaviorTreeContext Context, float DeltaSeconds)
 {
 	local String LogString;
 	local int ChildCount;

@@ -1,8 +1,8 @@
 //==============================================================================
-//	R_BTContext
+//	R_BehaviorTreeContext
 //	Contains instancing state associated with a Behavior Tree
 //==============================================================================
-class R_BTContext extends R_RBotsObject abstract;
+class R_BehaviorTreeContext extends R_RBotsObject abstract;
 
 function Initialize();
 

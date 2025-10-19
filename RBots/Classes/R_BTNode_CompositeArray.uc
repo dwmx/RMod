@@ -9,13 +9,13 @@ const LogCategory = 'BTNodeCompositeArray';
 var private R_BTNode Children[16];
 var private int NumChildren;
 
-function BaseNodeActivated(R_BTContext Context)
+function BaseNodeActivated(R_BehaviorTreeContext Context)
 {
 	Context.SetNodeActiveChildIndex(GetNodeUID(), InvalidIndex);
 	Super.BaseNodeActivated(Context);
 }
 
-function BaseNodeDeactivated(R_BTContext Context)
+function BaseNodeDeactivated(R_BehaviorTreeContext Context)
 {
 	Context.SetNodeActiveChildIndex(GetNodeUID(), InvalidIndex);
 	Super.BaseNodeDeactivated(Context);

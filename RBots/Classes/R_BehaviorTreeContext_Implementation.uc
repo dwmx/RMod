@@ -1,7 +1,7 @@
 //==============================================================================
-//	R_BTContext_Implementation
+//	R_BehaviorTreeContext_Implementation
 //==============================================================================
-class R_BTContext_Implementation extends R_BTContext;
+class R_BehaviorTreeContext_Implementation extends R_BehaviorTreeContext;
 
 var private R_Bot Bot;
 var private R_BlackBoard BlackBoard;

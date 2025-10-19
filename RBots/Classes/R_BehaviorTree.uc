@@ -106,7 +106,7 @@ function bool ContainsSubTree(Class<R_BehaviorTree> BehaviorTreeClass)
 
 //------------------------------------------------------------------------------
 
-function Tick(R_BTContext Context, float DeltaSeconds)
+function Tick(R_BehaviorTreeContext Context, float DeltaSeconds)
 {
 	if(Context == None || Root == None)
 	{

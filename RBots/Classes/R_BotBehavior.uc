@@ -9,7 +9,7 @@ const LogCategory = 'Behavior';
 const NavLib = Class'RBots.R_NavLibrary';
 
 const BlackBoardClass = Class'RBots.R_BlackBoard_Implementation';
-const BehaviorTreeContextClass = Class'RBots.R_BTContext_Implementation';
+const BehaviorTreeContextClass = Class'RBots.R_BehaviorTreeContext_Implementation';
 
 var private R_Bot OwnerBot;
 var private PlayerPawn OwnerPlayerPawn;
@@ -26,7 +26,7 @@ var private Class<R_BehaviorTree> BehaviorTreeClass;
 var private R_BehaviorTree BehaviorTree;
 
 //var private R_BTNode BehaviorTree;
-var private R_BTContext BehaviorTreeContext;
+var private R_BehaviorTreeContext BehaviorTreeContext;
 var private R_BlackBoard BlackBoard;
 
 //------------------------------------------------------------------------------
@@ -85,7 +85,7 @@ final function InitializeBehaviorTree()
 					BehaviorTree.AddKeySetToBlackBoard(BlackBoard);
 				}
 
-				BehaviorTreeContext = R_BTContext(LocalRBots.CreateRBotsObject(BehaviorTreeContextClass, Self));
+				BehaviorTreeContext = R_BehaviorTreeContext(LocalRBots.CreateRBotsObject(BehaviorTreeContextClass, Self));
 				if(BehaviorTreeContext != None)
 				{
 					BehaviorTreeContext.SetBot(GetBot());
@@ -163,7 +163,7 @@ final function R_BlackBoard GetBlackBoard()
 	return BlackBoard;
 }
 
-final function R_BTContext GetBehaviorTreeContext()
+final function R_BehaviorTreeContext GetBehaviorTreeContext()
 {
 	return BehaviorTreeContext;
 }

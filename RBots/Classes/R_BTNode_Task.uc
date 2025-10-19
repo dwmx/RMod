@@ -49,7 +49,7 @@ function R_BehaviorTaskInstance GetBehaviorTaskInstance()
 
 //------------------------------------------------------------------------------
 
-function BaseNodeActivated(R_BTContext Context)
+function BaseNodeActivated(R_BehaviorTreeContext Context)
 {
 	local R_Bot Bot;
 	local R_BlackBoard BlackBoard;
@@ -68,7 +68,7 @@ function BaseNodeActivated(R_BTContext Context)
 	}
 }
 
-function BaseNodeDeactivated(R_BTContext Context)
+function BaseNodeDeactivated(R_BehaviorTreeContext Context)
 {
 	local R_Bot Bot;
 	local R_BlackBoard BlackBoard;
@@ -87,7 +87,7 @@ function BaseNodeDeactivated(R_BTContext Context)
 	}
 }
 
-function int Tick(R_BTContext Context, float DeltaSeconds)
+function int Tick(R_BehaviorTreeContext Context, float DeltaSeconds)
 {
 	local R_Bot Bot;
 	local R_BlackBoard BlackBoard;

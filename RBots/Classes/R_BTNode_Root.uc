@@ -45,7 +45,7 @@ function R_BTNode GetChild(int Index)
 	return None;
 }
 
-function int Tick(R_BTContext Context, float DeltaSeconds)
+function int Tick(R_BehaviorTreeContext Context, float DeltaSeconds)
 {
 	local bool bActive;
 	local int TickResult;

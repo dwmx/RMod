@@ -7,7 +7,7 @@ const LogCategory = 'BehaviorTreeParallel';
 
 static function String GetNodeClassString() { return "Parallel"; }
 
-function BaseNodeActivated(R_BTContext Context)
+function BaseNodeActivated(R_BehaviorTreeContext Context)
 {
 	local String LogString;
 	local int ChildCount;
@@ -31,7 +31,7 @@ function BaseNodeActivated(R_BTContext Context)
 	Super.BaseNodeActivated(Context);
 }
 
-function int Tick(R_BTContext Context, float DeltaSeconds)
+function int Tick(R_BehaviorTreeContext Context, float DeltaSeconds)
 {
 	local String LogString;
 	local int ChildCount;
