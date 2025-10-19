@@ -18,20 +18,7 @@ function AddTaskParameters(R_BehaviorTaskInstance TaskInstance)
 	}
 }
 
-// TODO: Merge this up to base behavior task class and implement the other types
-function float GetTaskFloat(R_BehaviorTaskInstance TaskInstance, Name Key, float DefaultValue)
-{
-	local float Result;
-	if(TaskInstance != None)
-	{
-		if(TaskInstance.GetTaskFloat(Key, Result))
-		{
-			return Result;
-		}
-	}
-
-	return DefaultValue;
-}
+//------------------------------------------------------------------------------
 
 function int TickTask(R_BehaviorTaskInstance TaskInstance, R_Bot Bot, R_BlackBoard BlackBoard, float ActiveTime, float DeltaSeconds)
 {

@@ -7,14 +7,6 @@ const LogCategory = 'BehaviorTask';
 
 const TaskInstanceClass = Class'RBots.R_BehaviorTaskInstance';
 
-struct R_ParameterMappings
-{
-	var Name BlackBoardKey;
-	var Name TaskParameter;
-};
-var private R_ParameterMappings ParameterMappings[32];
-var private int NumParameterMappings;
-
 const TaskSuccess = 0;
 const TaskFail = 1;
 const TaskInProgress = 2;
@@ -58,149 +50,75 @@ function AddTaskParameters(R_BehaviorTaskInstance TaskInstance);
 
 //------------------------------------------------------------------------------
 
-function MapBlackBoardKey(Name BlackBoardKey, Name TaskParameter)
+function bool GetTaskBool(R_BehaviorTaskInstance TaskInstance, Name Key, bool bDefaultValue)
 {
-	local String LogString;
-
-	if(NumParameterMappings >= ArrayCount(ParameterMappings))
+	local byte ByteValue;
+	if(TaskInstance != None && TaskInstance.GetTaskBool(Key, ByteValue))
 	{
-		LogString = "MapBlackBoardKey failed -- array overflow";
-		Warn(LogString);
-		Utilities.Static.RLog(LogString, LogCategory);
-		return;
+		if(ByteValue == 0)	return false;
+		else				return true;
 	}
-
-	ParameterMappings[NumParameterMappings].BlackBoardKey = BlackBoardKey;
-	ParameterMappings[NumParameterMappings].TaskParameter = TaskParameter;
-	++NumParameterMappings;
+	return bDefaultValue;
 }
 
-function bool GetMappedBlackBoardKey(Name TaskParameter, out Name OutBlackBoardKey)
+function int GetTaskInt(R_BehaviorTaskInstance TaskInstance, Name Key, int DefaultValue)
 {
-	local int i;
-
-	for(i = 0; i < NumParameterMappings; ++i)
+	local int Value;
+	if(TaskInstance != None && TaskInstance.GetTaskInt(Key, Value))
 	{
-		if(ParameterMappings[i].TaskParameter == TaskParameter)
-		{
-			OutBlackBoardKey = ParameterMappings[i].BlackBoardKey;
-			return true;
-		}
+		return Value;
 	}
-	return false;
+	return DefaultValue;
 }
 
-//------------------------------------------------------------------------------
-
-function R_KeyValueStore GetBlackBoardKeyValueStore(R_BlackBoard BlackBoard)
+function float GetTaskFloat(R_BehaviorTaskInstance TaskInstance, Name Key, float DefaultValue)
 {
-	if(BlackBoard == None)
+	local float Value;
+	if(TaskInstance != None && TaskInstance.GetTaskFloat(Key, Value))
 	{
-		return None;
+		return Value;
 	}
-	return BlackBoard.GetKeyValueStore();
+	return DefaultValue;
 }
 
-//------------------------------------------------------------------------------
-//	Read from BlackBoard
-
-function bool ReadMappedInt(R_BlackBoard BlackBoard, Name TaskParameter, out int OutValue)
+function Vector GetTaskVector(R_BehaviorTaskInstance TaskInstance, Name Key, Vector DefaultValue)
 {
-	local R_KeyValueStore KeyValueStore;
-	local Name BBKey;
-	KeyValueStore = GetBlackBoardKeyValueStore(BlackBoard);
-	if(KeyValueStore != None && GetMappedBlackBoardKey(TaskParameter, BBKey))
+	local Vector Value;
+	if(TaskInstance != None && TaskInstance.GetTaskVector(Key, Value))
 	{
-		return KeyValueStore.GetInt(BBKey, OutValue);
+		return Value;
 	}
-	return false;
+	return DefaultValue;
 }
 
-function bool ReadMappedFloat(R_BlackBoard BlackBoard, Name TaskParameter, out float OutValue)
+function Actor GetTaskActor(R_BehaviorTaskInstance TaskInstance, Name Key, Actor DefaultValue)
 {
-	local R_KeyValueStore KeyValueStore;
-	local Name BBKey;
-	KeyValueStore = GetBlackBoardKeyValueStore(BlackBoard);
-	if(KeyValueStore != None && GetMappedBlackBoardKey(TaskParameter, BBKey))
+	local Actor Value;
+	if(TaskInstance != None && TaskInstance.GetTaskActor(Key, Value))
 	{
-		return KeyValueStore.GetFloat(BBKey, OutValue);
+		return Value;
 	}
-	return false;
+	return DefaultValue;
 }
 
-function bool ReadMappedVector(R_BlackBoard BlackBoard, Name TaskParameter, out Vector OutValue)
+function Object GetTaskObject(R_BehaviorTaskInstance TaskInstance, Name Key, Object DefaultValue)
 {
-	local R_KeyValueStore KeyValueStore;
-	local Name BBKey;
-	KeyValueStore = GetBlackBoardKeyValueStore(BlackBoard);
-	if(KeyValueStore != None && GetMappedBlackBoardKey(TaskParameter, BBKey))
+	local Object Value;
+	if(TaskInstance != None && TaskInstance.GetTaskObject(Key, Value))
 	{
-		return KeyValueStore.GetVector(BBKey, OutValue);
+		return Value;
 	}
-	return false;
+	return DefaultValue;
 }
 
-function bool ReadMappedActor(R_BlackBoard BlackBoard, Name TaskParameter, out Actor OutValue)
+function Class GetTaskClass(R_BehaviorTaskInstance TaskInstance, Name Key, Class DefaultValue)
 {
-	local R_KeyValueStore KeyValueStore;
-	local Name BBKey;
-	KeyValueStore = GetBlackBoardKeyValueStore(BlackBoard);
-	if(KeyValueStore != None && GetMappedBlackBoardKey(TaskParameter, BBKey))
+	local Class Value;
+	if(TaskInstance != None && TaskInstance.GetTaskClass(Key, Value))
 	{
-		return KeyValueStore.GetActor(BBKey, OutValue);
+		return Value;
 	}
-	return false;
-}
-
-//------------------------------------------------------------------------------
-//	Write to BlackBoard
-
-function bool WriteMappedInt(R_BlackBoard BlackBoard, Name TaskParameter, int Value)
-{
-	local R_KeyValueStore KeyValueStore;
-	local Name BBKey;
-	KeyValueStore = GetBlackBoardKeyValueStore(BlackBoard);
-	if(KeyValueStore != None && GetMappedBlackBoardKey(TaskParameter, BBKey))
-	{
-		return KeyValueStore.SetInt(BBKey, Value);
-	}
-	return false;
-}
-
-function bool WriteMappedFloat(R_BlackBoard BlackBoard, Name TaskParameter, float Value)
-{
-	local R_KeyValueStore KeyValueStore;
-	local Name BBKey;
-	KeyValueStore = GetBlackBoardKeyValueStore(BlackBoard);
-	if(KeyValueStore != None && GetMappedBlackBoardKey(TaskParameter, BBKey))
-	{
-		return KeyValueStore.SetFloat(BBKey, Value);
-	}
-	return false;
-}
-
-function bool WriteMappedVector(R_BlackBoard BlackBoard, Name TaskParameter, Vector Value)
-{
-	local R_KeyValueStore KeyValueStore;
-	local Name BBKey;
-	KeyValueStore = GetBlackBoardKeyValueStore(BlackBoard);
-	if(KeyValueStore != None && GetMappedBlackBoardKey(TaskParameter, BBKey))
-	{
-		return KeyValueStore.SetVector(BBKey, Value);
-	}
-	return false;
-}
-
-function bool WriteMappedActor(R_BlackBoard BlackBoard, Name TaskParameter, Actor Value)
-{
-	local R_KeyValueStore KeyValueStore;
-	local Name BBKey;
-	KeyValueStore = GetBlackBoardKeyValueStore(BlackBoard);
-	if(KeyValueStore != None && GetMappedBlackBoardKey(TaskParameter, BBKey))
-	{
-		return KeyValueStore.SetActor(BBKey, Value);
-	}
-	return false;
+	return DefaultValue;
 }
 
 //------------------------------------------------------------------------------

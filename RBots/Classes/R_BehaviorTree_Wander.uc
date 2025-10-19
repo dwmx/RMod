@@ -25,46 +25,29 @@ function BuildBehaviorTree(R_BTBuilder BT)
 	BT.CreateSequence();
 	BT.Push();
 		BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
-		BT.SetTaskFloat('Duration', 20.0);
+		BT.SetTaskFloat('Duration', 4.0);
 
 		BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
 		BT.SetTaskFloat('Duration', 10.0);
 
-		BT.CreateTask(Class'RBots.R_BehaviorTask_SelectEquipTarget');
-		BT.CreateTask(Class'RBots.R_BehaviorTask_Equip');
-
-	return;
-	BT.CreateSequence();
-	BT.Push();
 		BT.CreateSequence();
 		BT.Push();
 			BT.CreateSequence();
 			BT.Push();
-				BT.CreateTask(Class'RBots.R_BehaviorTask_SelectWaitTime');
-				BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
-				BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
-				//BT.CreateTask(Class'RBots.R_BehaviorTask_SelectEquipTarget');
-				BT.CreateTask(Class'RBots.R_BehaviorTask_Equip');
-				BT.Pop();
-			BT.CreateSelector();
-			BT.Push();
-				BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
-				BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
-				BT.Pop();
-			BT.CreateSequence();
-			BT.Push();
-				BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
-				BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
-				BT.Pop();
-			BT.CreateParallel();
-			BT.Push();
-				BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
-				BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
 				BT.CreateSequence();
 				BT.Push();
 					BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
-					BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
-					BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
+					BT.SetTaskFloat('Duration', 2.0);
 					BT.Pop();
 				BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
+				BT.SetTaskFloat('Duration', 3.0);
+				BT.Pop();
+			BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
+			BT.SetTaskFloat('Duration', 3.0);
+			BT.Pop();
+		BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
+		BT.SetTaskFloat('Duration', 3.0);
+				
+		BT.CreateTask(Class'RBots.R_BehaviorTask_SelectEquipTarget');
+		BT.CreateTask(Class'RBots.R_BehaviorTask_Equip');
 }

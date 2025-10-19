@@ -17,6 +17,9 @@ const NodeClassParallel = Class'RBots.R_BTNode_Parallel';
 const NodeClassTask 	= Class'RBots.R_BTNode_Task';
 const NodeClassSubTree	= Class'RBots.R_BTNode_SubTree';
 
+const LogWarn_InvalidTaskInstance = "Invalid TaskInstance reference";
+const LogWarn_MissingTaskParamKey = "Ensure TaskParameter key has been added before trying to set it";
+
 var private R_BehaviorTree BehaviorTree; // The BehaviorTree this is building for
 var private int CurrentNodeUID;
 
@@ -30,6 +33,13 @@ function R_BTNode GetRoot()
 function R_BTNode GetCurrent()
 {
 	return Nodes[NodeIndex];
+}
+
+function String GetStackPointerString()
+{
+	local R_BTNode Node;
+	Node = GetCurrent();
+	return "{StackIndex:" @ NodeIndex $ ", Node:" @ String(Node) $ "}";
 }
 
 //------------------------------------------------------------------------------
@@ -245,20 +255,196 @@ FailWithLogString:
 //	Task Parameters
 //	These calls are only valid in the reference of a Task node
 
-function SetTaskFloat(Name Key, float Value)
+function R_BehaviorTaskInstance GetCurrentTaskInstance()
 {
 	local R_BTNode_Task TaskNode;
 	local R_BehaviorTaskInstance TaskInstance;
-
 	TaskNode = R_BTNode_Task(GetCurrent());
 	if(TaskNode != None)
 	{
 		TaskInstance = TaskNode.GetBehaviorTaskInstance();
-		if(TaskInstance != None)
-		{
-			TaskInstance.SetTaskFloat(Key, Value);
-		}
+		return TaskInstance;
 	}
+	return None;
+}
+
+function SetTaskBool(Name Key, bool Value)
+{
+	local String LogString;
+	local R_BehaviorTaskInstance TaskInstance;
+	local byte ByteValue;
+
+	if(Value)	ByteValue = 1;
+	else		ByteValue = 0;
+
+	TaskInstance = GetCurrentTaskInstance();
+	if(TaskInstance == None)
+	{
+		LogString = LogWarn_InvalidTaskInstance;
+		GoTo FailWithLogString;
+	}
+
+	if(!TaskInstance.SetTaskBool(Key, ByteValue))
+	{
+		LogString = LogWarn_MissingTaskParamKey;
+		GoTo FailWithLogString;
+	}
+	return;
+FailWithLogString:
+	LogString = "SetTaskBool failed at" @ GetStackPointerString() @ "--" @ LogString;
+	Warn(LogString);
+	Utilities.Static.RLog(LogString, LogCategory);
+	return;
+}
+
+function SetTaskInt(Name Key, int Value)
+{
+	local String LogString;
+	local R_BehaviorTaskInstance TaskInstance;
+
+	TaskInstance = GetCurrentTaskInstance();
+	if(TaskInstance == None)
+	{
+		LogString = LogWarn_InvalidTaskInstance;
+		GoTo FailWithLogString;
+	}
+
+	if(!TaskInstance.SetTaskInt(Key, Value))
+	{
+		LogString = LogWarn_MissingTaskParamKey;
+		GoTo FailWithLogString;
+	}
+	return;
+FailWithLogString:
+	LogString = "SetTaskInt failed at" @ GetStackPointerString() @ "--" @ LogString;
+	Warn(LogString);
+	Utilities.Static.RLog(LogString, LogCategory);
+	return;
+}
+
+function SetTaskFloat(Name Key, float Value)
+{
+	local String LogString;
+	local R_BehaviorTaskInstance TaskInstance;
+
+	TaskInstance = GetCurrentTaskInstance();
+	if(TaskInstance == None)
+	{
+		LogString = LogWarn_InvalidTaskInstance;
+		GoTo FailWithLogString;
+	}
+
+	if(!TaskInstance.SetTaskFloat(Key, Value))
+	{
+		LogString = LogWarn_MissingTaskParamKey;
+		GoTo FailWithLogString;
+	}
+	return;
+FailWithLogString:
+	LogString = "SetTaskFloat failed at" @ GetStackPointerString() @ "--" @ LogString;
+	Warn(LogString);
+	Utilities.Static.RLog(LogString, LogCategory);
+	return;
+}
+
+function SetTaskVector(Name Key, Vector Value)
+{
+	local String LogString;
+	local R_BehaviorTaskInstance TaskInstance;
+
+	TaskInstance = GetCurrentTaskInstance();
+	if(TaskInstance == None)
+	{
+		LogString = LogWarn_InvalidTaskInstance;
+		GoTo FailWithLogString;
+	}
+
+	if(!TaskInstance.SetTaskVector(Key, Value))
+	{
+		LogString = LogWarn_MissingTaskParamKey;
+		GoTo FailWithLogString;
+	}
+	return;
+FailWithLogString:
+	LogString = "SetTaskVector failed at" @ GetStackPointerString() @ "--" @ LogString;
+	Warn(LogString);
+	Utilities.Static.RLog(LogString, LogCategory);
+	return;
+}
+
+function SetTaskActor(Name Key, Actor Value)
+{
+	local String LogString;
+	local R_BehaviorTaskInstance TaskInstance;
+
+	TaskInstance = GetCurrentTaskInstance();
+	if(TaskInstance == None)
+	{
+		LogString = LogWarn_InvalidTaskInstance;
+		GoTo FailWithLogString;
+	}
+
+	if(!TaskInstance.SetTaskActor(Key, Value))
+	{
+		LogString = LogWarn_MissingTaskParamKey;
+		GoTo FailWithLogString;
+	}
+	return;
+FailWithLogString:
+	LogString = "SetTaskActor failed at" @ GetStackPointerString() @ "--" @ LogString;
+	Warn(LogString);
+	Utilities.Static.RLog(LogString, LogCategory);
+	return;
+}
+
+function SetTaskObject(Name Key, Object Value)
+{
+	local String LogString;
+	local R_BehaviorTaskInstance TaskInstance;
+
+	TaskInstance = GetCurrentTaskInstance();
+	if(TaskInstance == None)
+	{
+		LogString = LogWarn_InvalidTaskInstance;
+		GoTo FailWithLogString;
+	}
+
+	if(!TaskInstance.SetTaskObject(Key, Value))
+	{
+		LogString = LogWarn_MissingTaskParamKey;
+		GoTo FailWithLogString;
+	}
+	return;
+FailWithLogString:
+	LogString = "SetTaskObject failed at" @ GetStackPointerString() @ "--" @ LogString;
+	Warn(LogString);
+	Utilities.Static.RLog(LogString, LogCategory);
+	return;
+}
+
+function SetTaskClass(Name Key, Class Value)
+{
+	local String LogString;
+	local R_BehaviorTaskInstance TaskInstance;
+
+	TaskInstance = GetCurrentTaskInstance();
+	if(TaskInstance == None)
+	{
+		LogString = LogWarn_InvalidTaskInstance;
+		GoTo FailWithLogString;
+	}
+
+	if(!TaskInstance.SetTaskClass(Key, Value))
+	{
+		LogString = LogWarn_MissingTaskParamKey;
+		GoTo FailWithLogString;
+	}
+	return;
+FailWithLogString:
+	LogString = "SetTaskClass failed at" @ GetStackPointerString() @ "--" @ LogString;
+	Warn(LogString);
+	Utilities.Static.RLog(LogString, LogCategory);
+	return;
 }
 
 //------------------------------------------------------------------------------

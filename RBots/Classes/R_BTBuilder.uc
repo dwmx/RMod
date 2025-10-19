@@ -15,6 +15,16 @@ function CreateParallel();
 function CreateTask(Class<R_BehaviorTask> TaskClass);
 function CreateSubTree(Class<R_BehaviorTree> BehaviorTreeClass);
 
-function SetTaskFloat(Name Key, float Value);
+//------------------------------------------------------------------------------
+// Configures task parameters on a per-node basis
+function SetTaskBool(Name TaskParameter, bool Value);
+function SetTaskInt(Name TaskParameter, int Value);
+function SetTaskFloat(Name TaskParameter, float Value);
+function SetTaskVector(Name TaskParameter, Vector Value);
+function SetTaskActor(Name TaskParameter, Actor Value);
+function SetTaskObject(Name TaskParameter, Object Value);
+function SetTaskClass(Name TaskParameter, Class Value);
+
+function MapTaskFloat(Name TaskParameter, Name BlackBoardKey);
 
 function R_BTNode GetRoot();

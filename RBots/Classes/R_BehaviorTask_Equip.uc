@@ -23,10 +23,11 @@ function int TickTask(R_BehaviorTaskInstance TaskInstance, R_Bot Bot, R_BlackBoa
 		return TaskFail;
 	}
 
-	if(!ReadMappedActor(BlackBoard, TaskParam_EquipTarget, EquipTarget))
-	{
-		return TaskFail;
-	}
+	BlackBoard.GetKeyValueStore().GetActor('EquipTarget', EquipTarget);
+	//if(!ReadMappedActor(BlackBoard, TaskParam_EquipTarget, EquipTarget))
+	//{
+	//	return TaskFail;
+	//}
 
 	EquipTargetWeapon = Weapon(EquipTarget);
 	if(EquipTargetWeapon == None && EquipTarget != None)

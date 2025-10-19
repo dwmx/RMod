@@ -20,7 +20,8 @@ function int TickTask(R_BehaviorTaskInstance TaskInstance, R_Bot Bot, R_BlackBoa
 	}
 
 	NewEquipTarget = SelectRandomStowedInventory(PP);
-	WriteMappedActor(BlackBoard, TaskParam_EquipTarget, NewEquipTarget);
+	//WriteMappedActor(BlackBoard, TaskParam_EquipTarget, NewEquipTarget);
+	BlackBoard.GetKeyValueStore().SetActor('EquipTarget', NewEquipTarget);
 	return TaskSuccess;
 }
 
