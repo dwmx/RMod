@@ -205,7 +205,7 @@ function DrawBlackBoardValidated(Canvas C, R_RBotsDebug_StringManager StringMana
 	local Class AsClass;
 	local int i;
 
-	KeyValueStore = BlackBoard.GetKeyValueStore();
+	KeyValueStore = BlackBoard;
 	if(KeyValueStore == None)
 	{
 		StringManager.AddWarning(StringCategoryBB, "BlackBoard's KeyValueStore is invalid");

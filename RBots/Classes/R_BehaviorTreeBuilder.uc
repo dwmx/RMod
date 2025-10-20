@@ -16,6 +16,10 @@ function CreateTask(Class<R_BehaviorTask> TaskClass);
 function CreateSubTree(Class<R_BehaviorTree> BehaviorTreeClass);
 
 //------------------------------------------------------------------------------
+// Map a TaskParamter name to a BlackBoard key
+function MapKeySelector(Name TaskParameter, Name BlackBoardKey);
+
+//------------------------------------------------------------------------------
 // Configures task parameters on a per-node basis
 function SetTaskBool(Name TaskParameter, bool Value);
 function SetTaskInt(Name TaskParameter, int Value);

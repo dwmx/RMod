@@ -12,8 +12,61 @@ const TaskInProgress = 2;
 
 var private R_BehaviorTask BehaviorTask;
 
+// KeySelectors are used to map parameter names in the Task to BlackBoard keys
+struct R_MappedKeySelector
+{
+	var Name TaskParameter;
+	var Name BlackBoardKey;
+};
+var private R_MappedKeySelector MappedKeySelectors[32];
+var private int NumMappedKeySelectors;
+
+// KeyValueStore is used to store TaskParameters
 const KeyValueStoreClass = Class'RBots.R_KeyValueStore_Implementation';
 var private R_KeyValueStore KeyValueStore;
+
+//------------------------------------------------------------------------------
+//	BlackBoard Key Selectors
+
+// Maps a Task's parameter name to a BlackBoard key
+function bool AddMappedKeySelector(Name TaskParameter, Name BlackBoardKey)
+{
+	local String LogString;
+	local int Index;
+
+	if(NumMappedKeySelectors >= ArrayCount(MappedKeySelectors))
+	{
+		LogString = "Array overflow";
+		GoTo FailWithLogString;
+	}
+
+	Index = NumMappedKeySelectors;
+	MappedKeySelectors[Index].TaskParameter = TaskParameter;
+	MappedKeySelectors[Index].BlackBoardKey = BlackBoardKey;
+	++NumMappedKeySelectors;
+	return true;
+
+FailWithLogString:
+	LogString = "AddMappedKeySelector failed for {" $ TaskParameter $ ", " $ BlackBoardKey $ "--" @ LogString;
+	Warn(LogString);
+	Utilities.Static.RLog(LogString, LogCategory);
+	return false;
+}
+
+function bool GetMappedKeySelector(Name TaskParameter, out Name OutBlackBoardKey)
+{
+	local int i;
+
+	for(i = 0; i < NumMappedKeySelectors; ++i)
+	{
+		if(MappedKeySelectors[i].TaskParameter == TaskParameter)
+		{
+			OutBlackBoardKey = MappedKeySelectors[i].BlackBoardKey;
+			return true;
+		}
+	}
+	return false;
+}
 
 //------------------------------------------------------------------------------
 // Task Parameters
@@ -73,6 +126,8 @@ function Initialize()
 		LogString = "Failed to create KeyValueStore";
 		GoTo FailWithLogString;
 	}
+
+	NumMappedKeySelectors = 0;
 
 	return;
 

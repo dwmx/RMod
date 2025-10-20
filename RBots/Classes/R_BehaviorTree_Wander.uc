@@ -6,26 +6,33 @@ class R_BehaviorTree_Wander extends R_BehaviorTree;
 
 function AddKeySetToBlackBoard(R_BlackBoard BlackBoard)
 {
-	local R_KeyValueStore KeyValueStore;
+	if(BlackBoard == None)
+	{
+		return;
+	}
 
-	if(BlackBoard != None)
-	{
-		KeyValueStore = BlackBoard.GetKeyValueStore();
-	}
-	if(KeyValueStore != None)
-	{
-		KeyValueStore.AddFloat('WaitTime');
-		KeyValueStore.AddActor('PickupTarget');
-		KeyValueStore.AddActor('EquipTarget');
-	}
+	BlackBoard.AddFloat('WaitTime');
+	BlackBoard.AddActor('PickupTarget');
+	BlackBoard.AddActor('EquipSelection');
 }
 
 function BuildBehaviorTree(R_BehaviorTreeBuilder BT)
 {
 	BT.CreateSequence();
 	BT.Push();
-		//BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
-		//BT.SetTaskFloat('Duration', 4.0);
+		BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
+		BT.SetTaskFloat('Duration', 5.0);
+
+		BT.CreateTask(Class'RBots.R_BehaviorTask_SelectEquipTarget');
+		BT.MapKeySelector('EquipTarget', 'EquipSelection');
+
+		BT.CreateTask(Class'RBots.R_BehaviorTask_Equip');
+		BT.MapKeySelector('InventoryToEquip', 'EquipSelection');
+
+		BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
+		BT.SetTaskFloat('Duration', 5.0);
+
+		return;
 
 		BT.CreateSubTree(Class'RBots.R_BehaviorTree_NavigateToGoal');
 

@@ -4,9 +4,7 @@
 //==============================================================================
 class R_BlackBoard_Implementation extends R_BlackBoard;
 
-const KeyValueStoreClass = Class'RBots.R_KeyValueStore_Implementation';
-var private R_KeyValueStore KeyValueStore;
-
+/*
 function Initialize()
 {
 	local String LogString;
@@ -34,8 +32,11 @@ FailWithLogString:
 	Utilities.Static.RLog(LogString, LogCategory);
 	return;
 }
+*/
 
+/*
 function R_KeyValueStore GetKeyValueStore()
 {
 	return KeyValueStore;
 }
+	*/

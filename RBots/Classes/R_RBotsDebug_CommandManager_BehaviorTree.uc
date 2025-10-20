@@ -194,17 +194,12 @@ function String GetNodeLogString(R_BTNode Node, int Depth)
 function HandleCommand_DumpBB(R_RBotsDebug DebugMutator, PlayerPawn Sender)
 {
 	local R_BlackBoard BlackBoard;
-	local R_KeyValueStore KeyValueStore;
 
 	BlackBoard = GetDebugTargetBlackBoard(DebugMutator);
 	if(BlackBoard != None)
 	{
-		KeyValueStore = BlackBoard.GetKeyValueStore();
-		if(KeyValueStore != None)
-		{
-			KeyValueStore.DumpToLog();
-			return;
-		}
+		BlackBoard.DumpToLog();
+		return;
 	}
 
 	Utilities.Static.RLog("Failed to dump BlackBoard to log");

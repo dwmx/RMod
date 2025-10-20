@@ -1,6 +1,6 @@
 class R_BehaviorTask_Equip extends R_BehaviorTask;
 
-const TaskParam_EquipTarget = 'EquipTarget';
+const TaskParam_InventoryToEquip = 'InventoryToEquip';
 
 static function String GetTaskDisplayString() { return "Equip"; }
 
@@ -23,13 +23,12 @@ function int TickTask(R_BehaviorTaskInstance TaskInstance, R_Bot Bot, R_BlackBoa
 		return TaskFail;
 	}
 
-	BlackBoard.GetKeyValueStore().GetActor('EquipTarget', EquipTarget);
-	//if(!ReadMappedActor(BlackBoard, TaskParam_EquipTarget, EquipTarget))
-	//{
-	//	return TaskFail;
-	//}
-
+	if(!GetBlackBoardActor(BlackBoard, TaskInstance, TaskParam_InventoryToEquip, EquipTarget))
+	{
+		return TaskFail;
+	}
 	EquipTargetWeapon = Weapon(EquipTarget);
+
 	if(EquipTargetWeapon == None && EquipTarget != None)
 	{	// Tried to equip a non-weapon
 		return TaskFail;

@@ -35,6 +35,19 @@ function R_BTNode GetCurrent()
 	return Nodes[NodeIndex];
 }
 
+function R_BehaviorTaskInstance GetCurrentTaskInstance()
+{
+	local R_BTNode_Task TaskNode;
+	local R_BehaviorTaskInstance TaskInstance;
+	TaskNode = R_BTNode_Task(GetCurrent());
+	if(TaskNode != None)
+	{
+		TaskInstance = TaskNode.GetBehaviorTaskInstance();
+		return TaskInstance;
+	}
+	return None;
+}
+
 function String GetStackPointerString()
 {
 	local R_BTNode Node;
@@ -264,21 +277,38 @@ FailWithLogString:
 }
 
 //------------------------------------------------------------------------------
+//	BlackBoard related functions
+
+function MapKeySelector(Name TaskParameter, Name BlackBoardKey)
+{
+	local String LogString;
+	local R_BehaviorTaskInstance TaskInstance;
+
+	TaskInstance = GetCurrentTaskInstance();
+	if(TaskInstance == None)
+	{
+		LogString = LogWarn_InvalidTaskInstance;
+		GoTo FailWithLogString;
+	}
+
+	if(!TaskInstance.AddMappedKeySelector(TaskParameter, BlackBoardKey))
+	{
+		LogString = "AddMappedKeySelector failed";
+		GoTo FailWithLogString;
+	}
+
+	return;
+
+FailWithLogString:
+	LogString = "MapKeySelector failed for {" $ TaskParameter $ ", " $ BlackBoardKey $ "}";
+	Warn(LogString);
+	Utilities.Static.RLog(LogString, LogCategory);
+	return;
+}
+
+//------------------------------------------------------------------------------
 //	Task Parameters
 //	These calls are only valid in the reference of a Task node
-
-function R_BehaviorTaskInstance GetCurrentTaskInstance()
-{
-	local R_BTNode_Task TaskNode;
-	local R_BehaviorTaskInstance TaskInstance;
-	TaskNode = R_BTNode_Task(GetCurrent());
-	if(TaskNode != None)
-	{
-		TaskInstance = TaskNode.GetBehaviorTaskInstance();
-		return TaskInstance;
-	}
-	return None;
-}
 
 function SetTaskBool(Name Key, bool Value)
 {
