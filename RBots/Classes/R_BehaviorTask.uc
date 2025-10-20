@@ -282,6 +282,20 @@ function Class GetTaskClass(R_BehaviorTaskInstance TaskInstance, Name TaskParame
 }
 
 //------------------------------------------------------------------------------
+//	RBots Utilities
+function R_NavQueryInterface GetNavQueryInterface()
+{
+	local R_RBotsServerActor LocalRBots;
+
+	LocalRBots = GetRBotsServerActor();
+	if(LocalRBots != None)
+	{
+		return LocalRBots.GetNavQueryInterface();
+	}
+	return None;
+}
+
+//------------------------------------------------------------------------------
 //	Bot Utilities
 function R_BotPawnController GetPawnController(R_Bot Bot)
 {
@@ -299,6 +313,18 @@ function PlayerPawn GetPlayerPawn(R_Bot Bot)
 		return None;
 	}
 	return Bot.GetOwnedPlayerPawn();
+}
+
+function Vector GetPawnLocation(R_Bot Bot)
+{
+	local Pawn P;
+
+	P = GetPlayerPawn(Bot);
+	if(P != None)
+	{
+		return P.Location;
+	}
+	return Vect(0,0,0);
 }
 
 //------------------------------------------------------------------------------

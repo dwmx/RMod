@@ -4,6 +4,16 @@
 //==============================================================================
 class R_BehaviorTree_Wander extends R_BehaviorTree;
 
+const BTT_Delay 					= Class'RBots.R_BehaviorTask_Delay';
+const BTT_SelectNavZoneGoal 		= Class'RBots.R_BehaviorTask_SelectNavZoneGoal';
+const BTT_SelectNavZoneDirection	= Class'RBots.R_BehaviorTask_SelectNavZoneDirection';
+const BTT_MoveInDirection			= Class'RBots.R_BehaviorTask_MoveInDirection';
+
+const BBKey_NavZoneGoalIndex 		= 'NavZoneGoalIndex';
+const BBKey_MoveDirection 			= 'MoveDirection';
+
+//------------------------------------------------------------------------------
+
 function AddKeySetToBlackBoard(R_BlackBoard BlackBoard)
 {
 	if(BlackBoard == None)
@@ -11,59 +21,30 @@ function AddKeySetToBlackBoard(R_BlackBoard BlackBoard)
 		return;
 	}
 
-	BlackBoard.AddFloat('WaitTime');
-	BlackBoard.AddActor('PickupTarget');
-	BlackBoard.AddActor('EquipSelection');
+	BlackBoard.AddInt(BBKey_NavZoneGoalIndex);
+	BlackBoard.AddVector(BBKey_MoveDirection);
 }
 
 function BuildBehaviorTree(R_BehaviorTreeBuilder BT)
 {
 	BT.CreateSequence();
 	BT.Push();
-		BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
-		BT.SetTaskFloat('Duration', 5.0);
-
-		BT.CreateTask(Class'RBots.R_BehaviorTask_SelectEquipTarget');
-		BT.MapKeySelector('EquipTarget', 'EquipSelection');
-
-		BT.CreateTask(Class'RBots.R_BehaviorTask_Equip');
-		BT.MapKeySelector('InventoryToEquip', 'EquipSelection');
-
-		BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
-		BT.SetTaskFloat('Duration', 5.0);
-
-		return;
-
-		BT.CreateSubTree(Class'RBots.R_BehaviorTree_NavigateToGoal');
-
-		BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
-		BT.SetTaskFloat('Duration', 5.0);
-
-		return;
-
-		BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
+		BT.CreateTask(BTT_Delay);
 		BT.SetTaskFloat('Duration', 10.0);
 
-
-		return;
-		BT.CreateSequence();
+		BT.CreateParallel();
 		BT.Push();
 			BT.CreateSequence();
 			BT.Push();
-				BT.CreateSequence();
-				BT.Push();
-					BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
-					BT.SetTaskFloat('Duration', 2.0);
-					BT.Pop();
-				BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
-				BT.SetTaskFloat('Duration', 3.0);
+				BT.CreateTask(BTT_SelectNavZoneGoal);
+				BT.MapKeySelector('NavZoneGoalIndex', BBKey_NavZoneGoalIndex);
+
+				BT.CreateTask(BTT_SelectNavZoneDirection);
+				BT.MapKeySelector('NavZoneGoalIndex', BBKey_NavZoneGoalIndex);
+				BT.MapKeySelector('NavZoneGoalDirection', BBKey_MoveDirection);
+
 				BT.Pop();
-			BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
-			BT.SetTaskFloat('Duration', 3.0);
-			BT.Pop();
-		BT.CreateTask(Class'RBots.R_BehaviorTask_Delay');
-		BT.SetTaskFloat('Duration', 3.0);
-				
-		BT.CreateTask(Class'RBots.R_BehaviorTask_SelectEquipTarget');
-		BT.CreateTask(Class'RBots.R_BehaviorTask_Equip');
+
+			BT.CreateTask(BTT_MoveInDirection);
+			BT.MapKeySelector('MoveDirection', BBKey_MoveDirection);
 }
