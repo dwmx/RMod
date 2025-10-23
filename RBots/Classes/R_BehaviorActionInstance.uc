@@ -5,6 +5,7 @@ class R_BehaviorActionInstance extends R_RBotsObject;
 
 const LogCategory = 'BehaviorActionInstance';
 
+var private Class<R_BehaviorAction> RequiredBehaviorActionClass;
 var private R_BehaviorAction BehaviorAction;
 
 const KeyValueStoreClass = Class'RBots.R_KeyValueStore_Implementation';
@@ -14,7 +15,22 @@ var private R_KeyValueStore KeyValueStore;
 
 function SetBehaviorAction(R_BehaviorAction NewBehaviorAction)
 {
+	local String LogString;
+
+	if(NewBehaviorAction != None && !ClassIsChildOf(NewBehaviorAction.Class, RequiredBehaviorActionClass))
+	{
+		LogString = "Invalid BehaviorAction:" @ NewBehaviorAction $ ", must be of type" @ RequiredBehaviorActionClass;
+		GoTo FailWithLogString;
+	}
+
 	BehaviorAction = NewBehaviorAction;
+	return;
+
+FailWithLogString:
+	LogString = "SetBehaviorAction failed --" @ LogString;
+	Warn(LogString);
+	Utilities.Static.RLog(LogString, LogCategory);
+	return;
 }
 
 function R_BehaviorAction GetBehaviorAction()
@@ -164,4 +180,11 @@ function bool GetObjectParameter(Name Key, out Object OutRef, optional Object Op
 	}
 	OutRef = OptionalDefault;
 	return false;
+}
+
+//------------------------------------------------------------------------------
+
+defaultproperties
+{
+	RequiredBehaviorActionClass=Class'RBots.R_BehaviorAction'
 }

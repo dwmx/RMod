@@ -2,25 +2,38 @@
 //	R_BTNode_Task
 //	Behavior Tree node which runs a Task
 //==============================================================================
-class R_BTNode_Task extends R_BTNode;
+class R_BTNode_Task extends R_BTNode_Action;
 
-var private R_BTI_TaskInstance BehaviorTaskInstance;
+var private R_BTI_TaskInstance TaskInstance;
 
 const TaskSuccess = 0;
 const TaskFail = 1;
 const TaskInProgress = 2;
 
+//------------------------------------------------------------------------------
+
+function R_BTI_TaskInstance GetTaskInstance()
+{
+	if(TaskInstance == None)
+	{
+		TaskInstance = R_BTI_TaskInstance(GetBehaviorActionInstance());
+	}
+	return TaskInstance;
+}
+
 function String GetNodeDisplayString()
 {
+	local R_BTI_TaskInstance LocalTaskInstance;
 	local R_BehaviorTask Task;
 	local Class<R_BehaviorTask> TaskClass;
 
-	if(BehaviorTaskInstance == None)
+	LocalTaskInstance = GetTaskInstance();
+	if(LocalTaskInstance == None)
 	{
 		return "ERR: INVALID BEHAVIOR TASK INSTANCE";
 	}
 
-	Task = BehaviorTaskInstance.GetBehaviorTask();
+	Task = LocalTaskInstance.GetBehaviorTask();
 	if(Task == None)
 	{
 		return "ERR: INVALID BEHAVIOR TASK";
@@ -37,64 +50,58 @@ function String GetNodeDisplayString()
 
 //------------------------------------------------------------------------------
 
-function SetBehaviorTaskInstance(R_BTI_TaskInstance NewBehaviorTaskInstance)
-{
-	BehaviorTaskInstance = NewBehaviorTaskInstance;
-}
-
-function R_BTI_TaskInstance GetBehaviorTaskInstance()
-{
-	return BehaviorTaskInstance;
-}
-
-//------------------------------------------------------------------------------
-
 function BaseNodeActivated(R_BehaviorTreeContext Context)
 {
+	local R_BTI_TaskInstance LocalTaskInstance;
 	local R_Bot Bot;
 	local R_BlackBoard BlackBoard;
 
 	Super.BaseNodeActivated(Context);
 
-	if(BehaviorTaskInstance != None)
+	LocalTaskInstance = GetTaskInstance();
+	if(LocalTaskInstance != None)
 	{
 		Bot = Context.GetBot();
 		BlackBoard = Context.GetBlackBoard();
 
 		if(Bot != None && BlackBoard != None)
 		{
-			BehaviorTaskInstance.TaskActivated(Bot, BlackBoard);
+			LocalTaskInstance.TaskActivated(Bot, BlackBoard);
 		}
 	}
 }
 
 function BaseNodeDeactivated(R_BehaviorTreeContext Context)
 {
+	local R_BTI_TaskInstance LocalTaskInstance;
 	local R_Bot Bot;
 	local R_BlackBoard BlackBoard;
 
 	Super.BaseNodeDeactivated(Context);
+	LocalTaskInstance = GetTaskInstance();
 
-	if(BehaviorTaskInstance != None)
+	if(LocalTaskInstance != None)
 	{
 		Bot = Context.GetBot();
 		BlackBoard = Context.GetBlackBoard();
 
 		if(Bot != None && BlackBoard != None)
 		{
-			BehaviorTaskInstance.TaskDeactivated(Bot, BlackBoard);
+			LocalTaskInstance.TaskDeactivated(Bot, BlackBoard);
 		}
 	}
 }
 
 function int Tick(R_BehaviorTreeContext Context, float DeltaSeconds)
 {
+	local R_BTI_TaskInstance LocalTaskInstance;
 	local R_Bot Bot;
 	local R_BlackBoard BlackBoard;
 	local float ActiveTime;
 	local int TaskResult;
 
-	if(BehaviorTaskInstance == None)
+	LocalTaskInstance = GetTaskInstance();
+	if(LocalTaskInstance == None)
 	{
 		return NodeFail;
 	}
@@ -108,7 +115,7 @@ function int Tick(R_BehaviorTreeContext Context, float DeltaSeconds)
 		return NodeFail;
 	}
 
-	TaskResult = BehaviorTaskInstance.TickTask(Bot, BlackBoard, ActiveTime, DeltaSeconds);
+	TaskResult = LocalTaskInstance.TickTask(Bot, BlackBoard, ActiveTime, DeltaSeconds);
 	switch(TaskResult)
 	{
 	case TaskInProgress:	return NodeRunning;
@@ -117,4 +124,9 @@ function int Tick(R_BehaviorTreeContext Context, float DeltaSeconds)
 	}
 
 	return NodeFail;
+}
+
+defaultproperties
+{
+	RequiredBehaviorActionInstanceClass=Class'RBots.R_BTI_TaskInstance'
 }

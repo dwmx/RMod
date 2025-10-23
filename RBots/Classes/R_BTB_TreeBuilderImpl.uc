@@ -38,6 +38,15 @@ function R_BTNode GetCurrent()
 	return Nodes[NodeIndex];
 }
 
+function R_BTNode GetCurrentParent()
+{
+	if(NodeIndex == 0)
+	{
+		return None;
+	}
+	return Nodes[NodeIndex-1];
+}
+
 function R_BTI_TaskInstance GetCurrentTaskInstance()
 {
 	local R_BTNode_Task TaskNode;
@@ -45,7 +54,7 @@ function R_BTI_TaskInstance GetCurrentTaskInstance()
 	TaskNode = R_BTNode_Task(GetCurrent());
 	if(TaskNode != None)
 	{
-		TaskInstance = TaskNode.GetBehaviorTaskInstance();
+		TaskInstance = TaskNode.GetTaskInstance();
 		return TaskInstance;
 	}
 	return None;
@@ -227,7 +236,7 @@ function R_BTB_TaskBuilder CreateTask(Class<R_BehaviorTask> TaskClass)
 	}
 
 	// Attach the Task to the TaskNode
-	TaskNode.SetBehaviorTaskInstance(TaskInstance);
+	TaskNode.SetBehaviorActionInstance(TaskInstance);
 	BehaviorActionBuilder.SetBehaviorActionInstance(TaskInstance);
 	return BehaviorActionBuilder;
 
