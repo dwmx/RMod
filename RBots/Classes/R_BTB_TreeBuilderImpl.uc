@@ -460,6 +460,85 @@ function Pop()
 	--NodeIndex;
 }
 
+//------------------------------------------------------------------------------
+
+function bool FindNodeAndParentByName(Name NodeName, out R_BTNode OutNode, out R_BTNode OutParent)
+{
+	local R_BTNode CurrentNode, CurrentChild;
+	local R_BTNode NodeStack[ArrayCount(Nodes)];
+	local int NumNodes;
+	local int NumChildren;
+	local int i;
+
+	CurrentNode = GetRoot();
+	if(CurrentNode == None || NodeName == '')
+	{
+		OutNode = None;
+		OutParent = None;
+		return false;
+	}
+	if(CurrentNode.GetNodeName() == NodeName)
+	{
+		OutNode = CurrentNode;
+		OutParent = None;
+		return true;
+	}
+
+	NodeStack[0] = CurrentNode;
+	NumNodes = 1;
+	while(NumNodes > 0)
+	{
+		--NumNodes;
+		CurrentNode = NodeStack[NumNodes];
+
+		if(CurrentNode.CanContainChildren())
+		{
+			NumChildren = CurrentNode.GetChildCount();
+			for(i = 0; i < NumChildren; ++i)
+			{
+				CurrentChild = CurrentNode.GetChild(i);
+				if(CurrentChild != None)
+				{
+					if(CurrentChild.GetNodeName() == NodeName)
+					{
+						OutNode = CurrentChild;
+						OutParent = CurrentNode;
+						return true;
+					}
+					NodeStack[NumNodes] = CurrentChild;
+					++NumNodes;
+				}
+			}
+		}
+	}
+	return false;
+}
+
+function R_BTB_DecoratorBuilder AddDecorator(Class<R_BehaviorDecorator> DecoratorClass, name NodeName)
+{
+	local String LogString;
+	local R_BTNode Node, Parent;
+
+	if(!FindNodeAndParentByName(NodeName, Node, Parent))
+	{
+		LogString = "Failed to find node by name:" @ NodeName;
+		GoTo FailWithLogString;
+	}
+
+	// TODO: Insert decorator in-between Parent and Node
+	// Probably will mean creating a remove child function
+
+	// TODO: Return decorator builder similar to task builder
+
+	return None;
+
+FailWithLogString:
+	LogString = "AddDecorator failed --" @ LogString;
+	Warn(LogString);
+	Utilities.Static.RLog(LogString, LogCategory);
+	return None;
+}
+
 defaultproperties
 {
 	bTreeBuilderInitialized=false

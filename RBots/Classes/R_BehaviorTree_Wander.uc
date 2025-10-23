@@ -25,6 +25,9 @@ function AddKeySetToBlackBoard(R_BlackBoard BlackBoard)
 function BuildBehaviorTree(R_BTB_TreeBuilder TB)
 {
 	TB.BeginSequence('TopLevelSequence');
+	TB.AddDecorator(None, 'TopLevelSequence')
+		.SetParameter('Iterations', MakeIntVariant(3))
+		.SetAbortType(0);
 
 		TB.CreateTask(BTT_Delay)
 			.SetParameter('Duration', MakeFloatVariant(1.0));

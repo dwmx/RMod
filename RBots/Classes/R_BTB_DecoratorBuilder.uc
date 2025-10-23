@@ -21,3 +21,9 @@ function R_BTB_DecoratorBuilder SetAbortType(int AbortType)
 {
 	return Self;
 }
+
+function R_BTB_DecoratorBuilder SetParameter(Name ParamName, R_Variant Value)
+{
+	InternalSetParameter(ParamName, Value);
+	return Self;
+}

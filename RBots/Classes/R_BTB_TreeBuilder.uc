@@ -25,3 +25,5 @@ function R_BTB_TaskBuilder CreateTask(Class<R_BehaviorTask> TaskClass, optional 
 
 // SubTrees
 function CreateSubTree(Class<R_BehaviorTree> BehaviorTreeClass, optional Name NodeName);
+
+function R_BTB_DecoratorBuilder AddDecorator(Class<R_BehaviorDecorator> DecoratorClass, name NodeName);

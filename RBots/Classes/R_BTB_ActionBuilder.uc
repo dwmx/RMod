@@ -18,8 +18,7 @@ function SetBehaviorActionInstance(R_BehaviorActionInstance NewBehaviorActionIns
 	BehaviorActionInstance = NewBehaviorActionInstance;
 }
 
-function R_BTB_ActionBuilder SetParameter(Name ParamName, R_Variant Value)
+function InternalSetParameter(Name ParamName, R_Variant Value)
 {
 	BehaviorActionInstance.SetParameter(ParamName, Value);
-	return Self;
 }
