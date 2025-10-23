@@ -4,7 +4,7 @@
 //==============================================================================
 class R_BTNode_Task extends R_BTNode;
 
-var private R_BehaviorTaskInstance BehaviorTaskInstance;
+var private R_BTI_TaskInstance BehaviorTaskInstance;
 
 const TaskSuccess = 0;
 const TaskFail = 1;
@@ -37,12 +37,12 @@ function String GetNodeDisplayString()
 
 //------------------------------------------------------------------------------
 
-function SetBehaviorTaskInstance(R_BehaviorTaskInstance NewBehaviorTaskInstance)
+function SetBehaviorTaskInstance(R_BTI_TaskInstance NewBehaviorTaskInstance)
 {
 	BehaviorTaskInstance = NewBehaviorTaskInstance;
 }
 
-function R_BehaviorTaskInstance GetBehaviorTaskInstance()
+function R_BTI_TaskInstance GetBehaviorTaskInstance()
 {
 	return BehaviorTaskInstance;
 }

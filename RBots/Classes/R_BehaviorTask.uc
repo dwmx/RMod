@@ -1,11 +1,9 @@
 //==============================================================================
 //	R_BehaviorTask
 //==============================================================================
-class R_BehaviorTask extends R_VirtualAsset abstract;
+class R_BehaviorTask extends R_BehaviorAction abstract;
 
 const LogCategory = 'BehaviorTask';
-
-const TaskInstanceClass = Class'RBots.R_BehaviorTaskInstance';
 
 const TaskSuccess = 0;
 const TaskFail = 1;
@@ -14,46 +12,6 @@ const TaskInProgress = 2;
 //------------------------------------------------------------------------------
 
 static function String GetTaskDisplayString() { return "Task"; }
-
-function R_BehaviorTaskInstance CreateInstance()
-{
-	local String LogString;
-	local R_RBotsServerActor LocalRBots;
-	local R_BehaviorTaskInstance TaskInstance;
-
-	LocalRBots = GetRBotsServerActor();
-	if(LocalRBots == None)
-	{
-		LogString = "Invalid reference to RBotsServerActor";
-		GoTo FailWithLogString;
-	}
-
-	// Create with deferred initialization so that the Task reference can be set first
-	TaskInstance = R_BehaviorTaskInstance(LocalRBots.CreateRBotsObject(TaskInstanceClass, Self, true));
-	if(TaskInstance == None)
-	{
-		LogString = "Failed to create TaskInstance from Class:" @ TaskInstanceClass;
-		GoTo FailWithLogString;
-	}
-
-	TaskInstance.SetBehaviorTask(Self);
-	TaskInstance.Initialize();
-	AddTaskParameters(TaskInstance);
-	return TaskInstance;
-
-FailWithLogString:
-	LogString = "CreateInstance failed --" @ LogString;
-	Warn(LogString);
-	Utilities.Static.RLog(LogString, LogCategory);
-	return None;
-}
-
-function AddTaskParameters(R_BehaviorTaskInstance TaskInstance);
-
-//------------------------------------------------------------------------------
-// TaskParameter Getters
-
-
 
 //------------------------------------------------------------------------------
 //	RBots Utilities
@@ -103,6 +61,11 @@ function Vector GetPawnLocation(R_Bot Bot)
 
 //------------------------------------------------------------------------------
 
-function TaskActivated(R_BehaviorTaskInstance TaskInstance, R_Bot Bot, R_BlackBoard BlackBoard);
-function TaskDeactivated(R_BehaviorTaskInstance TaskInstance, R_Bot Bot, R_BlackBoard BlackBoard);
-function int TickTask(R_BehaviorTaskInstance TaskInstance, R_Bot Bot, R_BlackBoard BlackBoard, float ActiveTime, float DeltaSeconds);
+function TaskActivated(R_BTI_TaskInstance TaskInstance, R_Bot Bot, R_BlackBoard BlackBoard);
+function TaskDeactivated(R_BTI_TaskInstance TaskInstance, R_Bot Bot, R_BlackBoard BlackBoard);
+function int TickTask(R_BTI_TaskInstance TaskInstance, R_Bot Bot, R_BlackBoard BlackBoard, float ActiveTime, float DeltaSeconds);
+
+defaultproperties
+{
+	InstanceClass=Class'RBots.R_BTI_TaskInstance'
+}

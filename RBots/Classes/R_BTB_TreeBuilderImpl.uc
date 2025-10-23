@@ -1,8 +1,8 @@
 //==============================================================================
-//	R_BehaviorTreeBuilder_Implementation
+//	R_BTB_TreeBuilderImpl
 //	Object for building a Behavior Tree
 //==============================================================================
-class R_BehaviorTreeBuilder_Implementation extends R_BehaviorTreeBuilder;
+class R_BTB_TreeBuilderImpl extends R_BTB_TreeBuilder;
 
 const Utilities = Class'RBots.R_BotUtilities';
 const LogCategory = 'BehaviorTreeBuilder';
@@ -23,6 +23,9 @@ const LogWarn_MissingTaskParamKey = "Ensure TaskParameter key has been added bef
 var private R_BehaviorTree BehaviorTree; // The BehaviorTree this is building for
 var private int CurrentNodeUID;
 
+const BehaviorActionBuilderClass = Class'RBots.R_BTB_TaskBuilder';
+var private R_BTB_TaskBuilder BehaviorActionBuilder;
+
 //------------------------------------------------------------------------------
 
 function R_BTNode GetRoot()
@@ -35,10 +38,10 @@ function R_BTNode GetCurrent()
 	return Nodes[NodeIndex];
 }
 
-function R_BehaviorTaskInstance GetCurrentTaskInstance()
+function R_BTI_TaskInstance GetCurrentTaskInstance()
 {
 	local R_BTNode_Task TaskNode;
-	local R_BehaviorTaskInstance TaskInstance;
+	local R_BTI_TaskInstance TaskInstance;
 	TaskNode = R_BTNode_Task(GetCurrent());
 	if(TaskNode != None)
 	{
@@ -180,12 +183,13 @@ function R_VirtualAssetManager InternalTryGetAssetManager(out String OutErrorStr
 	return AssMan;
 }
 
-function CreateTask(Class<R_BehaviorTask> TaskClass)
+function R_BTB_TaskBuilder CreateTask(Class<R_BehaviorTask> TaskClass)
 {
 	local String LogString;
 	local R_VirtualAssetManager AssMan;
 	local R_BehaviorTask Task;
-	local R_BehaviorTaskInstance TaskInstance;
+	local R_BehaviorActionInstance Instance;
+	local R_BTI_TaskInstance TaskInstance;
 	local R_BTNode_Task TaskNode;
 
 	AssMan = InternalTryGetAssetManager(LogString);
@@ -201,10 +205,17 @@ function CreateTask(Class<R_BehaviorTask> TaskClass)
 		GoTo FailWithLogString;
 	}
 
-	TaskInstance = Task.CreateInstance();
-	if(TaskInstance == None)
-	{	// Task instance will live on the node
+	Instance = Task.CreateInstance();
+	if(Instance == None)
+	{	// Instance lives on the node
 		LogString = "Failed to create TaskInstance";
+		GoTo FailWithLogString;
+	}
+
+	TaskInstance = R_BTI_TaskInstance(Instance);
+	if(TaskInstance == None)
+	{	// Tasks have to return instances of type TaskInstance
+		LogString = "Task.CreateInstance successfully created an Instance, but it was not a TaskInstance";
 		GoTo FailWithLogString;
 	}
 
@@ -217,13 +228,14 @@ function CreateTask(Class<R_BehaviorTask> TaskClass)
 
 	// Attach the Task to the TaskNode
 	TaskNode.SetBehaviorTaskInstance(TaskInstance);
-	return;
+	BehaviorActionBuilder.SetBehaviorActionInstance(TaskInstance);
+	return BehaviorActionBuilder;
 
 FailWithLogString:
 	LogString = "CreateTask failed for class" @ TaskClass @ "--" @ LogString;
 	Warn(LogString);
 	Utilities.Static.RLog(LogString, LogCategory);
-	return;
+	return None;
 }
 
 function CreateSubTree(Class<R_BehaviorTree> BehaviorTreeClass)
@@ -280,7 +292,14 @@ FailWithLogString:
 
 function Initialize()
 {
+	local R_RBotsServerActor LocalRBots;
 	local int i;
+
+	LocalRBots = GetRBotsServerActor();
+	if(LocalRBots != None)
+	{
+		BehaviorActionBuilder = R_BTB_TaskBuilder(LocalRBots.CreateRBotsObject(BehaviorActionBuilderClass, Self));
+	}
 
 	for(i = 0; i < ArrayCount(Nodes); ++i)
 	{

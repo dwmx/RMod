@@ -22,19 +22,21 @@ const InvalidKey = 'None';
 // Used extensively throughout behavior related classes
 
 const TypeCodeInvalid	= -1;
-const TypeCodeInt 		= 0;
-const TypeCodeFloat 	= 1;
-const TypeCodeVector 	= 2;
-const TypeCodeActor 	= 3;
-const TypeCodeClass 	= 4;
-const TypeCodeObject 	= 5;
+const TypeCodeName		= 0;
+const TypeCodeInt 		= 1;
+const TypeCodeFloat 	= 2;
+const TypeCodeVector 	= 3;
+const TypeCodeActor 	= 4;
+const TypeCodeClass 	= 5;
+const TypeCodeObject 	= 6;
 
 const TypeCodeValidMin = 0;
-const TypeCodeValidMax = 5;
+const TypeCodeValidMax = 6;
 
 struct R_Variant
 {
 	var int TypeCode;
+	var Name NameData;
 	var int IntData;
 	var float FloatData[3];
 	var Object ObjectRef;
@@ -100,6 +102,14 @@ FailWithLogString:
 	return false;
 }
 
+static function R_Variant MakeNameVariant(Name Value)
+{
+	local R_Variant Result;
+	Result.TypeCode = TypeCodeName;
+	Result.NameData = Value;
+	return Result;
+}
+
 static function R_Variant MakeIntVariant(int Value)
 {
 	local R_Variant Result;
@@ -151,6 +161,12 @@ static function R_Variant MakeObjectVariant(Object Ref)
 }
 
 //------------------------------------------------------------------------------
+
+static function Name GetNameVariant(R_Variant Variant)
+{
+	if(Variant.TypeCode == TypeCodeName) { return Variant.NameData; }
+	return '';
+}
 
 static function int GetIntVariant(R_Variant Variant)
 {
@@ -208,6 +224,7 @@ static function bool MatchVariantValue(R_Variant A, R_Variant B)
 	{
 		switch(A.TypeCode)
 		{
+		case TypeCodeName:	return A.NameData == B.NameData;
 		case TypeCodeInt:	return A.IntData == B.IntData;
 		case TypeCodeFloat:	return A.FloatData[0] == B.FloatData[0];
 		case TypeCodeVector:

@@ -36,10 +36,7 @@ var private R_BotPawnController PawnController;
 var private Class<R_BotBehavior> InitialBehaviorClass;
 var private R_BotBehavior ActiveBehavior;
 
-const Behavior_Fight = Class'RBots.R_BotBehavior_Fight';
-const Behavior_FindWeapon = Class'RBots.R_BotBehavior_FindWeapon';
-const Behavior_Wander = Class'RBots.R_BotBehavior_Wander';
-const Behavior_Avoid = Class'RBots.R_BotBehavior_Avoid';
+const Behavior_Main = Class'RBots.R_BotBehavior_Main';
 
 //------------------------------------------------------------------------------
 // Player
@@ -363,55 +360,7 @@ function SetBehavior(Class<R_BotBehavior> BehaviorClass)
 
 function Class<R_BotBehavior> DetermineDesiredBehavior()
 {
-	local PlayerPawn P;
-	local R_BotPerception Perception;
-	local Actor TargetActor;
-	local bool bWillingToFight;
-	local R_BlackBoard BlackBoard;
-
-	return Class'RBots.R_BotBehavior_Main';
-
-	P = GetOwnedPlayerPawn();
-	if(P == None)
-	{
-		return None;
-	}
-
-	bWillingToFight = false;
-	if(P.Weapon != None && P.Weapon.Rating > 0)
-	{
-		bWillingToFight = true;
-	}
-
-	// If target is in range, fight or avoid
-	Perception = R_BotPerception(GetBotObjectByClass(Class'RBots.R_BotPerception'));
-	if(Perception != None)
-	{
-		TargetActor = Perception.GetPerceivedActor();
-		if(TargetActor != None)
-		{
-			if(VSize(TargetActor.Location - P.Location) <= 256.0)
-			{
-				if(bWillingToFight)
-				{	// Engage target
-					return Behavior_Fight;
-				}
-				else
-				{	// Don't want to fight, avoid target
-					return Behavior_Avoid;
-				}
-			}
-		}
-	}
-
-	// If not happy with weapon, find a weapon
-	if(P.Weapon == None || P.Weapon.Rating == 0)
-	{
-		return Behavior_FindWeapon;
-	}
-
-	// By default just wander around until something interesting happens
-	return Behavior_Wander;
+	return Behavior_Main;
 }
 
 event Tick(float DeltaSeconds)
@@ -659,6 +608,5 @@ function Vector GetLastInputVector()
 
 defaultproperties
 {
-	//InitialBehaviorClass=Class'RBots.R_BotBehavior_Wander'
-	InitialBehaviorClass=Class'RBots.R_BotBehavior_FindWeapon'
+	InitialBehaviorClass=Class'RBots.R_BotBehavior_Main'
 }
