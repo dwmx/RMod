@@ -1,8 +1,9 @@
 //==============================================================================
-//	R_BlackBoard_Implementation
-//	Implementation of the R_BlackBoard class
+//	R_BehaviorActionInstance
 //==============================================================================
-class R_BlackBoard_Implementation extends R_BlackBoard;
+class R_BehaviorActionInstance extends R_RBotsObject;
+
+const LogCategory = 'BehaviorActionInstance';
 
 const KeyValueStoreClass = Class'RBots.R_KeyValueStore_Implementation';
 var private R_KeyValueStore KeyValueStore;
@@ -45,14 +46,12 @@ FailWithLogString:
 
 //------------------------------------------------------------------------------
 
-function bool Add(Name Key, int TypeCode)			{ return KeyValueStore.Add(Key, TypeCode); }
-function bool Get(Name Key, out R_Variant OutValue)	{ return KeyValueStore.Get(Key, OutValue); }
-function bool Set(Name Key, R_Variant Value)		{ return KeyValueStore.Set(Key, Value); }
-
-function int GetMaxKeys()							{ return KeyValueStore.GetMaxKeys(); }
-function int GetNumKeys()							{ return KeyValueStore.GetNumKeys(); }
-
-function bool GetKeyTypeAtIndex(int Index, out Name OutKey, out int OutTypeCode)
+function bool AddParameter(Name ParamName, int TypeCode)
 {
-	return KeyValueStore.GetKeyTypeAtIndex(Index, OutKey, OutTypeCode);
+	return KeyValueStore.Add(ParamName, TypeCode);
+}
+
+function bool GetParameter(Name ParamName, out R_Variant OutValue)
+{
+	return KeyValueStore.Get(ParamName, OutValue);
 }

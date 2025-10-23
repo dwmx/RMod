@@ -12,7 +12,6 @@ const Command_Show = "Show";
 const Command_Hide = "Hide";
 const Command_Toggle = "Toggle";
 const Command_DumpBT = "DumpBT";
-const Command_DumpBB = "DumpBB";
 
 function RegisterCommandList()
 {
@@ -20,7 +19,6 @@ function RegisterCommandList()
 	RegisterCommand(Command_Hide);
 	RegisterCommand(Command_Toggle);
 	RegisterCommand(Command_DumpBT);
-	RegisterCommand(Command_DumpBB);
 }
 
 function bool TryHandleCommand(String CommandString, R_RBotsDebug DebugMutator, PlayerPawn Sender)
@@ -31,7 +29,6 @@ function bool TryHandleCommand(String CommandString, R_RBotsDebug DebugMutator, 
 		case Command_Hide:		HandleCommand_Hide(DebugMutator, Sender);		return true;
 		case Command_Toggle:	HandleCommand_Toggle(DebugMutator, Sender);		return true;
 		case Command_DumpBT:	HandleCommand_DumpBT(DebugMutator, Sender);		return true;
-		case Command_DumpBB:	HandleCommand_DumpBB(DebugMutator, Sender);		return true;
 	}
 
 	return false;
@@ -187,20 +184,4 @@ function String GetNodeLogString(R_BTNode Node, int Depth)
 	}
 	Result = Result @ Node.Class;
 	return Result;
-}
-
-//------------------------------------------------------------------------------
-//	Dump BlackBoard
-function HandleCommand_DumpBB(R_RBotsDebug DebugMutator, PlayerPawn Sender)
-{
-	local R_BlackBoard BlackBoard;
-
-	BlackBoard = GetDebugTargetBlackBoard(DebugMutator);
-	if(BlackBoard != None)
-	{
-		BlackBoard.DumpToLog();
-		return;
-	}
-
-	Utilities.Static.RLog("Failed to dump BlackBoard to log");
 }

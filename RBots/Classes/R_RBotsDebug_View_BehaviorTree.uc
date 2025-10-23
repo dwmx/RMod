@@ -191,63 +191,6 @@ function DrawBlackBoard(Canvas C, R_RBotsDebug_StringManager StringManager, R_Bl
 
 function DrawBlackBoardValidated(Canvas C, R_RBotsDebug_StringManager StringManager, R_BlackBoard BlackBoard)
 {
-	local R_KeyValueStore KeyValueStore;
-	local int NumKeys;
-	local Name CurrentKey;
-	local int CurrentType;
-	local byte AsBoolByte;
-	local bool AsBool;
-	local int AsInt;
-	local float AsFloat;
-	local Vector AsVector;
-	local Actor AsActor;
-	local Object AsObject;
-	local Class AsClass;
-	local int i;
-
-	KeyValueStore = BlackBoard;
-	if(KeyValueStore == None)
-	{
-		StringManager.AddWarning(StringCategoryBB, "BlackBoard's KeyValueStore is invalid");
-		return;
-	}
-
-	NumKeys = KeyValueStore.GetNumKeys();
-	StringManager.AddInt(StringCategoryBB, "NumKeys", NumKeys);
-	for(i = 0; i < NumKeys; ++i)
-	{
-		KeyValueStore.GetKeyTypeAtIndex(i, CurrentKey, CurrentType);
-		switch(CurrentType)
-		{
-			case TypeCodeBool:
-				KeyValueStore.GetBool(CurrentKey, AsBoolByte);
-				if(AsBoolByte == 0)	AsBool = false;
-				else				AsBool = true;
-				StringManager.AddBool(StringCategoryBB, String(CurrentKey), AsBool);
-			case TypeCodeInt:
-				KeyValueStore.GetInt(CurrentKey, AsInt);
-				StringManager.AddInt(StringCategoryBB, String(CurrentKey), AsInt);
-				break;
-			case TypeCodeFloat:
-				KeyValueStore.GetFloat(CurrentKey, AsFloat);
-				StringManager.AddFloat(StringCategoryBB, String(CurrentKey), AsFloat);
-				break;
-			case TypeCodeVector:
-				KeyValueStore.GetVector(CurrentKey, AsVector);
-				StringManager.AddVector(StringCategoryBB, String(CurrentKey), AsVector);
-				break;
-			case TypeCodeActor:
-				KeyValueStore.GetActor(CurrentKey, AsActor);
-				StringManager.AddActor(StringCategoryBB, String(CurrentKey), AsActor);
-				break;
-			case TypeCodeObject:
-				KeyValueStore.GetObject(CurrentKey, AsObject);
-				StringManager.AddObject(StringCategoryBB, String(CurrentKey), AsObject);
-			case TypeCodeClass:
-				KeyValueStore.GetClass(CurrentKey, AsClass);
-				StringManager.AddClass(StringCategoryBB, String(CurrentKey), AsClass);
-			default:
-				StringManager.AddWarning(StringCategoryBB, "Failed to get Key:Value for '" $ CurrentKey $ "' {TypeCode: " $ CurrentType $ "}");
-		}
-	}
+	// DebugView doesn't have access to the Variant type, so translator has to draw this
+	Class'RBots.R_RBotsDebug_Translator'.Static.DrawBlackBoardValidated(C, StringManager, BlackBoard);
 }
