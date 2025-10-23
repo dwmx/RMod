@@ -1,7 +1,7 @@
 //==============================================================================
 //	R_BTNode_Selector
 //==============================================================================
-class R_BTNode_Selector extends R_BTNode_CompositeArray;
+class R_BTNode_Selector extends R_BTNode_Composite;
 
 const LogCategory = 'BehaviorTreeSelector';
 

@@ -2,7 +2,7 @@
 //	R_BTNode_Root
 //	Top level node in every Behavior Tree
 //==============================================================================
-class R_BTNode_Root extends R_BTNode_Composite;
+class R_BTNode_Root extends R_BTNode;
 
 var private R_BTNode Child;
 
@@ -43,6 +43,11 @@ function R_BTNode GetChild(int Index)
 		return Child;
 	}
 	return None;
+}
+
+function bool CanContainChildren()
+{
+	return true;
 }
 
 function int Tick(R_BehaviorTreeContext Context, float DeltaSeconds)

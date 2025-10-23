@@ -118,7 +118,6 @@ function HandleCommand_DumpBT(R_RBotsDebug DebugMutator, PlayerPawn Sender)
 {
 	local R_BehaviorTree BehaviorTree;
 	local R_BTNode Node;
-	local R_BTNode_Composite CompositeNode;
 	local R_BTNode NodeStack[128];
 	local int NodeDepth[128];
 	local int CurrentDepth;
@@ -150,15 +149,14 @@ function HandleCommand_DumpBT(R_RBotsDebug DebugMutator, PlayerPawn Sender)
 		{
 			--NumNodes;
 			Node = NodeStack[NumNodes];
-			CompositeNode = R_BTNode_Composite(Node);
 			CurrentDepth = NodeDepth[NumNodes];
 
-			if(CompositeNode != None)
+			if(Node != None && Node.CanContainChildren())
 			{
-				NumChildren = CompositeNode.GetChildCount();
+				NumChildren = Node.GetChildCount();
 				for(i = 0; i < NumChildren; ++i)
 				{
-					NodeStack[NumNodes] = CompositeNode.GetChild(i);
+					NodeStack[NumNodes] = Node.GetChild(i);
 					NodeDepth[NumNodes] = CurrentDepth + 1;
 					++NumNodes;
 				}

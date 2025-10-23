@@ -1,7 +1,7 @@
 //==============================================================================
 //	R_BTNode_Sequence
 //==============================================================================
-class R_BTNode_Sequence extends R_BTNode_CompositeArray;
+class R_BTNode_Sequence extends R_BTNode_Composite;
 
 const LogCategory = 'BehaviorTreeSequence';
 

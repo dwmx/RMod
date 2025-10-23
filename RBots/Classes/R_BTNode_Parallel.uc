@@ -1,7 +1,7 @@
 //==============================================================================
 //	R_BTNode_Parallel
 //==============================================================================
-class R_BTNode_Parallel extends R_BTNode_CompositeArray;
+class R_BTNode_Parallel extends R_BTNode_Composite;
 
 const LogCategory = 'BehaviorTreeParallel';
 

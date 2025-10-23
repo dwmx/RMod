@@ -167,16 +167,16 @@ FailWithLogString:
 function R_BTNode CreateChildBTNodeAtStackIndex(Class<R_BTNode> NodeClass, optional Name NodeName)
 {
 	local String LogString;
-	local R_BTNode_Composite ParentNode;
+	local R_BTNode ParentNode;
 	local R_BTNode NewNode;
 	local int NewNodeUID;
 
 	if(NodeIndex != 0)
 	{
-		ParentNode = R_BTNode_Composite(Nodes[NodeIndex-1]);
-		if(ParentNode == None || ParentNode.IsFull())
+		ParentNode = Nodes[NodeIndex-1];
+		if(ParentNode == None || !ParentNode.CanContainChildren() || ParentNode.IsFull())
 		{
-			LogString = "Parent node must be of type R_BTNode_Composite";
+			LogString = "Cannot add child to parent node";
 			GoTo FailWithLogString;
 		}
 	}
@@ -412,35 +412,36 @@ function SetOwningBehaviorTree(R_BehaviorTree NewBehaviorTree)
 
 function Push()
 {
-	local String LogWarning;
-	local R_BTNode_Composite ParentNode;
+	local String LogString;
+	local R_BTNode ParentNode;
 
 	if(Nodes[NodeIndex] == None)
 	{
-		LogWarning = "Push failed -- Attempted to Push on a None Node";
-		Warn(LogWarning);
-		Utilities.Static.RLog(LogWarning, LogCategory);
-		return;
+		LogString = "Push failed -- Attempted to Push on a None Node";
+		GoTo FailWithLogString;
 	}
 
-	ParentNode = R_BTNode_Composite(Nodes[NodeIndex]);
-	if(ParentNode == None || ParentNode.IsFull())
+	ParentNode = Nodes[NodeIndex];
+	if(ParentNode == None || !ParentNode.CanContainChildren() || ParentNode.IsFull())
 	{
-		LogWarning = "Push failed -- Attempted to push on a non-composite or full parent";
-		Warn(LogWarning);
-		Utilities.Static.RLog(LogWarning, LogCategory);
-		return;
+		LogString = "Push failed -- Attempted to push on a non-composite or full parent";
+		GoTo FailWithLogString;
 	}
 
 	if(NodeIndex >= ArrayCount(Nodes) - 1)
 	{
-		LogWarning = "Push failed -- Stack overflow";
-		Warn(LogWarning);
-		Utilities.Static.RLog(LogWarning, LogCategory);
-		return;
+		LogString = "Push failed -- Stack overflow";
+		GoTo FailWithLogString;
 	}
 
 	++NodeIndex;
+	return;
+
+FailWithLogString:
+	LogString = "Push failed --" @ LogString;
+	Warn(LogString);
+	Utilities.Static.RLog(LogString, LogCategory);
+	return;
 }
 
 function Pop()

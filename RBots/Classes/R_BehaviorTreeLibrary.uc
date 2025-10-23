@@ -12,7 +12,6 @@ static function bool DoesBTContainNodeWithName(R_BTNode Root, Name NodeName, boo
 	local R_BTNode NodeStack[256];
 	local int NumNodes;
 	local R_BTNode CurrentNode;
-	local R_BTNode_Composite CurrentCompositeNode;
 	local int NumChildren;
 	local int i;
 
@@ -37,13 +36,12 @@ static function bool DoesBTContainNodeWithName(R_BTNode Root, Name NodeName, boo
 			return true;
 		}
 
-		CurrentCompositeNode = R_BTNode_Composite(CurrentNode);
-		if(CurrentCompositeNode != None)
+		if(CurrentNode.CanContainChildren())
 		{
-			NumChildren = CurrentCompositeNode.GetChildCount();
+			NumChildren = CurrentNode.GetChildCount();
 			for(i = 0; i < NumChildren; ++i)
 			{
-				NodeStack[NumNodes] = CurrentCompositeNode.GetChild(i);
+				NodeStack[NumNodes] = CurrentNode.GetChild(i);
 				++NumNodes;
 			}
 		}

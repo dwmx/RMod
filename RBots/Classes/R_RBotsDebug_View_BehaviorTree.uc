@@ -81,7 +81,6 @@ function DrawBehaviorTreeValidated(Canvas C, R_BehaviorTree BT, R_BehaviorTreeCo
 	local int NodeDepth[128];
 	local int NumNodes;
 	local R_BTNode CurrentNode;
-	local R_BTNode_Composite CurrentCompositeNode;
 	local bool bCurrentIsActive;
 	local int CurrentDepth;
 	local int NumChildren;
@@ -121,14 +120,13 @@ function DrawBehaviorTreeValidated(Canvas C, R_BehaviorTree BT, R_BehaviorTreeCo
 		CurrentDepth = NodeDepth[NumNodes];
 		bCurrentIsActive = CTX.GetNodeActive(CurrentNode.GetNodeUID());
 
-		CurrentCompositeNode = R_BTNode_Composite(CurrentNode);
-		if(CurrentCompositeNode != None)
+		if(CurrentNode.CanContainChildren())
 		{
 			NumChildren = 0;
-			NumChildren = CurrentCompositeNode.GetChildCount();
+			NumChildren = CurrentNode.GetChildCount();
 			for(i = NumChildren - 1; i >= 0; --i)
 			{
-				NodeStack[NumNodes] = CurrentCompositeNode.GetChild(i);
+				NodeStack[NumNodes] = CurrentNode.GetChild(i);
 				NodeDepth[NumNodes] = CurrentDepth + 1;
 				++NumNodes;
 			}

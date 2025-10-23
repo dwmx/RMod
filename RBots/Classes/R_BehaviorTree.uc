@@ -65,7 +65,6 @@ function bool ContainsSubTree(Class<R_BehaviorTree> BehaviorTreeClass)
 	local int NumNodes;
 	local R_BTNode Node, ChildNode;
 	local R_BTNode_SubTree SubTreeNode;
-	local R_BTNode_Composite CompositeNode;
 	local int ChildCount;
 	local int i;
 
@@ -91,13 +90,12 @@ function bool ContainsSubTree(Class<R_BehaviorTree> BehaviorTreeClass)
 			}
 		}
 
-		CompositeNode = R_BTNode_Composite(Node);
-		if(CompositeNode != None)
+		if(Node.CanContainChildren())
 		{
-			ChildCount = CompositeNode.GetChildCount();
+			ChildCount = Node.GetChildCount();
 			for(i = 0; i < ChildCount; ++i)
 			{
-				ChildNode = CompositeNode.GetChild(i);
+				ChildNode = Node.GetChild(i);
 				if(ChildNode != None)
 				{
 					NodeStack[NumNodes] = ChildNode;

@@ -54,6 +54,15 @@ function OnActivated(R_Bot Bot, R_BlackBoard BlackBoard);
 function OnDeactivated(R_Bot Bot, R_BlackBoard BlackBoard);
 function int Tick(R_BehaviorTreeContext Context, float DeltaSeconds);
 
+//------------------------------------------------------------------------------
+// Composite Functions
+
+function bool IsFull()					{ return true; }
+function AddChild(R_BTNode ChildNode)	{ return; }
+function int GetChildCount()			{ return 0; }
+function R_BTNode GetChild(int Index)	{ return None; }
+function bool CanContainChildren()		{ return false; }
+
 defaultproperties
 {
 	NodeName='Node'
