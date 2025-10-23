@@ -35,6 +35,11 @@ function Load()
 
 	BT.SetOwningBehaviorTree(Self);
 	BT.Initialize(); // Resolve deferred initialization
+	if(!BT.IsTreeBuilderInitialized())
+	{
+		LogString = "TreeBuilder failed to initialize";
+		GoTo LoadFailedWithLogString;
+	}
 
 	BuildBehaviorTree(BT);
 	Root = BT.GetRoot();

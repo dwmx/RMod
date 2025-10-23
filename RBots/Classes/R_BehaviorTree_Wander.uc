@@ -24,8 +24,8 @@ function AddKeySetToBlackBoard(R_BlackBoard BlackBoard)
 
 function BuildBehaviorTree(R_BTB_TreeBuilder TB)
 {
-	TB.CreateSequence();
-	TB.Push();
+	TB.BeginSequence('TopLevelSequence');
+
 		TB.CreateTask(BTT_Delay)
 			.SetParameter('Duration', MakeFloatVariant(1.0));
 
@@ -44,4 +44,6 @@ function BuildBehaviorTree(R_BTB_TreeBuilder TB)
 		TB.CreateTask(BTT_SelectDirectionTowardsNavZone)
 			.SetParameter('NavZoneIndexKey', MakeNameVariant('MyExampleInteger'))
 			.SetParameter('DirectionKey', MakeNameVariant('MyExampleVector'));
+
+	TB.EndSequence(); // TopLevelSequence
 }

@@ -7,6 +7,8 @@ class R_BTB_TreeBuilderImpl extends R_BTB_TreeBuilder;
 const Utilities = Class'RBots.R_BotUtilities';
 const LogCategory = 'BehaviorTreeBuilder';
 
+const BTLib = Class'RBots.R_BehaviorTreeLibrary';
+
 var private R_BTNode Nodes[128];
 var private int NodeIndex;
 
@@ -23,8 +25,72 @@ const LogWarn_MissingTaskParamKey = "Ensure TaskParameter key has been added bef
 var private R_BehaviorTree BehaviorTree; // The BehaviorTree this is building for
 var private int CurrentNodeUID;
 
-const BehaviorActionBuilderClass = Class'RBots.R_BTB_TaskBuilder';
-var private R_BTB_TaskBuilder BehaviorActionBuilder;
+//const BehaviorActionBuilderClass = Class'RBots.R_BTB_TaskBuilder';
+//var private R_BTB_TaskBuilder BehaviorActionBuilder;
+
+const TaskBuilderClass = Class'RBots.R_BTB_TaskBuilder';
+var private R_BTB_TaskBuilder TaskBuilder;
+
+const DecoratorBuilderClass = Class'RBots.R_BTB_DecoratorBuilder';
+var private R_BTB_DecoratorBuilder DecoratorBuilder;
+
+var bool bTreeBuilderInitialized;
+
+//------------------------------------------------------------------------------
+
+function Initialize()
+{
+	local String LogString;
+	local R_RBotsServerActor LocalRBots;
+	local int i;
+
+	bTreeBuilderInitialized = false;
+
+	LocalRBots = GetRBotsServerActor();
+	if(LocalRBots == None)
+	{
+		LogString = CommonError_InvalidRBots;
+		GoTo FailWithLogString;
+	}
+
+	TaskBuilder = R_BTB_TaskBuilder(LocalRBots.CreateRBotsObject(TaskBuilderClass, Self));
+	if(TaskBuilder == None)
+	{
+		LogString = "Failed to initialize TaskBuilder";
+		GoTo FailWithLogString;
+	}
+
+	DecoratorBuilder = R_BTB_DecoratorBuilder(LocalRBots.CreateRBotsObject(DecoratorBuilderClass, Self));
+	if(DecoratorBuilder == None)
+	{
+		LogString = "Failed to initialize DecoratorBuilder";
+		GoTo FailWithLogString;
+	}
+
+	for(i = 0; i < ArrayCount(Nodes); ++i)
+	{
+		Nodes[i] = None;
+	}
+
+	CurrentNodeUID = 0;
+
+	NodeIndex = 0;
+	CreateChildBTNodeAtStackIndex(NodeClassRoot);
+	Push();
+	bTreeBuilderInitialized = true;
+	return;
+
+FailWithLogString:
+	LogString = "Initialize failed --" @ LogString;
+	Warn(LogString);
+	Utilities.Static.RLog(LogString, LogCategory);
+	return;
+}
+
+function bool IsTreeBuilderInitialized()
+{
+	return bTreeBuilderInitialized;
+}
 
 //------------------------------------------------------------------------------
 
@@ -98,7 +164,7 @@ FailWithLogString:
 	return None;
 }
 
-function R_BTNode CreateChildBTNodeAtStackIndex(Class<R_BTNode> NodeClass)
+function R_BTNode CreateChildBTNodeAtStackIndex(Class<R_BTNode> NodeClass, optional Name NodeName)
 {
 	local String LogString;
 	local R_BTNode_Composite ParentNode;
@@ -115,11 +181,23 @@ function R_BTNode CreateChildBTNodeAtStackIndex(Class<R_BTNode> NodeClass)
 		}
 	}
 
+	// NodeNames must be unique within any given tree
+	if(NodeName != '')
+	{
+		if(BTLib.Static.DoesBTContainNodeWithName(GetRoot(), NodeName, false))
+		{
+			LogString = "Duplicate NodeName:" @ NodeName;
+			GoTo FailWithLogString;
+		}
+	}
+	
 	NewNode = CreateBTNode(NodeClass);
 	if(NewNode == None)
 	{
 		return None;
 	}
+
+	NewNode.SetNodeName(NodeName);
 
 	// Set Node UID
 	if(BehaviorTree == None)
@@ -155,20 +233,48 @@ FailWithLogString:
 
 //------------------------------------------------------------------------------
 
-function CreateSequence()
+function BeginCompositeNode(Class<R_BTNode_Composite> CompositeNodeClass, optional Name NodeName)
 {
-	CreateChildBTNodeAtStackIndex(NodeClassSequence);
+	local String LogString;
+	if(CreateChildBTNodeAtStackIndex(CompositeNodeClass, NodeName) != None)
+	{
+		Push();
+	}
+	else
+	{
+		LogString = "BeginCompositeNode failed for class" @ CompositeNodeClass;
+		Warn(LogString);
+		Utilities.Static.RLog(LogString, LogCategory);
+	}
 }
 
-function CreateSelector()
+function EndCompositeNode(Class<R_BTNode_Composite> CompositeNodeClass)
 {
-	CreateChildBTNodeAtStackIndex(NodeClassSelector);
+	local String LogString;
+	local R_BTNode CurrentParent;
+	CurrentParent = GetCurrentParent();
+	if(CurrentParent != None && CurrentParent.Class == CompositeNodeClass)
+	{
+		Pop();
+	}
+	else
+	{
+		LogString = "EndCompositeNode failed for class" @ CompositeNodeClass;
+		Warn(LogString);
+		Utilities.Static.RLog(LogString, LogCategory);
+	}
 }
 
-function CreateParallel()
-{
-	CreateChildBTNodeAtStackIndex(NodeClassParallel);
-}
+function BeginSequence(optional Name NodeName)	{ BeginCompositeNode(NodeClassSequence, NodeName); }
+function EndSequence()							{ EndCompositeNode(NodeClassSequence); }
+
+function BeginSelector(optional Name NodeName)	{ BeginCompositeNode(NodeClassSelector, NodeName); }
+function EndSelector()							{ EndCompositeNode(NodeClassSelector); }
+
+function BeginParallel(optional Name NodeName)	{ BeginCompositeNode(NodeClassParallel, NodeName); }
+function EndParallel()							{ EndCompositeNode(NodeClassParallel); }
+
+//------------------------------------------------------------------------------
 
 function R_VirtualAssetManager InternalTryGetAssetManager(out String OutErrorString)
 {
@@ -192,7 +298,7 @@ function R_VirtualAssetManager InternalTryGetAssetManager(out String OutErrorStr
 	return AssMan;
 }
 
-function R_BTB_TaskBuilder CreateTask(Class<R_BehaviorTask> TaskClass)
+function R_BTB_TaskBuilder CreateTask(Class<R_BehaviorTask> TaskClass, optional Name NodeName)
 {
 	local String LogString;
 	local R_VirtualAssetManager AssMan;
@@ -228,7 +334,7 @@ function R_BTB_TaskBuilder CreateTask(Class<R_BehaviorTask> TaskClass)
 		GoTo FailWithLogString;
 	}
 
-	TaskNode = R_BTNode_Task(CreateChildBTNodeAtStackIndex(NodeClassTask));
+	TaskNode = R_BTNode_Task(CreateChildBTNodeAtStackIndex(NodeClassTask, NodeName));
 	if(TaskNode == None)
 	{	// This shouldn't happen, but catch it if it does
 		LogString = "Invalid reference to newly created TaskNode, or cast failed";
@@ -237,8 +343,8 @@ function R_BTB_TaskBuilder CreateTask(Class<R_BehaviorTask> TaskClass)
 
 	// Attach the Task to the TaskNode
 	TaskNode.SetBehaviorActionInstance(TaskInstance);
-	BehaviorActionBuilder.SetBehaviorActionInstance(TaskInstance);
-	return BehaviorActionBuilder;
+	TaskBuilder.SetBehaviorActionInstance(TaskInstance);
+	return TaskBuilder;
 
 FailWithLogString:
 	LogString = "CreateTask failed for class" @ TaskClass @ "--" @ LogString;
@@ -247,7 +353,7 @@ FailWithLogString:
 	return None;
 }
 
-function CreateSubTree(Class<R_BehaviorTree> BehaviorTreeClass)
+function CreateSubTree(Class<R_BehaviorTree> BehaviorTreeClass, optional Name NodeName)
 {
 	local String LogString;
 	local R_VirtualAssetManager AssMan;
@@ -279,7 +385,7 @@ function CreateSubTree(Class<R_BehaviorTree> BehaviorTreeClass)
 		GoTo FailWithLogString;
 	}
 
-	SubTreeNode = R_BTNode_SubTree(CreateChildBTNodeAtStackIndex(NodeClassSubTree));
+	SubTreeNode = R_BTNode_SubTree(CreateChildBTNodeAtStackIndex(NodeClassSubTree, NodeName));
 	if(SubTreeNode == None)
 	{	// Shouldn't happen, but catch it if it does
 		LogString = "Invalid reference to newly created SubTreeNode, or cast failed";
@@ -298,29 +404,6 @@ FailWithLogString:
 }
 
 //------------------------------------------------------------------------------
-
-function Initialize()
-{
-	local R_RBotsServerActor LocalRBots;
-	local int i;
-
-	LocalRBots = GetRBotsServerActor();
-	if(LocalRBots != None)
-	{
-		BehaviorActionBuilder = R_BTB_TaskBuilder(LocalRBots.CreateRBotsObject(BehaviorActionBuilderClass, Self));
-	}
-
-	for(i = 0; i < ArrayCount(Nodes); ++i)
-	{
-		Nodes[i] = None;
-	}
-
-	CurrentNodeUID = 0;
-
-	NodeIndex = 0;
-	CreateChildBTNodeAtStackIndex(NodeClassRoot);
-	Push();
-}
 
 function SetOwningBehaviorTree(R_BehaviorTree NewBehaviorTree)
 {
@@ -374,4 +457,9 @@ function Pop()
 
 	Nodes[NodeIndex] = None;
 	--NodeIndex;
+}
+
+defaultproperties
+{
+	bTreeBuilderInitialized=false
 }
