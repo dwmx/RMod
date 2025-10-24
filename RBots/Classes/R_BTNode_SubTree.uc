@@ -3,7 +3,7 @@
 //	SubTree nodes contain a reference to another BehaviorTree asset, and
 //	pass execution on to that Tree's Root node
 //==============================================================================
-class R_BTNode_SubTree extends R_BTNode_Composite;
+class R_BTNode_SubTree extends R_BTNode;
 
 var private R_BehaviorTree SubTree;
 
@@ -45,21 +45,14 @@ function Class<R_BehaviorTree> GetSubTreeClass()
 	return None;
 }
 
-function AddChild(R_BTNode ChildNode)
-{
-	local String LogString;
+//------------------------------------------------------------------------------
+// Composite Functions
+// SubTrees cannot allow any children to be added, but they do contain children
 
-	LogString = "AddChild was called for SubTree node -- This should never be called";
-	Warn(LogString);
-	Utilities.Static.RLog(LogString, LogCategory);
-	return;
-}
-
-function bool IsFull()
-{
-	// SubTree node is considered to always be full
-	return true;
-}
+function bool CanContainChildren()					{ return true; }	// Contain SubTree's children
+function bool IsFull()								{ return true; }	// Always considered full
+function AddChild(R_BTNode ChildNode)				{ return; }			// Adding children not allowed
+function RemoveChild(R_BTNode ChildNodeToRemove)	{ return; }			// Removing children not allowed
 
 function int GetChildCount()
 {
@@ -93,6 +86,8 @@ function R_BTNode GetChild(int Index)
 
 	return SubTreeRoot.GetChild(Index);
 }
+
+//------------------------------------------------------------------------------
 
 function BaseNodeActivated(R_BehaviorTreeContext Context)
 {

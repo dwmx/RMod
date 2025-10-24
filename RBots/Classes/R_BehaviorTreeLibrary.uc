@@ -48,3 +48,52 @@ static function bool DoesBTContainNodeWithName(R_BTNode Root, Name NodeName, boo
 	}
 	return false;
 }
+
+static function bool FindNodeAndParentByName(Name NodeName, R_BTNode Root, out R_BTNode OutParent, out R_BTNode OutNode)
+{
+	local R_BTNode CurrentNode, CurrentChild;
+	local R_BTNode NodeStack[128];
+	local int NumNodes;
+	local int NumChildren;
+	local int i;
+
+	if(Root == None || NodeName == '')
+	{
+		return false;
+	}
+	if(Root.GetNodeName() == NodeName)
+	{
+		OutParent = None;
+		OutNode = Root;
+		return true;
+	}
+
+	NodeStack[0] = Root;
+	NumNodes = 1;
+	while(NumNodes > 0)
+	{
+		--NumNodes;
+		CurrentNode = NodeStack[NumNodes];
+
+		if(CurrentNode.CanContainChildren())
+		{
+			NumChildren = CurrentNode.GetChildCount();
+			for(i = 0; i < NumChildren; ++i)
+			{
+				CurrentChild = CurrentNode.GetChild(i);
+				if(CurrentChild != None)
+				{
+					if(CurrentChild.GetNodeName() == NodeName)
+					{
+						OutNode = CurrentChild;
+						OutParent = CurrentNode;
+						return true;
+					}
+					NodeStack[NumNodes] = CurrentChild;
+					++NumNodes;
+				}
+			}
+		}
+	}
+	return false;
+}

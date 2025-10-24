@@ -4,58 +4,17 @@
 //==============================================================================
 class R_BTNode_Root extends R_BTNode;
 
-var private R_BTNode Child;
-
 static function String GetNodeClassString() { return "Root"; }
-
-function Initialize()
-{
-	Child = None;
-}
-
-function AddChild(R_BTNode ChildNode)
-{
-	Child = ChildNode;
-}
-
-function bool IsFull()
-{
-	if(Child != None)
-	{
-		return true;
-	}
-	return false;
-}
-
-function int GetChildCount()
-{
-	if(Child == None)
-	{
-		return 0;
-	}
-	return 1;
-}
-
-function R_BTNode GetChild(int Index)
-{
-	if(Index == 0)
-	{
-		return Child;
-	}
-	return None;
-}
-
-function bool CanContainChildren()
-{
-	return true;
-}
 
 function int Tick(R_BehaviorTreeContext Context, float DeltaSeconds)
 {
+	local R_BTNode LocalChildNode;
 	local bool bActive;
 	local int TickResult;
 
-	if(Context == None || Child == None)
+	LocalChildNode = GetChild();
+
+	if(Context == None || LocalChildNode == None)
 	{
 		return NodeFail;
 	}
@@ -66,16 +25,16 @@ function int Tick(R_BehaviorTreeContext Context, float DeltaSeconds)
 		BaseNodeActivated(Context);
 	}
 
-	bActive = Context.GetNodeActive(Child.GetNodeUID());
+	bActive = Context.GetNodeActive(LocalChildNode.GetNodeUID());
 	if(!bActive)
 	{
-		Child.BaseNodeActivated(Context);
+		LocalChildNode.BaseNodeActivated(Context);
 	}
 
-	TickResult = Child.Tick(Context, DeltaSeconds);
+	TickResult = LocalChildNode.Tick(Context, DeltaSeconds);
 	if(TickResult != NodeRunning)
 	{
-		Child.BaseNodeDeactivated(Context);
+		LocalChildNode.BaseNodeDeactivated(Context);
 	}
 
 	return NodeRunning;

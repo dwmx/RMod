@@ -59,12 +59,49 @@ function int GetChildCount()
 	return NumChildren;
 }
 
-function R_BTNode GetChild(int Index)
+function R_BTNode GetChild(optional int Index)
 {
 	return Children[Index];
 }
 
 function bool CanContainChildren()
 {
+	return true;
+}
+
+function bool TryInsertChildBetween(R_BTNode CurrentChild, R_BTNode NewChild)
+{
+	local R_BTNode TempNode;
+	local int InsertIndex;
+	local int i;
+
+	if(CurrentChild == None || NewChild == None || CurrentChild == NewChild)
+	{
+		return false;
+	}
+
+	if(IsNodeAncestor(CurrentChild, NewChild) || IsNodeAncestor(NewChild, CurrentChild))
+	{
+		return false;
+	}
+
+	InsertIndex = InvalidIndex;
+	for(i = 0; i < NumChildren; ++i)
+	{
+		if(Children[i] == CurrentChild)
+		{
+			InsertIndex = i;
+			break;
+		}
+	}
+
+	if(InsertIndex == InvalidIndex)
+	{
+		return false;
+	}
+
+	TempNode = Children[InsertIndex];
+	Children[InsertIndex] = NewChild;
+	NewChild.AddChild(TempNode);
 	return true;
 }

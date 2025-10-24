@@ -12,12 +12,13 @@ const BTLib = Class'RBots.R_BehaviorTreeLibrary';
 var private R_BTNode Nodes[128];
 var private int NodeIndex;
 
-const NodeClassRoot 	= Class'RBots.R_BTNode_Root';
-const NodeClassSequence = Class'RBots.R_BTNode_Sequence';
-const NodeClassSelector = Class'RBots.R_BTNode_Selector';
-const NodeClassParallel = Class'RBots.R_BTNode_Parallel';
-const NodeClassTask 	= Class'RBots.R_BTNode_Task';
-const NodeClassSubTree	= Class'RBots.R_BTNode_SubTree';
+const NodeClassRoot 		= Class'RBots.R_BTNode_Root';
+const NodeClassSequence 	= Class'RBots.R_BTNode_Sequence';
+const NodeClassSelector 	= Class'RBots.R_BTNode_Selector';
+const NodeClassParallel 	= Class'RBots.R_BTNode_Parallel';
+const NodeClassTask 		= Class'RBots.R_BTNode_Task';
+const NodeClassSubTree		= Class'RBots.R_BTNode_SubTree';
+const NodeClassDecorator 	= Class'RBots.R_BTNode_Decorator';
 
 const LogWarn_InvalidTaskInstance = "Invalid TaskInstance reference";
 const LogWarn_MissingTaskParamKey = "Ensure TaskParameter key has been added before trying to set it";
@@ -135,11 +136,12 @@ function String GetStackPointerString()
 
 //------------------------------------------------------------------------------
 
-function R_BTNode CreateBTNode(Class<R_BTNode> NodeClass)
+function R_BTNode CreateBTNode(Class<R_BTNode> NodeClass, optional Name NodeName)
 {
 	local String LogString;
 	local R_RBotsServerActor LocalRBots;
 	local R_BTNode NewNode;
+	local int NewNodeUID;
 
 	LocalRBots = GetRBotsServerActor();
 	if(LocalRBots == None)
@@ -155,6 +157,28 @@ function R_BTNode CreateBTNode(Class<R_BTNode> NodeClass)
 		GoTo FailWithLogString;
 	}
 
+	if(NodeName != '')
+	{
+		NewNode.SetNodeName(NodeName);
+	}
+
+	// Set Node UID
+	if(BehaviorTree == None)
+	{
+		LogString = "CreateBTNode warning -- BehaviorTree == None, Nodes may not have universally unique UIDs";
+		Warn(LogString);
+		Utilities.Static.RLog(LogString, LogCategory);
+		NewNodeUID = CurrentNodeUID;
+	}
+	else
+	{
+		NewNodeUID = BehaviorTree.GetAssetUID();
+		NewNodeUID = (NewNodeUID << 20) | CurrentNodeUID;
+	}
+
+	NewNode.SetNodeUID(NewNodeUID);
+	++CurrentNodeUID;
+
 	return NewNode;
 
 FailWithLogString:
@@ -169,7 +193,6 @@ function R_BTNode CreateChildBTNodeAtStackIndex(Class<R_BTNode> NodeClass, optio
 	local String LogString;
 	local R_BTNode ParentNode;
 	local R_BTNode NewNode;
-	local int NewNodeUID;
 
 	if(NodeIndex != 0)
 	{
@@ -191,30 +214,11 @@ function R_BTNode CreateChildBTNodeAtStackIndex(Class<R_BTNode> NodeClass, optio
 		}
 	}
 	
-	NewNode = CreateBTNode(NodeClass);
+	NewNode = CreateBTNode(NodeClass, NodeName);
 	if(NewNode == None)
 	{
 		return None;
 	}
-
-	NewNode.SetNodeName(NodeName);
-
-	// Set Node UID
-	if(BehaviorTree == None)
-	{
-		LogString = "CreateChildBTNodeAtStackIndex warning -- BehaviorTree == None, Nodes may not have universally unique UIDs";
-		Warn(LogString);
-		Utilities.Static.RLog(LogString, LogCategory);
-		NewNodeUID = CurrentNodeUID;
-	}
-	else
-	{
-		NewNodeUID = BehaviorTree.GetAssetUID();
-		NewNodeUID = (NewNodeUID << 20) | CurrentNodeUID;
-	}
-
-	NewNode.SetNodeUID(NewNodeUID);
-	++CurrentNodeUID;
 
 	// Add child
 	if(ParentNode != None)
@@ -229,6 +233,14 @@ FailWithLogString:
 	Warn(LogString);
 	Utilities.Static.RLog(LogString, LogCategory);
 	return None;
+}
+
+function ClearChildBTNodeAtStackIndex()
+{
+	if(NodeIndex > 0)
+	{
+		Nodes[NodeIndex] = None;
+	}
 }
 
 //------------------------------------------------------------------------------
@@ -462,75 +474,65 @@ function Pop()
 
 //------------------------------------------------------------------------------
 
-function bool FindNodeAndParentByName(Name NodeName, out R_BTNode OutNode, out R_BTNode OutParent)
-{
-	local R_BTNode CurrentNode, CurrentChild;
-	local R_BTNode NodeStack[ArrayCount(Nodes)];
-	local int NumNodes;
-	local int NumChildren;
-	local int i;
-
-	CurrentNode = GetRoot();
-	if(CurrentNode == None || NodeName == '')
-	{
-		OutNode = None;
-		OutParent = None;
-		return false;
-	}
-	if(CurrentNode.GetNodeName() == NodeName)
-	{
-		OutNode = CurrentNode;
-		OutParent = None;
-		return true;
-	}
-
-	NodeStack[0] = CurrentNode;
-	NumNodes = 1;
-	while(NumNodes > 0)
-	{
-		--NumNodes;
-		CurrentNode = NodeStack[NumNodes];
-
-		if(CurrentNode.CanContainChildren())
-		{
-			NumChildren = CurrentNode.GetChildCount();
-			for(i = 0; i < NumChildren; ++i)
-			{
-				CurrentChild = CurrentNode.GetChild(i);
-				if(CurrentChild != None)
-				{
-					if(CurrentChild.GetNodeName() == NodeName)
-					{
-						OutNode = CurrentChild;
-						OutParent = CurrentNode;
-						return true;
-					}
-					NodeStack[NumNodes] = CurrentChild;
-					++NumNodes;
-				}
-			}
-		}
-	}
-	return false;
-}
-
 function R_BTB_DecoratorBuilder AddDecorator(Class<R_BehaviorDecorator> DecoratorClass, name NodeName)
 {
 	local String LogString;
+	local R_VirtualAssetManager AssMan;
+	local R_BehaviorDecorator Decorator;
+	local R_BehaviorActionInstance Instance;
+	local R_BTI_DecoratorInstance DecoratorInstance;
+	local R_BTNode_Decorator DecoratorNode;
 	local R_BTNode Node, Parent;
 
-	if(!FindNodeAndParentByName(NodeName, Node, Parent))
+	if(!BTLib.Static.FindNodeAndParentByName(NodeName, GetRoot(), Parent, Node))
 	{
 		LogString = "Failed to find node by name:" @ NodeName;
 		GoTo FailWithLogString;
 	}
 
-	// TODO: Insert decorator in-between Parent and Node
-	// Probably will mean creating a remove child function
+	AssMan = InternalTryGetAssetManager(LogString);
+	if(AssMan == None)
+	{
+		GoTo FailWithLogString;
+	}
 
-	// TODO: Return decorator builder similar to task builder
+	Decorator = R_BehaviorDecorator(AssMan.LoadAsset(DecoratorClass));
+	if(Decorator == None)
+	{
+		LogString = "Failed to load Decorator";
+		GoTo FailWithLogString;
+	}
 
-	return None;
+	Instance = Decorator.CreateInstance();
+	if(Instance == None)
+	{
+		LogString = "Failed to create DecoratorInstance";
+		GoTo FailWithLogString;
+	}
+
+	DecoratorInstance = R_BTI_DecoratorInstance(Instance);
+	if(DecoratorInstance == None)
+	{
+		LogString = "Decorator.CreateInstance successfully created an Instance, but it was not a DecoratorInstance";
+		GoTo FailWithLogString;
+	}
+
+	DecoratorNode = R_BTNode_Decorator(CreateBTNode(NodeClassDecorator));
+	if(DecoratorNode == None)
+	{
+		LogString = "Invalid reference to newly created DecoratorNode, or cast failed";
+		GoTo FailWithLogString;
+	}
+
+	if(!Parent.TryInsertChildBetween(Node, DecoratorNode))
+	{
+		LogString = "Failed to insert Decorator node";
+		GoTo FailWithLogString;
+	}
+
+	DecoratorNode.SetBehaviorActionInstance(DecoratorInstance);
+	DecoratorBuilder.SetBehaviorActionInstance(DecoratorInstance);
+	return DecoratorBuilder;
 
 FailWithLogString:
 	LogString = "AddDecorator failed --" @ LogString;

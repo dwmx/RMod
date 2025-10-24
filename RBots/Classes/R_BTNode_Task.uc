@@ -11,6 +11,19 @@ const TaskFail = 1;
 const TaskInProgress = 2;
 
 //------------------------------------------------------------------------------
+// Composite Functions
+// Task nodes are always leaf nodes, so composite functionality is removed
+
+function bool CanContainChildren()					{ return false; }
+function bool IsFull()								{ return true; }
+function int GetChildCount()						{ return 0; }
+function R_BTNode GetChild(optional int Index)		{ return None; }
+function AddChild(R_BTNode NewChildNode)			{ return; }
+
+function bool TryInsertChildBetween(R_BTNode CurrentChild, R_BTNode NewChild)
+{ return false; }
+
+//------------------------------------------------------------------------------
 
 function R_BTI_TaskInstance GetTaskInstance()
 {

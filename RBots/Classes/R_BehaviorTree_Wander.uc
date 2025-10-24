@@ -7,6 +7,8 @@ class R_BehaviorTree_Wander extends R_BehaviorTree;
 const BTT_Delay = Class'RBots.R_BTT_Delay';
 const BTT_SelectDirectionTowardsNavZone = Class'RBots.R_BTT_SelectDirectionTowardsNavZone';
 
+const BTD_Loop = Class'RBots.R_BTD_Loop';
+
 //------------------------------------------------------------------------------
 
 function AddKeySetToBlackBoard(R_BlackBoard BlackBoard)
@@ -25,7 +27,7 @@ function AddKeySetToBlackBoard(R_BlackBoard BlackBoard)
 function BuildBehaviorTree(R_BTB_TreeBuilder TB)
 {
 	TB.BeginSequence('TopLevelSequence');
-	TB.AddDecorator(None, 'TopLevelSequence')
+	TB.AddDecorator(BTD_Loop, 'TopLevelSequence')
 		.SetParameter('Iterations', MakeIntVariant(3))
 		.SetAbortType(0);
 
