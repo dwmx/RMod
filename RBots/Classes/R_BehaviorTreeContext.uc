@@ -9,6 +9,8 @@ function Initialize();
 function SetBot(R_Bot NewBot);
 function R_Bot GetBot();
 
+function R_DecoratorMemory GetDecoratorMemory(int NodeUID);
+
 function SetBlackBoard(R_BlackBoard NewBlackBoard);
 function R_BlackBoard GetBlackBoard();
 

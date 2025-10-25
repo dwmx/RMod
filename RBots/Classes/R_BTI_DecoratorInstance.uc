@@ -21,6 +21,41 @@ function R_BehaviorDecorator GetBehaviorDecorator()
 
 //------------------------------------------------------------------------------
 
+function DecoratorActivated(R_Bot Bot, R_DecoratorMemory Memory)
+{
+	local R_BehaviorDecorator LocalDecorator;
+
+	LocalDecorator = GetBehaviorDecorator();
+	if(LocalDecorator != None)
+	{
+		BehaviorDecorator.DecoratorActivated(Self, Bot, Memory);
+	}
+}
+
+function DecoratorDeactivated(R_Bot Bot, R_DecoratorMemory Memory)
+{
+	local R_BehaviorDecorator LocalDecorator;
+
+	LocalDecorator = GetBehaviorDecorator();
+	if(LocalDecorator != None)
+	{
+		BehaviorDecorator.DecoratorDeactivated(Self, Bot, Memory);
+	}
+}
+
+function DecoratorTick(R_Bot Bot, R_DecoratorMemory Memory, float ActiveTime, float DeltaSeconds)
+{
+	local R_BehaviorDecorator LocalDecorator;
+
+	LocalDecorator = GetBehaviorDecorator();
+	if(LocalDecorator != None)
+	{
+		BehaviorDecorator.DecoratorTick(Self, Bot, Memory, ActiveTime, DeltaSeconds);
+	}
+}
+
+//------------------------------------------------------------------------------
+
 defaultproperties
 {
 	RequiredBehaviorActionClass=Class'RBots.R_BehaviorDecorator'

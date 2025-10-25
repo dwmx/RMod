@@ -15,6 +15,14 @@ struct R_BTNodeState
 };
 var private R_BTNodeState NodeStates[128];
 
+struct R_BTDecoratorMemoryPair
+{
+	var int NodeUID;
+	var R_DecoratorMemory DecoratorMemory;
+};
+var private R_BTDecoratorMemoryPair DecoratorMemoryPairs[128];
+var private int NumDecoratorMemoryPairs;
+
 //------------------------------------------------------------------------------
 
 function Initialize()
@@ -27,6 +35,7 @@ function Initialize()
 		NodeStates[i].ActiveChildIndex = InvalidIndex;
 		NodeStates[i].ActiveTime = 0.0;
 	}
+	NumDecoratorMemoryPairs = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -49,6 +58,57 @@ function SetBlackBoard(R_BlackBoard NewBlackBoard)
 function R_BlackBoard GetBlackBoard()
 {
 	return BlackBoard;
+}
+
+//------------------------------------------------------------------------------
+
+function R_DecoratorMemory GetDecoratorMemory(int NodeUID)
+{
+	local R_RBotsServerActor LocalRBots;
+	local R_DecoratorMemory DecoratorMemory;
+	local int Index;;
+	local int i;
+
+	Index = InvalidIndex;
+	for(i = 0; i < NumDecoratorMemoryPairs; ++i)
+	{
+		if(DecoratorMemoryPairs[i].NodeUID == NodeUID)
+		{
+			Index = i;
+			break;
+		}
+		if(Index == InvalidIndex && DecoratorMemoryPairs[i].DecoratorMemory == None)
+		{
+			Index = i;
+		}
+	}
+
+	if(Index == InvalidIndex)
+	{
+		Index = NumDecoratorMemoryPairs;
+		++NumDecoratorMemoryPairs;
+	}
+
+	if(Index >= ArrayCount(DecoratorMemoryPairs))
+	{
+		return None;
+	}
+
+	if(DecoratorMemoryPairs[Index].DecoratorMemory == None)
+	{
+		LocalRBots = GetRBotsServerActor();
+		if(LocalRBots != None)
+		{
+			DecoratorMemory = R_DecoratorMemory(LocalRBots.CreateRBotsObject(Class'RBots.R_DecoratorMemory', Self));
+			if(DecoratorMemory != None)
+			{
+				DecoratorMemoryPairs[Index].DecoratorMemory = DecoratorMemory;
+				DecoratorMemoryPairs[Index].NodeUID = NodeUID;
+			}
+		}
+	}
+
+	return DecoratorMemoryPairs[Index].DecoratorMemory;
 }
 
 //------------------------------------------------------------------------------
