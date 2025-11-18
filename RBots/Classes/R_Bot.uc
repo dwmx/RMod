@@ -505,7 +505,8 @@ function UpdateNavContext(float DeltaSeconds)
 		// Fire events if necessary
 		if(ActiveBehavior != None)
 		{
-			if(NodeIndex != OldNodeIndex)
+			// Only trigger if NodeIndex is valid
+			if(NodeIndex != NavLib.Static.InvalidIndex() && NodeIndex != OldNodeIndex)
 			{
 				OnNavMeshNodeIndexChanged(OldNodeIndex, NodeIndex);
 			}
