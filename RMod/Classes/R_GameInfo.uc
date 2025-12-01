@@ -616,24 +616,21 @@ event PreLogin(
 *   Overridden to force all incoming players to spawn with a common class.
 *   Individual class data is extracted and applied to R_RunePlayer.
 */
-event PlayerPawn Login(
-	String Portal,
-	String Options,
-	out String Error,
-	Class<PlayerPawn> SpawnClass)
+event PlayerPawn Login(String Portal, String Options, out String Error, Class<PlayerPawn> SpawnClass)
 {
 	local Class<PlayerPawn> IncomingClass;
 	local PlayerPawn P;
 	
 	IncomingClass = SpawnClass;
-	
 	SpawnClass = RunePlayerClass;
 
-	P = Super.Login(
-		Portal,
-		Options,
-		Error,
-		SpawnClass);
+	P = Super.Login(Portal, Options, Error, SpawnClass);
+
+    if (P == None)
+    {
+        UtilitiesClass.Static.RModLog("Login failed: Super.Login returned None");
+        return None;
+    }
 	
 	if(Class<RunePlayer>(IncomingClass) != None
 	&& Class<R_RunePlayer>(IncomingClass) == None)
