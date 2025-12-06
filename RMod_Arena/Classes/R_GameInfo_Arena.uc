@@ -1703,6 +1703,9 @@ function DestroyPawnsWeapons(Pawn PlayerPawn)
 	local Inventory next;
 	local int i;
 
+	if (PlayerPawn == None || PlayerPawn.Inventory == None)
+		return;
+
 	i = 0;
 	
 	for(Inv = PlayerPawn.Inventory; Inv != None; Inv = next)
