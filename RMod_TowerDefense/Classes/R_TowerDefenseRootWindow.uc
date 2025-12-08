@@ -52,18 +52,18 @@ function SetupFonts()
 
 function Created()
 {
-	ComputeGuiScale(WinWidth, WinHeight);
-	SetScale(GUIScale);
-	bHiddenWindow = true;
-}
-
-function Paint(Canvas C, float X, float Y)
-{
-	//Log("Root window is painting");
+	//ComputeGuiScale(WinWidth, WinHeight);
+	//SetScale(GUIScale);
+	//bHiddenWindow = true;
+	bHiddenWindow = false;
 }
 
 function WindowEvent(WinMessage Msg, Canvas C, float X, float Y, int Key)
 {
+	if(Msg == WM_LMouseDown)
+	{
+		Log("MOUSE DOWN");
+	}
 	if(bHiddenWindow)
 	{
 		return;

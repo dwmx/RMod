@@ -30,12 +30,12 @@ function Created()
 event Paint(Canvas C, float X, float Y)
 {
 	//Log("Client window is painting");
-	WinWidth = 512.0;
-	WinHeight = 512.0;
-	ClippingRegion.X = 0;
-	ClippingRegion.Y = 0;
-	ClippingRegion.W = 512;
-	ClippingRegion.H = 512;
+	//WinWidth = 512.0;
+	//WinHeight = 512.0;
+	//ClippingRegion.X = 0;
+	//ClippingRegion.Y = 0;
+	//ClippingRegion.W = 512;
+	//ClippingRegion.H = 512;
 	DrawStretchedTexture(C, 0, 0, WinWidth, WinHeight, Texture'UWindow.WhiteTexture');
 	//DrawStretchedTextureModded(C, 0, 0, WinWidth, WinHeight, Texture'UWindow.WhiteTexture');
 	//ExampleButton.Paint(C, X, Y);
