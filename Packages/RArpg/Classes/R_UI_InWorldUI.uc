@@ -1,7 +1,7 @@
 //==============================================================================
 //	R_UI_InWorldUI
 //==============================================================================
-class R_UI_InWorldUI extends R_UI_UserInterface;
+class R_UI_InWorldUI extends RGameUI.R_UI_GameUserInterface;
 
 function ConstructUI()
 {

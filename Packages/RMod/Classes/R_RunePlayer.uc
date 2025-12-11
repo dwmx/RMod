@@ -8,7 +8,6 @@ class R_RunePlayer extends RunePlayer config(RMod);
 
 // Libraries
 const PlayerLibrary = Class'RBase.R_APlayerLibrary';
-const UILibrary = Class'RGameUI.R_AUILibrary';
 
 //==============================================================================
 //  Statics
@@ -49,16 +48,6 @@ var FSkelGroupSkinArray GoreCapArrays[16];
 //==============================================================================
 //  RMod Game User Interface
 //
-// RMod Root UI Widget
-// When a game mode is using a UI from the RModUI package, the root widget
-// will be stored here
-//
-// Setting RootWidgetClass in defaultproperties will cause the widget to be
-// created
-//
-var Class<R_UIWidget> RootWidgetClass;
-var R_UIWidget RootWidget;
-
 // RMod Game Cursor, which can be enabled and disabled by calling
 // EnableGameCursor and DisableGameCursor
 var Class<R_GameCursor> GameCursorClass;
@@ -937,36 +926,11 @@ function InitializePlayerAfterPossess(bool bIsLocallyControlled)
 
 /**
 *   InitializeGameUserInterface
-*   If RooWidgetClass is configured, then this function will create, initialize and save reference
-*   to that Widget in the RootWidget class
-*   R_RunePlayer.RootWidget is the entry point to the entire Game UI
-*
-*   Note: It is caller's responsibility to ensure that this only gets called on the appropriate
-*   instances of the game (i.e. you should probably always use IsLocallyControlled)
+*	Called immediately after Pawn possession so that Player reference is valid
+*	This function is only called when Self is locally controlled
 */
 function InitializeGameUserInterface()
-{
-    if(RootWidget != None)
-    {
-        UtilitiesClass.Static.RModWarn("Attempted to reinitialize RootWidget via InitializeGameUserInterface");
-        return;
-    }
-
-    if(RootWidgetClass != None)
-    {
-        UtilitiesClass.Static.RModLog("Creating RootWidget from class" @ RootWidgetClass @ "for" @ Self);
-        RootWidget = UILibrary.Static.CreateWidget(RootWidgetClass, Self);
-        if(RootWidget == None)
-        {
-            UtilitiesClass.Static.RModWarn("Failed to create RootWidget from class" @ RootWidgetClass);
-            return;
-        }
-        else
-        {
-            UtilitiesClass.Static.RModLog("Initialized Game User Interface for" @ Self);
-        }
-    }
-}
+{}
 
 function ValidatePlayer()
 {
@@ -1016,12 +980,6 @@ event PostRender(Canvas C)
     if(GameCursor != None)
     {
         GameCursor.DrawGameCursor(C);
-    }
-    
-    // Draw Game UI
-    if(RootWidget != None)
-    {
-        RootWidget.DrawWidget(C);
     }
 }
 

@@ -1,13 +1,13 @@
 //==============================================================================
-//	R_UI_UserInterface
+//	R_UI_GameUserInterface
 //	Manages a custom UWindow-based user interface outside of the normal
 //	WindowConsole windowing system
 //==============================================================================
-class R_UI_UserInterface extends Object abstract;
+class R_UI_GameUserInterface extends Object abstract;
 
 const Utilities = Class'RBase.R_AUtilityLibrary';
 
-const LogCategory = 'RArpg';
+const LogCategory = 'GameUI';
 const LogSubCategory = 'UserInterface';
 
 const DefaultRootWindowClass = Class'UWindow.UWindowRootWindow';

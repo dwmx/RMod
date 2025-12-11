@@ -242,20 +242,6 @@ exec function PlayerMouseDown()
 		//return;
 	}
 
-	// Try to pass mouse down event to UI first
-	if(RootWidget != None)
-	{
-		if(GameCursor != None)
-		{
-			GameCursor.GetCursorPosition(UIEventPayload.X, UIEventPayload.Y);
-		}
-
-		if(RootWidget.NotifyInputEvent('MouseDown', UIEventPayload))
-		{
-			return;
-		}
-	}
-
 	TryExecuteBuilderBrush();
 	if(GameCursor != None && GameCursor.IsEnabled())
     {
@@ -272,20 +258,6 @@ exec function PlayerMouseUp()
 		GameCursor.GetCursorPosition(UIEventPayload.X, UIEventPayload.Y);
 		MyRootWindow.WindowEvent(WM_LMouseUp, None, UIEventPayload.X, UIEventPayload.Y, 0);
 		//return;
-	}
-
-	// Try to pass mouse up event to UI first
-	if(RootWidget != None)
-	{
-		if(GameCursor != None)
-		{
-			GameCursor.GetCursorPosition(UIEventPayload.X, UIEventPayload.Y);
-		}
-
-		if(RootWidget.NotifyInputEvent('MouseUp', UIEventPayload))
-		{
-			return;
-		}
 	}
 
 	// Otherwise pass it to game cursor
@@ -307,20 +279,6 @@ event PlayerInput(float DeltaSeconds)
 	{
 		GameCursor.GetCursorPosition(GameCursorPosition.X, GameCursorPosition.Y);
 		MyRootWindow.MoveMouse(GameCursorPosition.X, GameCursorPosition.Y);
-	}
-
-	// Try to pass mouse up event to UI first
-	if(RootWidget != None)
-	{
-		if(GameCursor != None)
-		{
-			GameCursor.GetCursorPosition(UIEventPayload.X, UIEventPayload.Y);
-		}
-
-		if(RootWidget.NotifyInputEvent('CursorPosition', UIEventPayload))
-		{
-			return;
-		}
 	}
 }
 

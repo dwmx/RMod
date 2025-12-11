@@ -1,15 +1,10 @@
 class R_ArpgRunePlayer extends R_RunePlayer;
 
 const InWorldUIClass = Class'RArpg.R_UI_InWorldUI';
-var private R_UI_UserInterface InWorldUI;
+var private R_UI_GameUserInterface InWorldUI;
 
-// Overridden to initialize custom UI
-// This has to be done here because Player is not valid in any of the BeginPlay functions,
-// and the UI needs reference to Player's Console
-event Possess()
+function InitializeGameUserInterface()
 {
-	Super.Possess();
-
 	InWorldUI = new(Self) InWorldUIClass;
 	InWorldUI.Initialize(Self.Player);
 }
