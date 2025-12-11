@@ -6,6 +6,7 @@ packages:
   - RGameUI
   - RMod
   - RBots
+  - RBotsDebug
   #- RMod_Arena
   #- RMod_FreezeTag
   - RMod_TowerDefense
