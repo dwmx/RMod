@@ -2,11 +2,15 @@ class R_UI_InventoryWindow extends UWindowDialogClientWindow;
 
 const MathLibrary = Class'RBase.R_AMathLibrary';
 
+var R_UI_InventoryItem ActiveUIItem;
+
 var Texture TestItemTexture;
 var int ActiveX, ActiveY;
 var int ActiveX1, ActiveY1;
 
 var Vector DebugP0, DebugP1, DebugMouse;
+
+var R_UI_InventoryItem UIInventoryItem;
 
 /*
 
@@ -58,8 +62,28 @@ function GetGridCellAreaFromLocation(
 
 function Click(float X, float Y)
 {
+	local Vector MouseLocation;
+	local int X0, X1, Y0, Y1;
+
+	MouseLocation.X = X;
+	MouseLocation.Y = Y;
+	GetGridCellAreaFromLocation(MouseLocation, Vect(0.5,0.5,0.0), 48, 2, 3, X0, X1, Y0, Y1);
+
+	if(ActiveUIItem != None)
+	{
+		ActiveUIItem.Position.X = X0 * 48;
+		ActiveUIItem.Position.Y = Y0 * 48;
+		ActiveUIItem.bTrackMouse = false;
+		ActiveUIItem = None;
+	}
+
 	//Super.LMouseDown(X, Y);
-	Log("CLICK ON THE INVENTORY WINDOW");
+	//Log("CLICK ON THE INVENTORY WINDOW");
+}
+
+function PlaceInventoryAt(int GridCellX, int GridCellY)
+{
+
 }
 
 function Created()
@@ -73,9 +97,18 @@ function Created()
 	// Add a test inventory item
 	//InventoryItem = R_UI_InventoryItem(CreateControl(Class'R_UI_InventoryItem', 0.0, 0.0, 128.0, 128.0));
 
-	InventoryItem2 = R_UI_InventoryItem(CreateControl(Class'R_UI_InventoryItem', 0, 0, WinWidth, WinHeight));
-	InventoryItem2.bTrackMouse = true;
+	InventoryItem2 = R_UI_InventoryItem(CreateControl(Class'R_UI_InventoryItem', 0, 0, 128, 128));
+	
+	InventoryItem2 = R_UI_InventoryItem(CreateControl(Class'R_UI_InventoryItem', 0, 0, 128, 128));
+	InventoryItem2.Position.X = 48 * 4;
 
+	InventoryItem2 = R_UI_InventoryItem(CreateControl(Class'R_UI_InventoryItem', 0, 0, 128, 128));
+	InventoryItem2.Position.X = 48 * 8;
+	InventoryItem2.Position.Y = 48 * 1;
+	//InventoryItem2.bTrackMouse = true;
+
+	ActiveUIItem = None;
+	//UIInventoryItem = InventoryItem2;
 	/*
 	// Button 1
 	CreatedButton = R_MyButton(CreateControl(class'R_MyButton', 0, 0, 180, 40));
@@ -168,7 +201,7 @@ function PaintInventoryGrid(Canvas C, float X, float Y)
 	C.DrawColor.R = 0;
 	C.DrawColor.G = 0;
 	C.DrawColor.B = 0;
-	DrawStretchedTexture(C, 0.0, 128.0, FullWidth, FullHeight, Texture'UWindow.WhiteTexture');
+	DrawStretchedTexture(C, 0.0, 0.0, FullWidth, FullHeight, Texture'UWindow.WhiteTexture');
 	C.DrawColor = SavedColor;
 
 	for(GridX = 0; GridX <= GridXCount; ++GridX)
@@ -187,16 +220,20 @@ function PaintInventoryGrid(Canvas C, float X, float Y)
 		DrawStretchedTexture(C, 0.0, 0.0 + GridY * CellHeight - 2.0, FullWidth, 4.0, Texture'UWindow.WhiteTexture');
 	}
 
-	C.DrawColor.R = 0;
-	C.DrawColor.G = 255;
-	C.DrawColor.B = 0;
-	for(actx = ActiveX; actx < ActiveX1; ++actx)
+	if(ActiveUIItem != None)
 	{
-		for(acty = ActiveY; acty < ActiveY1; ++acty)
+		C.DrawColor.R = 0;
+		C.DrawColor.G = 255;
+		C.DrawColor.B = 0;
+		for(actx = ActiveX; actx < ActiveX1; ++actx)
 		{
-			DrawStretchedTexture(C, 0.0 + actx * CellWidth, 0.0 + acty * CellHeight, CellWidth - 2.0, CellHeight - 2.0, Texture'UWindow.WhiteTexture');
+			for(acty = ActiveY; acty < ActiveY1; ++acty)
+			{
+				DrawStretchedTexture(C, 0.0 + actx * CellWidth, 0.0 + acty * CellHeight, CellWidth - 2.0, CellHeight - 2.0, Texture'UWindow.WhiteTexture');
+			}
 		}
 	}
+	
 	
 	/*
 	// Draw a 3x3 section of green cells

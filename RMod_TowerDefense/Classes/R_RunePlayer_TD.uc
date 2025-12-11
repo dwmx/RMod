@@ -48,7 +48,13 @@ function InitializePlayerAfterPossess(bool bIsLocallyControlled)
 		SpawnInWorldHUD();
         //SpawnBuilderBrush();
         SpawnActorSelector();
+
+		// Enable and initialize the game cursor
         EnableGameCursor();
+		if(GameCursor != None)
+		{
+			GameCursor.SetDragSelectionEnabled(false);
+		}
     }
 }
 

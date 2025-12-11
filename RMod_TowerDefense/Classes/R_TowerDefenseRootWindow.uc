@@ -60,10 +60,6 @@ function Created()
 
 function WindowEvent(WinMessage Msg, Canvas C, float X, float Y, int Key)
 {
-	if(Msg == WM_LMouseDown)
-	{
-		Log("MOUSE DOWN");
-	}
 	if(bHiddenWindow)
 	{
 		return;
