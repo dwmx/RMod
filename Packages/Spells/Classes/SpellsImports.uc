@@ -6,4 +6,4 @@ class SpellsImports extends Object abstract;
 
 #exec SKELETAL ORIGIN NAME=PowerPauldron X=0 Y=0 Z=-9 Pitch=0 Yaw=-64 Roll=-64
 
-#exec TEXTURE IMPORT FILE="C:\Users\jsava\Repos\rmod\Spells\Textures\uidba.bmp" NAME="uidba" PACKAGE="Spells" GROUP="None" MIPS=on FLAGS=2 TEXFLAGS=0
+#exec TEXTURE IMPORT FILE="..\Spells\Textures\uidba.bmp" NAME="uidba" PACKAGE="Spells" GROUP="None" MIPS=on FLAGS=2 TEXFLAGS=0

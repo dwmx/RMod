@@ -68,7 +68,7 @@ function bool CheckMousePassThrough(float X, float Y)
 defaultproperties
 {
 	bTrackMouse=false
-	ItemTexture=Texture'Spells.uidba'
+	ItemTexture=Texture'RuneFX2.haxe'
 	CellCountX=2
 	CellCountY=3
 }

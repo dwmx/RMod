@@ -1,1 +1,1 @@
-..\Rune\System\UCC.exe server AR-8on8-ChampionsER?game=RMod_Arena.R_GameInfo_Arena
+..\Rune\System\UCC.exe server DM-BotTest.run?game=RMod.R_GameInfo_DM
