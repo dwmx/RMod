@@ -44,8 +44,8 @@ const CommandNameSpace_BehaviorTree		= 'BehaviorTree';
 const CommandManagerClass_BehaviorTree	= Class'RBots.R_RBotsDebug_CommandManager_BehaviorTree';
 
 // String manager
-const StringManagerClass = Class'RBots.R_RBotsDebug_StringManager';
-var R_RBotsDebug_StringManager StringManager;
+const StringManagerClass = Class'RBots.R_DBStringManager';
+var R_DBStringManager StringManager;
 
 // Debug views
 const MAX_DEBUG_VIEWS = 16;

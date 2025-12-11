@@ -24,7 +24,7 @@ function ToggleDrawAnimationInfo()
 	SaveConfig();
 }
 
-function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringManager)
+function DrawDebugView(Canvas C, R_DBStringManager StringManager)
 {
 	local PlayerPawn PPOwner;
 
@@ -50,7 +50,7 @@ function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringManager)
 	}
 }
 
-function DrawPlayerAnimInfo(Canvas C, R_RBotsDebug_StringManager StringManager, PlayerPawn PPOwner)
+function DrawPlayerAnimInfo(Canvas C, R_DBStringManager StringManager, PlayerPawn PPOwner)
 {
 	local AnimationProxy AP;
 	local float AnimDurationSeconds;

@@ -42,14 +42,14 @@ function ToggleDrawPerception()
 	SaveConfig();
 }
 
-simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringManager)
+simulated function DrawDebugView(Canvas C, R_DBStringManager StringManager)
 {
 	local R_RBotsDebug DebugMutator;
 	local R_Bot DebugTarget;
 
 	StringManager.AddCategory(DebugRBotsCategory);
 
-	DebugMutator = GetDebugMutator();
+	DebugMutator = GetRBotsDebugMutator();
 	if(DebugMutator != None)
 	{
 		DebugTarget = DebugMutator.DebugTarget;
@@ -75,7 +75,7 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 	DrawDebugTarget_WantParameters(C, StringManager, DebugTarget);
 }
 
-simulated function DrawDebugTarget(Canvas C, R_RBotsDebug_StringManager StringManager, R_Bot BotDebugTarget)
+simulated function DrawDebugTarget(Canvas C, R_DBStringManager StringManager, R_Bot BotDebugTarget)
 {
 	local R_BotBehavior ActiveBehavior;
 	local PlayerPawn PP;
@@ -122,7 +122,7 @@ simulated function DrawDebugTarget(Canvas C, R_RBotsDebug_StringManager StringMa
 	}
 }
 
-function DrawDebugTarget_Perception_Combat(Canvas C, R_RBotsDebug_StringManager StringManager, R_Bot BotDebugTarget)
+function DrawDebugTarget_Perception_Combat(Canvas C, R_DBStringManager StringManager, R_Bot BotDebugTarget)
 {
 	local R_BotPerception BotPerception;
 	local Actor PerceivedActor;
@@ -177,7 +177,7 @@ function DrawDebugTarget_Perception_Combat(Canvas C, R_RBotsDebug_StringManager 
 	}
 }
 
-function DrawDebugTarget_Perception_Inventories(Canvas C, R_RBotsDebug_StringManager StringManager, R_Bot BotDebugTarget)
+function DrawDebugTarget_Perception_Inventories(Canvas C, R_DBStringManager StringManager, R_Bot BotDebugTarget)
 {
 	local R_BotPerception BotPerception;
 	local PlayerPawn PP;
@@ -215,7 +215,7 @@ function DrawDebugTarget_Perception_Inventories(Canvas C, R_RBotsDebug_StringMan
 }
 
 // Draw debug information specific to DebugBots
-simulated function DrawDebugTaret_DebugBot(Canvas C, R_RBotsDebug_StringManager StringManager, R_RBotsDebug_DebugBot DebugBotDebugTarget)
+simulated function DrawDebugTaret_DebugBot(Canvas C, R_DBStringManager StringManager, R_RBotsDebug_DebugBot DebugBotDebugTarget)
 {
 	StringManager.AddActor(DebugRBotsCategory, "CurrentPathingTarget", DebugBotDebugTarget.GetCurrentPathingTarget());
 }
@@ -238,7 +238,7 @@ simulated function DrawDebugTarget_MovementInput(Canvas C, R_Bot BotDebugTarget)
 	}
 }
 
-function DrawDebugTarget_Navigation(Canvas C, R_RBotsDebug_StringManager StringManager, R_Bot BotDebugTarget)
+function DrawDebugTarget_Navigation(Canvas C, R_DBStringManager StringManager, R_Bot BotDebugTarget)
 {
 	local R_IndexCache RecentlyVisitedNodes;
 	local R_IndexCache RecentlyVisitedPolyGroups;
@@ -296,7 +296,7 @@ function DrawDebugTarget_Navigation(Canvas C, R_RBotsDebug_StringManager StringM
 	}
 }
 
-function DrawDebugTarget_WantParameters(Canvas C, R_RBotsDebug_StringManager StringManager, R_Bot BotDebugTarget)
+function DrawDebugTarget_WantParameters(Canvas C, R_DBStringManager StringManager, R_Bot BotDebugTarget)
 {
 	local Name BlackBoardKeys[16];
 	local float Value;

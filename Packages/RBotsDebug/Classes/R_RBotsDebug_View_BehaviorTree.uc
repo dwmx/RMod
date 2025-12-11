@@ -22,7 +22,7 @@ const TypeCodeActor 	= 5;
 const TypeCodeObject 	= 6;
 const TypeCodeClass 	= 7;
 
-function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
+function DrawDebugView(Canvas C, R_DBStringManager StringManager)
 {
 	local R_RBotsDebug DebugMutator;
 	local R_Bot DebugTarget;
@@ -33,7 +33,7 @@ function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
 
 	StringManager.AddCategory(StringCategoryBT);
 
-	DebugMutator = GetDebugMutator();
+	DebugMutator = GetRBotsDebugMutator();
 	if(DebugMutator != None)
 	{
 		DebugTarget = DebugMutator.DebugTarget;
@@ -65,7 +65,7 @@ function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
 	DrawBlackBoard(C, StringManager, BlackBoard);
 }
 
-function DrawBehaviorTree(Canvas C, R_RBotsDebug_StringManager StringManager, R_BehaviorTree BehaviorTree, R_BehaviorTreeContext BehaviorTreeContext)
+function DrawBehaviorTree(Canvas C, R_DBStringManager StringManager, R_BehaviorTree BehaviorTree, R_BehaviorTreeContext BehaviorTreeContext)
 {
 	if(BehaviorTree == None)
 	{
@@ -175,7 +175,7 @@ function String GetBehaviorNodeString(R_BTNode Node)
 	return "[" $ NodeUID $ "]:" @ NodeDisplayString @ "(" $ NodeClassString $ ")";
 }
 
-function DrawBlackBoard(Canvas C, R_RBotsDebug_StringManager StringManager, R_BlackBoard BlackBoard)
+function DrawBlackBoard(Canvas C, R_DBStringManager StringManager, R_BlackBoard BlackBoard)
 {
 	StringManager.AddCategory(StringCategoryBB);
 
@@ -187,7 +187,7 @@ function DrawBlackBoard(Canvas C, R_RBotsDebug_StringManager StringManager, R_Bl
 	DrawBlackBoardValidated(C, StringManager, BlackBoard);
 }
 
-function DrawBlackBoardValidated(Canvas C, R_RBotsDebug_StringManager StringManager, R_BlackBoard BlackBoard)
+function DrawBlackBoardValidated(Canvas C, R_DBStringManager StringManager, R_BlackBoard BlackBoard)
 {
 	// DebugView doesn't have access to the Variant type, so translator has to draw this
 	Class'RBots.R_RBotsDebug_Translator'.Static.DrawBlackBoardValidated(C, StringManager, BlackBoard);

@@ -2,7 +2,7 @@ class R_RBotsDebug_Translator extends R_RBotsObject;
 
 const StringCategoryBB = 'BlackBoard';
 
-static function DrawBlackBoardValidated(Canvas C, R_RBotsDebug_StringManager StringManager, R_BlackBoard BlackBoard)
+static function DrawBlackBoardValidated(Canvas C, R_DBStringManager StringManager, R_BlackBoard BlackBoard)
 {
 	local int NumKeys;
 	local Name CurrentKey;

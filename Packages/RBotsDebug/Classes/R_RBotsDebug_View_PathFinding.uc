@@ -72,36 +72,42 @@ function InitNavContextObserver()
 	}
 }
 
-function DebugTargetChanged(R_Bot OldDebugTarget, R_Bot NewDebugTarget)
+function DebugTargetChanged(Actor OldDebugTarget, Actor NewDebugTarget)
 {
+	local R_Bot OldDebugTargetBot;
+	local R_Bot NewDebugTargetBot;
+
+	OldDebugTargetBot = R_Bot(OldDebugTarget);
+	NewDebugTargetBot = R_Bot(NewDebugTarget);
+
 	InitNavContextObserver();
 
 	if(NavContextObserver != None)
 	{
-		if(OldDebugTarget != None)
+		if(OldDebugTargetBot != None)
 		{
-			if(OldDebugTarget.GetNavContextObserver() == NavContextObserver)
+			if(OldDebugTargetBot.GetNavContextObserver() == NavContextObserver)
 			{
-				OldDebugTarget.DetachNavContextObserver();
+				OldDebugTargetBot.DetachNavContextObserver();
 			}
 		}
 
 		NavContextObserver.ClearPath();
-		if(Utilities.Static.IsValidActor(NewDebugTarget))
+		if(Utilities.Static.IsValidActor(NewDebugTarget) && NewDebugTargetBot != None)
 		{
-			NewDebugTarget.AttachNavContextObserver(NavContextObserver);
+			NewDebugTargetBot.AttachNavContextObserver(NavContextObserver);
 		}
 	}
 }
 
-simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringManager)
+simulated function DrawDebugView(Canvas C, R_DBStringManager StringManager)
 {
 	local R_RBotsDebug DebugMutator;
 	local R_Bot DebugTarget;
 	local int NumPathPoints;
 	local Vector TempVector;
 
-	DebugMutator = GetDebugMutator();
+	DebugMutator = GetRBotsDebugMutator();
 	if(DebugMutator != None)
 	{
 		DebugTarget = DebugMutator.DebugTarget;
@@ -155,7 +161,7 @@ simulated function DrawDebugView(Canvas C, R_RBotsDebug_StringManager StringMana
 	DrawPolyGroupPathInfo(C, DebugTarget, StringManager);
 }
 
-simulated function DrawPathNodes(Canvas C, R_Bot DebugTarget, R_RBotsDebug_StringManager StringManager)
+simulated function DrawPathNodes(Canvas C, R_Bot DebugTarget, R_DBStringManager StringManager)
 {
 	local R_NavMesh NavMesh;
 	local int VertexIndices[3];
@@ -211,7 +217,7 @@ simulated function DrawPathNodes(Canvas C, R_Bot DebugTarget, R_RBotsDebug_Strin
 	}
 }
 
-simulated function DrawPathPoints(Canvas C, R_Bot DebugTarget, R_RBotsDebug_StringManager StringManager)
+simulated function DrawPathPoints(Canvas C, R_Bot DebugTarget, R_DBStringManager StringManager)
 {
 	local int i;
 	local int NumPathPoints;
@@ -272,7 +278,7 @@ simulated function DrawPathPoints(Canvas C, R_Bot DebugTarget, R_RBotsDebug_Stri
 	}
 }
 
-simulated function DrawPathPortals(Canvas C, R_Bot DebugTarget, R_RBotsDebug_StringManager StringManager)
+simulated function DrawPathPortals(Canvas C, R_Bot DebugTarget, R_DBStringManager StringManager)
 {
 	local Vector PortalLeft, PortalRight;
 	local int PortalsCount;
@@ -313,7 +319,7 @@ simulated function DrawPathPortals(Canvas C, R_Bot DebugTarget, R_RBotsDebug_Str
 	}
 }
 
-simulated function DrawBoundaryPushDirs(Canvas C, R_Bot DebugTarget, R_RBotsDebug_StringManager StringManager)
+simulated function DrawBoundaryPushDirs(Canvas C, R_Bot DebugTarget, R_DBStringManager StringManager)
 {
 	local Vector BoundaryVector;
 	local Vector PushDir;
@@ -365,7 +371,7 @@ simulated function DrawBoundaryPushDirs(Canvas C, R_Bot DebugTarget, R_RBotsDebu
 	}
 }
 
-function DrawPolyGroupPathInfo(Canvas C, R_Bot DebugTarget, R_RBotsDebug_StringManager StringManager)
+function DrawPolyGroupPathInfo(Canvas C, R_Bot DebugTarget, R_DBStringManager StringManager)
 {
 	local bool bHadError;
 	local R_NavMesh NavMesh;
@@ -411,7 +417,7 @@ function DrawPolyGroupPathInfo(Canvas C, R_Bot DebugTarget, R_RBotsDebug_StringM
 		bHadError = true;
 	}
 
-	NavQuery = GetDebugMutator().GetRBotsServerActor().GetNavQueryInterface();
+	NavQuery = GetRBotsDebugMutator().GetRBotsServerActor().GetNavQueryInterface();
 	if(NavQuery == None)
 	{
 		StringManager.AddWarning(DebugPolyGroupPathFindCategory, "NavQueryInterface is None");

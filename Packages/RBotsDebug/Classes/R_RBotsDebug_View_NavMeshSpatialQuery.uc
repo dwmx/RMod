@@ -124,7 +124,7 @@ function CopyFloatRGB(out float InSrcRGB[3], out float OutDestRGB[3])
 	OutDestRGB[2] = InSrcRGB[2];
 }
 
-function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
+function DrawDebugView(Canvas C, R_DBStringManager StringManager)
 {
 	local R_NavMesh NavMesh;
 	local R_NavMeshSpatialQuery_GridCache SQG;
@@ -172,7 +172,7 @@ function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
 	}
 }
 
-function DrawSQG_Bounds(Canvas C, R_RBotsDebug_StringManager StringManager, R_NavMeshSpatialQuery_GridCache SQG)
+function DrawSQG_Bounds(Canvas C, R_DBStringManager StringManager, R_NavMeshSpatialQuery_GridCache SQG)
 {
 	local Vector BoundsMin, BoundsMax;
 	local float BoundsRGB[3];
@@ -186,7 +186,7 @@ function DrawSQG_Bounds(Canvas C, R_RBotsDebug_StringManager StringManager, R_Na
 	CanvasLib.Static.DrawAABB3D(C, BoundsMin, BoundsMax, BoundsRGB);
 }
 
-function DrawSQG_GridCells(Canvas C, R_RBotsDebug_StringManager StringManager, R_NavMeshSpatialQuery_GridCache SQG)
+function DrawSQG_GridCells(Canvas C, R_DBStringManager StringManager, R_NavMeshSpatialQuery_GridCache SQG)
 {
 	local Vector BoundsMin, BoundsMax;
 	local int GridMaxX, GridMaxY;
@@ -273,7 +273,7 @@ function DrawSQG_GridCells(Canvas C, R_RBotsDebug_StringManager StringManager, R
 	StringManager.AddInt(DebugCategory, "Greatest Cell Index Count", GreatestCellIndexCount);
 }
 
-function DrawSQG_PlayerIndexTriangles(Canvas C, R_RBotsDebug_StringManager StringManager, R_NavMesh NavMesh, R_NavMeshSpatialQuery_GridCache SQG)
+function DrawSQG_PlayerIndexTriangles(Canvas C, R_DBStringManager StringManager, R_NavMesh NavMesh, R_NavMeshSpatialQuery_GridCache SQG)
 {
 	local Vector PlayerLocation;
 	local int PlayerX, PlayerY;
@@ -312,7 +312,7 @@ function DrawSQG_PlayerIndexTriangles(Canvas C, R_RBotsDebug_StringManager Strin
 	}
 }
 
-function DrawSQG_NodesInRadius(Canvas C, R_RBotsDebug_StringManager StringManager, R_NavMesh NavMesh, R_NavMeshSpatialQuery_GridCache SQG)
+function DrawSQG_NodesInRadius(Canvas C, R_DBStringManager StringManager, R_NavMesh NavMesh, R_NavMeshSpatialQuery_GridCache SQG)
 {
 	local int GridXMin, GridXMax;
 	local int GridYMin, GridYMax;

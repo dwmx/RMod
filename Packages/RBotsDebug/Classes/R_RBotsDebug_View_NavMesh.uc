@@ -169,7 +169,7 @@ function TogglePortals()
 
 
 
-function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
+function DrawDebugView(Canvas C, R_DBStringManager StringManager)
 {
 	local R_NavMesh NavMesh;
 
@@ -194,7 +194,7 @@ function DrawDebugView(Canvas C, R_RbotsDebug_StringManager StringManager)
 	}
 }
 
-function DrawNavMesh(Canvas C, R_RbotsDebug_StringManager StringManager, R_NavMesh NavMesh)
+function DrawNavMesh(Canvas C, R_DBStringManager StringManager, R_NavMesh NavMesh)
 {
 	// Draw Mode
 	StringManager.AddString(DebugCategory_NavMesh, String(GetEnum(Enum'R_NavMeshDrawMode', DrawMode)), "Draw Mode");
@@ -233,7 +233,7 @@ function DrawNavMesh(Canvas C, R_RbotsDebug_StringManager StringManager, R_NavMe
 	}
 }
 
-function DrawNavMeshVertices(Canvas C, R_RbotsDebug_StringManager StringManager, R_NavMesh NavMesh)
+function DrawNavMeshVertices(Canvas C, R_DBStringManager StringManager, R_NavMesh NavMesh)
 {
 	local Vector VertexLocation;
 	local Vector DrawExtents, DrawVerticalOffset;
@@ -255,7 +255,7 @@ function DrawNavMeshVertices(Canvas C, R_RbotsDebug_StringManager StringManager,
 	}
 }
 
-function DrawNavMeshEdges(Canvas C, R_RbotsDebug_StringManager StringManager, R_NavMesh NavMesh)
+function DrawNavMeshEdges(Canvas C, R_DBStringManager StringManager, R_NavMesh NavMesh)
 {
 	local int V0, V1;
 	local int EdgeFlags;
@@ -338,7 +338,7 @@ function DrawNavMeshEdges(Canvas C, R_RbotsDebug_StringManager StringManager, R_
 	}
 }
 
-function DrawNavMeshTriangles(Canvas C, R_RbotsDebug_StringManager StringManager, R_NavMesh NavMesh)
+function DrawNavMeshTriangles(Canvas C, R_DBStringManager StringManager, R_NavMesh NavMesh)
 {
 	local int IndexA, IndexB, IndexC;
 	local Vector VertexA, VertexB, VertexC;
@@ -382,7 +382,7 @@ function DrawNavMeshTriangles(Canvas C, R_RbotsDebug_StringManager StringManager
 	}
 }
 
-function DrawNavMeshNeighbors(Canvas C, R_RbotsDebug_StringManager StringManager, R_NavMesh NavMesh)
+function DrawNavMeshNeighbors(Canvas C, R_DBStringManager StringManager, R_NavMesh NavMesh)
 {
 	local Vector PlayerLocation;
 	local int NodeIndex;
@@ -490,7 +490,7 @@ function DrawTriangle(Canvas C, Vector VLoc[3], float RGB[3], float Scale, optio
 	CanvasLib.Static.DrawLine3D(C, VLoc[2], VLoc[0], RGB[0], RGB[1], RGB[2]);
 }
 
-function DrawNavMeshPlayerBorders(Canvas C, R_RbotsDebug_StringManager StringManager, R_NavMesh NavMesh)
+function DrawNavMeshPlayerBorders(Canvas C, R_DBStringManager StringManager, R_NavMesh NavMesh)
 {
 	local Vector Location;
 	local int EdgeIndices[32], NumEdges;
@@ -530,7 +530,7 @@ function DrawNavMeshPlayerBorders(Canvas C, R_RbotsDebug_StringManager StringMan
 	}
 }
 
-function DrawPolyGroupInfo(Canvas C, R_RbotsDebug_StringManager StringManager, R_NavMesh NavMesh)
+function DrawPolyGroupInfo(Canvas C, R_DBStringManager StringManager, R_NavMesh NavMesh)
 {
 	local R_NavMeshPolyGroup PolyGroup;
 	local int NumPolyGroups, NumTriangles;
@@ -641,7 +641,7 @@ function DrawPolyGroupInfo(Canvas C, R_RbotsDebug_StringManager StringManager, R
 
 function DrawPolyGroupInfo_Neighbors(
 	Canvas C,
-	R_RBotsDebug_StringManager StringManager,
+	R_DBStringManager StringManager,
 	R_NavMeshPolyGroup PolyGroup)
 {
 	local int NeighborIndices[32];
@@ -666,7 +666,7 @@ function String GetFormattedNeighborString(int NeighborIndex, float NeighborCost
 
 function DrawPolyGroupInfo_PortalPathways(
 	Canvas C,
-	R_RbotsDebug_StringManager StringManager,
+	R_DBStringManager StringManager,
 	R_NavMesh NavMesh,
 	int SrcNodeIndex,
 	int DestPolyGroupIndex)
@@ -692,7 +692,7 @@ function DrawPolyGroupInfo_PortalPathways(
 	}
 }
 
-function DrawPortals(Canvas C, R_RBotsDebug_StringManager StringManager, R_NavMesh NavMesh)
+function DrawPortals(Canvas C, R_DBStringManager StringManager, R_NavMesh NavMesh)
 {
 	local int PortalCount;
 	local R_NavMeshPortal Portal;
@@ -854,7 +854,7 @@ function DrawPortalNeighborConnections(Canvas C, R_NavMesh NavMesh, R_NavMeshPor
 	}
 }
 
-function DrawPortalInfo(Canvas C, R_RBotsDebug_StringManager StringManager, R_NavMesh NavMesh, R_NavMeshPortal Portal)
+function DrawPortalInfo(Canvas C, R_DBStringManager StringManager, R_NavMesh NavMesh, R_NavMeshPortal Portal)
 {
 	local int PolyGroupIndexA, PolyGroupIndexB;
 	local int PortalNeighborIndices[32];
