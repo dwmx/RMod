@@ -1,0 +1,1 @@
+class R_ArpgRunePlayer extends R_RunePlayer;
