@@ -11,4 +11,5 @@ packages:
   #- RMod_FreezeTag
   - RMod_TowerDefense
   - Spells
+  - RArpg
   - RArpgDebug

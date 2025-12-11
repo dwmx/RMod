@@ -1,0 +1,1 @@
+class R_ArpgItem extends R_ArpgObject;
