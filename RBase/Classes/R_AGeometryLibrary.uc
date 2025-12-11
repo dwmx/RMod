@@ -288,6 +288,35 @@ static function ProjectLocationZOnPlane(Vector Location, Vector PlaneOrigin, Vec
 	OutProjectedLocation = Location + t * Dir;
 }
 
+// RayIntersectPlane
+// Given a Ray and a Plane, both defined by an origin and a normal, find the world-space location at which the
+// ray will intersect the plane
+static function bool RayIntersectPlane(Vector RayOrigin, Vector RayDir, Vector PlaneOrigin, Vector PlaneNormal, out Vector OutIntersection)
+{
+	local float Denom;
+	local float t;
+
+	RayDir = Normal(RayDir);
+	PlaneNormal = Normal(PlaneNormal);
+
+	Denom = RayDir Dot PlaneNormal;
+
+	if(Abs(Denom) < 0.0001)
+	{
+		return false;
+	}
+
+	t = ((PlaneOrigin - RayOrigin) Dot PlaneNormal) / Denom;
+
+	if(t < 0)
+	{
+		return false;
+	}
+
+	OutIntersection = RayOrigin + RayDir * t;
+	return true;
+}
+
 // Returns true if the triangle defined by VLoc intersects with the provided AABB
 static function bool DoesTriangleIntersectAABB2D(Vector AABBMin, Vector AABBMax, Vector VLoc[3])
 {
