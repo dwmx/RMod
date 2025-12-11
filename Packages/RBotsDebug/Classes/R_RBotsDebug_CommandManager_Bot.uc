@@ -30,7 +30,7 @@ function RegisterCommandList()
 	RegisterCommand(Command_GrantInventory);
 }
 
-function bool TryHandleCommand(String CommandString, R_RBotsDebug DebugMutator, PlayerPawn Sender)
+function bool TryHandleRBotsCommand(String CommandString, R_RBotsDebug DebugMutator, PlayerPawn Sender)
 {
 	switch(CommandString)
 	{
@@ -186,7 +186,7 @@ function HandleCommand_GrantInventory(R_RBotsDebug DebugMutator, PlayerPawn Send
 		return;
 	}
 
-	Bot = DebugMutator.GetDebugTarget();
+	Bot = DebugMutator.GetDebugTargetBot();
 	if(Bot != None)
 	{
 		PP = Bot.GetOwnedPlayerPawn();

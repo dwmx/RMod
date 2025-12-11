@@ -34,11 +34,16 @@ var Actor DebugTarget;
 
 simulated function PreBeginPlay()
 {
-	InitializeCommandManagers();
+	BaseInitializeCommandManagers();
 	InitializeStringManager();
 }
 
-simulated function InitializeCommandManagers()
+simulated final function BaseInitializeCommandManagers()
+{
+	CommandManager = InitializeCommandManagers();
+}
+
+simulated function R_DBCommandManager InitializeCommandManagers()
 {}
 
 simulated function InitializeStringManager()
@@ -285,6 +290,11 @@ function ToggleTopLevelDebugVisualization()
 	SetTopLevelDebugVisualization(!bDrawDebugVisualization);
 }
 
+function bool IsDrawingDebugVisualization()
+{
+	return bDrawDebugVisualization;
+}
+
 simulated event Tick(float DeltaSeconds)
 {
 	// Ensure HUD mutator is registered
@@ -312,6 +322,8 @@ simulated event PostRender(Canvas C)
 	// Setup debug draw managers
 	StringManager.Clear();
 
+	PreDrawDebugViews(C, StringManager);
+
 	// Draw each view
 	for(i = 0; i < MaxDebugViews; ++i)
 	{
@@ -323,6 +335,9 @@ simulated event PostRender(Canvas C)
 
 	StringManager.DrawStringManager(C);
 }
+
+simulated function PreDrawDebugViews(Canvas C, R_DBStringManager InStringManager)
+{}
 
 function Mutate(string MutateString, PlayerPawn Sender)
 {

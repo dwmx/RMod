@@ -39,7 +39,7 @@ function RegisterCommandList()
 	RegisterCommand(Command_TogglePortals);
 }
 
-function bool TryHandleCommand(String CommandString, R_RBotsDebug DebugMutator, PlayerPawn Sender)
+function bool TryHandleRBotsCommand(String CommandString, R_RBotsDebug DebugMutator, PlayerPawn Sender)
 {
 	switch(CommandString)
 	{

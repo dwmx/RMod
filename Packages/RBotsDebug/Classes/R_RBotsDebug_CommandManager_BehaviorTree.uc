@@ -21,7 +21,7 @@ function RegisterCommandList()
 	RegisterCommand(Command_DumpBT);
 }
 
-function bool TryHandleCommand(String CommandString, R_RBotsDebug DebugMutator, PlayerPawn Sender)
+function bool TryHandleRBotsCommand(String CommandString, R_RBotsDebug DebugMutator, PlayerPawn Sender)
 {
 	switch(CommandString)
 	{
@@ -53,7 +53,7 @@ final function R_BehaviorTree GetDebugTargetBehaviorTree(R_RBotsDebug DebugMutat
 
 	if(DebugMutator != None)
 	{
-		Bot = DebugMutator.GetDebugTarget();
+		Bot = DebugMutator.GetDebugTargetBot();
 		if(Bot != None)
 		{
 			ActiveBehavior = Bot.GetActiveBehavior();
@@ -73,7 +73,7 @@ final function R_BlackBoard GetDebugTargetBlackBoard(R_RBotsDebug DebugMutator)
 
 	if(DebugMutator != None)
 	{
-		Bot = DebugMutator.GetDebugTarget();
+		Bot = DebugMutator.GetDebugTargetBot();
 		if(Bot != None)
 		{
 			ActiveBehavior = Bot.GetActiveBehavior();

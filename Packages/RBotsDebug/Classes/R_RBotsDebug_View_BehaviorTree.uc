@@ -32,7 +32,7 @@ function DrawDebugView(Canvas C, R_DBStringManager StringManager)
 	DebugMutator = GetRBotsDebugMutator();
 	if(DebugMutator != None)
 	{
-		DebugTarget = DebugMutator.DebugTarget;
+		DebugTarget = DebugMutator.GetDebugTargetBot();
 	}
 
 	if(DebugTarget != None)

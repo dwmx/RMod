@@ -5,7 +5,7 @@
 //	Use mutate commands for debug testing:
 //	"mutate rbots"
 //==============================================================================
-class R_RBotsDebug extends Mutator config(RBotsDebug);
+class R_RBotsDebug extends RDebugTools.R_DBMutator config(RBotsDebug);
 
 const Utilities = Class'RBots.R_BotUtilities';
 const DebugLib = Class'RBots.R_RBots_DebugLibrary';
@@ -14,9 +14,6 @@ const CanvasLib = Class'RBots.R_RBots_CanvasLibrary';
 const LogCategory = 'Debug';
 const DebugRBotsCategory = 'RBots';
 
-var bool bDrawDebugVisualization;
-var bool bRegisteredHUDMutator;
-
 // Cached RBot system classes
 var R_RBotsServerActor RBots;
 var R_BotManager BotManager;
@@ -24,7 +21,6 @@ var R_DynamicMapData MapData;
 var R_NavMesh NavMesh;
 
 // Command manager
-var R_RBotsDebug_CommandManager CommandManager;
 const CommandNameSpace_RBots 			= 'RBots'; // Main debug commands and top level namespace
 const CommandManagerClass_RBots			= Class'RBots.R_RBotsDebug_CommandManager_Bot';
 
@@ -45,25 +41,6 @@ const CommandManagerClass_Player		= Class'RBots.R_RBotsDebug_CommandManager_Play
 
 const CommandNameSpace_BehaviorTree		= 'BehaviorTree';
 const CommandManagerClass_BehaviorTree	= Class'RBots.R_RBotsDebug_CommandManager_BehaviorTree';
-
-// String manager
-const StringManagerClass = Class'RBots.R_DBStringManager';
-var R_DBStringManager StringManager;
-
-// Debug views
-const MAX_DEBUG_VIEWS = 16;
-var R_RBotsDebug_View DebugViews[16]; // Must match MAX_DEBUG_VIEWS
-var config Class<R_RBotsDebug_View> DefaultViews[ArrayCount(DebugViews)];
-
-// Debug targeting
-//const PathBotClass = Class'RBots.R_RBotsDebug_PathBot';
-var R_Bot DebugTarget;
-
-simulated event PreBeginPlay()
-{
-	InitializeCommandManagers();
-	InitializeStringManager();
-}
 
 simulated function R_RBotsDebug_CommandManager CreateCommandManager(Class<R_RBotsDebug_CommandManager> CommandManagerClass, Name NameSpace)
 {
@@ -92,7 +69,7 @@ simulated function R_RBotsDebug_CommandManager CreateCommandManager(Class<R_RBot
 	return NewCommandManager;
 }
 
-simulated function InitializeCommandManagers()
+simulated function R_DBCommandManager InitializeCommandManagers()
 {
 	local R_RBotsDebug_CommandManager CommandManager_Main;
 	local R_RBotsDebug_CommandManager CommandManager_NavMesh;
@@ -117,85 +94,9 @@ simulated function InitializeCommandManagers()
 	CommandManager_Main.AddSubCommandManager(CommandManager_Player);
 	CommandManager_Main.AddSubCommandManager(CommandManager_BehaviorTree);
 
-	CommandManager = CommandManager_Main;
-
 	Utilities.Static.RLog("Initialized command manager", LogCategory);
-}
 
-simulated function InitializeStringManager()
-{
-	if(StringManager != None)
-	{
-		StringManager = None;
-	}
-
-	StringManager = new(None) StringManagerClass;
-	if(StringManager != None)
-	{
-		Utilities.Static.RLog("Initialized debug string manager from class" @ StringManagerClass, LogCategory);
-	}
-	else
-	{
-		Utilities.Static.RLog("Failed to initialized debug string manager from class" @ StringManagerClass, LogCategory);
-	}
-}
-
-simulated event BeginPlay()
-{
-	Super.BeginPlay();
-	bRegisteredHUDMutator = false;
-
-	EnableDefaultViews();
-
-	Utilities.Static.RLog("R_RBotsDebug debug view created and default views enabled", LogCategory);
-}
-
-simulated function RegisterHUDMutator()
-{
-	local HUD MyHUD;
-	local Pawn P;
-	local PlayerPawn PP;
-
-	if(bRegisteredHUDMutator)
-	{
-		return;
-	}
-
-	// Attach self to the first Pawn with a Viewport
-	for(P = Level.PawnList; P != None; P = P.NextPawn)
-	{
-		PP = PlayerPawn(P);
-		if(PP != None && PP.Player != None && Viewport(PP.Player) != None)
-		{
-			SetOwner(PP);
-		}
-	}
-
-	if(Owner == None)
-	{
-		Utilities.Static.RLog("Unable to attach RBotsDebug view, no owner", LogCategory);
-		bRegisteredHUDMutator = true;
-		return;
-	}
-
-	// Register
-	if((Level.NetMode == NM_Client && Owner != None && Owner.Role == ROLE_AutonomousProxy)
-	|| 	Level.NetMode == NM_Standalone
-	||	Level.NetMode == NM_ListenServer)
-	{
-		if(PlayerPawn(Owner) != None)
-        {
-            MyHUD = PlayerPawn(Owner).MyHUD;
-            if(MyHUD != None)
-            {
-                NextHUDMutator = MyHUD.HUDMutator;
-                MyHUD.HUDMutator = Self;
-                bHUDMutator = true;
-                bRegisteredHUDMutator = true;
-				Utilities.Static.RLog("Registered RBotsDebug hud mutator", LogCategory);
-            }
-        }
-	}
+	return CommandManager_Main;
 }
 
 final function R_RBotsServerActor GetRBotsServerActor()
@@ -276,284 +177,31 @@ function R_NavMeshActorTracker GetNavMeshActorTracker()
 	return None;
 }
 
-simulated function EnableDebugView(Class<R_RBotsDebug_View> DebugViewClass)
+simulated function PreDrawDebugViews(Canvas C, R_DBStringManager InStringManager)
 {
-	local int i;
-
-	if(DebugViewClass == None)
-	{
-		return;
-	}
-
-	// Ensure an instance of this view is not already enabled
-	for(i = 0; i < MAX_DEBUG_VIEWS; ++i)
-	{
-		if(DebugViews[i] != None && DebugViews[i].Class == DebugViewClass)
-		{
-			return;
-		}
-	}
-
-	for(i = 0; i < MAX_DEBUG_VIEWS; ++i)
-	{
-		if(DebugViews[i] == None)
-		{
-			break;
-		}
-	}
-
-	if(i == MAX_DEBUG_VIEWS)
-	{
-		Utilities.Static.RLog("Cannot load DebugView" @ DebugViewClass @ "-- too many enabled", LogCategory);
-		return;
-	}
-
-	DebugViews[i] = Spawn(DebugViewClass, Self);
-	if(DebugViews[i] != None)
-	{
-		DebugViews[i].DebugTargetChanged(None, DebugTarget);
-	}
-	Utilities.Static.RLog("Enabled RBots Debug View for class" @ DebugViewClass, LogCategory);
-
-	// Update default views for config
-	AddDefaultDebugView(DebugViewClass);
-}
-
-simulated event AddDefaultDebugView(Class<R_RBotsDebug_View> DebugViewClass)
-{
-	local int i;
-
-	for(i = 0; i < ArrayCount(DefaultViews); ++i)
-	{ // Make sure this view is not already in default views
-		if(DefaultViews[i] == DebugViewClass)
-		{
-			return;
-		}
-	}
-
-	for(i = 0; i < ArrayCount(DefaultViews); ++i)
-	{
-		if(DefaultViews[i] == None)
-		{
-			break;
-		}
-	}
-
-	if(i < ArrayCount(DefaultViews))
-	{
-		DefaultViews[i] = DebugViewClass;
-	}
-
-	SaveConfig();
-}
-
-simulated event DisableDebugView(Class<R_RBotsDebug_View> DebugViewClass)
-{
-	local int i;
-
-	if(DebugViewClass == None)
-	{
-		return;
-	}
-
-	for(i = 0; i < MAX_DEBUG_VIEWS; ++i)
-	{
-		if(DebugViews[i] != None && DebugViews[i].Class == DebugViewClass)
-		{
-			DebugViews[i].Destroy();
-			DebugViews[i] = None;
-			Utilities.Static.RLog("Disabled RBots Debug View for class" @ DebugViewClass, LogCategory);
-
-			RemoveDefaultDebugView(DebugViewClass);
-		}
-	}
-}
-
-simulated event RemoveDefaultDebugView(Class<R_RBotsDebug_View> DebugViewClass)
-{
-	local int i;
-
-	for(i = 0; i < ArrayCount(DefaultViews); ++i)
-	{
-		if(DefaultViews[i] == DebugViewClass)
-		{
-			DefaultViews[i] = None;
-			SaveConfig();
-			return;
-		}
-	}
-}
-
-simulated function R_Bot GetDebugTarget()
-{
-	return DebugTarget;
-}
-
-simulated function R_RBotsDebug_View GetDebugView(Class<R_RBotsDebug_View> DebugViewClass)
-{
-	local int i;
-
-	if(DebugViewClass == None)
-	{
-		return None;
-	}
-
-	for(i = 0; i < MAX_DEBUG_VIEWS; ++i)
-	{
-		if(DebugViews[i] != None && DebugViews[i].Class == DebugViewClass)
-		{
-			return DebugViews[i];
-		}
-	}
-
-	return None;
-}
-
-simulated function EnableDefaultViews()
-{
-	local int i;
-
-	for(i = 0; i < ArrayCount(DefaultViews); ++i)
-	{
-		if(DefaultViews[i] != None)
-		{
-			EnableDebugView(DefaultViews[i]);
-		}
-	}
-}
-
-simulated function bool IsViewEnabled(Class<R_RbotsDebug_View> DebugViewClass)
-{
-	local int i;
-
-	for(i = 0; i < MAX_DEBUG_VIEWS; ++i)
-	{
-		if(DebugViews[i] != None && DebugViews[i].Class == DebugViewClass)
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
-simulated function ToggleDebugView(Class<R_RbotsDebug_View> DebugViewClass)
-{
-	if(IsViewEnabled(DebugViewClass))
-	{
-		DisableDebugView(DebugViewClass);
-	}
-	else
-	{
-		EnableDebugView(DebugViewClass);
-	}
-}
-
-function SetTopLevelDebugVisualization(bool bNewTopLevelDebugVisualization)
-{
-	bDrawDebugVisualization = bNewTopLevelDebugVisualization;
-}
-
-function ToggleTopLevelDebugVisualization()
-{
-	SetTopLevelDebugVisualization(!bDrawDebugVisualization);
-}
-
-simulated event Tick(float DeltaSeconds)
-{
-	// Ensure HUD mutator is registered
-	RegisterHUDMutator();
-
-	// Validate DebugTarget reference
-	if(DebugTarget != None)
-	{
-		if(!Utilities.Static.IsValidActor(DebugTarget))
-		{
-			SetDebugTarget(None);
-		}
-	}	
-}
-
-simulated event PostRender(Canvas C)
-{
-	local int i;
 	local R_RBotsServerActor LocalRBots;
-
-	if(!bDrawDebugVisualization)
-	{
-		return;
-	}
-
-	// Setup debug draw managers
-	StringManager.Clear();
 
 	// Add debug strings
 	LocalRBots = GetRBotsServerActor();
 	if(LocalRBots != None)
 	{
-		StringManager.AddClass(DebugRBotsCategory, "LoadedMapDataClass", LocalRBots.LoadedMapDataClass);
+		InStringManager.AddClass(DebugRBotsCategory, "LoadedMapDataClass", LocalRBots.LoadedMapDataClass);
 	}
 	else
 	{
-		StringManager.AddWarning(DebugRBotsCategory, "Invalid RBots reference");
+		InStringManager.AddWarning(DebugRBotsCategory, "Invalid RBots reference");
 	}
 
-	StringManager.AddActor(DebugRBotsCategory, "DebugTarget", DebugTarget);
-
-	for(i = 0; i < MAX_DEBUG_VIEWS; ++i)
-	{
-		if(DebugViews[i] != None)
-		{
-			DebugViews[i].DrawDebugView(C, StringManager);
-		}
-	}
-
-	StringManager.DrawStringManager(C);
+	InStringManager.AddActor(DebugRBotsCategory, "DebugTarget", DebugTarget);
 }
 
-function Mutate(string MutateString, PlayerPawn Sender)
+function R_Bot GetDebugTargetBot()
 {
-	if(CommandManager != None)
-	{
-		if(CommandManager.ReceiveCommand(MutateString, Self, Sender))
-		{
-			return;
-		}
-	}
-
-	if(NextMutator != None)
-	{
-		NextMutator.Mutate(MutateString, Sender);
-	}
-}
-
-function SetDebugTarget(R_Bot NewDebugTarget)
-{
-	local R_Bot OldDebugTarget;
-	local int i;
-
-	if(Utilities.Static.IsValidActor(DebugTarget))
-	{
-		// Forget about old debug target here
-	}
-
-	OldDebugTarget = DebugTarget;
-	DebugTarget = NewDebugTarget;
-
-	for(i = 0; i < MAX_DEBUG_VIEWS; ++i)
-	{
-		if(Utilities.Static.IsValidActor(DebugViews[i]))
-		{
-			DebugViews[i].DebugTargetChanged(OldDebugTarget, DebugTarget);
-		}
-	}
-
-	Utilities.Static.RLog("RBotsDebug DebugTarget updated to" @ DebugTarget, LogCategory);
+	return R_Bot(DebugTarget);
 }
 
 defaultproperties
 {
-	bDrawDebugVisualization=true
 	// Leave all of these here -- default views will fail to load them from config at startup
 	// if these are not in defaultproperties
 	DefaultViews(0)=Class'RBots.R_RBotsDebug_View_NavMesh'

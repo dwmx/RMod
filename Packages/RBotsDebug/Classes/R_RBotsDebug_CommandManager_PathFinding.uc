@@ -23,7 +23,7 @@ function RegisterCommandList()
 	RegisterCommand(Command_BoundaryPushDirs);
 }
 
-function bool TryHandleCommand(String CommandString, R_RBotsDebug DebugMutator, PlayerPawn Sender)
+function bool TryHandleRBotsCommand(String CommandString, R_RBotsDebug DebugMutator, PlayerPawn Sender)
 {
 	switch(CommandString)
 	{
