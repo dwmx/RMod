@@ -4,9 +4,6 @@
 //==============================================================================
 class R_RBotsDebug_View_NavMesh extends R_RBotsDebug_View config(RBotsDebug);
 
-const Utilities = Class'RBots.R_BotUtilities';
-const CanvasLib = Class'RBots.R_RBots_CanvasLibrary';
-const DebugLib = Class'RBots.R_RBots_DebugLibrary';
 const NavLib = Class'RBots.R_NavLibrary';
 const NavTranslator = Class'RBots.R_RBotsDebug_NavObjectTranslator';
 

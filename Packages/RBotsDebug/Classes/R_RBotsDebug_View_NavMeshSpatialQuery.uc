@@ -5,11 +5,6 @@
 //==============================================================================
 class R_RBotsDebug_View_NavMeshSpatialQuery extends R_RBotsDebug_View config(RBotsDebug);
 
-const Utilities = Class'RBots.R_BotUtilities';
-const CanvasLib = Class'RBots.R_RBots_CanvasLibrary';
-const DebugLib = Class'RBots.R_RBots_DebugLibrary';
-const BaseCanvasLib = Class'RBase.R_ACanvasLibrary';
-
 const DebugCategory = 'SpatialQueryGrid';
 
 // Return values copied from NavMeshSpatialQuery_GridCache

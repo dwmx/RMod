@@ -4,9 +4,6 @@
 //==============================================================================
 class R_RbotsDebug_View_PathFinding extends R_RbotsDebug_View config(RBotsDebug);
 
-const Utilities = Class'RBots.R_BotUtilities';
-const DebugLib = Class'RBots.R_RBots_DebugLibrary';
-const CanvasLib = Class'RBots.R_RBots_CanvasLibrary';
 const DebugPathFindingCategory = 'PathFinding';
 const DebugPolyGroupPathFindCategory = 'PathFindingPolyGroups';
 

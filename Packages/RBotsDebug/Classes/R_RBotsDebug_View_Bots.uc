@@ -4,9 +4,6 @@
 //==============================================================================
 class R_RbotsDebug_View_Bots extends R_RbotsDebug_View;
 
-const Utilities = Class'RBots.R_BotUtilities';
-const CanvasLib = Class'RBots.R_RBots_CanvasLibrary';
-const CanvasBaseLib = Class'RBase.R_ACanvasLibrary';
 const NavLib = Class'RBots.R_NavLibrary';
 
 const DebugRBotsCategory = 'DebugTarget';
@@ -101,7 +98,7 @@ simulated function DrawDebugTarget(Canvas C, R_DBStringManager StringManager, R_
 		PP = BotDebugTarget.GetOwnedPlayerPawn();
 		if(PP != None)
 		{
-			CanvasBaseLib.Static.DrawCylinderAxisAligned3D(
+			BaseCanvasLib.Static.DrawCylinderAxisAligned3D(
 				C,
 				PP.Location,
 				Vect(0,0,0),
@@ -172,7 +169,7 @@ function DrawDebugTarget_Perception_Combat(Canvas C, R_DBStringManager StringMan
 			case CombatState_VulnerableMoving:		Utilities.Static.ColorToFloats(PerceptionColor_VulnerableMoving, RGBCombatState[0], RGBCombatState[1], RGBCombatState[2]);		break;
 			case CombatState_VulnerableStationary:	Utilities.Static.ColorToFloats(PerceptionColor_VulnerableStationary, RGBCombatState[0], RGBCombatState[1], RGBCombatState[2]);	break;
 			}
-			CanvasBaseLib.Static.DrawCircle3D(C, PerceivedActor.Location, Vect(0.0,0.0,1.0), PerceivedActor.CollisionRadius, 32, RGBCombatState[0], RGBCombatState[1], RGBCombatState[2]);
+			BaseCanvasLib.Static.DrawCircle3D(C, PerceivedActor.Location, Vect(0.0,0.0,1.0), PerceivedActor.CollisionRadius, 32, RGBCombatState[0], RGBCombatState[1], RGBCombatState[2]);
 		}
 	}
 }
@@ -207,7 +204,7 @@ function DrawDebugTarget_Perception_Inventories(Canvas C, R_DBStringManager Stri
 			Inv = BotPerception.GetPerceivedInventory(i);
 			if(Inv != None)
 			{
-				CanvasBaseLib.Static.DrawCylinderAxisAligned3D(C, Inv.Location, Vect(0,0,0), Inv.CollisionRadius, Inv.CollisionHeight * 2.0, 32, 1.0, 1.0, 0.0);
+				BaseCanvasLib.Static.DrawCylinderAxisAligned3D(C, Inv.Location, Vect(0,0,0), Inv.CollisionRadius, Inv.CollisionHeight * 2.0, 32, 1.0, 1.0, 0.0);
 				CanvasLib.Static.DrawLine3D(C, BotLocation, Inv.Location, 1.0, 1.0, 0.0);
 			}
 		}

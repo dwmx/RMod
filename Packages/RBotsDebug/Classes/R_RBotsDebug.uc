@@ -8,6 +8,9 @@
 class R_RBotsDebug extends Mutator config(RBotsDebug);
 
 const Utilities = Class'RBots.R_BotUtilities';
+const DebugLib = Class'RBots.R_RBots_DebugLibrary';
+const CanvasLib = Class'RBots.R_RBots_CanvasLibrary';
+
 const LogCategory = 'Debug';
 const DebugRBotsCategory = 'RBots';
 

@@ -4,10 +4,6 @@
 //==============================================================================
 class R_RBotsDebug_View_BehaviorTree extends R_RBotsDebug_View config(RBotsDebug);
 
-const Utilities = Class'RBots.R_BotUtilities';
-const DebugLib = Class'RBots.R_RBots_DebugLibrary';
-const CanvasLib = Class'RBots.R_RBots_CanvasLibrary';
-
 const StringCategoryBT = 'BehaviorTree';
 const StringCategoryBB = 'BlackBoard';
 

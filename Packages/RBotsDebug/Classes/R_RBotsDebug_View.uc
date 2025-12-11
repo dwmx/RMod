@@ -6,6 +6,11 @@
 //==============================================================================
 class R_RBotsDebug_View extends RBotsDebug.R_DBView abstract;
 
+const Utilities = Class'RBots.R_BotUtilities';
+const DebugLib = Class'RBots.R_RBots_DebugLibrary';
+const CanvasLib = Class'RBots.R_RBots_CanvasLibrary';
+const BaseCanvasLib = Class'RBase.R_ACanvasLibrary';
+
 function R_RBotsDebug GetRBotsDebugMutator()
 {
 	return R_RBotsDebug(Owner);
