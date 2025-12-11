@@ -2,6 +2,7 @@ mod_folder: "../Packages"
 rune_install: "../Rune"
 packages:
   - RBase
+  - RDebugTools
   - RGameUI
   - RMod
   - RBots
@@ -9,3 +10,4 @@ packages:
   #- RMod_FreezeTag
   - RMod_TowerDefense
   - Spells
+  - RArpgDebug

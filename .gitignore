@@ -3,3 +3,6 @@
 
 # Common symlink directories
 Rune
+
+# Generated files
+Build/RModBuild.ini
