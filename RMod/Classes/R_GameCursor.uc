@@ -7,6 +7,7 @@ class R_GameCursor extends Object;
 
 // Libraries
 const MathLibrary = Class'RBase.R_AMathLibrary';
+const GeomLibrary = Class'RBase.R_AGeometryLibrary';
 const CanvasLibrary = Class'RBase.R_ACanvasLibrary';
 const PlayerLibrary = Class'RBase.R_APlayerLibrary';
 
@@ -19,9 +20,29 @@ var private bool bRecenterGameCursor;
 var private bool bCursorEnabled;
 var private bool bConsumeMouseInput;
 
+var private bool bDragSelectionEnabled;
 var private bool bIsDragSelecting;
 var private Vector DragSelectionStart;
 var private Vector DragSelectionEnd;
+
+/**
+*	SetDragSelectionEnabled
+*	Enable / Disable the ability for this GameCursor to draw a selection box
+*	by click + dragging
+*/
+function SetDragSelectionEnabled(bool bNewDragSelectionEnabled)
+{
+	if(bDragSelectionEnabled == bNewDragSelectionEnabled)
+	{
+		return;
+	}
+
+	bDragSelectionEnabled = bNewDragSelectionEnabled;
+
+	bIsDragSelecting = false;
+	DragSelectionStart = Vect(0,0,0);
+	DragSelectionEnd = Vect(0,0,0);
+}
 
 /**
 *   PlayerInputMouseMove
@@ -33,7 +54,7 @@ function PlayerInputMouseMove(float MoveX, float MoveY, float DeltaSeconds)
     CursorX += MoveX * DeltaSeconds;
     CursorY += MoveY * DeltaSeconds * -1.0;
     
-    if(bIsDragSelecting)
+    if(bDragSelectionEnabled && bIsDragSelecting)
     {
         DragSelectionEnd.X = CursorX;
         DragSelectionEnd.Y = CursorY;
@@ -101,6 +122,54 @@ function RecenterGameCursor()
 }
 
 /**
+*	PlaneIntersectUnderCursor
+*	Pure world-space plane intersection for this cursor's screen-space location
+*/
+function bool PlaneIntersectUnderCursor(
+	Vector PlaneOrigin,
+	Vector PlaneNormal,
+	out Vector OutIntersectLocation)
+{
+	local float ScreenWidth, ScreenHeight;
+	local Vector WorldRay;
+    local Vector ScreenPosition;
+	local Vector IntersectLocation;
+
+	if(CursorOwner == None)
+	{
+		OutIntersectLocation = Vect(0,0,0);
+		return false;
+	}
+
+	PlayerLibrary.Static.GetScreenResolutionFromPlayerPawnInPixels(CursorOwner, ScreenWidth, ScreenHeight);
+
+	// Get screen space -> world space ray
+    ScreenPosition.X = CursorX;
+    ScreenPosition.Y = CursorY;
+    WorldRay = MathLibrary.Static.GetWorldRayFromScreen(
+        ScreenPosition,
+        ScreenWidth, ScreenHeight,
+        CursorOwner.FOVAngle,
+        CursorOwner.SavedCameraLoc,
+        CursorOwner.SavedCameraRot);
+
+	// Intersect
+	if(!GeomLibrary.Static.RayIntersectPlane(
+		CursorOwner.SavedCameraLoc,
+		WorldRay,
+		PlaneOrigin,
+		PlaneNormal,
+		IntersectLocation))
+	{
+		OutIntersectLocation = Vect(0,0,0);
+		return false;
+	}
+	
+	OutIntersectLocation = IntersectLocation;
+	return true;
+}
+
+/**
 *   TraceUnderCursor
 *   Performs a trace from screen space to world space for this cursor screen location
 */
@@ -162,6 +231,10 @@ function Actor TraceUnderCursor(
 
 function BeginDragSelection()
 {
+	if(!bDragSelectionEnabled)
+	{
+		return;
+	}
     bIsDragSelecting = true;
     DragSelectionStart.X = CursorX;
     DragSelectionStart.Y = CursorY;
@@ -169,6 +242,10 @@ function BeginDragSelection()
 
 function EndDragSelection()
 {
+	if(!bDragSelectionEnabled)
+	{
+		return;
+	}
     bIsDragSelecting = false;
 }
 
@@ -179,6 +256,13 @@ function bool IsDragSelecting()
 
 function GetDragSelectionExtents(out Vector Extent1, out Vector Extent2)
 {
+	if(!bDragSelectionEnabled)
+	{
+		Extent1 = Vect(0,0,0);
+		Extent2 = Vect(0,0,0);
+		return;
+	}
+
     Extent1 = DragSelectionStart;
     Extent2 = DragSelectionEnd;
 }
@@ -210,7 +294,7 @@ function DrawGameCursor(Canvas C)
     CursorY = FClamp(CursorY, 0.0, C.ClipY);
     
     // If drag selecting, draw selection box
-    if(bIsDragSelecting)
+    if(bDragSelectionEnabled && bIsDragSelecting)
     {
         CanvasLibrary.Static.DrawBoxOutline(
             C, DragSelectionStart, DragSelectionEnd, 2.0, 1.0, 1.0, 1.0, 0.5);
@@ -231,5 +315,6 @@ defaultproperties
     CursorTexture=Texture'UWindow.Icons.MouseCursor'
     bConsumeMouseInput=True
     bRecenterGameCursor=True
+	bDragSelectionEnabled=True
     bIsDragSelecting=False
 }
