@@ -1,1 +1,0 @@
-class R_UI_InWorldRootWindow extends UWindowRootWindow;

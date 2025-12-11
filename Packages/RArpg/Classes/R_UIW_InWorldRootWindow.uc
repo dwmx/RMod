@@ -1,0 +1,1 @@
+class R_UIW_InWorldRootWindow extends R_UIW_RootWindow;
