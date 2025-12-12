@@ -46,6 +46,10 @@ replication
 	reliable if(Role == ROLE_Authority)
 		CameraDist,
 		CameraMode;
+
+	// Functions client can call
+	reliable if(Role == ROLE_AutonomousProxy)
+		ServerSelectNextCameraMode;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -124,6 +128,11 @@ function Input_Use()
 }
 
 function SelectNextCameraMode()
+{
+	ServerSelectNextCameraMode();
+}
+
+function ServerSelectNextCameraMode()
 {
 	switch(CameraMode)
 	{
