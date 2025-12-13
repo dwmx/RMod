@@ -26,3 +26,8 @@ event Actor SpawnNotification(Actor A)
 
     return A;
 }
+
+defaultproperties
+{
+    RemoteRole=ROLE_None
+}

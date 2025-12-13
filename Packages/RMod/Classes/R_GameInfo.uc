@@ -121,7 +121,7 @@ event PostBeginPlay()
     local R_GameReplicationInfo RGRI;
     
 	Super.PostBeginPlay();
-	
+
 	// Actors spawned after this point are not a part of the level's original
 	// state, so they won't be respawned on level reset
 	bMarkSpawnedActorsAsNativeToLevel = false;
