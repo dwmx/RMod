@@ -52,6 +52,8 @@ var config int DefaultPlayerMaxHealth;
 var config int DefaultPlayerRunePower;
 var config int DefaultPlayerMaxRunePower;
 
+var R_ActorSubstitutionSpawnNotify ActorSubstitutionSpawnNotify;
+
 event Tick(float DeltaSeconds)
 {
 	local String CurrentGamePassword;
@@ -101,6 +103,12 @@ function PlayerSetTimeLimit(PlayerPawn P, int DurationMinutes)
 	BroadcastMessage("TimeLimit has been set to " $ DurationMinutes $ " minutes.");
 }
 
+event PreBeginPlay()
+{
+    SpawnActorSubstitutionSpawnNotify();
+    Super.PreBeginPlay();
+}
+
 event BeginPlay()
 {
     Super.BeginPlay();
@@ -135,6 +143,11 @@ event PostBeginPlay()
     {
         RGRI.bLoadoutsEnabled = bLoadoutsEnabled;
     }
+}
+
+function SpawnActorSubstitutionSpawnNotify()
+{
+    ActorSubstitutionSpawnNotify = Spawn(Class'RMod.R_ActorSubstitutionSpawnNotify');
 }
 
 function SpawnLoadoutOptionReplicationInfo()
@@ -764,9 +777,14 @@ event bool IsRelevant(Actor A)
         if(bRemoveNativeFoods && Food(A) != None)       { return false; }
     }
 
-    if(ActorSubstitutionClass != None)
+    // When the ActorSubstitutionSpawnNotify is active, it will handle replacements
+    // Otherwise, GameInfo handles replacements (always at startup)
+    if(ActorSubstitutionSpawnNotify == None)
     {
-        A = ActorSubstitutionClass.Static.PerformActorSubstitution(Self, A);
+        if(ActorSubstitutionClass != None)
+        {
+            A = ActorSubstitutionClass.Static.PerformActorSubstitution(Self, A, true);
+        }
     }
 
 	if(!Super.IsRelevant(A))

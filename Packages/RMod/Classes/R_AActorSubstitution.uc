@@ -66,7 +66,7 @@ static function Class<Actor> GetActorSubstitutionClass(Class<Actor> InClass)
 *   PerformActorSubstitution
 *   Called by R_GameInfo.IsRelevant in order to substitute actors at spawn time.
 */
-static function Actor PerformActorSubstitution(Actor WorldContextActor, Actor InActor)
+static function Actor PerformActorSubstitution(Actor WorldContextActor, Actor InActor, optional bool bLogSubstitution)
 {
     local String LogMessage;
     local Class<Actor> SubstitutionClass;
@@ -85,21 +85,9 @@ static function Actor PerformActorSubstitution(Actor WorldContextActor, Actor In
     }
 
     // Log
-    LogMessage = "Substituting" @ SubstitutionClass @ "in place of" @ InActor.Class;
-    if(Default.UtilitiesClass != None)
+    if(bLogSubstitution)
     {
-        Default.UtilitiesClass.Static.RModLog(LogMessage);
-    }
-    else
-    {
-        Log(LogMessage);
-    }
-
-    // Replace
-    TempActor = WorldContextActor.Spawn(SubstitutionClass,,,InActor.Location, InActor.Rotation);
-    if(TempActor == None)
-    {
-        LogMessage = "Substitution failed for" @ SubstitutionClass;
+        LogMessage = "Substituting" @ SubstitutionClass @ "in place of" @ InActor.Class;
         if(Default.UtilitiesClass != None)
         {
             Default.UtilitiesClass.Static.RModLog(LogMessage);
@@ -107,6 +95,24 @@ static function Actor PerformActorSubstitution(Actor WorldContextActor, Actor In
         else
         {
             Log(LogMessage);
+        }
+    }
+
+    // Replace
+    TempActor = WorldContextActor.Spawn(SubstitutionClass,,,InActor.Location, InActor.Rotation);
+    if(TempActor == None)
+    {
+        if(bLogSubstitution)
+        {
+            LogMessage = "Substitution failed for" @ SubstitutionClass;
+            if(Default.UtilitiesClass != None)
+            {
+                Default.UtilitiesClass.Static.RModLog(LogMessage);
+            }
+            else
+            {
+                Log(LogMessage);
+            }
         }
         return InActor;
     }
