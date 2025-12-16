@@ -5,6 +5,8 @@
 //==============================================================================
 class R_ArpgDBView_Main extends R_ArpgDBView;
 
+const CanvasLib = Class'RBase.R_ACanvasLibrary';
+
 const DebugCategory = 'RArpgDebug';
 
 simulated function DrawDebugView(Canvas C, R_DBStringManager StringManager)
@@ -19,10 +21,12 @@ simulated function DrawDebugView(Canvas C, R_DBStringManager StringManager)
 		return;
 	}
 
-	DrawDebugGameInfo(C, StringManager, DBM);
+	DrawTopLevelStrings(C, StringManager, DBM);
+
+	DrawDebugTarget(C, StringManager, DBM);
 }
 
-simulated function DrawDebugGameInfo(Canvas C, R_DBStringManager StringManager, R_ArpgDBMutator DBM)
+simulated function DrawTopLevelStrings(Canvas C, R_DBStringManager StringManager, R_ArpgDBMutator DBM)
 {
 	local GameInfo GI;
 	local Class GIClass;
@@ -47,5 +51,28 @@ simulated function DrawDebugGameInfo(Canvas C, R_DBStringManager StringManager, 
 		StringManager.AddClass(DebugCategory, "Game Info Class", GIClass);
 		StringManager.AddActor(DebugCategory, "Game Info Actor", GI);
 		StringManager.AddActor(DebugCategory, "Debug Target", DBTarget);
+	}
+}
+
+simulated function DrawDebugTarget(Canvas C, R_DBStringManager StringManager, R_ArpgDBMutator DBM)
+{
+	local Actor DebugTarget;
+
+	if(DBM != None)
+	{
+		DebugTarget = DBM.GetDebugTarget();
+		if(DebugTarget == None)
+		{
+			return;
+		}
+
+		CanvasLib.Static.DrawCylinderAxisAligned3D(
+			C,
+			DebugTarget.Location,
+			Vect(0,0,0),
+			DebugTarget.CollisionRadius,
+			DebugTarget.CollisionHeight * 2.0,
+			16,
+			1.0, 1.0, 0.0);
 	}
 }
