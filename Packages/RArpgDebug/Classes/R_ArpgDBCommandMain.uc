@@ -1,3 +1,7 @@
+//==============================================================================
+//	R_ArpgDBCommandMain
+//	Top level command manager for Arpg debug package
+//==============================================================================
 class R_ArpgDBCommandMain extends R_ArpgDBCommandManager;
 
 const Command_NextTarget = "NextTarget";
@@ -17,10 +21,13 @@ function bool TryHandleArpgCommand(String CommandString, R_ArpgDBMutator DebugMu
 	return false;
 }
 
+//------------------------------------------------------------------------------
+//	Command handlers
+
 function HandleCommand_NextTarget(R_ArpgDBMutator DebugMutator, PlayerPawn Sender)
 {
-	if(Sender != None)
+	if(DebugMutator != None)
 	{
-		Sender.ClientMessage("Next target stub");
+		DebugMutator.SelectNextDebugTarget();
 	}
 }

@@ -8,6 +8,34 @@ class R_ArpgDBMutator extends RDebugTools.R_DBMutator config(RArpgDebug);
 const CMClass_Main = Class'RArpgDebug.R_ArpgDBCommandMain';
 const CMNameSpace_Main = 'rarpg';
 
+simulated function SelectNextDebugTarget()
+{
+	local Pawn P;
+	local Actor LocalDebugTarget;
+	
+	LocalDebugTarget = GetDebugTarget();
+	if(LocalDebugTarget != None)
+	{
+		P = Pawn(LocalDebugTarget);
+	}
+
+	if(P == None || P.NextPawn == None)
+	{
+		P = Level.PawnList;
+	}
+	else
+	{
+		P = P.NextPawn;
+	}
+
+	while(P != None && P.NextPawn != None && R_ArpgRunePlayer(P) == None)
+	{
+		P = P.NextPawn;
+	}
+
+	SetDebugTarget(P);
+}
+
 simulated function R_DBCommandManager InitializeCommandManagers()
 {
 	local R_DBCommandManager CM_Main;

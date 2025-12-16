@@ -26,6 +26,7 @@ simulated function DrawDebugGameInfo(Canvas C, R_DBStringManager StringManager, 
 {
 	local GameInfo GI;
 	local Class GIClass;
+	local Actor DBTarget;
 
 	GI = None;
 	GIClass = None;
@@ -37,11 +38,14 @@ simulated function DrawDebugGameInfo(Canvas C, R_DBStringManager StringManager, 
 		{
 			GIClass = GI.Class;
 		}
+
+		DBTarget = DBM.GetDebugTarget();
 	}
 
 	if(StringManager != None)
 	{
 		StringManager.AddClass(DebugCategory, "Game Info Class", GIClass);
 		StringManager.AddActor(DebugCategory, "Game Info Actor", GI);
+		StringManager.AddActor(DebugCategory, "Debug Target", DBTarget);
 	}
 }
