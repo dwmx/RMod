@@ -2,7 +2,7 @@
 //	R_ArpgDBView_Sessions
 //	Draws session related info for the currently selected DebugTarget
 //==============================================================================
-class R_ArpgDBView_Sessions extends R_ArpgDBView;
+class R_ArpgDBView_Sessions extends R_ArpgDBView config(RArpgDebug);
 
 const DebugCategory = 'Sessions';
 

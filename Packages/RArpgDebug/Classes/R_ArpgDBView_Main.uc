@@ -3,7 +3,7 @@
 //	Top level debug view class for Arpg debug mutator
 //	This generally should always be enabled -- it just shows base level info
 //==============================================================================
-class R_ArpgDBView_Main extends R_ArpgDBView;
+class R_ArpgDBView_Main extends R_ArpgDBView config(RArpgDebug);
 
 const DebugCategory = 'RArpgDebug';
 

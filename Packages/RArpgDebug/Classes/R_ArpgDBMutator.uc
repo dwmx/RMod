@@ -8,6 +8,11 @@ class R_ArpgDBMutator extends RDebugTools.R_DBMutator config(RArpgDebug);
 const CMClass_Main = Class'RArpgDebug.R_ArpgDBCommands_Main';
 const CMNameSpace_Main = 'rarpg';
 
+const CMClass_Sessions = Class'RArpgDebug.R_ArpgDBCommands_Sessions';
+const CMNameSpace_Sessions = 'sessions';
+
+//------------------------------------------------------------------------------
+
 simulated function SelectNextDebugTarget()
 {
 	local Pawn P;
@@ -39,8 +44,12 @@ simulated function SelectNextDebugTarget()
 simulated function R_DBCommandManager InitializeCommandManagers()
 {
 	local R_DBCommandManager CM_Main;
+	local R_DBCommandManager CM_Sessions;
 
 	CM_Main = CreateCommandManager(CMClass_Main, CMNameSpace_Main);
+	CM_Sessions = CreateCommandManager(CMClass_Sessions, CMNameSpace_Sessions);
+
+	CM_Main.AddSubCommandManager(CM_Sessions);
 
 	return CM_Main;
 }
