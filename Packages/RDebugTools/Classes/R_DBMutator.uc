@@ -46,6 +46,33 @@ simulated final function BaseInitializeCommandManagers()
 simulated function R_DBCommandManager InitializeCommandManagers()
 {}
 
+simulated function R_DBCommandManager CreateCommandManager(Class<R_DBCommandManager> CommandManagerClass, Name NameSpace)
+{
+	local R_DBCommandManager NewCommandManager;
+
+	if(CommandManagerClass == None)
+	{
+		Utilities.Static.RLog("CreateCommandManager failed -- CommandManagerClass == None", LogCategory, LogSubCategory);
+		return None;
+	}
+
+	if(NameSpace == '')
+	{
+		Utilities.Static.RLog("CreateCommandManager failed -- NameSpace cannot be empty", LogCategory, LogSubCategory);
+		return None;
+	}
+
+	NewCommandManager = new(None) CommandManagerClass;
+	if(NewCommandManager == None)
+	{
+		Utilities.Static.RLog("CreateCommandManager failed -- Instantiation failed", LogCategory, LogSubCategory);
+		return None;
+	}
+
+	NewCommandManager.Initialize(NameSpace);
+	return NewCommandManager;
+}
+
 simulated function InitializeStringManager()
 {
 	StringManager = new(None) StringManagerClass;

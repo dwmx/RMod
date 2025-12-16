@@ -42,6 +42,7 @@ const CommandManagerClass_Player		= Class'RBots.R_RBotsDebug_CommandManager_Play
 const CommandNameSpace_BehaviorTree		= 'BehaviorTree';
 const CommandManagerClass_BehaviorTree	= Class'RBots.R_RBotsDebug_CommandManager_BehaviorTree';
 
+/*
 simulated function R_RBotsDebug_CommandManager CreateCommandManager(Class<R_RBotsDebug_CommandManager> CommandManagerClass, Name NameSpace)
 {
 	local R_RBotsDebug_CommandManager NewCommandManager;
@@ -68,6 +69,7 @@ simulated function R_RBotsDebug_CommandManager CreateCommandManager(Class<R_RBot
 	NewCommandManager.Initialize(NameSpace);
 	return NewCommandManager;
 }
+	*/
 
 simulated function R_DBCommandManager InitializeCommandManagers()
 {
@@ -79,13 +81,13 @@ simulated function R_DBCommandManager InitializeCommandManagers()
 	local R_RBotsDebug_CommandManager CommandManager_Player;
 	local R_RBotsDebug_CommandManager CommandManager_BehaviorTree;
 
-	CommandManager_Main = CreateCommandManager(CommandManagerClass_RBots, CommandNameSpace_RBots);
-	CommandManager_NavMesh = CreateCommandManager(CommandManagerClass_NavMesh, CommandNameSpace_NavMesh);
-	CommandManager_NavQuery = CreateCommandManager(CommandManagerClass_NavQuery, CommandNameSpace_NavQuery);
-	CommandManager_PathFinding = CreateCommandManager(CommandManagerClass_PathFinding, CommandNameSpace_PathFinding);
-	CommandManager_Target = CreateCommandManager(CommandManagerClass_Target, CommandNameSpace_Target);
-	CommandManager_Player = CreateCommandManager(CommandManagerClass_Player, CommandNameSpace_Player);
-	CommandManager_BehaviorTree = CreateCommandManager(CommandManagerClass_BehaviorTree, CommandNameSpace_BehaviorTree);
+	CommandManager_Main 		= R_RBotsDebug_CommandManager(CreateCommandManager(CommandManagerClass_RBots, CommandNameSpace_RBots));
+	CommandManager_NavMesh 		= R_RBotsDebug_CommandManager(CreateCommandManager(CommandManagerClass_NavMesh, CommandNameSpace_NavMesh));
+	CommandManager_NavQuery 	= R_RBotsDebug_CommandManager(CreateCommandManager(CommandManagerClass_NavQuery, CommandNameSpace_NavQuery));
+	CommandManager_PathFinding 	= R_RBotsDebug_CommandManager(CreateCommandManager(CommandManagerClass_PathFinding, CommandNameSpace_PathFinding));
+	CommandManager_Target 		= R_RBotsDebug_CommandManager(CreateCommandManager(CommandManagerClass_Target, CommandNameSpace_Target));
+	CommandManager_Player 		= R_RBotsDebug_CommandManager(CreateCommandManager(CommandManagerClass_Player, CommandNameSpace_Player));
+	CommandManager_BehaviorTree = R_RBotsDebug_CommandManager(CreateCommandManager(CommandManagerClass_BehaviorTree, CommandNameSpace_BehaviorTree));
 
 	CommandManager_Main.AddSubCommandManager(CommandManager_NavMesh);
 	CommandManager_Main.AddSubCommandManager(CommandManager_NavQuery);
