@@ -5,7 +5,7 @@
 class R_ArpgDBMutator extends RDebugTools.R_DBMutator config(RArpgDebug);
 
 // Command managers
-const CMClass_Main = Class'RArpgDebug.R_ArpgDBCommandMain';
+const CMClass_Main = Class'RArpgDebug.R_ArpgDBCommands_Main';
 const CMNameSpace_Main = 'rarpg';
 
 simulated function SelectNextDebugTarget()
@@ -47,5 +47,6 @@ simulated function R_DBCommandManager InitializeCommandManagers()
 
 defaultproperties
 {
-	DefaultViews=Class'RArpgDebug.R_ArpgDBView_Main'
+	DefaultViews(0)=Class'RArpgDebug.R_ArpgDBView_Main'
+	DefaultViews(1)=Class'RArpgDebug.R_ArpgDBView_Sessions'
 }

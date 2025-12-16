@@ -5,8 +5,6 @@
 //==============================================================================
 class R_ArpgDBView_Main extends R_ArpgDBView;
 
-const CanvasLib = Class'RBase.R_ACanvasLibrary';
-
 const DebugCategory = 'RArpgDebug';
 
 simulated function DrawDebugView(Canvas C, R_DBStringManager StringManager)

@@ -1,8 +1,8 @@
 //==============================================================================
-//	R_ArpgDBCommandMain
+//	R_ArpgDBCommands_Main
 //	Top level command manager for Arpg debug package
 //==============================================================================
-class R_ArpgDBCommandMain extends R_ArpgDBCommandManager;
+class R_ArpgDBCommands_Main extends R_ArpgDBCommandManager;
 
 const Command_NextTarget = "NextTarget";
 
