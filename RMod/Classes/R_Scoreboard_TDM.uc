@@ -534,7 +534,7 @@ PlayerCount=0;
 
 	// Draw bottom seperator
 	Canvas.StrLen("TEST", XL, YL);
-	YOffset += YL;
+	YOffset += Y*1.25L;
 	Canvas.SetPos(0, YOffset);
 
 	// Trailer

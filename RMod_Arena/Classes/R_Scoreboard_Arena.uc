@@ -53,7 +53,7 @@ function DrawTableHeadings(canvas Canvas)
 	Canvas.DrawColor = WhiteColor;
 	Canvas.SetPos(Canvas.ClipX*0.1, YOffset);
 	Canvas.DrawTile(Seperator, Canvas.ClipX*0.8, YL*0.5, 0, 0, Seperator.USize, Seperator.VSize);
-	YOffset += YL*0.75;
+	YOffset += YL*0.40;
 	Canvas.SetPos(Canvas.ClipX*0.1, YOffset);
 
 	Canvas.DrawColor = GoldColor;
@@ -89,11 +89,11 @@ function DrawTableHeadings(canvas Canvas)
 
 	// Draw seperator
 	Canvas.Style = ERenderStyle.STY_Normal;
-	YOffset += YL*2.25;
+	YOffset += YL*2.00;
 	Canvas.DrawColor = WhiteColor;
 	Canvas.SetPos(Canvas.ClipX*0.1, YOffset);
 	Canvas.DrawTile(Seperator, Canvas.ClipX*0.8, YL*0.5, 0, 0, Seperator.USize, Seperator.VSize);
-	YOffset += YL*0.75;
+	YOffset += YL*0.25;
 	Canvas.SetPos(Canvas.ClipX*0.1, YOffset);
 
 }
@@ -575,7 +575,7 @@ function DrawTrailer( canvas Canvas )
 
 	// Bottom seperator
 	YOffset = Canvas.CurY;
-	YOffset += YL*0.25;
+	YOffset += YL*0.75;
 	Canvas.SetPos(Canvas.ClipX*0.1, YOffset);
 	Canvas.DrawTile(Seperator, Canvas.ClipX*0.8, YL*0.5, 0, 0, Seperator.USize, Seperator.VSize);
 
