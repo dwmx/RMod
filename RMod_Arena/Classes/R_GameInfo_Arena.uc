@@ -2432,14 +2432,18 @@ simulated function Debug(Canvas canvas, int mode)
 	}
 }
 
-
 // <-- blitznuckel (C): additional functions for auto team sizing
-
-function int calcNewTeamSize(int numberOfPlayers){
-	if( (numberOfPlayers % 2)==1 )
-		return max(1,min(maxMapSupport,(numberOfPlayers-1)/2));
+function int calcNewTeamSize(int numberOfPlayers)
+{
+	if (numberOfPlayers > 1)
+		bTeamGame = True;
 	else
-		return max(1,min(maxMapSupport,numberOfPlayers/2));
+		bTeamGame = False;
+
+	if( (numberOfPlayers % 2) == 1 )
+		return max(1,min(maxMapSupport,(numberOfPlayers - 1) / 2));
+	else
+		return max(1,min(maxMapSupport,numberOfPlayers / 2));
 }
 
 function int countReadyPlayers(){
