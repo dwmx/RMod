@@ -116,7 +116,6 @@ auto state Pickup
 Begin: // Overridden to avoid overwriting subclass settings
 }
 
-
 state Drop
 {
     function BeginState()
@@ -134,13 +133,20 @@ state Drop
         //DesiredRotation.Yaw = Rotation.Yaw - Rand(2000) + 1000;     
     }
     
-    function EndState()
-    {
-        Super.EndState();
+	function EndState()
+	{
+		Super.EndState();
 
-        Blood = DetachActorFromJoint(JointNamed('offset'));
-        Blood.Destroy();        
-    }
+		if (Blood != None)
+		{
+			Blood = DetachActorFromJoint(JointNamed('offset'));
+
+			if (Blood != None)
+			{
+				Blood.Destroy();
+			}
+		}
+	}
     
     function InitializeStateRotation()
     {
