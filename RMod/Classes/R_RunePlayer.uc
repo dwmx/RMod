@@ -476,6 +476,35 @@ exec function Use()
 }
 
 /**
+*   Taunt (override)
+*	Overridden to prevent taunt manipulation
+*/
+exec function Taunt()
+{
+	local name Sequence;
+
+	if ( Physics != PHYS_Walking || VSize2D(Acceleration) > 0 ) // Disallow while falling or accelerating
+		return;
+
+	if( bShowMenu || (Level.Pauser != "") )
+		return;
+
+    // Don't allow the player to taunt if they are doing something like weapon switching or attacking
+	if ( AnimProxy != None && AnimProxy.GetStateName() != 'Idle' )
+		return;
+
+	if ( Weapon != None )
+		Sequence = Weapon.A_Taunt;
+	else
+		Sequence = 'S3_Taunt';
+
+	if ( Role < ROLE_Authority )
+		ServerTaunt(Sequence);
+	else
+		PlayUninterruptedAnim(Sequence);
+}
+
+/**
 *   Suicide (override)
 *   Overridden to prevent suicide-spam server attacks.
 *   TODO:
