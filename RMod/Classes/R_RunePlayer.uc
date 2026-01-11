@@ -491,7 +491,7 @@ exec function Suicide()
     }
 
     SuicideSpamParameters.TimeStamp = Level.TimeSeconds;
-    KilledBy( None );
+    KilledBy( Self );
 }
 
 /**
