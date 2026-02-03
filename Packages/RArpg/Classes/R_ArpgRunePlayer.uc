@@ -4,11 +4,18 @@
 //==============================================================================
 class R_ArpgRunePlayer extends R_RunePlayer;
 
+const CanvasLib = Class'RBase.R_ACanvasLibrary';
+const MathLib = Class'RBase.R_AMathLibrary';
+
 const InWorldUIClass = Class'RArpg.R_UI_InWorldUI';
 var private R_UI_GameUserInterface InWorldUI;
 
 const SessionEndPointClass = Class'RArpg.R_ArpgSessionEndPoint';
 var private R_ArpgSessionEndPoint SessionEndPoint;
+
+// The current selection target
+// i.e. what actor the mouse is currently hovered over
+var private Actor SelectionTarget;
 
 replication
 {
@@ -60,12 +67,41 @@ event Tick(float DeltaSeconds)
 {
 	Super.Tick(DeltaSeconds);
 
+	TickSelectionTarget(DeltaSeconds);
 	TickPawnRotation(DeltaSeconds);
 
 	if(InWorldUI != None)
 	{
 		InWorldUI.Tick(DeltaSeconds);
 	}
+}
+
+function TickSelectionTarget(float DeltaSeconds)
+{
+	local Actor A;
+	local Vector HitLocation, HitNormal;
+
+	A = GameCursor.TraceUnderCursor(10240.0, HitLocation, HitNormal, true);
+
+	if(SelectionTarget != A)
+	{
+		SetSelectionTarget(A);
+	}
+}
+
+function SetSelectionTarget(Actor NewSelectionTarget)
+{
+	if(SelectionTarget == NewSelectionTarget)
+	{
+		return;
+	}
+	SelectionTarget = NewSelectionTarget;
+	OnSelectionTargetChange(NewSelectionTarget);
+}
+
+function OnSelectionTargetChange(Actor NewSelectionTarget)
+{
+	Log("New selection target is" @ NewSelectionTarget);
 }
 
 function TickPawnRotation(float DeltaSeconds)
