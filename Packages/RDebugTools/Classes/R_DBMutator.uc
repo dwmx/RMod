@@ -406,6 +406,19 @@ function SetDebugTarget(Actor NewDebugTarget)
 	Utilities.Static.RLog("DBMutator DebugTarget updated to" @ DebugTarget, LogCategory, LogSubCategory);
 }
 
+function Rotator GetDebugViewRotation()
+{
+	local PlayerPawn PP;
+
+	PP = PlayerPawn(Owner);
+	if(PP != None)
+	{
+		return PP.ViewRotation;
+	}
+
+	return Rot(0,0,0);
+}
+
 defaultproperties
 {
 	bDrawDebugVisualization=true

@@ -60,6 +60,19 @@ simulated function R_DBCommandManager InitializeCommandManagers()
 	return CM_Main;
 }
 
+function Rotator GetDebugViewRotation()
+{
+	local R_ArpgRunePlayer PP;
+
+	PP = R_ArpgRunePlayer(Owner);
+	if(PP != None)
+	{
+		return PP.SavedCameraRot;
+	}
+
+	return Super.GetDebugViewRotation();
+}
+
 defaultproperties
 {
 	DefaultViews(0)=Class'RArpgDebug.R_ArpgDBView_Main'
