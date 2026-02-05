@@ -89,6 +89,11 @@ function TickSelectionTarget(float DeltaSeconds)
 	}
 }
 
+function Actor GetSelectionTarget()
+{
+	return SelectionTarget;
+}
+
 function SetSelectionTarget(Actor NewSelectionTarget)
 {
 	if(SelectionTarget == NewSelectionTarget)
