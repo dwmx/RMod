@@ -170,6 +170,43 @@ function bool PlaneIntersectUnderCursor(
 }
 
 /**
+*	GetTraceWorldRay
+*	Retrieve a origin-direction ray in world space for performing a world trace
+*/
+function bool GetTraceWorldRay(
+	out Vector OutTraceOrigin,
+	out Vector OutTraceDirection)
+{
+	local float ScreenWidth, ScreenHeight;
+	local Vector WorldRay;
+	local Vector ScreenPosition;
+
+	OutTraceDirection = Vect(0,0,0);
+	OutTraceDirection = Vect(0,0,0);
+
+	if(CursorOwner == None)
+    {
+        return false;
+    }
+
+	PlayerLibrary.Static.GetScreenResolutionFromPlayerPawnInPixels(CursorOwner, ScreenWidth, ScreenHeight);
+
+	// Get screen space -> world space ray
+    ScreenPosition.X = CursorX;
+    ScreenPosition.Y = CursorY;
+    WorldRay = MathLibrary.Static.GetWorldRayFromScreen(
+        ScreenPosition,
+        ScreenWidth, ScreenHeight,
+        CursorOwner.FOVAngle,
+        CursorOwner.SavedCameraLoc,
+        CursorOwner.SavedCameraRot);
+	
+	OutTraceOrigin = CursorOwner.SavedCameraLoc;
+	OutTraceDirection = WorldRay;
+	return true;
+}
+
+/**
 *   TraceUnderCursor
 *   Performs a trace from screen space to world space for this cursor screen location
 */
@@ -180,34 +217,21 @@ function Actor TraceUnderCursor(
     optional bool bTraceActors,
     optional Vector Extent)
 {
-    local float ScreenWidth, ScreenHeight;
-    local Vector WorldRay;
-    local Vector ScreenPosition;
+	local Vector TraceOrigin;
+	local Vector TraceDirection;
     local Actor HitActor;
-    
-    if(CursorOwner == None)
-    {
-        return None;
-    }
-    
-    PlayerLibrary.Static.GetScreenResolutionFromPlayerPawnInPixels(CursorOwner, ScreenWidth, ScreenHeight);
-    
-    // Get screen space -> world space ray
-    ScreenPosition.X = CursorX;
-    ScreenPosition.Y = CursorY;
-    WorldRay = MathLibrary.Static.GetWorldRayFromScreen(
-        ScreenPosition,
-        ScreenWidth, ScreenHeight,
-        CursorOwner.FOVAngle,
-        CursorOwner.SavedCameraLoc,
-        CursorOwner.SavedCameraRot);
-    
+
+	if(!GetTraceWorldRay(TraceOrigin, TraceDirection))
+	{
+		return None;
+	}
+
     // Trace from the screen space -> world space ray
     HitActor = CursorOwner.Trace(
         HitLocation,
         HitNormal,
-        WorldRay * TraceDistance,
-        CursorOwner.SavedCameraLoc,
+        TraceDirection * TraceDistance,
+        TraceOrigin,
         /*bTraceActors*/,
         Extent);
         
@@ -221,7 +245,7 @@ function Actor TraceUnderCursor(
             HitLocation,
             HitNormal,
             HitLocation,
-            CursorOwner.SavedCameraLoc,
+            TraceOrigin,
             true,
             Extent);
     }
