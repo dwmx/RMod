@@ -1374,6 +1374,12 @@ function ApplyRunePlayerSubClass_ExtractMenuName(Class<RunePlayer> SubClass)
         }
     }
 
+	if ( SubClass == class'RMod.R_ASpectatorMarker' )
+	{
+		MenuName = "Spectator";
+		return;
+	}
+
     MenuName = "RMod Rune Player";
 }
 //==============================================================================
