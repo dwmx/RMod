@@ -4063,6 +4063,17 @@ function ClientCloseLoadoutMenu()
 //  End Loadout Menu Functions
 //==============================================================================
 
+/**
+*   EncroachedBy (override)
+*   Overridden to prevent collision kills
+*/
+event EncroachedBy( actor Other )
+{
+	Velocity += 60 * VRand();
+	Velocity.Z = 180;
+	SetPhysics(PHYS_Falling);
+}
+
 defaultproperties
 {
     UtilitiesClass=Class'RMod.R_AUtilities'
