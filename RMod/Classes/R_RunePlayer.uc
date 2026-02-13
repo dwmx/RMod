@@ -282,6 +282,37 @@ function Touch(Actor Other)
 }
 
 /**
+*   DoJump (override)
+*   Overridden to prevent jump/duck manipulation
+*/
+function DoJump( optional float F )
+{   
+	if ( !bIsCrouching && bDuck == 0 && (Physics == PHYS_Walking) )
+	{
+		if ( Role == ROLE_Authority )
+			PlaySound(JumpSound, SLOT_Talk, 1.5, True, 1200, 1.0 );
+		if ( (Level.Game != None) && (Level.Game.Difficulty > 0) )
+			MakeNoise(0.1 * Level.Game.Difficulty);
+
+		PlayJump();
+
+		Velocity.Z = JumpZ;
+
+		if ( Base != None && Base != Level )
+		{
+			Velocity.Z += Base.Velocity.Z; 
+		}
+
+		SetPhysics(PHYS_Falling);
+
+		if ( bCountJumps && (Role == ROLE_Authority) && Inventory != None )
+		{
+			Inventory.OwnerJumped();
+		}
+	}
+}
+
+/**
 *   CanPickup (override)
 *   Overridden to prevent duplicate inventory pickups.
 */
