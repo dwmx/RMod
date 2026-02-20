@@ -11,7 +11,7 @@ static function String GetTestCollectionNameString()
 
 static function int GetNumTests()
 {
-	return 4;
+	return 5;
 }
 
 static function Class<R_ATest> GetTestAtIndex(int TestIndex)
@@ -22,6 +22,7 @@ static function Class<R_ATest> GetTestAtIndex(int TestIndex)
 	case 1:			return Class'RArpgTests.R_ArpgTest_ItemSlot_InitialState';
 	case 2:			return Class'RArpgTests.R_ArpgTest_ItemSlot_AddItem';
 	case 3:			return Class'RArpgTests.R_ArpgTest_ItemSlot_AddAndRemoveItem';
+	case 4:			return Class'RArpgTests.R_ArpgTest_ItemSlot_StateTransition';
 	}
 
 	return None;
