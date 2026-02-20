@@ -13,7 +13,7 @@ event BeginPlay()
 	Super.BeginPlay();
 	// This is just a test and should not be here
 
-	LocalItem = new(Self) Class'RArpg.R_ArpgItem';
+	LocalItem = new(Self) Class'RArpgCore.R_ArpgItem';
 	SetItem(LocalItem);
 }
 
@@ -37,12 +37,12 @@ function ClearItemVisualFeatures()
 
 function ApplyItemVisualFeatures(R_ArpgItem NewItem)
 {
-	if(NewItem == None)
-	{
-		return;
-	}
-
-	Skeletal = NewItem.GetItemSkelModel();
+	//if(NewItem == None)
+	//{
+	//	return;
+	//}
+//
+	//Skeletal = NewItem.GetItemSkelModel();
 }
 
 defaultproperties
