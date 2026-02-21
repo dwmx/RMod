@@ -7,6 +7,7 @@ if exist ..\Rune\System\UCC.exe (
 )
 
 :RunAllTests
-..\Rune\System\UCC.exe RTest.R_TestCommandlet RBaseTests.R_ATestCollection_RBase
+rem ..\Rune\System\UCC.exe RTest.R_TestCommandlet RBaseTests.R_ATestCollection_RBase
+..\Rune\System\UCC.exe RTest.R_TestCommandlet RArpgTests.R_ATestCollection_RArpg
 
 :NoUCC
