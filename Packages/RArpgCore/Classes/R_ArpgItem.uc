@@ -9,6 +9,12 @@ var private Texture ItemUITexture;
 var private int ItemGridSizeX;
 var private int ItemGridSizeY;
 
+function InitializeArpgObject()
+{
+	// Force clamping on defaultproperties
+	SetItemGridSize(ItemGridSizeX, ItemGridSizeY);
+}
+
 function bool GetItemSkelModel(out SkelModel OutItemSkelModel)
 {
 	OutItemSkelModel = None;
@@ -63,6 +69,6 @@ defaultproperties
 {
 	ItemSkelModel=None
 	ItemUITexture=None
-	ItemGridSizeX=0
-	ItemGridSizeY=0
+	ItemGridSizeX=1
+	ItemGridSizeY=1
 }
