@@ -67,12 +67,10 @@ function ConstructUI()
 	// Build the UI
 	LocalRootWindow = GetRootWindow();
 	LocalArpgRootWindow = R_UI_ArpgRootWindow(LocalRootWindow);
-	Log("LOCAL ROOT WINDOW" @ LocalRootWindow @ LocalArpgRootWindow);
 	RootX = LocalRootWindow.WinLeft;
 	RootY = LocalRootWindow.WinTop;
 	RootW = LocalRootWindow.WinWidth;
 	RootH = LocalRootWindow.WinHeight;
-	Log(RootX @ RootY @ RootW @ RootH);
 
 	// Main Inventory window
 	W = RootW * 0.4;
