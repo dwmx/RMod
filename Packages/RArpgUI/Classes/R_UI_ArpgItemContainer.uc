@@ -40,3 +40,12 @@ function bool TryPlaceFloatingItem(
 {
 	return false;
 }
+
+function Paint(Canvas C, float X, float Y)
+{
+	C.DrawColor.R = 0;
+	C.DrawColor.G = 0;
+	C.DrawColor.B = 0;
+	C.Style = 1;
+	DrawStretchedTexture(C, 0, 0, WinWidth, WinHeight, WhiteTexture);
+}

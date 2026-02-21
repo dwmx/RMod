@@ -3,6 +3,8 @@
 //==============================================================================
 class R_UIW_RootWindow extends UWindowRootWindow;
 
+const PlayerLib = Class'RBase.R_APlayerLibrary';
+
 var bool bHiddenWindow;
 
 function SetupFonts()
@@ -59,6 +61,7 @@ function Created()
 	//SetScale(GUIScale);
 	//bHiddenWindow = true;
 	bHiddenWindow = false;
+	FitRootWindowToScreenResolution();
 }
 
 function WindowEvent(WinMessage Msg, Canvas C, float X, float Y, int Key)
@@ -68,6 +71,36 @@ function WindowEvent(WinMessage Msg, Canvas C, float X, float Y, int Key)
 		return;
 	}
 	Super.WindowEvent(Msg, C, X, Y, Key);
+}
+
+function Paint(Canvas C, float X, float Y)
+{
+	FitRootWindowToScreenResolution();
+	Super.Paint(C, X, Y);
+}
+
+function FitRootWindowToScreenResolution()
+{
+	local PlayerPawn PlayerOwner;
+	local float ScreenWidth, ScreenHeight;
+
+	PlayerOwner = GetPlayerOwner();
+	if(PlayerOwner == None)
+	{
+		return;
+	}
+
+	PlayerLib.Static.GetScreenResolutionFromPlayerPawnInPixels(PlayerOwner, ScreenWidth, ScreenHeight);
+
+	WinTop = 0;
+	WinLeft = 0;
+	WinWidth = ScreenWidth;
+	WinHeight = ScreenHeight;
+
+	ClippingRegion.X = 0;
+	ClippingRegion.Y = 0;
+	ClippingRegion.W = WinWidth;
+	ClippingRegion.H = WinHeight;
 }
 
 defaultproperties

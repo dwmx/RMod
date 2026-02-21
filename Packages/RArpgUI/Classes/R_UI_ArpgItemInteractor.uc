@@ -9,3 +9,7 @@ function SetFloatingItemSlot(R_ArpgItemSlot NewFloatingItemSlot)
 {
 	FloatingItemSlot = NewFloatingItemSlot;
 }
+
+function Paint(Canvas C, float X, float Y)
+{
+}
