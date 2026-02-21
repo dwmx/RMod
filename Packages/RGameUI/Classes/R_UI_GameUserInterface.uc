@@ -17,6 +17,13 @@ var private UWindowRootWindow RootWindow;
 function Initialize(Player OwningPlayer)
 {
 	local Class<UWindowRootWindow> LocalRootWindowClass;
+	local float ScreenWidth, ScreenHeight;
+
+	if(OwningPlayer == None)
+	{
+		Utilities.Static.RLog("Failed to initialize User Interface -- Bad Player", LogCategory, LogSubCategory);
+		return;
+	}
 
 	Utilities.Static.RLog("Initializing User Interface with Player" @ OwningPlayer, LogCategory, LogSubCategory);
 
@@ -29,15 +36,20 @@ function Initialize(Player OwningPlayer)
 	RootWindow = new(Self) LocalRootWindowClass;
 	RootWindow.BeginPlay();
 
-	RootWindow.WinTop = 0;
-	RootWindow.WinLeft = 0;
-	RootWindow.WinWidth = 1920;
-	RootWindow.WinHeight = 1080;
+	//if(OwningPlayer.Actor != None)
+	//{
+	//	PlayerLib.Static.GetScreenResolutionFromPlayerPawnInPixels(OwningPlayer.Actor, ScreenWidth, ScreenHeight);
+	//}
 
-	RootWindow.ClippingRegion.X = 0;
-	RootWindow.ClippingRegion.Y = 0;
-	RootWindow.ClippingRegion.W = RootWindow.WinWidth;
-	RootWindow.ClippingRegion.H = RootWindow.WinHeight;
+	//RootWindow.WinTop = 0;
+	//RootWindow.WinLeft = 0;
+	//RootWindow.WinWidth = ScreenWidth;
+	//RootWindow.WinHeight = ScreenHeight;
+//
+	//RootWindow.ClippingRegion.X = 0;
+	//RootWindow.ClippingRegion.Y = 0;
+	//RootWindow.ClippingRegion.W = RootWindow.WinWidth;
+	//RootWindow.ClippingRegion.H = RootWindow.WinHeight;
 
 	RootWindow.Console = WindowConsole(OwningPlayer.Console);
 	RootWindow.bUWindowActive = true;
@@ -81,7 +93,6 @@ function PostRender(Canvas C)
 	if(RootWindow != None)
 	{
 		RootWindow.WindowEvent(WM_Paint, C, 0.0, 0.0, 0);
-		RootWindow.Paint(C, 0.0, 0.0);
 	}
 }
 
@@ -108,3 +119,5 @@ function InputLMouseUp(float MouseX, float MouseY)
 		RootWindow.WindowEvent(WM_LMouseUp, None, MouseX, MouseY, 0);
 	}
 }
+
+function InputCommand(Name Command);
