@@ -1,1 +1,0 @@
-class R_ArpgObject extends Object abstract;
