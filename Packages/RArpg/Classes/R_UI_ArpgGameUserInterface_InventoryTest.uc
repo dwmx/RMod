@@ -41,6 +41,7 @@ function ConstructUI()
 	//--------------------------------------------------------------------------
 	// Create and initialize the item data classes
 	Item = R_ArpgItem(ArpgLib.Static.CreateArpgObject(Class'RArpgCore.R_ArpgItem', Self));
+	Item.SetItemUITexture(Texture'RuneFX2.ssword1b');
 	//Item.AddItemAttribute(Class'RArpg.R_ArpgItemAttribute000_Damage', 0);
 	//Item.AddItemAttribute(Class'RArpg.R_ArpgItemAttribute001_Health', 0);
 	//Item.AddItemAttribute(Class'RArpg.R_ArpgItemAttribute002_AllSkills', 0);
@@ -52,16 +53,18 @@ function ConstructUI()
 
 	ItemGrid = R_ArpgItemGrid(ArpgLib.Static.CreateArpgObject(Class'RArpgCore.R_ArpgItemGrid', Self));
 	ItemGrid.SetGridSize(12, 4);
-	ItemGrid.AddItemAtGridIndex(Item, 2, 0);
-	ItemGrid.AddItemAtGridIndex(Item, 5, 0);
+	//ItemGrid.AddItemAtGridIndex(Item, 2, 0);
+	//ItemGrid.AddItemAtGridIndex(Item2, 5, 0);
 
 	ItemSlotMainHand = R_ArpgItemSlot(ArpgLib.Static.CreateArpgObject(Class'RArpgCore.R_ArpgItemSlot', Self));
 	ItemSlotOffHand = R_ArpgItemSlot(ArpgLib.Static.CreateArpgObject(Class'RArpgCore.R_ArpgItemSlot', Self));
 	ItemSlotArmor = R_ArpgItemSlot(ArpgLib.Static.CreateArpgObject(Class'RArpgCore.R_ArpgItemSlot', Self));
 	ItemSlotHelm = R_ArpgItemSlot(ArpgLib.Static.CreateArpgObject(Class'RArpgCore.R_ArpgItemSlot', Self));
 
+	ItemSlotMainHand.AddItem(Item2);
+
 	ItemSlotFloat = R_ArpgItemSlot(ArpgLib.Static.CreateArpgObject(Class'RArpgCore.R_ArpgItemSlot', Self));
-	//ItemSlotFloat.AddItem(Item);
+	ItemSlotFloat.AddItem(Item);
 
 	//--------------------------------------------------------------------------
 	// Build the UI

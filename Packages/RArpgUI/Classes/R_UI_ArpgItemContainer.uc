@@ -41,6 +41,9 @@ function bool TryPlaceFloatingItem(
 	return false;
 }
 
+//------------------------------------------------------------------------------
+//	Paint Funtions
+
 function Paint(Canvas C, float X, float Y)
 {
 	C.DrawColor.R = 0;

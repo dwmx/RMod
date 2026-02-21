@@ -65,6 +65,38 @@ function Paint(Canvas C, float X, float Y)
 	DrawStretchedTexture(C, 0, 0, WinWidth, WinHeight, WhiteTexture);
 }
 
+function PaintItem(Canvas C, float X, float Y, Vector Alignment, R_ArpgItem Item)
+{
+	local Texture DrawTexture;
+	local float DrawX, DrawY, DrawW, DrawH;
+
+	if(Item == None)
+	{
+		return;
+	}
+
+	if(Item.GetItemUITexture(DrawTexture))
+	{
+		DrawW = DrawTexture.USize;
+		DrawH = DrawTexture.VSize;
+	}
+	else
+	{
+		DrawTexture = WhiteTexture; // Could use a better invalid texture here
+		DrawW = 96.0;
+		DrawH = 96.0;
+	}
+
+	DrawX = X - DrawW * Alignment.X;
+	DrawY = Y - DrawH * Alignment.Y;
+
+	C.DrawColor.R = 255;
+	C.DrawColor.R = 255;
+	C.DrawColor.R = 255;
+	C.Style = 1;
+	DrawStretchedTexture(C, DrawX, DrawY, DrawW, DrawH, DrawTexture);
+}
+
 function GetGridCellPixelSize(out float OutGridPixelSizeX, out float OutGridPixelSizeY)
 {
 	local R_UI_ArpgRootWindow LocalRootWindow;
