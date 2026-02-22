@@ -190,11 +190,48 @@ function PaintInspecting(Canvas C, float X, float Y)
 
 function PaintInspectedItemPanel(Canvas C, float PanelX, float PanelY, float PanelW, float PanelH, R_ArpgItem Item)
 {
+	local float BorderThickness;
+	local float DrawX, DrawY;
+	local String DrawString;
+	local float StrW, StrH;
+
+	C.Style = 5;
+	C.AlphaScale = 0.85;
+
+	// Draw backdrop
 	C.DrawColor.R = 32.0;
 	C.DrawColor.G = 32.0;
 	C.DrawColor.B = 32.0;
-	C.Style = 1;
 	DrawStretchedTexture(C, PanelX, PanelY, PanelW, PanelH, WhiteTexture);
+
+	// Draw border
+	BorderThickness = 2.0;
+	C.DrawColor.R = 180.0;
+	C.DrawColor.G = 180.0;
+	C.DrawColor.B = 180.0;
+	C.Style = 1;
+
+	DrawStretchedTexture(C, PanelX, PanelY, PanelW, BorderThickness, WhiteTexture);	// Top
+	DrawStretchedTexture(C, PanelX, PanelY + PanelH - BorderThickness, PanelW, BorderThickness, WhiteTexture); // Bottom
+	DrawStretchedTexture(C, PanelX, PanelY + BorderThickness, BorderThickness, PanelH - BorderThickness, WhiteTexture); // Left
+	DrawStretchedTexture(C, PanelX + PanelW - BorderThickness, PanelY + BorderThickness, BorderThickness, PanelH - BorderThickness, WhiteTexture); // Right
+
+	//--------------------------------------------------------------------------
+	//	Prepare for drawing text
+	C.DrawColor.R = 255;
+	C.DrawColor.G = 255;
+	C.DrawColor.B = 255;
+	C.Style = 1;
+
+	DrawY = PanelY + BorderThickness + 16.0;
+
+	// Draw Item name
+	C.Font = C.CredsFont;
+	DrawString = "Item Name";
+	C.StrLen(DrawString, StrW, StrH);
+	DrawX = PanelX + PanelW * 0.5 - StrW * 0.5;
+	C.SetPos(DrawX, DrawY);
+	C.DrawText(DrawString);
 }
 
 //------------------------------------------------------------------------------
