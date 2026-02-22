@@ -4,6 +4,18 @@
 class R_UI_ArpgItemContainer extends R_UI_ArpgWindow;
 
 /**
+	QueryItemAtLocation
+	Returns the item at the specified location
+*/
+function bool QueryItemAtLocation(
+	float PositionX, float PositionY,
+	out R_ArpgItem OutItem)
+{
+	OutItem = None;
+	return false;
+}
+
+/**
 	QueryPlaceFloatingItem
 	Returns an answer to the question: "If I were to try to place an item here,
 	what would happen?". Used by ArpgItemInteractor to draw the correct

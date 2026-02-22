@@ -12,6 +12,27 @@ function SetItemGrid(R_ArpgItemGrid NewItemGrid)
 	ItemGrid = NewItemGrid;
 }
 
+function bool QueryItemAtLocation(
+	float PositionX, float PositionY,
+	out R_ArpgItem OutItem)
+{
+	local int IndexX, IndexY;
+
+	OutItem = None;
+
+	if(ItemGrid == None)
+	{
+		return false;
+	}
+
+	if(!GetGridIndexForPosition(PositionX, PositionY, IndexX, IndexY))
+	{
+		return false;
+	}
+
+	return ItemGrid.QueryItemIntersectingGridIndex(IndexX, IndexY, OutItem);
+}
+
 function bool QueryPlaceFloatingItem(
 	R_ArpgItem Item,
 	float PositionX, float PositionY,
@@ -102,7 +123,40 @@ function GetWindowRegionForGridRegion(
 	OutWindowRegion.PositionY = CellSizeY * float(IndexY);
 }
 
+function bool GetGridIndexForPosition(
+	float PositionX, float PositionY,
+	out int OutIndexX, out int OutIndexY)
+{
+	local float CellSizeX, CellSizeY;
+	local int IndexX, IndexY;
+	local int GridSizeX, GridSizeY;
+
+	OutIndexX = INVALID_INDEX;
+	OutIndexY = INVALID_INDEX;
+	if(ItemGrid == None)
+	{
+		return false;
+	}
+
+	GetGridCellPixelSize(CellSizeX, CellSizeY);
+
+	IndexX = int(PositionX / CellSizeX);
+	IndexY = int(PositionY / CellSizeY);
+
+	ItemGrid.GetGridSize(GridSizeX, GridSizeY);
+
+	if(IndexX >= GridSizeX || IndexY >= GridSizeY)
+	{
+		return false;
+	}
+
+	OutIndexX = IndexX;
+	OutIndexY = IndexY;
+	return true;
+}
+
 //------------------------------------------------------------------------------
+//	Painting
 
 function Paint(Canvas C, float X, float Y)
 {

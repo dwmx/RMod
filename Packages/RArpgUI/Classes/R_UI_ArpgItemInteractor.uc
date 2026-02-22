@@ -18,6 +18,8 @@ var private int FloatingQueryResult;
 var private R_ArpgWindowRegion SwapItemQueryRegion;
 var private R_ArpgItem SwapItem;
 
+var private R_ArpgItem InspectedItem;
+
 //------------------------------------------------------------------------------
 
 function SetFloatingItemSlot(R_ArpgItemSlot NewFloatingItemSlot)
@@ -100,7 +102,26 @@ function TickFloating(float DeltaSeconds)
 }
 
 function TickInspecting(float DeltaSeconds)
-{}
+{
+	local R_UI_ArpgItemContainer NewFloatingItemContainerWindow;
+	local R_ArpgItem NewInspectedItem;
+	local float GlobalX, GlobalY;
+	local float WindowX, WindowY;
+
+	InspectedItem = None;
+
+	WindowToGlobal(PositionX, PositionY, GlobalX, GlobalY);
+	NewFloatingItemContainerWindow = R_UI_ArpgItemContainer(ArpgUILib.Static.FindWindowUnderPoint(Root, GlobalX, GlobalY));
+
+	if(NewFloatingItemContainerWindow != None)
+	{
+		NewFloatingItemContainerWindow.GlobalToWindow(GlobalX, GlobalY, WindowX, WindowY);
+		if(NewFloatingItemContainerWindow.QueryItemAtLocation(WindowX, WindowY, NewInspectedItem))
+		{
+			InspectedItem = NewInspectedItem;
+		}
+	}
+}
 
 //------------------------------------------------------------------------------
 
@@ -132,7 +153,32 @@ function PaintFloating(Canvas C, float X, float Y)
 }
 
 function PaintInspecting(Canvas C, float X, float Y)
-{}
+{
+	local float PanelX, PanelY, PanelW, PanelH;
+	local Vector Alignment, Offset;
+
+	if(InspectedItem != None)
+	{
+		Alignment = Vect(0.5,1.0,0.0);
+		Offset = Vect(0.0,-32.0,0.0);
+
+		PanelW = 512.0;
+		PanelH = 512.0;
+		PanelX = PositionX - PanelW * Alignment.X + Offset.X;
+		PanelY = PositionY - PanelH * Alignment.Y + Offset.Y;
+
+		PaintInspectedItemPanel(C, PanelX, PanelY, PanelW, PanelH, InspectedItem);
+	}
+}
+
+function PaintInspectedItemPanel(Canvas C, float PanelX, float PanelY, float PanelW, float PanelH, R_ArpgItem Item)
+{
+	C.DrawColor.R = 32.0;
+	C.DrawColor.G = 32.0;
+	C.DrawColor.B = 32.0;
+	C.Style = 1;
+	DrawStretchedTexture(C, PanelX, PanelY, PanelW, PanelH, WhiteTexture);
+}
 
 //------------------------------------------------------------------------------
 

@@ -4,6 +4,8 @@
 //==============================================================================
 class R_UI_ArpgWindow extends UWindowWindow;
 
+const INVALID_INDEX = -1;
+
 // QueryResult Consts
 const QUERY_RESULT_INVALID = -1;
 const QUERY_RESULT_CANNOT_PLACE = 0;
