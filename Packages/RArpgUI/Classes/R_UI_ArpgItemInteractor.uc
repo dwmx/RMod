@@ -161,8 +161,9 @@ function PaintFloating(Canvas C, float X, float Y)
 			C.DrawColor.G = 180;
 			C.DrawColor.B = 180;
 		}
-		C.Style = 1;
-		
+		C.Style = 5;
+		C.AlphaScale = 0.5;
+
 		DrawStretchedTexture(C, FloatingItemQueryRegion.PositionX, FloatingItemQueryRegion.PositionY, FloatingItemQueryRegion.SizeX, FloatingItemQueryRegion.SizeY, WhiteTexture);
 		PaintItem(C, PositionX, PositionY, FloatingAlignment, FloatingItem);
 	}
