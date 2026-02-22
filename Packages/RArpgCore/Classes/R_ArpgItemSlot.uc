@@ -18,6 +18,11 @@ function bool IsValidIndex(int Index)
 	return Index == 0;
 }
 
+function bool IsEmpty()
+{
+	return StoredItem == None;
+}
+
 function bool ContainsItem(R_ArpgItem Item)
 {
 	if(Item == None || StoredItem == None)

@@ -5,6 +5,7 @@
 class R_ArpgItemContainer extends R_ArpgObject abstract;
 
 function bool IsValidIndex(int Index);
+function bool IsEmpty();
 function bool ContainsItem(R_ArpgItem Item);
 
 function bool AddItem(R_ArpgItem Item);

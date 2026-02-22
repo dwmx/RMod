@@ -104,25 +104,48 @@ function TickFloating(float DeltaSeconds)
 	}
 }
 
-function TickInspecting(float DeltaSeconds)
+function bool GetHoveredItemAndContainerWindow(
+	out R_ArpgItem OutItem,
+	out R_UI_ArpgItemContainer OutItemContainerWindow)
 {
-	local R_UI_ArpgItemContainer NewFloatingItemContainerWindow;
-	local R_ArpgItem NewInspectedItem;
 	local float GlobalX, GlobalY;
 	local float WindowX, WindowY;
+	local R_UI_ArpgItemContainer HoveredItemContainerWindow;
+	local R_ArpgItem HoveredItem;
 
-	InspectedItem = None;
+	OutItem = None;
+	OutItemContainerWindow = None;
 
 	WindowToGlobal(PositionX, PositionY, GlobalX, GlobalY);
-	NewFloatingItemContainerWindow = R_UI_ArpgItemContainer(ArpgUILib.Static.FindWindowUnderPoint(Root, GlobalX, GlobalY));
-
-	if(NewFloatingItemContainerWindow != None)
+	HoveredItemContainerWindow = R_UI_ArpgItemContainer(ArpgUILib.Static.FindWindowUnderPoint(Root, GlobalX, GlobalY));
+	if(HoveredItemContainerWindow == None)
 	{
-		NewFloatingItemContainerWindow.GlobalToWindow(GlobalX, GlobalY, WindowX, WindowY);
-		if(NewFloatingItemContainerWindow.QueryItemAtLocation(WindowX, WindowY, NewInspectedItem))
-		{
-			InspectedItem = NewInspectedItem;
-		}
+		return false;
+	}
+
+	HoveredItemContainerWindow.GlobalToWindow(GlobalX, GlobalY, WindowX, WindowY);
+	if(HoveredItemContainerWindow.QueryItemAtLocation(WindowX, WindowY, HoveredItem))
+	{
+		OutItem = HoveredItem;
+		OutItemContainerWindow = HoveredItemContainerWindow;
+		return true;
+	}
+
+	return false;
+}
+
+function TickInspecting(float DeltaSeconds)
+{
+	local R_ArpgItem HoveredItem;
+	local R_UI_ArpgItemContainer HoveredItemContainerWindow;
+
+	if(GetHoveredItemAndContainerWindow(HoveredItem, HoveredItemContainerWindow))
+	{
+		InspectedItem = HoveredItem;
+	}
+	else
+	{
+		InspectedItem = None;
 	}
 }
 
@@ -276,16 +299,86 @@ function LMouseDown(float X, float Y)
 
 	if(FloatingItemSlot != None && FloatingItemSlot.GetItem(0, LocalFloatingItem))
 	{
-		if(FloatingItemContainerWindow != None)
+		TryPlaceFloatingItem();
+	}
+	else
+	{
+		TryPickUpItem();
+	}
+}
+
+// Attempts to the current floating item, and will perform swap if necessary
+function bool TryPlaceFloatingItem()
+{
+	local R_ArpgItem LocalFloatingItem;
+	local R_ArpgItem LocalSwapItem;
+	local float GlobalX, GlobalY;
+	local float WindowX, WindowY;
+
+	if(FloatingItemContainerWindow == None)
+	{
+		return false;
+	}
+
+	FloatingItemSlot.GetItem(0, LocalFloatingItem);
+	if(LocalFloatingItem == None)
+	{
+		return false;
+	}
+
+	LocalSwapItem = None;
+	if(SwapItem != None)
+	{
+		LocalSwapItem = SwapItem;
+	}
+
+	if(LocalSwapItem != None && !FloatingItemContainerWindow.RemoveItem(LocalSwapItem))
+	{	// Failed to remove the swap item from its container
+		return false;
+	}
+
+	SwapItem = None;
+
+	WindowToGlobal(PositionX, PositionY, GlobalX, GlobalY);
+	FloatingItemContainerWindow.GlobalToWindow(GlobalX, GlobalY, WindowX, WindowY);
+	if(!FloatingItemContainerWindow.TryPlaceFloatingItem(LocalFloatingItem, WindowX, WindowY, FloatingAlignment))
+	{	// Only issue here is that now the swap item will be removed
+		return false;
+	}
+
+	FloatingItemSlot.RemoveItem(FloatingItem);
+	FloatingItem = None;
+	if(LocalSwapItem != None)
+	{
+		FloatingItemSlot.AddItem(LocalSwapItem);
+	}
+
+	FloatingItem = None;
+	SwapItem = None;
+
+	return true;
+}
+
+function bool TryPickUpItem()
+{
+	local R_ArpgItem HoveredItem;
+	local R_UI_ArpgItemContainer HoveredItemContainerWindow;
+
+	if(FloatingItemSlot == None || !FloatingItemSlot.IsEmpty())
+	{
+		return false;
+	}
+
+	if(GetHoveredItemAndContainerWindow(HoveredItem, HoveredItemContainerWindow))
+	{
+		if(HoveredItemContainerWindow.RemoveItem(HoveredItem))
 		{
-			WindowToGlobal(PositionX, PositionY, GlobalX, GlobalY);
-			FloatingItemContainerWindow.GlobalToWindow(GlobalX, GlobalY, WindowX, WindowY);
-			if(FloatingItemContainerWindow.TryPlaceFloatingItem(LocalFloatingItem, WindowX, WindowY, FloatingAlignment))
-			{
-				FloatingItemSlot.RemoveItem(LocalFloatingItem);
-			}
+			FloatingItemSlot.AddItem(HoveredItem);
+			return true;
 		}
 	}
+
+	return false;
 }
 
 defaultproperties

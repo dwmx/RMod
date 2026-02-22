@@ -37,6 +37,11 @@ function bool IsValidIndex(int Index)
 	return Index >= 0 && Index < EntriesCount;
 }
 
+function bool IsEmpty()
+{
+	return EntriesCount == 0;
+}
+
 function bool ContainsItem(R_ArpgItem Item)
 {
 	local int i;
