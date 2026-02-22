@@ -44,6 +44,8 @@ function bool QueryPlaceFloatingItem(
 {
 	local int SizeX, SizeY;
 	local int IndexX, IndexY;
+	local R_ArpgItem Items[16]; // Items in region
+	local int ItemCount;
 
 	OutQueryResult = QUERY_RESULT_INVALID;
 	OutFloatingItemRegion = ArpgWindowRegion(0,0,0,0);
@@ -57,8 +59,30 @@ function bool QueryPlaceFloatingItem(
 
 	Item.GetItemGridSize(SizeX, SizeY);
 	SnapFloatingGridRegion(PositionX, PositionY, Alignment, SizeX, SizeY, IndexX, IndexY);
+
+	if(!ItemGrid.QueryItemsIntersectingGridRegion(
+		IndexX, IndexY, SizeX, SizeY,
+		Items,
+		ItemCount))
+	{
+		return false;
+	}
+
+	if(ItemCount == 0)
+	{	// Colliding with nothing, can place
+		OutQueryResult = QUERY_RESULT_CAN_PLACE;
+	}
+	else if(ItemCount == 1)
+	{	// One collision, can swap with what's there
+		OutQueryResult = QUERY_RESULT_CAN_SWAP;
+		OutSwapItem = Items[0];
+	}
+	else if(ItemCount > 1)
+	{	// Multiple collisions, no handling case for this
+		OutQueryResult = QUERY_RESULT_CANNOT_PLACE;
+	}
+
 	GetWindowRegionForGridRegion(IndexX, IndexY, SizeX, SizeY, OutFloatingItemRegion);
-	OutQueryResult = QUERY_RESULT_CAN_PLACE;
 
 	return true;
 }

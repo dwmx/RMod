@@ -143,10 +143,26 @@ function PaintFloating(Canvas C, float X, float Y)
 {
 	if(FloatingItem != None)
 	{
-		C.DrawColor.R = 25;
-		C.DrawColor.G = 255;
-		C.DrawColor.B = 25;
+		if(FloatingQueryResult == QUERY_RESULT_CANNOT_PLACE)
+		{
+			C.DrawColor.R = 255;
+			C.DrawColor.G = 25;
+			C.DrawColor.B = 25;
+		}
+		else if(FloatingQueryResult == QUERY_RESULT_CAN_PLACE)
+		{
+			C.DrawColor.R = 25;
+			C.DrawColor.G = 255;
+			C.DrawColor.B = 25;
+		}
+		else if(FloatingQueryResult == QUERY_RESULT_CAN_SWAP)
+		{
+			C.DrawColor.R = 180;
+			C.DrawColor.G = 180;
+			C.DrawColor.B = 180;
+		}
 		C.Style = 1;
+		
 		DrawStretchedTexture(C, FloatingItemQueryRegion.PositionX, FloatingItemQueryRegion.PositionY, FloatingItemQueryRegion.SizeX, FloatingItemQueryRegion.SizeY, WhiteTexture);
 		PaintItem(C, PositionX, PositionY, FloatingAlignment, FloatingItem);
 	}
