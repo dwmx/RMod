@@ -14,6 +14,8 @@ static function bool RunTest(out String FailedResonString)
 	local R_ArpgItemGrid ItemGrid;
 	local R_ArpgItem Item1, Item2, OutItem;
 	local R_ArpgItem OutItems[16];
+	local int OutItemsIndexX[ArrayCount(OutItems)];
+	local int OutItemsIndexY[ArrayCount(OutItems)];
 	local int OutItemCount;
 
 	ItemGrid = CreateMockItemGrid();
@@ -44,7 +46,7 @@ static function bool RunTest(out String FailedResonString)
 	}
 
 	// Query region covering both items
-	if(!ItemGrid.QueryItemsIntersectingGridRegion(0, 0, 4, 4, OutItems, OutItemCount))
+	if(!ItemGrid.QueryItemsIntersectingGridRegion(0, 0, 4, 4, OutItems, OutItemsIndexX, OutItemsIndexY, OutItemCount))
 	{
 		FailedResonString = "QueryItemsIntersectingGridRegion failed";
 		return false;

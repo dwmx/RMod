@@ -354,6 +354,8 @@ function bool QueryItemIntersectingGridIndex(
 function bool QueryItemsIntersectingGridRegion(
 	int IndexX, int IndexY, int SizeX, int SizeY,
 	out R_ArpgItem OutItems[16],
+	out int OutItemsIndexX[ArrayCount(OutItems)],
+	out int OutItemsIndexY[ArrayCount(OutItems)],
 	out int OutItemCount)
 {
 	local R_ArpgItem ItemIt;
@@ -389,6 +391,8 @@ function bool QueryItemsIntersectingGridRegion(
 			ItemItIndexX, ItemItIndexY, ItemItSizeX, ItemItSizeY))
 		{
 			OutItems[OutItemCount] = ItemIt;
+			OutItemsIndexX[OutItemCount] = ItemItIndexX;
+			OutItemsIndexY[OutItemCount] = ItemItIndexY;
 			++OutItemCount;
 		}
 	}
