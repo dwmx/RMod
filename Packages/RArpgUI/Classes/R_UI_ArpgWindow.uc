@@ -70,14 +70,23 @@ function Paint(Canvas C, float X, float Y)
 
 function PaintItem(Canvas C, float X, float Y, Vector Alignment, R_ArpgItem Item)
 {
+	local int ItemSizeX, ItemSizeY;
+	local float CellSizeX, CellSizeY;
 	local Texture DrawTexture;
 	local float DrawX, DrawY, DrawW, DrawH;
+	local float MaxDimension;
+	local float ScaleFactor;
 
 	if(Item == None)
 	{
 		return;
 	}
 
+	// Get the unit size of Item
+	Item.GetItemGridSize(ItemSizeX, ItemSizeY);
+	GetGridCellPixelSize(CellSizeX, CellSizeY);
+
+	// Determine size from texture
 	if(Item.GetItemUITexture(DrawTexture))
 	{
 		DrawW = DrawTexture.USize;
@@ -86,9 +95,16 @@ function PaintItem(Canvas C, float X, float Y, Vector Alignment, R_ArpgItem Item
 	else
 	{
 		DrawTexture = WhiteTexture; // Could use a better invalid texture here
-		DrawW = 96.0;
-		DrawH = 96.0;
+		DrawW = MaxDimension;
+		DrawH = MaxDimension;
 	}
+
+	// Scale the texture down if necessary
+	MaxDimension = FMin(ItemSizeX * CellSizeX, ItemSizeY * CellSizeY);
+	ScaleFactor = FClamp(FMin(MaxDimension / DrawW, MaxDimension / DrawH), 0.0, 1.0);
+
+	DrawW *= ScaleFactor;
+	DrawH *= ScaleFactor;
 
 	DrawX = X - DrawW * Alignment.X;
 	DrawY = Y - DrawH * Alignment.Y;

@@ -59,11 +59,11 @@ function ConstructUI()
 
 	Item2 = R_ArpgItem(ArpgLib.Static.CreateArpgObject(Class'RArpgCore.R_ArpgItem', Self));
 	Item2.SetItemGridSize(2,2);
-	Item2.SetItemUITexture(Texture'RuneFX2.ssword1b');
+	Item2.SetItemUITexture(Texture'RuneFX.loading1');
 
 	Item3 = R_ArpgItem(ArpgLib.Static.CreateArpgObject(Class'RArpgCore.R_ArpgItem', Self));
-	Item3.SetItemGridSize(2,2);
-	Item3.SetItemUITexture(Texture'RuneFX2.ssword1b');
+	Item3.SetItemGridSize(3,3);
+	Item3.SetItemUITexture(Texture'RuneFX2.saving1');
 
 	// Place each item in a container
 	ItemSlotFloat.AddItem(Item);
