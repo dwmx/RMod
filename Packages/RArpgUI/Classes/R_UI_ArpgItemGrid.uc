@@ -256,6 +256,20 @@ function PaintItems(Canvas C, float X, float Y)
 			}
 
 			GetWindowRegionForGridRegion(IndexX, IndexY, SizeX, SizeY, ItemWindowRegion);
+
+			// Paint backdrop color behind the item
+			// Later this will need to call some CanUse function on the pawn or something
+			C.DrawColor.R = 25;
+			C.DrawColor.G = 25;
+			C.DrawColor.B = 255;
+			C.Style = 5;
+			C.AlphaScale = 0.5;
+			DrawStretchedTexture(
+				C,
+				ItemWindowRegion.PositionX, ItemWindowRegion.PositionY,
+				ItemWindowRegion.SizeX, ItemWindowRegion.SizeY,
+				WhiteTexture);
+
 			PaintItem(C, ItemWindowRegion.PositionX, ItemWindowRegion.PositionY, Vect(0,0,0), Item);
 		}
 	}
