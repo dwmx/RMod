@@ -20,6 +20,7 @@ struct R_ArpgWindowRegion
 };
 
 const CanvasLib = Class'RBase.R_ACanvasLibrary';
+const ArpgUILib = Class'RArpgUI.R_UI_ArpgLibrary';
 const WhiteTexture = Texture'UWindow.WhiteTexture';
 
 var private bool bMousePassThrough;
@@ -91,8 +92,8 @@ function PaintItem(Canvas C, float X, float Y, Vector Alignment, R_ArpgItem Item
 	DrawY = Y - DrawH * Alignment.Y;
 
 	C.DrawColor.R = 255;
-	C.DrawColor.R = 255;
-	C.DrawColor.R = 255;
+	C.DrawColor.G = 255;
+	C.DrawColor.B = 255;
 	C.Style = 1;
 	DrawStretchedTexture(C, DrawX, DrawY, DrawW, DrawH, DrawTexture);
 }

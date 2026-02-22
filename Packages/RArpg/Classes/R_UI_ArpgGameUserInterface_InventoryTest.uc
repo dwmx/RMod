@@ -41,6 +41,7 @@ function ConstructUI()
 	//--------------------------------------------------------------------------
 	// Create and initialize the item data classes
 	Item = R_ArpgItem(ArpgLib.Static.CreateArpgObject(Class'RArpgCore.R_ArpgItem', Self));
+	Item.SetItemGridSize(2,2);
 	Item.SetItemUITexture(Texture'RuneFX2.ssword1b');
 	//Item.AddItemAttribute(Class'RArpg.R_ArpgItemAttribute000_Damage', 0);
 	//Item.AddItemAttribute(Class'RArpg.R_ArpgItemAttribute001_Health', 0);

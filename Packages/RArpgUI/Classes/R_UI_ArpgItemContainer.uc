@@ -41,6 +41,11 @@ function bool TryPlaceFloatingItem(
 	return false;
 }
 
+function bool RemoveItem(R_ArpgItem Item)
+{
+	return false;
+}
+
 //------------------------------------------------------------------------------
 //	Paint Funtions
 
