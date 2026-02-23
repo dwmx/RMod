@@ -240,6 +240,9 @@ function PaintInspecting(Canvas C, float X, float Y)
 		PanelX = PositionX - PanelW * Alignment.X + Offset.X;
 		PanelY = PositionY - PanelH * Alignment.Y + Offset.Y;
 
+		PanelX = FClamp(PanelX, 0.0, WinWidth - PanelW);
+		PanelY = FClamp(PanelY, 0.0, WinHeight - PanelH);
+
 		PaintInspectedItemPanel(C, PanelX, PanelY, PanelW, PanelH, InspectedItem);
 	}
 }
