@@ -12,6 +12,6 @@ function Killed( pawn killer, pawn Other, name damageType )
 
 defaultproperties
 {
-	RunePlayerClass=Class'RArpg.R_ArpgRunePlayer'
+	RunePlayerClass=Class'RArpg.R_ArpgPlayerController'
 	HUDType=Class'RArpg.R_UI_GameHUD'
 }

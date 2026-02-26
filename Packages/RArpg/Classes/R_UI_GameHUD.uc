@@ -15,16 +15,16 @@ simulated event PostRender(Canvas C)
 	DrawExperience(C);
 }
 
-simulated function R_ArpgRunePlayer GetArpgRunePlayer()
+simulated function R_ArpgPlayerController GetArpgRunePlayer()
 {
-	local R_ArpgRunePlayer RP;
-	RP = R_ArpgRunePlayer(Owner);
+	local R_ArpgPlayerController RP;
+	RP = R_ArpgPlayerController(Owner);
 	return RP;
 }
 
 simulated function DrawSelectionTarget(Canvas C)
 {
-	local R_ArpgRunePlayer RP;
+	local R_ArpgPlayerController RP;
 	local Actor SelectionTarget;
 
 	SelectionTarget = None;

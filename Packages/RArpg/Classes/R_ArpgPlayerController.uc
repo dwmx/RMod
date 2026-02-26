@@ -1,8 +1,8 @@
 //==============================================================================
-//	R_ArpgRunePlayer
+//	R_ArpgPlayerController
 //	RunePlayer class for Arpg game modes
 //==============================================================================
-class R_ArpgRunePlayer extends R_RunePlayer;
+class R_ArpgPlayerController extends R_RunePlayer;
 
 const CanvasLib = Class'RBase.R_ACanvasLibrary';
 const MathLib = Class'RBase.R_AMathLibrary';

@@ -36,7 +36,7 @@ simulated function SelectNextDebugTarget()
 		P = P.NextPawn;
 	}
 
-	while(P != None && P.NextPawn != None && R_ArpgRunePlayer(P) == None)
+	while(P != None && P.NextPawn != None && R_ArpgPlayerController(P) == None)
 	{
 		P = P.NextPawn;
 	}
@@ -62,9 +62,9 @@ simulated function R_DBCommandManager InitializeCommandManagers()
 
 function Rotator GetDebugViewRotation()
 {
-	local R_ArpgRunePlayer PP;
+	local R_ArpgPlayerController PP;
 
-	PP = R_ArpgRunePlayer(Owner);
+	PP = R_ArpgPlayerController(Owner);
 	if(PP != None)
 	{
 		return PP.SavedCameraRot;
