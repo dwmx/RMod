@@ -12,6 +12,10 @@ const MathLib = Class'RBase.R_AMathLibrary';
 //var private R_UI_GameUI GameUI;
 
 //------------------------------------------------------------------------------
+var private Class<R_ArpgPlayerCamera> PlayerCameraClass;
+var private R_ArpgPlayerCamera PlayerCamera;
+
+//------------------------------------------------------------------------------
 //	GameUI
 var private Class<R_UI_GameUserInterface> GameUIClass;
 var private String GameUIClassString;
@@ -48,6 +52,20 @@ event PostBeginPlay()
 {
 	Super.PostBeginPlay();
 	InitializeSessionEndPoint();
+	SpawnPlayerCamera();
+}
+
+function SpawnPlayerCamera()
+{
+	if(PlayerCameraClass != None)
+	{
+		if(PlayerCamera != None)
+		{
+			PlayerCamera.Destroy();
+			PlayerCamera = None;
+		}
+		PlayerCamera = Spawn(PlayerCameraClass, Self);
+	}
 }
 
 function R_ArpgPawn GetControlledPawn()
@@ -277,14 +295,6 @@ event PlayerInput(float DeltaSeconds)
 		GameCursor.GetCursorPosition(CursorX, CursorY);
 		GameUI.InputMouseMove(CursorX, CursorY);
 	}
-	/*
-	if(ControlledPawn != None)
-	{
-		ControlledPawn.aForward = aForward;
-		ControlledPawn.aStrafe = aStrafe;
-		ControlledPawn.PlayerTick(DeltaSeconds);
-	}
-	*/
 }
 
 event PlayerCalcView(
@@ -292,33 +302,12 @@ event PlayerCalcView(
     out vector CameraLocation,
     out rotator CameraRotation)
 {
-    local float CamDistance;
-    local Vector OffsetVector;
-	local Vector BasisLocation;
-    
-    CamDistance = 1024.0;
-    OffsetVector.X = 1.0;
-    OffsetVector.Y = 1.0;
-    OffsetVector.Z = 2.0;
-    OffsetVector = Normal(OffsetVector) * CamDistance;
-    
-	if(ControlledPawn != None)
+	if(PlayerCamera != None)
 	{
-		BasisLocation = ControlledPawn.Location;
+		PlayerCamera.PlayerCalcView(ViewActor, CameraLocation, CameraRotation);
+		SavedCameraLoc = CameraLocation;
+		SavedCameraRot = CameraRotation;
 	}
-	else
-	{
-		BasisLocation = Self.Location;
-	}
-
-    CameraLocation = BasisLocation + OffsetVector;
-    
-    CameraRotation = Rotator(BasisLocation - CameraLocation);
-    ViewActor = Self;
-    
-    // Cursor needs these when selecting objects in world
-    SavedCameraLoc = CameraLocation;
-    SavedCameraRot = CameraRotation;
 }
 
 //==============================================================================
@@ -574,6 +563,7 @@ exec function SetAnimFrame(float Frame)
 
 defaultproperties
 {
+	PlayerCameraClass=Class'RArpg.R_ArpgPlayerCamera'
 	//GameUIClass=Class'RArpg.R_UI_ArpgGameUserInterface'
 	//GameUIClass=Class'RArpg.R_UI_ArpgGameUserInterface_ItemSlotTest'
 	GameUIClass=Class'RArpg.R_UI_ArpgGameUserInterface_InventoryTest'
