@@ -35,4 +35,8 @@ defaultproperties
 	RemoteRole=ROLE_None
 	OffsetDistance=1024.0
 	OffsetDirection=(X=1.0,Y=1.0,Z=2.0)
+	DrawType=DT_Sprite
+    Style=STY_Normal
+	Texture=Texture'Engine.S_Camera'
+	bHidden=true
 }

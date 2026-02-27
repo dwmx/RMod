@@ -281,6 +281,7 @@ simulated function DrawHealthBar(Canvas C)
 defaultproperties
 {
 	//RemoteRole=ROLE_AutonomousProxy
+	RemoteRole=ROLE_SimulatedProxy
 	InitialState=PlayerWalking
 	DrawType=DT_SkeletalMesh
 	CollisionRadius=16.000000

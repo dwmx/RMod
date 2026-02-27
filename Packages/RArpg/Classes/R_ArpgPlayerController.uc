@@ -7,10 +7,6 @@ class R_ArpgPlayerController extends R_RunePlayer;
 const CanvasLib = Class'RBase.R_ACanvasLibrary';
 const MathLib = Class'RBase.R_AMathLibrary';
 
-//const GameUIClass = Class'RArpg.R_UI_GameUI';
-//var private Class<R_UI_GameUI> GameUIClass;
-//var private R_UI_GameUI GameUI;
-
 //------------------------------------------------------------------------------
 var private Class<R_ArpgPlayerCamera> PlayerCameraClass;
 var private R_ArpgPlayerCamera PlayerCamera;
@@ -18,7 +14,6 @@ var private R_ArpgPlayerCamera PlayerCamera;
 //------------------------------------------------------------------------------
 //	GameUI
 var private Class<R_UI_GameUserInterface> GameUIClass;
-var private String GameUIClassString;
 var private R_UI_GameUserInterface GameUI;
 
 // Commands that the GameUI needs to be able to handle
@@ -53,6 +48,8 @@ event PostBeginPlay()
 	Super.PostBeginPlay();
 	InitializeSessionEndPoint();
 	SpawnPlayerCamera();
+
+	GotoState('PlayerController');
 }
 
 function SpawnPlayerCamera()
@@ -78,6 +75,11 @@ exec function TestHero()
 	SetCollision(false, false, false);
 	DrawType = DT_None;
 	ControlledPawn = Spawn(Class'RArpg.R_ArpgPawn_Hero', Self,, Self.Location, Self.Rotation);
+}
+
+function SetControlledPawn(R_ArpgPawn NewControlledPawn)
+{
+	ControlledPawn = NewControlledPawn;
 }
 
 function InitializeSessionEndPoint()
@@ -109,9 +111,6 @@ function InitializePlayerAfterPossess(bool bIsLocallyControlled)
 function InitializeGameUserInterface()
 {
 	Log("Initializing game ui from class" @ GameUIClass);
-	//Log("Loading class from string" @ GameUIClassString);
-	//GameUIClass = Class<R_UI_GameUserInterface>(DynamicLoadObject(GameUIClassString, Class.Class));
-	//Log("Initializing game ui from class" @ GameUIClass);
 	GameUI = new(Self) GameUIClass;
 	GameUI.Initialize(Self.Player);
 }
@@ -129,6 +128,11 @@ exec function ArpgInventory()
 
 event Tick(float DeltaSeconds)
 {
+	if(GetStateName() != 'PlayerController')
+	{
+		GotoState('PlayerController');
+	}
+
 	Super.Tick(DeltaSeconds);
 
 	TickSelectionTarget(DeltaSeconds);
@@ -561,10 +565,37 @@ exec function SetAnimFrame(float Frame)
 	ControlledPawn.AnimFrame = Frame;
 }
 
+auto state PlayerController
+{
+	event BeginState()
+	{
+		SetPhysics(PHYS_Flying);
+		SetCollision(false, false, false);
+		bCollideWorld = false;
+	}
+
+	function PlayerTick(float DeltaSeconds)
+	{
+		if(ControlledPawn != None)
+		{
+			SetLocation(ControlledPawn.Location);
+		}
+		else
+		{
+			Super.PlayerTick(DeltaSeconds);
+		}
+	}
+}
+
 defaultproperties
 {
+	InitialState=PlayerController
 	PlayerCameraClass=Class'RArpg.R_ArpgPlayerCamera'
 	//GameUIClass=Class'RArpg.R_UI_ArpgGameUserInterface'
 	//GameUIClass=Class'RArpg.R_UI_ArpgGameUserInterface_ItemSlotTest'
 	GameUIClass=Class'RArpg.R_UI_ArpgGameUserInterface_InventoryTest'
+	DrawType=DT_Sprite
+    Style=STY_Normal
+	Texture=Texture'Engine.S_Pawn'
+	bHidden=true
 }
