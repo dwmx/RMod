@@ -1,5 +1,8 @@
 class R_ArpgPawn_Hero extends R_ArpgPawn;
 
+//var private R_ArpgInventorySet InventorySet;
+var private R_ArpgItemContainerSet InventorySet;
+
 event PostBeginPlay()
 {
 	local Weapon W;
@@ -16,6 +19,16 @@ event PostBeginPlay()
 	AddSkill(Class'RArpg.R_ArpgSkill_Whirlwind');
 	AddSkill(Class'RArpg.R_ArpgSkill_Orb');
 	AddSkill(Class'RArpg.R_ArpgSkill_Attack');
+}
+
+function InitializeInventorySet()
+{
+	InventorySet = R_ArpgItemContainerSet(ArpgLib.Static.CreateArpgObject(Class'RArpg.R_ArpgItemContainerSet_HeroInventory', Self));
+}
+
+function R_ArpgItemContainerSet GetInventorySet()
+{
+	return InventorySet;
 }
 
 function Input_Fire()

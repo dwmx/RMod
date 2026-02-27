@@ -5,6 +5,7 @@
 class R_ArpgPawn extends PlayerPawn abstract;
 
 const CanvasLib = Class'RBase.R_ACanvasLibrary';
+const ArpgLib = Class'RArpgCore.R_ArpgLibrary';
 
 var private Class<R_ArpgAnimationSet> AnimationSetDefaultClass;
 var private R_ArpgAnimationSet AnimationSet;
@@ -35,6 +36,11 @@ event PostBeginPlay()
 {
 	Super.PostBeginPlay();
 	Spawn(TraceProxyClass, Self);
+}
+
+function R_ArpgItemContainerSet GetInventorySet()
+{
+	return None;
 }
 
 function SetBlockMovementInput(bool bNewBlockMovementInput)
