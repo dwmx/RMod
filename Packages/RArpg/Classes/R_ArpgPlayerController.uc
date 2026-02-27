@@ -13,8 +13,8 @@ var private R_ArpgPlayerCamera PlayerCamera;
 
 //------------------------------------------------------------------------------
 //	GameUI
-var private Class<R_UI_GameUserInterface> GameUIClass;
-var private R_UI_GameUserInterface GameUI;
+var private Class<R_UI_ArpgGameUserInterface> GameUIClass;
+var private R_UI_ArpgGameUserInterface GameUI;
 
 // Commands that the GameUI needs to be able to handle
 // These should be reflected in any UI designed for Arpg
@@ -80,6 +80,11 @@ exec function TestHero()
 function SetControlledPawn(R_ArpgPawn NewControlledPawn)
 {
 	ControlledPawn = NewControlledPawn;
+	GameUI.SetItemContainerSet(None);
+	if(ControlledPawn != None)
+	{
+		GameUI.SetItemContainerSet(ControlledPawn.GetInventorySet());
+	}
 }
 
 function InitializeSessionEndPoint()

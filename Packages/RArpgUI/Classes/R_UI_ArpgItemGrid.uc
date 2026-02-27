@@ -209,38 +209,41 @@ function PaintGrid(Canvas C, float X, float Y)
 	C.Style = 1;
 	DrawStretchedTexture(C, 0, 0, WinWidth, WinHeight, WhiteTexture);
 
-	// Draw grid lines
 	if(ItemGrid != None)
 	{
-		GetGridCellPixelSize(CellSizeX, CellSizeY);
-		ItemGrid.GetGridSize(GridSizeX, GridSizeY);
-
-		C.DrawColor.R = 255;
-		C.DrawColor.G = 255;
-		C.DrawColor.B = 255;
-
-		// Horizontal lines
-		for(i = 0; i <= GridSizeY; ++i)
+		// Draw grid lines
+		if(ItemGrid != None)
 		{
-			DrawStretchedTexture(
-				C,
-				0,
-				CellSizeY * i - GridLineWidth * 0.5,
-				WinWidth,
-				GridLineWidth,
-				WhiteTexture);
-		}
+			GetGridCellPixelSize(CellSizeX, CellSizeY);
+			ItemGrid.GetGridSize(GridSizeX, GridSizeY);
 
-		// Vertical lines
-		for(i = 0; i < GridSizeX; ++i)
-		{
-			DrawStretchedTexture(
-				C,
-				CellSizeX * i - GridLineWidth * 0.5,
-				0,
-				GridLineWidth,
-				WinHeight,
-				WhiteTexture);
+			C.DrawColor.R = 255;
+			C.DrawColor.G = 255;
+			C.DrawColor.B = 255;
+
+			// Horizontal lines
+			for(i = 0; i <= GridSizeY; ++i)
+			{
+				DrawStretchedTexture(
+					C,
+					0,
+					CellSizeY * i - GridLineWidth * 0.5,
+					WinWidth,
+					GridLineWidth,
+					WhiteTexture);
+			}
+
+			// Vertical lines
+			for(i = 0; i < GridSizeX; ++i)
+			{
+				DrawStretchedTexture(
+					C,
+					CellSizeX * i - GridLineWidth * 0.5,
+					0,
+					GridLineWidth,
+					WinHeight,
+					WhiteTexture);
+			}
 		}
 	}
 }

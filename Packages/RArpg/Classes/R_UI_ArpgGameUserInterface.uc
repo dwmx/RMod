@@ -16,6 +16,7 @@ function InputCommand(Name Command)
 }
 
 function HandleCommand_Inventory() {}
+function SetItemContainerSet(R_ArpgItemContainerSet NewItemContainerSet) {}
 
 defaultproperties
 {

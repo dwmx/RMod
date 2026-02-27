@@ -19,6 +19,8 @@ event PostBeginPlay()
 	AddSkill(Class'RArpg.R_ArpgSkill_Whirlwind');
 	AddSkill(Class'RArpg.R_ArpgSkill_Orb');
 	AddSkill(Class'RArpg.R_ArpgSkill_Attack');
+
+	InitializeInventorySet();
 }
 
 function InitializeInventorySet()
