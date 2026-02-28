@@ -18,6 +18,9 @@ const INVENTORY_SLOT_FLOAT = 'Float';
 //------------------------------------------------------------------------------
 
 var private R_ArpgItemActor ItemActor_Weapon;
+var private R_ArpgItemActor ItemActor_Shield;
+
+//------------------------------------------------------------------------------
 
 event PostBeginPlay()
 {
@@ -25,20 +28,21 @@ event PostBeginPlay()
 
 	Super.PostBeginPlay();
 
-	InitializeInventorySet();
+	// Initialize the InventorySet object which holds all of the ItemContainers
+	InventorySet = R_ArpgItemContainerSet(ArpgLib.Static.CreateArpgObject(Class'RArpg.R_ArpgItemContainerSet_HeroInventory', Self));
+	InventorySet.SetOwnerPawn(Self);
 
-	ItemActor_Weapon = Spawn(Class'RArpg.R_ArpgItemActor', Self,, Self.Location);
+	// Create world-representation actors for the items
+	ItemActor_Weapon = Spawn(Class'RArpg.R_ArpgItemActor', Self);
+	ItemActor_Shield = Spawn(Class'RArpg.R_ArpgItemActor', Self);
+
 	AttachActorToJoint(ItemActor_Weapon, JointNamed(WeaponJoint));
+	AttachActorToJoint(ItemActor_Shield, JointNamed(ShieldJoint));
 
+	// Add some test skills
 	AddSkill(Class'RArpg.R_ArpgSkill_Whirlwind');
 	AddSkill(Class'RArpg.R_ArpgSkill_Orb');
 	AddSkill(Class'RArpg.R_ArpgSkill_Attack');
-}
-
-function InitializeInventorySet()
-{
-	InventorySet = R_ArpgItemContainerSet(ArpgLib.Static.CreateArpgObject(Class'RArpg.R_ArpgItemContainerSet_HeroInventory', Self));
-	InventorySet.SetOwnerPawn(Self);
 }
 
 function ReceiveInventoryEvent(Name EventName, Name InventoryContainerName, R_ArpgItemContainerSet Sender, optional R_ArpgItem OptionalItem)
@@ -51,9 +55,10 @@ function ReceiveInventoryEvent(Name EventName, Name InventoryContainerName, R_Ar
 
 function HandleEvent_InventorySlotChanged(Name InventorySlotName, R_ArpgItem NewItem)
 {
-	if(InventorySlotName == INVENTORY_SLOT_MAIN_HAND)
+	switch(InventorySlotName)
 	{
-		ItemActor_Weapon.SetItem(NewItem);
+	case INVENTORY_SLOT_MAIN_HAND:	ItemActor_Weapon.SetItem(NewItem);	break;
+	case INVENTORY_SLOT_OFF_HAND:	ItemActor_Shield.SetItem(NewItem);	break;
 	}
 }
 
