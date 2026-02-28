@@ -18,6 +18,8 @@ function InputCommand(Name Command)
 function HandleCommand_Inventory() {}
 function SetItemContainerSet(R_ArpgItemContainerSet NewItemContainerSet) {}
 
+function bool IsWindowVisible(Name WindowName) { return false; }
+
 defaultproperties
 {
 	RootWindowClass=Class'RArpgUI.R_UI_ArpgRootWindow'

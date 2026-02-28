@@ -313,6 +313,15 @@ event PlayerCalcView(
 {
 	if(PlayerCamera != None)
 	{
+		if(GameUI != None && GameUI.IsWindowVisible('Inventory'))
+		{
+			PlayerCamera.SetLocalOffset(Vect(0,1,0) * 128.0);
+		}
+		else
+		{
+			PlayerCamera.SetLocalOffset(Vect(0,0,0));
+		}
+
 		PlayerCamera.PlayerCalcView(ViewActor, CameraLocation, CameraRotation);
 		SavedCameraLoc = CameraLocation;
 		SavedCameraRot = CameraRotation;

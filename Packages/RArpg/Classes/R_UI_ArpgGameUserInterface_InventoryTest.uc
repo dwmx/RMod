@@ -38,8 +38,10 @@ function ConstructUI()
 
 	// Main Inventory window
 	W = RootW * 0.4;
-	H = RootH * 0.7;
-	X = RootX + RootW * 0.5 - W * 0.5;
+	H = RootH * 0.85;
+
+	X = RootX + RootW - W - 32.0;
+	//X = RootX + RootW * 0.5 - W * 0.5;
 	Y = RootY + RootH * 0.5 - H * 0.5;
 	UIInventoryWindow = R_UI_ArpgWindow(CreateWindow(Class'RArpgUI.R_UI_ArpgWindow', X, Y, W, H));
 	OldX = X;
@@ -99,6 +101,14 @@ function HandleCommand_Inventory()
 	else
 	{
 		UIInventoryWindow.ShowWindow();
+	}
+}
+
+function bool IsWindowVisible(Name WindowName)
+{
+	if(WindowName == 'Inventory')
+	{
+		return UIInventoryWindow.WindowIsVisible();
 	}
 }
 

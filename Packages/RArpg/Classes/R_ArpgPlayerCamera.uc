@@ -6,6 +6,13 @@ class R_ArpgPlayerCamera extends Actor;
 var private float OffsetDistance;
 var private Vector OffsetDirection;
 
+var private Vector LocalOffset;
+
+function SetLocalOffset(Vector NewLocalOffset)
+{
+	LocalOffset = NewLocalOffset;	
+}
+
 function PlayerCalcView(
 	out Actor ViewActor,
 	out Vector CameraLocation,
@@ -13,6 +20,7 @@ function PlayerCalcView(
 {
 	local Vector BasisLocation;
 	local Vector OffsetVector;
+	local Vector LocalOffsetVector;
 
 	if(Owner == None)
 	{
@@ -27,6 +35,11 @@ function PlayerCalcView(
 
 	CameraLocation = BasisLocation + OffsetVector;
 	CameraRotation = Rotator(BasisLocation - CameraLocation);
+
+	// Apply local offset
+	LocalOffsetVector = LocalOffset >> CameraRotation;
+	CameraLocation += LocalOffsetVector;
+
 	ViewActor = Owner;
 }
 
