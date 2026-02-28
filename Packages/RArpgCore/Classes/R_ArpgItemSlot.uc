@@ -6,6 +6,27 @@
 class R_ArpgItemSlot extends R_ArpgItemContainer;
 
 var private R_ArpgItem StoredItem;
+var private R_ArpgObject EventListener;
+
+//------------------------------------------------------------------------------
+// 	Events emitted from this object
+const EVENT_ITEM_CHANGED = 'ItemChanged'; // Payload: New stored item
+
+//------------------------------------------------------------------------------
+
+function SetStoredItem(R_ArpgItem NewItem)
+{
+	if(StoredItem == NewItem)
+	{
+		return;
+	}
+
+	StoredItem = NewItem;
+
+	FireEvent(EVENT_ITEM_CHANGED, StoredItem);
+}
+
+//------------------------------------------------------------------------------
 
 function bool IsValidIndex(int Index)
 {
@@ -41,7 +62,7 @@ function bool AddItem(R_ArpgItem Item)
 		return false;
 	}
 
-	StoredItem = Item;
+	SetStoredItem(Item);
 	return true;
 }
 
@@ -54,7 +75,7 @@ function bool RemoveItem(R_ArpgItem Item)
 
 	if(StoredItem == Item)
 	{
-		StoredItem = None;
+		SetStoredItem(None);
 		return true;
 	}
 
@@ -90,4 +111,19 @@ function bool GetItemIndex(R_ArpgItem Item, out int OutIndex)
 	}
 	OutIndex = INVALID_INDEX;
 	return false;
+}
+
+//------------------------------------------------------------------------------
+
+function SetEventListener(R_ArpgObject NewEventListener)
+{
+	EventListener = NewEventListener;
+}
+
+function FireEvent(Name EventName, optional Object OptionalPayload)
+{
+	if(EventListener != None)
+	{
+		EventListener.ReceiveArpgEvent(EventName, Self, OptionalPayload);
+	}
 }

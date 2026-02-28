@@ -26,6 +26,13 @@ var private bool bShouldDrawHealth;
 
 var Class<R_ArpgTraceProxy> TraceProxyClass;
 
+//------------------------------------------------------------------------------
+//	Inventory events received from ItemContainerSets
+//	These must match what are in R_ArpgItemContainerSet.uc
+const EVENT_INVENTORY_SLOT_CHANGED = 'InventorySlotChanged';
+
+//------------------------------------------------------------------------------
+
 replication
 {
 	reliable if(Role == ROLE_Authority && bNetOwner)
@@ -42,6 +49,8 @@ function R_ArpgItemContainerSet GetInventorySet()
 {
 	return None;
 }
+
+function ReceiveInventoryEvent(Name EventName, Name InventoryContainerName, R_ArpgItemContainerSet Sender, optional R_ArpgItem OptionalItem);
 
 function SetBlockMovementInput(bool bNewBlockMovementInput)
 {

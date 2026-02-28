@@ -496,7 +496,7 @@ exec function InputLMouseDown()
 		GameUI.InputLMouseDown(CursorPosition.X, CursorPosition.Y);
 	}
 
-	Fire();
+	//Fire();
 }
 
 exec function InputLMouseUp()
@@ -512,10 +512,10 @@ exec function InputLMouseUp()
 
 exec function Fire(optional float F)
 {
-	if(ControlledPawn != None)
-	{
-		ControlledPawn.Input_Fire();
-	}
+	//if(ControlledPawn != None)
+	//{
+	//	ControlledPawn.Input_Fire();
+	//}
 
 	/*
 	// Determine context of the click

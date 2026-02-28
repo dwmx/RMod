@@ -47,6 +47,11 @@ function ApplyItemVisualFeatures(R_ArpgItem NewItem)
 
 defaultproperties
 {
-	RemoteRole=ROLE_DumbProxy
-	DrawType=DT_SkeletalMesh
+	RemoteRole=ROLE_SimulatedProxy
+    DrawType=DT_SkeletalMesh
+    CollisionRadius=24.000000
+    CollisionHeight=46.000000
+	Skeletal=SkelModel'weapons.broadsword'
+	SkelGroupSkins(0)=Texture'weapons.broadswordv_broad'
+	SkelGroupSkins(1)=Texture'weapons.broadswordv_broad'
 }

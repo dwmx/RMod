@@ -9,3 +9,5 @@ const INVALID_INDEX = -1;
 const ArpgLib = Class'RArpgCore.R_ArpgLibrary';
 
 function InitializeArpgObject();
+
+function ReceiveArpgEvent(Name EventName, Object Sender, optional Object OptionalPayload);
