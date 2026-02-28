@@ -26,7 +26,7 @@ function SpawnPawnForPlayer(R_ArpgPlayerController PlayerController)
 	NewPawn = Spawn(
 		Class'RArpg.R_ArpgPawn_Hero',
 		PlayerController,,
-		PlayerController.Location,
+		PlayerController.Location + Vect(0,0,1) * 200.0,
 		PlayerController.Rotation);
 	PlayerController.SetControlledPawn(NewPawn);
 }
