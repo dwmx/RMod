@@ -70,6 +70,54 @@ function Paint(Canvas C, float X, float Y)
 
 function PaintItem(Canvas C, float X, float Y, Vector Alignment, R_ArpgItem Item)
 {
+	local int ItemGridSizeX, ItemGridSizeY;
+	local float GridCellPixelSizeX, GridCellPixelSizeY;
+	local float ScaleFactor;
+	local Texture DrawTexture;
+	local float TexX, TexY;
+	local float TexW, TexH;
+	local float DrawX, DrawY;
+	local float DrawW, DrawH;
+
+	// Get the unit size of Item
+	Item.GetItemGridSize(ItemGridSizeX, ItemGridSizeY);
+	GetGridCellPixelSize(GridCellPixelSizeX, GridCellPixelSizeY);
+
+	Item.GetItemUITexture(DrawTexture);
+	TexX = Item.ItemUITextureTX;
+	TexY = Item.ItemUITextureTY;
+	TexW = Item.ItemUITextureTW;
+	TexH = Item.ItemUITextureTH;
+	//TexX = 86.0;
+	//TexY = 0.0;
+	//TexW = 86.0;
+	//TexH = 256.0;
+
+	DrawW = TexW;
+	DrawH = TexH;
+
+	ScaleFactor = 1.0;
+	ScaleFactor = FMin(ScaleFactor, FClamp((GridCellPixelSizeX * ItemGridSizeX) / DrawW, 0.0, 1.0));
+	ScaleFactor = FMin(ScaleFactor, FClamp((GridCellPixelSizeY * ItemGridSizeY) / DrawH, 0.0, 1.0));
+
+	DrawW *= ScaleFactor;
+	DrawH *= ScaleFactor;
+
+	DrawX = X - DrawW * Alignment.X;
+	DrawY = Y - DrawH * Alignment.Y;
+
+	C.DrawColor.R = 255;
+	C.DrawColor.G = 255;
+	C.DrawColor.B = 255;
+	C.Style = 1;
+
+	DrawStretchedTextureSegment(
+		C,
+		DrawX, DrawY, DrawW, DrawH,
+		TexX, TexY, TexW, TexH,
+		DrawTexture);
+
+	/*
 	local int ItemSizeX, ItemSizeY;
 	local float CellSizeX, CellSizeY;
 	local Texture DrawTexture;
@@ -89,8 +137,10 @@ function PaintItem(Canvas C, float X, float Y, Vector Alignment, R_ArpgItem Item
 	// Determine size from texture
 	if(Item.GetItemUITexture(DrawTexture))
 	{
-		DrawW = DrawTexture.USize;
-		DrawH = DrawTexture.VSize;
+		//DrawW = DrawTexture.USize;
+		//DrawH = DrawTexture.VSize;
+		DrawW = Item.ItemUITextureTW;
+		DrawH = Item.ItemUITextureTH;
 	}
 	else
 	{
@@ -113,7 +163,13 @@ function PaintItem(Canvas C, float X, float Y, Vector Alignment, R_ArpgItem Item
 	C.DrawColor.G = 255;
 	C.DrawColor.B = 255;
 	C.Style = 1;
-	DrawStretchedTexture(C, DrawX, DrawY, DrawW, DrawH, DrawTexture);
+	//DrawStretchedTexture(C, DrawX, DrawY, DrawW, DrawH, DrawTexture);
+
+	DrawStretchedTextureSegment(C, DrawX, DrawY, DrawW, DrawH,
+		Item.ItemUITextureTX, Item.ItemUITextureTY,
+		DrawW, DrawH,
+		DrawTexture);
+	*/
 }
 
 function GetGridCellPixelSize(out float OutGridPixelSizeX, out float OutGridPixelSizeY)

@@ -114,7 +114,7 @@ function PaintItems(Canvas C)
 	{
 		if(ItemSlot.GetItem(0, StoredItem))
 		{
-			PaintItem(C, 0, 0, Vect(0,0,0), StoredItem);
+			PaintItem(C, WinWidth * 0.5, WinHeight * 0.5, Vect(0.5,0.5,0), StoredItem);
 		}
 	}
 }

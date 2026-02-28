@@ -3,16 +3,110 @@
 //==============================================================================
 class R_ArpgItem extends R_ArpgObject;
 
-var private SkelModel ItemSkelModel;
-var private Texture ItemUITexture;
-
 var private int ItemGridSizeX;
 var private int ItemGridSizeY;
 
+const ITEM_RARITY_NORMAL = 0;
+const ITEM_RARITY_MAGIC = 1;
+const ITEM_RARITY_RARE = 2;
+const ITEM_RARITY_UNIQUE = 3;
+
+var private String ItemSpecialString;
+var private String ItemTypeString;
+var private int ItemRarity;
+
+struct R_ArpgItemModifierInstance
+{
+	var Class<R_ArpgItemModifier> ItemModifierClass;
+	var int Parameters;
+};
+var private R_ArpgItemModifierInstance ItemModifierInstances[16];
+var private int ItemModifierInstanceCount;
+
+//------------------------------------------------------------------------------
+
+var private SkelModel ItemSkelModel;
+var private Texture ItemUITexture;
+var float ItemUITextureTX;
+var float ItemUITextureTY;
+var float ItemUITextureTW;
+var float ItemUITextureTH;
+
+//------------------------------------------------------------------------------
+
+function AddItemModifier(Class<R_ArpgItemModifier> ItemModifierClass, int Parameters)
+{
+	local int i;
+
+	if(ItemModifierInstanceCount >= ArrayCount(ItemModifierInstances) || ItemModifierClass == None)
+	{
+		return;
+	}
+
+	// Make sure an ItemModifier of this class is not already present
+	for(i = 0; i < ItemModifierInstanceCount; ++i)
+	{
+		if(ItemModifierInstances[i].ItemModifierClass == ItemModifierClass)
+		{
+			return;
+		}
+	}
+
+	ItemModifierInstances[ItemModifierInstanceCount].ItemModifierClass = ItemModifierClass;
+	ItemModifierInstances[ItemModifierInstanceCount].Parameters = Parameters;
+	++ItemModifierInstanceCount;
+}
+
+function int GetItemModifierCount()
+{
+	return ItemModifierInstanceCount;
+}
+
+function String GetItemModifierInspectionString(int ItemModifierIndex)
+{
+	local Class<R_ArpgItemModifier> ItemModifierClass;
+	local int Parameters;
+
+	if(ItemModifierIndex >= 0 && ItemModifierIndex < ItemModifierInstanceCount)
+	{
+		ItemModifierClass = ItemModifierInstances[ItemModifierIndex].ItemModifierClass;
+		Parameters = ItemModifierInstances[ItemModifierIndex].Parameters;
+		if(ItemModifierClass != None)
+		{
+			return ItemModifierClass.Static.GetItemModifierInspectionString(Parameters);
+		}
+	}
+
+	return "";
+}
+
+function String GetItemSpecialName()
+{
+	return ItemSpecialString;
+}
+
+function String GetItemTypeString()
+{
+	return ItemTypeString;
+}
+
+function int GetItemRarity()
+{
+	return ItemRarity;
+}
+
 function InitializeArpgObject()
 {
+	// Initialize ItemModifierInstances
+	ItemModifierInstanceCount = 0;
+
 	// Force clamping on defaultproperties
 	SetItemGridSize(ItemGridSizeX, ItemGridSizeY);
+
+	// Some test stuff
+	ItemTypeString = "Broad Sword";
+	ItemSpecialString = "Ragnar's Steel";
+	ItemRarity = ITEM_RARITY_UNIQUE;
 }
 
 function bool GetItemSkelModel(out SkelModel OutItemSkelModel)

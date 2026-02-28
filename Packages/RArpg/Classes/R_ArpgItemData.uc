@@ -1,0 +1,1 @@
+class R_ArpgItemData extends R_ArpgObject abstract;

@@ -18,7 +18,35 @@ var private int FloatingQueryResult;
 var private R_ArpgWindowRegion SwapItemQueryRegion;
 var private R_ArpgItem SwapItem;
 
+//------------------------------------------------------------------------------
+
 var private R_ArpgItem InspectedItem;
+
+const ITEM_RARITY_NORMAL = 0;
+const ITEM_RARITY_MAGIC = 1;
+const ITEM_RARITY_RARE = 2;
+const ITEM_RARITY_UNIQUE = 3;
+
+var private Color C_ItemNameUnique;
+var private Color C_ItemNameRare;
+var private Color C_ItemNameMagic;
+var private Color C_ItemNameNormal;
+var private Color C_ItemModifier;
+
+var private Font F_ItemName;
+var private Font F_ItemType;
+var private Font F_ItemDescriptor;
+
+//------------------------------------------------------------------------------
+
+function Created()
+{
+	Super.Created();
+
+	F_ItemName = Font(DynamicLoadObject("RArpgFonts.Marcellus20", Class'Font'));
+	F_ItemType = Font(DynamicLoadObject("RArpgFonts.Marcellus20", Class'Font'));
+	F_ItemDescriptor = Font(DynamicLoadObject("RArpgFonts.Marcellus16", Class'Font'));
+}
 
 //------------------------------------------------------------------------------
 
@@ -249,10 +277,13 @@ function PaintInspecting(Canvas C, float X, float Y)
 
 function PaintInspectedItemPanel(Canvas C, float PanelX, float PanelY, float PanelW, float PanelH, R_ArpgItem Item)
 {
+	local Font ItemFont;
 	local float BorderThickness;
 	local float DrawX, DrawY;
 	local String DrawString;
 	local float StrW, StrH;
+	local int i, Count;
+	local String DrawStrings[8];
 
 	C.Style = 5;
 	C.AlphaScale = 0.85;
@@ -284,13 +315,62 @@ function PaintInspectedItemPanel(Canvas C, float PanelX, float PanelY, float Pan
 
 	DrawY = PanelY + BorderThickness + 16.0;
 
-	// Draw Item name
-	C.Font = C.CredsFont;
-	DrawString = "Item Name";
-	C.StrLen(DrawString, StrW, StrH);
-	DrawX = PanelX + PanelW * 0.5 - StrW * 0.5;
-	C.SetPos(DrawX, DrawY);
-	C.DrawText(DrawString);
+	// Draw item special name --------------------------------------------------
+	DrawString = Item.GetItemSpecialName();
+	if(DrawString != "")
+	{
+		switch(Item.GetItemRarity())
+		{
+		case ITEM_RARITY_UNIQUE:	C.DrawColor = C_ItemNameUnique;	break;
+		case ITEM_RARITY_RARE:		C.DrawColor = C_ItemNameRare;	break;
+		case ITEM_RARITY_MAGIC:		C.DrawColor = C_ItemNameMagic;	break;
+		default: 					C.DrawColor = C_ItemNameNormal;	break;
+		}
+		C.Style = 1;
+		C.Font = F_ItemName;
+		C.StrLen(DrawString, StrW, StrH);
+		DrawX = PanelX + PanelW * 0.5 - StrW * 0.5;
+		C.SetPos(DrawX, DrawY);
+		C.DrawText(DrawString);
+		DrawY += StrH + 8.0;
+	}
+	
+	// Draw item type name ----------------------------------------------------------
+	DrawString = Item.GetItemTypeString();
+	if(DrawString != "")
+	{
+		C.DrawColor.R = 255;
+		C.DrawColor.G = 255;
+		C.DrawColor.B = 255;
+		C.Font = F_ItemName;
+		C.Style = 1;
+		
+		C.StrLen(DrawString, StrW, StrH);
+		DrawX = PanelX + PanelW * 0.5 - StrW * 0.5;
+		C.SetPos(DrawX, DrawY);
+		C.DrawText(DrawString);
+		DrawY += StrH + 8.0;
+	}
+
+	// Draw item modifiers -----------------------------------------------------
+	Count = Item.GetItemModifierCount();
+	C.Font = F_ItemDescriptor;
+	C.DrawColor = C_ItemModifier;
+	C.Style = 1;
+	for(i = 0; i < Count; ++i)
+	{
+		DrawString = Item.GetItemModifierInspectionString(i);
+		if(DrawString == "")
+		{
+			continue;
+		}
+
+		C.StrLen(DrawString, StrW, StrH);
+		DrawX = PanelX + PanelW * 0.5 - StrW * 0.5;
+		C.SetPos(DrawX, DrawY);
+		C.DrawText(DrawString);
+		DrawY += StrH + 2.0;
+	}
 }
 
 //------------------------------------------------------------------------------
@@ -387,4 +467,9 @@ function bool TryPickUpItem()
 defaultproperties
 {
 	FloatingAlignment=(X=0.5,Y=0.5)
+	C_ItemNameUnique=(R=255,G=0,B=68)
+	C_ItemNameRare=(R=155,G=155,B=155)
+	C_ItemNameMagic=(R=155,G=155,B=155)
+	C_ItemNameNormal=(R=155,G=155,B=155)
+	C_ItemModifier=(R=252,G=161,B=3)
 }

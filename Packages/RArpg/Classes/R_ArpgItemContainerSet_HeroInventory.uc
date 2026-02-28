@@ -38,13 +38,25 @@ function AddSomeTestItems()
 	local R_ArpgItem TestItem;
 
 	TestItem = R_ArpgItem(ArpgLib.Static.CreateArpgObject(Class'RArpgCore.R_ArpgItem', Self));
-	TestItem.SetItemGridSize(2,2);
-	TestItem.SetItemUITexture(Texture'RuneFX.loading1');
+	TestItem.SetItemGridSize(2,3);
+	TestItem.SetItemUITexture(Texture'RArpg.UIWoodShield');
+	TestItem.ItemUITextureTX = 0.0;
+	TestItem.ItemUITextureTY = 0.0;
+	TestItem.ItemUITextureTW = 256.0;
+	TestItem.ItemUITextureTH = 256.0;
+	TestItem.AddItemModifier(Class'RArpg.R_ArpgItemModifier_AllSkills', 3);
+	TestItem.AddItemModifier(Class'RArpg.R_ArpgItemModifier_AttackSpeed', 50);
 	ItemGrid_PersonalInventory.AddItem(TestItem);
 
 	TestItem = R_ArpgItem(ArpgLib.Static.CreateArpgObject(Class'RArpgCore.R_ArpgItem', Self));
-	TestItem.SetItemGridSize(3,3);
-	TestItem.SetItemUITexture(Texture'RuneFX.saving1');
+	TestItem.SetItemGridSize(1,3);
+	TestItem.SetItemUITexture(Texture'RArpg.UIBroadSword');
+	TestItem.ItemUITextureTX = 86.0;
+	TestItem.ItemUITextureTY = 0.0;
+	TestItem.ItemUITextureTW = 86.0;
+	TestItem.ItemUITextureTH = 256.0;
+	TestItem.AddItemModifier(Class'RArpg.R_ArpgItemModifier_AttackSpeed', 100);
+	TestItem.AddItemModifier(Class'RArpg.R_ArpgItemModifier_Damage', 300);
 	ItemGrid_PersonalInventory.AddItem(TestItem);
 }
 
