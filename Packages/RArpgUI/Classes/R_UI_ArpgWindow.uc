@@ -88,10 +88,6 @@ function PaintItem(Canvas C, float X, float Y, Vector Alignment, R_ArpgItem Item
 	TexY = Item.ItemUITextureTY;
 	TexW = Item.ItemUITextureTW;
 	TexH = Item.ItemUITextureTH;
-	//TexX = 86.0;
-	//TexY = 0.0;
-	//TexW = 86.0;
-	//TexH = 256.0;
 
 	DrawW = TexW;
 	DrawH = TexH;
@@ -116,60 +112,6 @@ function PaintItem(Canvas C, float X, float Y, Vector Alignment, R_ArpgItem Item
 		DrawX, DrawY, DrawW, DrawH,
 		TexX, TexY, TexW, TexH,
 		DrawTexture);
-
-	/*
-	local int ItemSizeX, ItemSizeY;
-	local float CellSizeX, CellSizeY;
-	local Texture DrawTexture;
-	local float DrawX, DrawY, DrawW, DrawH;
-	local float MaxDimension;
-	local float ScaleFactor;
-
-	if(Item == None)
-	{
-		return;
-	}
-
-	// Get the unit size of Item
-	Item.GetItemGridSize(ItemSizeX, ItemSizeY);
-	GetGridCellPixelSize(CellSizeX, CellSizeY);
-
-	// Determine size from texture
-	if(Item.GetItemUITexture(DrawTexture))
-	{
-		//DrawW = DrawTexture.USize;
-		//DrawH = DrawTexture.VSize;
-		DrawW = Item.ItemUITextureTW;
-		DrawH = Item.ItemUITextureTH;
-	}
-	else
-	{
-		DrawTexture = WhiteTexture; // Could use a better invalid texture here
-		DrawW = MaxDimension;
-		DrawH = MaxDimension;
-	}
-
-	// Scale the texture down if necessary
-	MaxDimension = FMin(ItemSizeX * CellSizeX, ItemSizeY * CellSizeY);
-	ScaleFactor = FClamp(FMin(MaxDimension / DrawW, MaxDimension / DrawH), 0.0, 1.0);
-
-	DrawW *= ScaleFactor;
-	DrawH *= ScaleFactor;
-
-	DrawX = X - DrawW * Alignment.X;
-	DrawY = Y - DrawH * Alignment.Y;
-
-	C.DrawColor.R = 255;
-	C.DrawColor.G = 255;
-	C.DrawColor.B = 255;
-	C.Style = 1;
-	//DrawStretchedTexture(C, DrawX, DrawY, DrawW, DrawH, DrawTexture);
-
-	DrawStretchedTextureSegment(C, DrawX, DrawY, DrawW, DrawH,
-		Item.ItemUITextureTX, Item.ItemUITextureTY,
-		DrawW, DrawH,
-		DrawTexture);
-	*/
 }
 
 function GetGridCellPixelSize(out float OutGridPixelSizeX, out float OutGridPixelSizeY)

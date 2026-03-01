@@ -8,6 +8,18 @@ var private R_ArpgDataStore DataStore;
 
 //------------------------------------------------------------------------------
 
+function bool GetUIPresence(R_ArpgTag Tag, out R_ArpgData_UIPresence OutUIPresence)
+{
+	local R_ArpgObject Data;
+	local bool bResult;
+
+	bResult = DataStore.GetData(Tag, Data);
+	OutUIPresence = R_ArpgData_UIPresence(Data);
+	return bResult;
+}
+
+//------------------------------------------------------------------------------
+
 function InitializeArpgObject()
 {
 	Log("Loading UIPresence Data Store from class" @ Self.Class);
@@ -21,15 +33,15 @@ function LogDumpArpgObject()
 	DataStore.LogDumpArpgObject();
 }
 
-function R_ArpgDataObject_UIPresence CreateUIPresence(
+function R_ArpgData_UIPresence CreateUIPresence(
 	Texture DrawTexture,
 	float TexX, float TexY, float TexW, float TexH,
 	optional Sound PickupSound,
 	optional Sound PlaceSound)
 {
-	local R_ArpgDataObject_UIPresence Data;
+	local R_ArpgData_UIPresence Data;
 
-	Data = R_ArpgDataObject_UIPresence(ArpgLib.Static.CreateArpgObject(Class'RArpg.R_ArpgDataObject_UIPresence', Self));
+	Data = R_ArpgData_UIPresence(ArpgLib.Static.CreateArpgObject(Class'RArpg.R_ArpgData_UIPresence', Self));
 	Data.DrawTexture = DrawTexture;
 	Data.TexX = TexX;
 	Data.TexY = TexY;

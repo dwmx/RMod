@@ -1,8 +1,8 @@
 //==============================================================================
-//	R_ArpgDataObject_UIPresence
+//	R_ArpgData_UIPresence
 //	Holds all information relevant to an object's presence in the UI
 //==============================================================================
-class R_ArpgDataObject_UIPresence extends R_ArpgObject;
+class R_ArpgData_UIPresence extends R_ArpgObject;
 
 var Texture DrawTexture;
 var float TexX;

@@ -3,6 +3,8 @@
 //==============================================================================
 class R_ArpgItem extends R_ArpgObject;
 
+var private R_ArpgTag ItemTag;
+
 var private int ItemGridSizeX;
 var private int ItemGridSizeY;
 
@@ -93,6 +95,16 @@ function String GetItemTypeString()
 function int GetItemRarity()
 {
 	return ItemRarity;
+}
+
+function SetItemTag(R_ArpgTag NewItemTag)
+{
+	ItemTag = NewItemTag;
+}
+
+function R_ArpgTag GetItemTag()
+{
+	return ItemTag;
 }
 
 function InitializeArpgObject()

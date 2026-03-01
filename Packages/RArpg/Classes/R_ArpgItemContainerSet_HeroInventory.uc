@@ -61,6 +61,7 @@ function AddSomeTestItems()
 	local R_ArpgItem TestItem;
 
 	TestItem = R_ArpgItem(ArpgLib.Static.CreateArpgObject(Class'RArpgCore.R_ArpgItem', Self));
+	TestItem.SetItemTag(TagLib.Static.MakeTag('Item','Shield','WoodShield'));
 	TestItem.SetItemGridSize(2,3);
 	TestItem.SetItemSkelModel(SkelModel'weapons.woodshield');
 	TestItem.SetItemUITexture(Texture'RArpg.UIWoodShield');
@@ -73,6 +74,7 @@ function AddSomeTestItems()
 	ItemGrid_PersonalInventory.AddItem(TestItem);
 
 	TestItem = R_ArpgItem(ArpgLib.Static.CreateArpgObject(Class'RArpgCore.R_ArpgItem', Self));
+	TestItem.SetItemTag(TagLib.Static.MakeTag('Item','Weapon','Sword','BroadSword'));
 	TestItem.SetItemGridSize(1,3);
 	TestItem.SetItemSkelModel(SkelModel'weapons.broadsword');
 	TestItem.SetItemUITexture(Texture'RArpg.UIBroadSword');
