@@ -1,4 +1,23 @@
+//==============================================================================
+//	R_ArpgGameInfo
+//==============================================================================
 class R_ArpgGameInfo extends R_GameInfo;
+
+const ArpgLib = Class'RArpg.R_ArpgLibrary';
+const TagLib = Class'RArpg.R_ArpgTagLibrary';
+
+// ItemFactory
+var private R_ArpgItemFactory ItemFactory;
+
+function R_ArpgItemFactory GetItemFactory()
+{
+	return ItemFactory;
+}
+
+event PostBeginPlay()
+{
+	ItemFactory = R_ArpgItemFactory(ArpgLib.Static.CreateArpgObject(Class'RArpg.R_ArpgItemFactory', Self));
+}
 
 event PostLogin(PlayerPawn NewPlayer)
 {
@@ -29,6 +48,11 @@ function SpawnPawnForPlayer(R_ArpgPlayerController PlayerController)
 		PlayerController.Location + Vect(0,0,1) * 200.0,
 		PlayerController.Rotation);
 	PlayerController.SetControlledPawn(NewPawn);
+
+	// Grant a couple of test items
+	// TODO: Still need to implement the WorldPresence data store
+	NewPawn.TryAddItem(ItemFactory.CreateItemFromTag(TagLib.Static.MakeTag('Item','Weapon','Sword','BroadSword')));
+	NewPawn.TryAddItem(ItemFactory.CreateItemFromTag(TagLib.Static.MakeTag('Item','Shield','WoodShield')));
 }
 
 function Killed( pawn killer, pawn Other, name damageType )

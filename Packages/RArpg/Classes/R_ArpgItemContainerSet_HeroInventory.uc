@@ -56,17 +56,25 @@ function InitializeArpgObject()
 	AddSomeTestItems();
 }
 
+// TODO:
+// GET RID OF THIS
+// This is being implemented by ArpgItemFactory, which is stored on ArpgGameInfo
 function AddSomeTestItems()
 {
 	local R_ArpgItem TestItem;
 
-	TestItem = R_ArpgItem(ArpgLib.Static.CreateArpgObject(Class'RArpgCore.R_ArpgItem', Self));
-	TestItem.SetItemTag(TagLib.Static.MakeTag('Item','Shield','WoodShield'));
-	TestItem.SetItemGridSize(2,3);
-	TestItem.SetItemSkelModel(SkelModel'weapons.woodshield');
-	TestItem.AddItemModifier(Class'RArpg.R_ArpgItemModifier_AllSkills', 3);
-	TestItem.AddItemModifier(Class'RArpg.R_ArpgItemModifier_AttackSpeed', 50);
-	ItemGrid_PersonalInventory.AddItem(TestItem);
+	// TODO: This was moved to R_ArpgGameInfo.SpawnForPlayer
+	// Still need to implement the WorldPresence DataStore and set up actors, animations, etc
+
+	//TestItem = ItemFactory.CreateItemFromTag(TagLib.Static.MakeTag('Item','Shield','WoodShield'));
+
+	//TestItem = R_ArpgItem(ArpgLib.Static.CreateArpgObject(Class'RArpgCore.R_ArpgItem', Self));
+	//TestItem.SetItemTag(TagLib.Static.MakeTag('Item','Shield','WoodShield'));
+	//TestItem.SetItemGridSize(2,3);
+	//TestItem.SetItemSkelModel(SkelModel'weapons.woodshield');
+	//TestItem.AddItemModifier(Class'RArpg.R_ArpgItemModifier_AllSkills', 3);
+	//TestItem.AddItemModifier(Class'RArpg.R_ArpgItemModifier_AttackSpeed', 50);
+	//ItemGrid_PersonalInventory.AddItem(TestItem);
 
 	TestItem = R_ArpgItem(ArpgLib.Static.CreateArpgObject(Class'RArpgCore.R_ArpgItem', Self));
 	TestItem.SetItemTag(TagLib.Static.MakeTag('Item','Weapon','Sword','BroadSword'));
@@ -124,4 +132,13 @@ function HandleEvent_ItemSlotChanged(R_ArpgItemSlot ItemSlot, R_ArpgItem NewItem
 
 	InventorySlotName = GetItemContainerIdentifier(ItemSlot);
 	FireInventoryEvent(EVENT_INVENTORY_SLOT_CHANGED, InventorySlotName, NewItem);
+}
+
+function bool TryAddItem(R_ArpgItem Item)
+{
+	if(ItemGrid_PersonalInventory != None)
+	{
+		return ItemGrid_PersonalInventory.AddItem(Item);
+	}
+	return false;
 }

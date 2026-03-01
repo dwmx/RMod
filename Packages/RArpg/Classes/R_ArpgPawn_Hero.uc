@@ -67,6 +67,15 @@ function R_ArpgItemContainerSet GetInventorySet()
 	return InventorySet;
 }
 
+function bool TryAddItem(R_ArpgItem Item)
+{
+	if(InventorySet != None)
+	{
+		return InventorySet.TryAddItem(Item);
+	}
+	return false;
+}
+
 function Input_Fire()
 {
 	ActivateSkill();

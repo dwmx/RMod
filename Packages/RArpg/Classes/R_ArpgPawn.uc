@@ -16,7 +16,7 @@ var private Vector LookDirection;
 var private R_ArpgSkill Skills[8];
 
 var private float Experience;
-var private int Level;
+//var private int Level;
 
 var private bool bLockDirection;
 
@@ -45,10 +45,8 @@ event PostBeginPlay()
 	Spawn(TraceProxyClass, Self);
 }
 
-function R_ArpgItemContainerSet GetInventorySet()
-{
-	return None;
-}
+function R_ArpgItemContainerSet GetInventorySet() { return None; }
+function bool TryAddItem(R_ArpgItem Item) { return false; }
 
 function ReceiveInventoryEvent(Name EventName, Name InventoryContainerName, R_ArpgItemContainerSet Sender, optional R_ArpgItem OptionalItem);
 

@@ -41,3 +41,7 @@ function FireInventoryEvent(Name EventName, Name InventoryContainerName, optiona
 
 	OwnerPawn.ReceiveInventoryEvent(EventName, InventoryContainerName, Self, OptionalItem);
 }
+
+// General entry point for any game events that attempt to give an Item to this set
+// i.e. GameInfo trying to give a Pawn some initial inventory at spawn time
+function bool TryAddItem(R_ArpgItem Item);
