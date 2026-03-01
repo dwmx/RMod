@@ -83,11 +83,16 @@ function PaintItem(Canvas C, float X, float Y, Vector Alignment, R_ArpgItem Item
 	Item.GetItemGridSize(ItemGridSizeX, ItemGridSizeY);
 	GetGridCellPixelSize(GridCellPixelSizeX, GridCellPixelSizeY);
 
-	Item.GetItemUITexture(DrawTexture);
-	TexX = Item.ItemUITextureTX;
-	TexY = Item.ItemUITextureTY;
-	TexW = Item.ItemUITextureTW;
-	TexH = Item.ItemUITextureTH;
+	// Retrieve the texture info for the item
+	if(!GetItemUITextureInfo(Item, DrawTexture, TexX, TexY, TexW, TexH))
+	{
+		// Failed to retrieve UI Texture info for the item, use defaults
+		DrawTexture = WhiteTexture;
+		DrawX = 0.0;
+		DrawY = 0.0;
+		DrawW = DrawTexture.USize;
+		DrawH = DrawTexture.VSize;
+	}
 
 	DrawW = TexW;
 	DrawH = TexH;
@@ -125,6 +130,29 @@ function GetGridCellPixelSize(out float OutGridPixelSizeX, out float OutGridPixe
 	}
 
 	LocalRootWindow.GetGridCellPixelSize(OutGridPixelSizeX, OutGridPixelSizeY);
+}
+
+function bool GetItemUITextureInfo(
+	R_ArpgItem Item,
+	out Texture OutDrawTexture,
+	out float OutTexX, out float OutTexY,
+	out float OutTexW, out float OutTexH)
+{
+	local R_UI_ArpgRootWindow LocalRootWindow;
+	LocalRootWindow = GetArpgRootWindow();
+	if(LocalRootWindow != None)
+	{
+		return LocalRootWindow.GetItemUITextureInfo(Item, OutDrawTexture, OutTexX, OutTexY, OutTexW, OutTexH);
+	}
+	else
+	{
+		OutDrawTexture = None;
+		OutTexX = 0.0;
+		OutTexY = 0.0;
+		OutTexW = 0.0;
+		OutTexH = 0.0;
+		return false;
+	}
 }
 
 defaultproperties

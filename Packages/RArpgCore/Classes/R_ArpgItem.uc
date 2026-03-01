@@ -28,11 +28,6 @@ var private int ItemModifierInstanceCount;
 //------------------------------------------------------------------------------
 
 var private SkelModel ItemSkelModel;
-var private Texture ItemUITexture;
-var float ItemUITextureTX;
-var float ItemUITextureTY;
-var float ItemUITextureTW;
-var float ItemUITextureTH;
 
 //------------------------------------------------------------------------------
 
@@ -137,21 +132,6 @@ function SetItemSkelModel(SkelModel NewItemSkelModel)
 	ItemSkelModel = NewItemSkelModel;
 }
 
-function bool GetItemUITexture(out Texture OutItemUITexture)
-{
-	OutItemUITexture = None;
-	if(ItemUITexture == None)
-	{
-		return false;
-	}
-	OutItemUITexture = ItemUITexture;
-	return true;
-}
-
-function SetItemUITexture(Texture NewItemUITexture)
-{
-	ItemUITexture = NewItemUITexture;
-}
 
 function bool GetItemGridSize(out int OutItemGridSizeX, out int OutItemGridSizeY)
 {
@@ -174,7 +154,6 @@ function SetItemGridSize(int NewItemGridSizeX, int NewItemGridSizeY)
 defaultproperties
 {
 	ItemSkelModel=None
-	ItemUITexture=None
 	ItemGridSizeX=1
 	ItemGridSizeY=1
 }

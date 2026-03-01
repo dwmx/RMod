@@ -64,11 +64,6 @@ function AddSomeTestItems()
 	TestItem.SetItemTag(TagLib.Static.MakeTag('Item','Shield','WoodShield'));
 	TestItem.SetItemGridSize(2,3);
 	TestItem.SetItemSkelModel(SkelModel'weapons.woodshield');
-	TestItem.SetItemUITexture(Texture'RArpg.UIWoodShield');
-	TestItem.ItemUITextureTX = 0.0;
-	TestItem.ItemUITextureTY = 0.0;
-	TestItem.ItemUITextureTW = 256.0;
-	TestItem.ItemUITextureTH = 256.0;
 	TestItem.AddItemModifier(Class'RArpg.R_ArpgItemModifier_AllSkills', 3);
 	TestItem.AddItemModifier(Class'RArpg.R_ArpgItemModifier_AttackSpeed', 50);
 	ItemGrid_PersonalInventory.AddItem(TestItem);
@@ -77,11 +72,6 @@ function AddSomeTestItems()
 	TestItem.SetItemTag(TagLib.Static.MakeTag('Item','Weapon','Sword','BroadSword'));
 	TestItem.SetItemGridSize(1,3);
 	TestItem.SetItemSkelModel(SkelModel'weapons.broadsword');
-	TestItem.SetItemUITexture(Texture'RArpg.UIBroadSword');
-	TestItem.ItemUITextureTX = 86.0;
-	TestItem.ItemUITextureTY = 0.0;
-	TestItem.ItemUITextureTW = 86.0;
-	TestItem.ItemUITextureTH = 256.0;
 	TestItem.AddItemModifier(Class'RArpg.R_ArpgItemModifier_AttackSpeed', 100);
 	TestItem.AddItemModifier(Class'RArpg.R_ArpgItemModifier_Damage', 300);
 	ItemGrid_PersonalInventory.AddItem(TestItem);

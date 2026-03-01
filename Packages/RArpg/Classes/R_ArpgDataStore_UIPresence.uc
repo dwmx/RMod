@@ -8,12 +8,17 @@ var private R_ArpgDataStore DataStore;
 
 //------------------------------------------------------------------------------
 
-function bool GetUIPresence(R_ArpgTag Tag, out R_ArpgData_UIPresence OutUIPresence)
+function bool GetUIPresence(R_ArpgItem Item, out R_ArpgData_UIPresence OutUIPresence)
 {
 	local R_ArpgObject Data;
 	local bool bResult;
 
-	bResult = DataStore.GetData(Tag, Data);
+	if(Item == None)
+	{
+		return false;
+	}
+
+	bResult = DataStore.GetData(Item.GetItemTag(), Data);
 	OutUIPresence = R_ArpgData_UIPresence(Data);
 	return bResult;
 }

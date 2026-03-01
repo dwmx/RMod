@@ -46,6 +46,21 @@ function GetGridPixelDimensions(int GridSizeX, int GridSizeY, out float OutGridP
 	OutGridPixelSizeY = float(GridSizeY) * GridPixelSizeY;
 }
 
+function bool GetItemUITextureInfo(
+	R_ArpgItem Item,
+	out Texture OutDrawTexture,
+	out float OutTexX, out float OutTexY,
+	out float OutTexW, out float OutTexH)
+{
+	// Implementing class needs to determine how the item texture data is stored and retrieved
+	OutDrawTexture = None;
+	OutTexX = 0.0;
+	OutTexY = 0.0;
+	OutTexW = 0.0;
+	OutTexH = 0.0;
+	return false;
+}
+
 defaultproperties
 {
 	GridPixelSizeX=48.0
