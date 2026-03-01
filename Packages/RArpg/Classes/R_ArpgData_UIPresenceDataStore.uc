@@ -1,7 +1,9 @@
 //==============================================================================
-//	R_ArpgDataStore_UIPresence
+//	R_ArpgData_UIPresenceDataStore
+//	Holds all of the UI data used by items
+//	Textures, texture draw parameters, sounds, etc
 //==============================================================================
-class R_ArpgDataStore_UIPresence extends R_ArpgObject;
+class R_ArpgData_UIPresenceDataStore extends R_ArpgDataStore;
 
 const DataStoreClass = Class'RArpgCore.R_ArpgDataStoreArray';
 var private R_ArpgDataStore DataStore;

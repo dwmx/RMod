@@ -7,7 +7,7 @@ class R_UI_ArpgGameUserInterface extends RGameUI.R_UI_GameUserInterface;
 const ArpgLib = Class'RArpgCore.R_ArpgLibrary';
 
 // UIPresence DataStore
-var private R_ArpgDataStore_UIPresence DataStoreUIPresence;
+var private R_ArpgData_UIPresenceDataStore DataStoreUIPresence;
 
 // UI Commands
 const UICommand_Inventory = 'Inventory';
@@ -21,10 +21,10 @@ function ConstructUI()
 
 	//--------------------------------------------------------------------------
 	// Load the UIPresence data store
-	DataStoreUIPresence = R_ArpgDataStore_UIPresence(ArpgLib.Static.CreateArpgObject(Class'RArpg.R_ArpgDataStore_UIPresence', Self));
+	DataStoreUIPresence = R_ArpgData_UIPresenceDataStore(ArpgLib.Static.CreateArpgObject(Class'RArpg.R_ArpgData_UIPresenceDataStore', Self));
 }
 
-function R_ArpgDataStore_UIPresence GetDataStoreUIPresence()
+function R_ArpgData_UIPresenceDataStore GetDataStoreUIPresence()
 {
 	return DataStoreUIPresence;
 }

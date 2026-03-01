@@ -15,7 +15,7 @@ function SetGameUserInterface(R_UI_ArpgGameUserInterface NewGameUserInterface)
 	GameUserInterface = NewGameUserInterface;
 }
 
-function R_ArpgDataStore_UIPresence GetDataStoreUIPresence()
+function R_ArpgData_UIPresenceDataStore GetDataStoreUIPresence()
 {
 	if(GameUserInterface != None)
 	{
@@ -32,7 +32,7 @@ function bool GetItemUITextureInfo(
 	out float OutTexX, out float OutTexY,
 	out float OutTexW, out float OutTexH)
 {
-	local R_ArpgDataStore_UIPresence DataStore;
+	local R_ArpgData_UIPresenceDataStore DataStore;
 	local R_ArpgData_UIPresence Data;
 
 	DataStore = GetDataStoreUIPresence();
