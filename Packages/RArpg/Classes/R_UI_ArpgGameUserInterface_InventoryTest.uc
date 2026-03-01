@@ -6,6 +6,9 @@ class R_UI_ArpgGameUserInterface_InventoryTest extends R_UI_ArpgGameUserInterfac
 
 const ArpgLib = Class'RArpgCore.R_ArpgLibrary';
 
+// UIPresence DataStore
+var private R_ArpgDataStore_UIPresence DataStoreUIPresence;
+
 // UI Objects
 // These are the UI counter-parts that point to Data objects and know how to
 // draw and interact with them
@@ -27,6 +30,9 @@ function ConstructUI()
 	local float OldX, OldY, OldW, OldH;
 	local float X, Y, W, H;
 
+	//--------------------------------------------------------------------------
+	// Load the UIPresence data store
+	DataStoreUIPresence = R_ArpgDataStore_UIPresence(ArpgLib.Static.CreateArpgObject(Class'RArpg.R_ArpgDataStore_UIPresence', Self));
 	//--------------------------------------------------------------------------
 	// Build the UI
 	LocalRootWindow = GetRootWindow();
