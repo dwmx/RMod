@@ -8,15 +8,22 @@ const TagLib = Class'RArpg.R_ArpgTagLibrary';
 
 // ItemFactory
 var private R_ArpgItemFactory ItemFactory;
+var private R_ArpgData_WorldPresenceDataStore WorldPresenceDataStore;
 
 function R_ArpgItemFactory GetItemFactory()
 {
 	return ItemFactory;
 }
 
+function R_ArpgData_WorldPresenceDataStore GetWorldPresenceDataStore()
+{
+	return WorldPresenceDataStore;
+}
+
 event PostBeginPlay()
 {
 	ItemFactory = R_ArpgItemFactory(ArpgLib.Static.CreateArpgObject(Class'RArpg.R_ArpgItemFactory', Self));
+	WorldPresenceDataStore = R_ArpgData_WorldPresenceDataStore(ArpgLib.Static.CreateArpgObject(Class'RArpg.R_ArpgData_WorldPresenceDataStore', Self));
 }
 
 event PostLogin(PlayerPawn NewPlayer)

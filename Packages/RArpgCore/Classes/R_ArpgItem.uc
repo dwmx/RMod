@@ -27,10 +27,6 @@ var private int ItemModifierInstanceCount;
 
 //------------------------------------------------------------------------------
 
-var private SkelModel ItemSkelModel;
-
-//------------------------------------------------------------------------------
-
 function AddItemModifier(Class<R_ArpgItemModifier> ItemModifierClass, int Parameters)
 {
 	local int i;
@@ -116,23 +112,6 @@ function InitializeArpgObject()
 	ItemRarity = ITEM_RARITY_UNIQUE;
 }
 
-function bool GetItemSkelModel(out SkelModel OutItemSkelModel)
-{
-	OutItemSkelModel = None;
-	if(ItemSkelModel == None)
-	{
-		return false;
-	}
-	OutItemSkelModel = ItemSkelModel;
-	return true;
-}
-
-function SetItemSkelModel(SkelModel NewItemSkelModel)
-{
-	ItemSkelModel = NewItemSkelModel;
-}
-
-
 function bool GetItemGridSize(out int OutItemGridSizeX, out int OutItemGridSizeY)
 {
 	OutItemGridSizeX = ItemGridSizeX;
@@ -153,7 +132,6 @@ function SetItemGridSize(int NewItemGridSizeX, int NewItemGridSizeY)
 
 defaultproperties
 {
-	ItemSkelModel=None
 	ItemGridSizeX=1
 	ItemGridSizeY=1
 }

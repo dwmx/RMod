@@ -52,8 +52,8 @@ function InitializeArpgObject()
 	ItemSlot_Gloves.SetEventListener(Self);
 	ItemSlot_Boots.SetEventListener(Self);
 
-	// Add some test items
-	AddSomeTestItems();
+	//// Add some test items
+	//AddSomeTestItems();
 }
 
 // TODO:
@@ -61,7 +61,7 @@ function InitializeArpgObject()
 // This is being implemented by ArpgItemFactory, which is stored on ArpgGameInfo
 function AddSomeTestItems()
 {
-	local R_ArpgItem TestItem;
+	//local R_ArpgItem TestItem;
 
 	// TODO: This was moved to R_ArpgGameInfo.SpawnForPlayer
 	// Still need to implement the WorldPresence DataStore and set up actors, animations, etc
@@ -76,13 +76,13 @@ function AddSomeTestItems()
 	//TestItem.AddItemModifier(Class'RArpg.R_ArpgItemModifier_AttackSpeed', 50);
 	//ItemGrid_PersonalInventory.AddItem(TestItem);
 
-	TestItem = R_ArpgItem(ArpgLib.Static.CreateArpgObject(Class'RArpgCore.R_ArpgItem', Self));
-	TestItem.SetItemTag(TagLib.Static.MakeTag('Item','Weapon','Sword','BroadSword'));
-	TestItem.SetItemGridSize(1,3);
-	TestItem.SetItemSkelModel(SkelModel'weapons.broadsword');
-	TestItem.AddItemModifier(Class'RArpg.R_ArpgItemModifier_AttackSpeed', 100);
-	TestItem.AddItemModifier(Class'RArpg.R_ArpgItemModifier_Damage', 300);
-	ItemGrid_PersonalInventory.AddItem(TestItem);
+	//TestItem = R_ArpgItem(ArpgLib.Static.CreateArpgObject(Class'RArpgCore.R_ArpgItem', Self));
+	//TestItem.SetItemTag(TagLib.Static.MakeTag('Item','Weapon','Sword','BroadSword'));
+	//TestItem.SetItemGridSize(1,3);
+	//TestItem.SetItemSkelModel(SkelModel'weapons.broadsword');
+	//TestItem.AddItemModifier(Class'RArpg.R_ArpgItemModifier_AttackSpeed', 100);
+	//TestItem.AddItemModifier(Class'RArpg.R_ArpgItemModifier_Damage', 300);
+	//ItemGrid_PersonalInventory.AddItem(TestItem);
 }
 
 function R_ArpgItemContainer GetItemContainer(Name ItemContainerIdentifier)

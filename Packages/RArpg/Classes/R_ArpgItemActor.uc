@@ -37,12 +37,30 @@ function ClearItemVisualFeatures()
 
 function ApplyItemVisualFeatures(R_ArpgItem NewItem)
 {
+	local R_ArpgGameInfo GI;
+	local R_ArpgData_WorldPresenceDataStore DataStore;
+	local R_ArpgData_WorldPresence Data;
+
 	if(NewItem == None)
 	{
 		return;
 	}
 
-	NewItem.GetItemSkelModel(Skeletal);
+	if(Role == ROLE_Authority)
+	{
+		GI = R_ArpgGameInfo(Level.Game);
+		if(GI != None)
+		{
+			DataStore = GI.GetWorldPresenceDataStore();
+			if(DataStore != None)
+			{
+				if(DataStore.GetWorldPresence(NewItem, Data))
+				{
+					Skeletal = Data.Skeletal;
+				}
+			}
+		}
+	}
 }
 
 defaultproperties
@@ -51,7 +69,4 @@ defaultproperties
     DrawType=DT_SkeletalMesh
     CollisionRadius=24.000000
     CollisionHeight=46.000000
-	Skeletal=SkelModel'weapons.broadsword'
-	SkelGroupSkins(0)=Texture'weapons.broadswordv_broad'
-	SkelGroupSkins(1)=Texture'weapons.broadswordv_broad'
 }
