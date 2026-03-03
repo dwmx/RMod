@@ -9,6 +9,10 @@ struct R_ArpgAttribute
 {
 	var Name AttributeName;
 	var float CurrentValue;
+	var float MinimumValue;
+	var float MaximumValue;
+	var bool bUseMinimumValue;
+	var bool bUseMaximumValue;
 };
 var private R_ArpgAttribute Attributes[64];
 var private int AttributeCount;
@@ -35,7 +39,13 @@ function InitializeAttributes()
 //	Adds a unique attribute to this AttributeSet with the specified name
 //	By default, Attributes are initialized to a value of 0.0
 //	Attributes are not meant to be removed, only added
-function CreateAttribute(Name AttributeName, optional float OptionalInitialValue)
+function CreateAttribute(
+	Name AttributeName,
+	optional float OptionalInitialValue,
+	optional float OptionalMinimumValue,
+	optional bool bUseMinimumValue,
+	optional float OptionalMaximumValue,
+	optional bool bUseMaximumValue)
 {
 	local int i;
 
@@ -52,9 +62,20 @@ function CreateAttribute(Name AttributeName, optional float OptionalInitialValue
 		}
 	}
 
+	if(OptionalMinimumValue > OptionalMaximumValue)
+	{
+		OptionalMinimumValue = OptionalMaximumValue;
+	}
+
 	Attributes[AttributeCount].AttributeName = AttributeName;
-	Attributes[AttributeCount].CurrentValue = OptionalInitialValue;
+	Attributes[AttributeCount].MinimumValue = OptionalMinimumValue;
+	Attributes[AttributeCount].bUseMinimumValue = bUseMinimumValue;
+	Attributes[AttributeCount].MaximumValue = OptionalMaximumValue;
+	Attributes[AttributeCount].bUseMaximumValue = bUseMaximumValue;
 	++AttributeCount;
+
+	// Call Set so that constraints may be applied to initial value
+	SetAttribute(AttributeName, OptionalInitialValue);
 }
 
 //	HasAttribute
@@ -109,9 +130,20 @@ function SetAttribute(Name AttributeName, float Value)
 
 	PreviousValue = Attributes[Index].CurrentValue;
 	NewValue = Value;
+
+	// Clamp to min and max if the attribute is using them
+	if(Attributes[Index].bUseMinimumValue)
+	{
+		NewValue = FMax(NewValue, Attributes[Index].MinimumValue);
+	}
+	if(Attributes[Index].bUseMaximumValue)
+	{
+		NewValue = FMin(NewValue, Attributes[Index].MaximumValue);
+	}
+
+	// If no change, return
 	if(PreviousValue == NewValue)
 	{
-		// No change
 		return;
 	}
 

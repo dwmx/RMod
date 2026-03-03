@@ -9,8 +9,8 @@ const ATTRIBUTE_HEALTH = 'Health';
 
 function InitializeAttributes()
 {
-	CreateAttribute('MaxHealth', 100.0);
-	CreateAttribute('Health', 100.0);
+	CreateAttribute('MaxHealth', 100.0, 0.0, true);
+	CreateAttribute('Health', 100.0, 0.0, true);
 }
 
 //	PreAttributeChange
