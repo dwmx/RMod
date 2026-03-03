@@ -6,12 +6,20 @@ class R_ArpgDBView_Pawns extends R_ArpgDBView config(RArpgDebug);
 
 const DebugCategory = 'Pawns';
 const DebugCategoryTags = 'PawnsTags';
+const DebugCategoryAttributes = 'PawnsAttributes';
 
 var config private bool bDrawTags;
+var config private bool bDrawAttributes;
 
 simulated function ToggleTags()
 {
 	bDrawTags = !bDrawTags;
+	SaveConfig();
+}
+
+simulated function ToggleAttributes()
+{
+	bDrawAttributes = !bDrawAttributes;
 	SaveConfig();
 }
 
@@ -30,7 +38,8 @@ simulated function DrawDebugView(Canvas C, R_DBStringManager StringManager)
 
 	DrawAllPawns(C, StringManager, DBM);
 
-	if(bDrawTags)	DrawTags(C, StringManager, DBM);
+	if(bDrawTags)		DrawTags(C, StringManager, DBM);
+	if(bDrawAttributes)	DrawAttributes(C, StringManager, DBM);
 }
 
 simulated function DrawAllPawns(Canvas C, R_DBStringManager StringManager, R_ArpgDBMutator DBM)
@@ -94,5 +103,46 @@ simulated function DrawTags(Canvas C, R_DBStringManager StringManager, R_ArpgDBM
 	for(i = 0; i < UniqueTagCount; ++i)
 	{
 		StringManager.AddName(DebugCategoryTags, "---", UniqueTags[i]);
+	}
+}
+
+simulated function DrawAttributes(Canvas C, R_DBStringManager StringManager, R_ArpgDBMutator DBM)
+{
+	local R_ArpgPawn P;
+	local R_ArpgEntity Entity;
+	local R_ArpgEntityAttributeSet AttributeSet;
+	local int AttributeCount;
+	local Name AttributeTag;
+	local float AttributeValue;
+	local int i;
+
+	P = R_ArpgPawn(DBM.GetDebugTarget());
+	if(P == None)
+	{
+		StringManager.AddWarning(DebugCategoryAttributes, "DebugTarget is not an R_ArpgPawn, cannot view attributes");
+		return;
+	}
+
+	Entity = P.GetEntity();
+	if(Entity == None)
+	{
+		StringManager.AddWarning(DebugCategoryAttributes, "Could not retrieve Entity from ArpgPawn");
+		return;
+	}
+
+	AttributeSet = Entity.GetEntityAttributeSet();
+	if(AttributeSet == None)
+	{
+		StringManager.AddWarning(DebugCategoryAttributes, "Could not retrieve AttributeSet from Entity");
+		return;
+	}
+
+	AttributeCount = AttributeSet.GetAttributeCount();
+	StringManager.AddInt(DebugCategoryAttributes, "Attribute Count", AttributeCount);
+
+	for(i = 0; i < AttributeCount; ++i)
+	{
+		AttributeSet.GetAttributeByIndex(i, AttributeTag, AttributeValue);
+		StringManager.AddFloat(DebugCategoryAttributes, "[" $ String(AttributeTag) $ "]", AttributeValue);
 	}
 }

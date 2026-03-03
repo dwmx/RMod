@@ -6,11 +6,13 @@ class R_ArpgDBCommands_Pawns extends R_ArpgDBCommandManager;
 
 const Command_Toggle = "Toggle";
 const Command_Tags = "Tags";
+const Command_Attributes = "Attributes";
 
 function RegisterCommandList()
 {
 	RegisterCommand(Command_Toggle);
 	RegisterCommand(Command_Tags);
+	RegisterCommand(Command_Attributes);
 }
 
 function bool TryHandleArpgCommand(String CommandString, R_ArpgDBMutator DebugMutator, PlayerPawn Sender)
@@ -19,6 +21,7 @@ function bool TryHandleArpgCommand(String CommandString, R_ArpgDBMutator DebugMu
 	{
 		case Command_Toggle:		HandleCommand_Toggle(DebugMutator, Sender);	return true;
 		case Command_Tags:			HandleCommand_Tags(DebugMutator, Sender);	return true;
+		case Command_Attributes:	HandleCommand_Attributes(DebugMutator, Sender);	return true;
 	}
 
 	return false;
@@ -53,5 +56,16 @@ function HandleCommand_Tags(R_ArpgDBMutator DebugMutator, PlayerPawn Sender)
 	if(View != None)
 	{
 		View.ToggleTags();
+	}
+}
+
+function HandleCommand_Attributes(R_ArpgDBMutator DebugMutator, PlayerPawn Sender)
+{
+	local R_ArpgDBView_Pawns View;
+
+	View = GetDVPawns(DebugMutator);
+	if(View != None)
+	{
+		View.ToggleAttributes();
 	}
 }
