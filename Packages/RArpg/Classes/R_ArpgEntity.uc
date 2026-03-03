@@ -14,5 +14,15 @@ function R_ArpgAttributeSet GetEntityAttributeSet() { return AttributeSet; }
 function InitializeArpgObject()
 {
 	TagContainer = R_ArpgEntityTagContainer(ArpgLib.Static.CreateArpgObject(Class'RArpg.R_ArpgEntityTagContainer', Self));
-	AttributeSet = R_ArpgAttributeSet(ArpgLib.Static.CreateArpgObject(Class'RArpg.R_ArpgAttributeSet', Self));
+}
+
+function CreateAttributeSet(Class<R_ArpgAttributeSet> AttributeSetClass)
+{
+	AttributeSet = R_ArpgAttributeSet(ArpgLib.Static.CreateArpgObject(AttributeSetClass, Self));
+	AttributeSet.SetEventListener(Self);
+}
+
+function ReceiveArpgEvent(Name EventName, Object Sender, R_ArpgEventPayload Payload)
+{
+	Log("Entity received event:" @ EventName @ "with payload name arg:" @ Payload.NameArg);
 }

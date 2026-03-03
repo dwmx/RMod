@@ -49,6 +49,7 @@ event PostBeginPlay()
 
 	// Create ArpgEntity object
 	Entity = R_ArpgEntity(ArpgLib.Static.CreateArpgObject(Class'RArpg.R_ArpgEntity', Self));
+	Entity.CreateAttributeSet(Class'RArpg.R_ArpgAttributeSet_Pawn');
 
 	Spawn(TraceProxyClass, Self);
 }

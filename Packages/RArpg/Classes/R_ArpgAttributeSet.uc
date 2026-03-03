@@ -20,7 +20,18 @@ var private R_ArpgObject EventListener;
 
 //------------------------------------------------------------------------------
 
-//	CreateAttributes
+function InitializeArpgObject()
+{
+	InitializeAttributes();
+}
+
+function InitializeAttributes()
+{
+	// To be implemented in child class
+	// Use CreateAttribute to build the set of attributes
+}
+
+//	CreateAttribute
 //	Adds a unique attribute to this AttributeSet with the specified name
 //	By default, Attributes are initialized to a value of 0.0
 //	Attributes are not meant to be removed, only added
