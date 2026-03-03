@@ -14,6 +14,13 @@ struct R_ArpgTag
 	var Name T[4];
 };
 
+struct R_ArpgEventPayload
+{
+	var Name NameArg;
+	var float FloatArgs[2];    // For handling OldValue / NewValue event types
+	var Object OptionalObject;
+};
+
 function InitializeArpgObject();
 
 function LogDumpArpgObject()
@@ -21,4 +28,4 @@ function LogDumpArpgObject()
 	Log("Log Dump for ArpgObject (Class:" @ Self.Class $ "), (Instance:" @ Self $ ")");
 }
 
-function ReceiveArpgEvent(Name EventName, Object Sender, optional Object OptionalPayload);
+function ReceiveArpgEvent(Name EventName, Object Sender, R_ArpgEventPayload Payload);

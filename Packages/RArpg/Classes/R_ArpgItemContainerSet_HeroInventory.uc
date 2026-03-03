@@ -113,7 +113,7 @@ function Name GetItemContainerIdentifier(R_ArpgItemContainer ItemContainer)
 	return '';
 }
 
-function ReceiveArpgEvent(Name EventName, Object Sender, optional Object OptionalPayload)
+function ReceiveArpgEvent(Name EventName, Object Sender, R_ArpgEventPayload Payload)
 {
 	local R_ArpgItemSlot LocalItemSlot;
 	local R_ArpgItem LocalItem;
@@ -121,7 +121,7 @@ function ReceiveArpgEvent(Name EventName, Object Sender, optional Object Optiona
 	if(EventName == EVENT_ITEM_CHANGED)
 	{
 		LocalItemSlot = R_ArpgItemSlot(Sender);
-		LocalItem = R_ArpgItem(OptionalPayload);
+		LocalItem = R_ArpgItem(Payload.OptionalObject);
 		HandleEvent_ItemSlotChanged(LocalItemSlot, LocalItem);
 	}
 }

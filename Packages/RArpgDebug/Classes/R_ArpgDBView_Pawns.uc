@@ -110,9 +110,9 @@ simulated function DrawAttributes(Canvas C, R_DBStringManager StringManager, R_A
 {
 	local R_ArpgPawn P;
 	local R_ArpgEntity Entity;
-	local R_ArpgEntityAttributeSet AttributeSet;
+	local R_ArpgAttributeSet AttributeSet;
 	local int AttributeCount;
-	local Name AttributeTag;
+	local Name AttributeName;
 	local float AttributeValue;
 	local int i;
 
@@ -142,7 +142,7 @@ simulated function DrawAttributes(Canvas C, R_DBStringManager StringManager, R_A
 
 	for(i = 0; i < AttributeCount; ++i)
 	{
-		AttributeSet.GetAttributeByIndex(i, AttributeTag, AttributeValue);
-		StringManager.AddFloat(DebugCategoryAttributes, "[" $ String(AttributeTag) $ "]", AttributeValue);
+		AttributeSet.GetAttributeByIndex(i, AttributeName, AttributeValue);
+		StringManager.AddFloat(DebugCategoryAttributes, "[" $ String(AttributeName) $ "]", AttributeValue);
 	}
 }

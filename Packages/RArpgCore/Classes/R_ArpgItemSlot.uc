@@ -122,8 +122,11 @@ function SetEventListener(R_ArpgObject NewEventListener)
 
 function FireEvent(Name EventName, optional Object OptionalPayload)
 {
+	local R_ArpgEventPayload Payload;
+
 	if(EventListener != None)
 	{
-		EventListener.ReceiveArpgEvent(EventName, Self, OptionalPayload);
+		Payload.OptionalObject = OptionalPayload;
+		EventListener.ReceiveArpgEvent(EventName, Self, Payload);
 	}
 }

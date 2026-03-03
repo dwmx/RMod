@@ -6,18 +6,13 @@
 class R_ArpgEntity extends R_ArpgObject;
 
 var private R_ArpgEntityTagContainer TagContainer;
-var private R_ArpgEntityAttributeSet AttributeSet;
+var private R_ArpgAttributeSet AttributeSet;
 
 function R_ArpgEntityTagContainer GetEntityTagContainer() { return TagContainer; }
-function R_ArpgEntityAttributeSet GetEntityAttributeSet() { return AttributeSet; }
+function R_ArpgAttributeSet GetEntityAttributeSet() { return AttributeSet; }
 
 function InitializeArpgObject()
 {
 	TagContainer = R_ArpgEntityTagContainer(ArpgLib.Static.CreateArpgObject(Class'RArpg.R_ArpgEntityTagContainer', Self));
-	AttributeSet = R_ArpgEntityAttributeSet(ArpgLib.Static.CreateArpgObject(Class'RArpg.R_ArpgEntityAttributeSet', Self));
-
-	AttributeSet.AddAttribute('MaxHealth');
-	AttributeSet.AddAttribute('Health');
-	AttributeSet.AddAttribute('MaxMana');
-	AttributeSet.AddAttribute('Mana');
+	AttributeSet = R_ArpgAttributeSet(ArpgLib.Static.CreateArpgObject(Class'RArpg.R_ArpgAttributeSet', Self));
 }
