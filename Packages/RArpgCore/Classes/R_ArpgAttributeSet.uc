@@ -121,6 +121,12 @@ function SetAttribute(Name AttributeName, float Value)
 		return;
 	}
 
+	if(PreviousValue == ModifiedNewValue)
+	{
+		// PreAttributeChange modified the value such that there will be no change
+		return;
+	}
+
 	Attributes[Index].CurrentValue = ModifiedNewValue;
 	PostAttributeChange(AttributeName, PreviousValue, ModifiedNewValue);
 }

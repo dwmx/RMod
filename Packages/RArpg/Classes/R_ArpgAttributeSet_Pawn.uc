@@ -61,4 +61,6 @@ function PostAttributeChange(
 			SetAttribute(ATTRIBUTE_HEALTH, NewAffectedValue);
 		}
 	}
+
+	Super.PostAttributeChange(AttributeName, PreviousValue, NewValue);
 }
