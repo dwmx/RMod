@@ -7,6 +7,8 @@ class R_ArpgPawn extends PlayerPawn abstract;
 const CanvasLib = Class'RBase.R_ACanvasLibrary';
 const ArpgLib = Class'RArpgCore.R_ArpgLibrary';
 
+var private R_ArpgEntity Entity;
+
 var private Class<R_ArpgAnimationSet> AnimationSetDefaultClass;
 var private R_ArpgAnimationSet AnimationSet;
 
@@ -39,9 +41,15 @@ replication
 		Skills;
 }
 
+function R_ArpgEntity GetEntity() { return Entity; }
+
 event PostBeginPlay()
 {
 	Super.PostBeginPlay();
+
+	// Create ArpgEntity object
+	Entity = R_ArpgEntity(ArpgLib.Static.CreateArpgObject(Class'RArpg.R_ArpgEntity', Self));
+
 	Spawn(TraceProxyClass, Self);
 }
 

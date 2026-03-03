@@ -41,6 +41,11 @@ simulated function SelectNextDebugTarget()
 		P = P.NextPawn;
 	}
 
+	if(R_ArpgPlayerController(P) != None)
+	{
+		P = R_ArpgPlayerController(P).GetControlledPawn();
+	}
+
 	SetDebugTarget(P);
 }
 
