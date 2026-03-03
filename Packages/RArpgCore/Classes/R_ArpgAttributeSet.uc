@@ -109,6 +109,12 @@ function SetAttribute(Name AttributeName, float Value)
 
 	PreviousValue = Attributes[Index].CurrentValue;
 	NewValue = Value;
+	if(PreviousValue == NewValue)
+	{
+		// No change
+		return;
+	}
+
 	if(!PreAttributeChange(AttributeName, PreviousValue, NewValue, ModifiedNewValue))
 	{
 		// Change rejected

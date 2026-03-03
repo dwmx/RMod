@@ -579,6 +579,21 @@ exec function SetAnimFrame(float Frame)
 	ControlledPawn.AnimFrame = Frame;
 }
 
+exec function TrySetAttribute(Name AttributeName, float Value)
+{
+	Log("Attempting to set Attribute" @ AttributeName @ "to a value of" @ Value);
+	ControlledPawn.GetEntity().GetEntityAttributeSet().SetAttribute(AttributeName, Value);
+}
+
+exec function TryGetAttribute(Name AttributeName)
+{
+	local bool bSuccess;
+	local float Value;
+
+	bSuccess = ControlledPawn.GetEntity().GetEntityAttributeSet().GetAttributeValue(AttributeName, Value);
+	Log("Attempted to get Attribute" @ AttributeName @ "Result:" @ bSuccess @ "Value:" @ Value);
+}
+
 auto state PlayerController
 {
 	event BeginState()
