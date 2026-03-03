@@ -26,3 +26,12 @@ function ReceiveArpgEvent(Name EventName, Object Sender, R_ArpgEventPayload Payl
 {
 	Log("Entity received event:" @ EventName @ "with payload name arg:" @ Payload.NameArg);
 }
+
+//------------------------------------------------------------------------------
+function Tick(float DeltaSeconds)
+{
+	if(AttributeSet != None)
+	{
+		AttributeSet.Tick(DeltaSeconds);
+	}
+}

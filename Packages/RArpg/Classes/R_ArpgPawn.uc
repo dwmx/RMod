@@ -137,6 +137,10 @@ event Tick(float DeltaSeconds)
 	//aForward = MovementInput.X;
 	//aStrafe = MovementInput.Y;
 	PlayerTick(DeltaSeconds);
+	if(Entity != None)
+	{
+		Entity.Tick(DeltaSeconds);
+	}
 }
 
 function R_ArpgAnimationSet GetAnimationSet()

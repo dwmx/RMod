@@ -264,3 +264,6 @@ function bool GetAttributeByIndex(
 	OutAttributeValue = Attributes[Index].CurrentValue;
 	return true;
 }
+
+//------------------------------------------------------------------------------
+function Tick(float DeltaSeconds) {}

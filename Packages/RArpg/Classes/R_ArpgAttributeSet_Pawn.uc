@@ -64,3 +64,8 @@ function PostAttributeChange(
 
 	Super.PostAttributeChange(AttributeName, PreviousValue, NewValue);
 }
+
+function Tick(float DeltaSeconds)
+{
+	Super.Tick(DeltaSeconds);
+}
