@@ -585,15 +585,6 @@ exec function TrySetAttribute(Name AttributeName, float Value)
 	ControlledPawn.GetEntity().GetEntityAttributeSet().SetAttributeBaseValue(AttributeName, Value);
 }
 
-exec function TryGetAttribute(Name AttributeName)
-{
-	local bool bSuccess;
-	local float Value;
-
-	bSuccess = ControlledPawn.GetEntity().GetEntityAttributeSet().GetAttributeValue(AttributeName, Value);
-	Log("Attempted to get Attribute" @ AttributeName @ "Result:" @ bSuccess @ "Value:" @ Value);
-}
-
 auto state PlayerController
 {
 	event BeginState()

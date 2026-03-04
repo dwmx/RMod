@@ -4,6 +4,7 @@
 //==============================================================================
 class R_ArpgDBView extends RDebugTools.R_DBView abstract;
 
+const UtilityLib = Class'RBase.R_AUtilityLibrary';
 const CanvasLib = Class'RBase.R_ACanvasLibrary';
 
 function R_ArpgDBMutator GetArpgDebugMutator()

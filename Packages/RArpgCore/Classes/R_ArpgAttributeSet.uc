@@ -112,14 +112,14 @@ function SetAttributeBaseValue(Name AttributeName, float NewBaseValue)
 //	Increment the BaseValue and trigger attribute recalculation
 function IncrementAttributeBaseValue(Name AttributeName, float Amount)
 {
-	local float CurrentBaseValue;
+	local int Index;
 
-	if(!GetAttributeValue(AttributeName, CurrentBaseValue))
+	if(!GetAttributeIndex(AttributeName, Index))
 	{
 		return;
 	}
 
-	CalculateAttributeFromBaseValue(AttributeName, CurrentBaseValue + Amount);
+	CalculateAttributeFromBaseValue(AttributeName, Attributes[Index].BaseValue + Amount);
 }
 
 //	CalculateAttributeFromBaseValue
@@ -290,7 +290,10 @@ function FireEvent(Name EventName, R_ArpgEventPayload Payload)
 //	GetAttributeValue
 //	Retrieves the current value of the specified attribute
 //	Returns false if the attribute could not be found
-function bool GetAttributeValue(Name AttributeName, out float OutValue)
+function bool GetAttributeValue(
+	Name AttributeName,
+	out float OutBaseValue,
+	out float OutAggregateValue)
 {
 	local int Index;
 
@@ -299,7 +302,8 @@ function bool GetAttributeValue(Name AttributeName, out float OutValue)
 		return false;
 	}
 
-	OutValue = Attributes[Index].BaseValue;
+	OutBaseValue = Attributes[Index].BaseValue;
+	OutAggregateValue = Attributes[Index].AggregateValue;
 	return true;
 }
 
@@ -318,7 +322,8 @@ function int GetAttributeCount()
 function bool GetAttributeByIndex(
 	int Index,
 	out Name OutAttributeName,
-	out float OutAttributeValue)
+	out float OutAttributeBaseValue,
+	out float OutAttributeAggregateValue)
 {
 	if(Index < 0 || Index >= AttributeCount)
 	{
@@ -326,7 +331,8 @@ function bool GetAttributeByIndex(
 	}
 
 	OutAttributeName = Attributes[Index].AttributeName;
-	OutAttributeValue = Attributes[Index].BaseValue;
+	OutAttributeBaseValue = Attributes[Index].BaseValue;
+	OutAttributeAggregateValue = Attributes[Index].AggregateValue;
 	return true;
 }
 

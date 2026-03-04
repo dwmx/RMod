@@ -113,7 +113,9 @@ simulated function DrawAttributes(Canvas C, R_DBStringManager StringManager, R_A
 	local R_ArpgAttributeSet AttributeSet;
 	local int AttributeCount;
 	local Name AttributeName;
-	local float AttributeValue;
+	local float AttributeBaseValue;
+	local float AttributeAggregateValue;
+	local String BaseValueString, AggregateValueString;
 	local int i;
 
 	P = R_ArpgPawn(DBM.GetDebugTarget());
@@ -142,7 +144,9 @@ simulated function DrawAttributes(Canvas C, R_DBStringManager StringManager, R_A
 
 	for(i = 0; i < AttributeCount; ++i)
 	{
-		AttributeSet.GetAttributeByIndex(i, AttributeName, AttributeValue);
-		StringManager.AddFloat(DebugCategoryAttributes, "[" $ String(AttributeName) $ "]", AttributeValue);
+		AttributeSet.GetAttributeByIndex(i, AttributeName, AttributeBaseValue, AttributeAggregateValue);
+		BaseValueString = UtilityLib.Static.FloatToString(AttributeBaseValue, 1);
+		AggregateValueString = UtilityLib.Static.FloatToString(AttributeAggregateValue, 1);
+		StringManager.AddString(DebugCategoryAttributes, "{Base: " $ BaseValueString $ ", Aggregate: " $ AggregateValueString, "[" $ String(AttributeName) $ "]");
 	}
 }
