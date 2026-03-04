@@ -58,7 +58,7 @@ function PostAttributeChange(
 		if(GetAttributeValue(ATTRIBUTE_HEALTH, AffectedValue))
 		{
 			NewAffectedValue = FClamp(AffectedValue, 0.0, NewValue);
-			SetAttribute(ATTRIBUTE_HEALTH, NewAffectedValue);
+			SetAttributeBaseValue(ATTRIBUTE_HEALTH, NewAffectedValue);
 		}
 	}
 

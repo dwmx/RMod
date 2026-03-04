@@ -5,14 +5,22 @@ class R_ArpgAttributeSet extends R_ArpgObject;
 
 //------------------------------------------------------------------------------
 
+struct R_ArpgAttributeModifier
+{
+	var float Magnitude;
+	var int Operation;
+	var int SourceUID;
+};
+
 struct R_ArpgAttribute
 {
 	var Name AttributeName;
-	var float CurrentValue;
+	var float BaseValue;
 	var float MinimumValue;
 	var float MaximumValue;
 	var bool bUseMinimumValue;
 	var bool bUseMaximumValue;
+	var R_ArpgAttributeModifier Modifiers[32];
 };
 var private R_ArpgAttribute Attributes[64];
 var private int AttributeCount;
@@ -75,7 +83,7 @@ function CreateAttribute(
 	++AttributeCount;
 
 	// Call Set so that constraints may be applied to initial value
-	SetAttribute(AttributeName, OptionalInitialValue);
+	SetAttributeBaseValue(AttributeName, OptionalInitialValue);
 }
 
 //	HasAttribute
@@ -113,11 +121,11 @@ function bool GetAttributeIndex(Name AttributeName, out int OutAttributeIndex)
 	return false;
 }
 
-//	SetAttribute
+//	SetAttributeBaseValue
 //	Overrides the value of the specified attribute with the value provided
 //	Use PreAttributeChange to perform clamping or reject value changes
 //	Use PostAttributeChange to fire events
-function SetAttribute(Name AttributeName, float Value)
+function SetAttributeBaseValue(Name AttributeName, float NewBaseValue)
 {
 	local int Index;
 	local float PreviousValue, NewValue, ModifiedNewValue;
@@ -128,8 +136,8 @@ function SetAttribute(Name AttributeName, float Value)
 		return;
 	}
 
-	PreviousValue = Attributes[Index].CurrentValue;
-	NewValue = Value;
+	PreviousValue = Attributes[Index].BaseValue;
+	NewValue = NewBaseValue;
 
 	// Clamp to min and max if the attribute is using them
 	if(Attributes[Index].bUseMinimumValue)
@@ -159,7 +167,7 @@ function SetAttribute(Name AttributeName, float Value)
 		return;
 	}
 
-	Attributes[Index].CurrentValue = ModifiedNewValue;
+	Attributes[Index].BaseValue = ModifiedNewValue;
 	PostAttributeChange(AttributeName, PreviousValue, ModifiedNewValue);
 }
 
@@ -221,7 +229,7 @@ function bool GetAttributeValue(Name AttributeName, out float OutValue)
 		return false;
 	}
 
-	OutValue = Attributes[Index].CurrentValue;
+	OutValue = Attributes[Index].BaseValue;
 	return true;
 }
 
@@ -230,14 +238,14 @@ function bool GetAttributeValue(Name AttributeName, out float OutValue)
 //	If attribute is not found, this will fail silently
 function IncrementAttribute(Name AttributeName, float Amount)
 {
-	local float CurrentValue;
+	local float CurrentBaseValue;
 
-	if(!GetAttributeValue(AttributeName, CurrentValue))
+	if(!GetAttributeValue(AttributeName, CurrentBaseValue))
 	{
 		return;
 	}
 
-	SetAttribute(AttributeName, CurrentValue + Amount);
+	SetAttributeBaseValue(AttributeName, CurrentBaseValue + Amount);
 }
 
 //------------------------------------------------------------------------------
@@ -261,7 +269,7 @@ function bool GetAttributeByIndex(
 	}
 
 	OutAttributeName = Attributes[Index].AttributeName;
-	OutAttributeValue = Attributes[Index].CurrentValue;
+	OutAttributeValue = Attributes[Index].BaseValue;
 	return true;
 }
 

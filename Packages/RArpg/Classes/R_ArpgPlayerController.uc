@@ -582,7 +582,7 @@ exec function SetAnimFrame(float Frame)
 exec function TrySetAttribute(Name AttributeName, float Value)
 {
 	Log("Attempting to set Attribute" @ AttributeName @ "to a value of" @ Value);
-	ControlledPawn.GetEntity().GetEntityAttributeSet().SetAttribute(AttributeName, Value);
+	ControlledPawn.GetEntity().GetEntityAttributeSet().SetAttributeBaseValue(AttributeName, Value);
 }
 
 exec function TryGetAttribute(Name AttributeName)
