@@ -17,7 +17,7 @@ struct R_ArpgTag
 struct R_ArpgEventPayload
 {
 	var Name NameArg;
-	var float FloatArgs[2];    // For handling OldValue / NewValue event types
+	var float FloatArgs[4];
 	var Object OptionalObject;
 };
 

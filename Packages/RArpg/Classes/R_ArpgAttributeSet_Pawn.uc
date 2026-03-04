@@ -13,6 +13,7 @@ function InitializeAttributes()
 	CreateAttribute('Health', 100.0, 0.0, true);
 }
 
+/*
 //	PreAttributeChange
 //	Perform clamping against Max attributes
 function bool PreAttributeChange(
@@ -41,7 +42,9 @@ function bool PreAttributeChange(
 	OutModifiedNewValue = FClamp(NewValue, ClampMin, ClampMax);
 	return true;
 }
+	*/
 
+/*
 //	PostAttributeChange
 //	When Max attributes change, need to re-clamp the affected attributes
 function PostAttributeChange(
@@ -64,6 +67,7 @@ function PostAttributeChange(
 
 	Super.PostAttributeChange(AttributeName, PreviousValue, NewValue);
 }
+*/
 
 function Tick(float DeltaSeconds)
 {
