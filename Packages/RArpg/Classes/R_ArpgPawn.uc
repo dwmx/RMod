@@ -57,7 +57,7 @@ event PostBeginPlay()
 function R_ArpgItemContainerSet GetInventorySet() { return None; }
 function bool TryAddItem(R_ArpgItem Item) { return false; }
 
-function ReceiveInventoryEvent(Name EventName, Name InventoryContainerName, R_ArpgItemContainerSet Sender, optional R_ArpgItem OptionalItem);
+function ReceiveInventoryEvent(Name EventName, Name InventoryContainerName, R_ArpgItemContainerSet Sender, R_ArpgItem Items[2]);
 
 function SetBlockMovementInput(bool bNewBlockMovementInput)
 {

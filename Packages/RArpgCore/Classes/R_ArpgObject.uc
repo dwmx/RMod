@@ -18,7 +18,7 @@ struct R_ArpgEventPayload
 {
 	var Name NameArg;
 	var float FloatArgs[4];
-	var Object OptionalObject;
+	var Object ObjectArgs[2];
 };
 
 function InitializeArpgObject();

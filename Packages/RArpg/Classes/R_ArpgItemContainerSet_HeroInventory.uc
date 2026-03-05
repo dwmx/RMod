@@ -116,22 +116,27 @@ function Name GetItemContainerIdentifier(R_ArpgItemContainer ItemContainer)
 function ReceiveArpgEvent(Name EventName, Object Sender, R_ArpgEventPayload Payload)
 {
 	local R_ArpgItemSlot LocalItemSlot;
-	local R_ArpgItem LocalItem;
+	local R_ArpgItem LocalUnequippedItem;
+	local R_ArpgItem LocalEquippedItem;
 
 	if(EventName == EVENT_ITEM_CHANGED)
 	{
 		LocalItemSlot = R_ArpgItemSlot(Sender);
-		LocalItem = R_ArpgItem(Payload.OptionalObject);
-		HandleEvent_ItemSlotChanged(LocalItemSlot, LocalItem);
+		LocalUnequippedItem = R_ArpgItem(Payload.ObjectArgs[0]);
+		LocalEquippedItem = R_ArpgItem(Payload.ObjectArgs[1]);
+		HandleEvent_ItemSlotChanged(LocalItemSlot, LocalUnequippedItem, LocalEquippedItem);
 	}
 }
 
-function HandleEvent_ItemSlotChanged(R_ArpgItemSlot ItemSlot, R_ArpgItem NewItem)
+function HandleEvent_ItemSlotChanged(R_ArpgItemSlot ItemSlot, R_ArpgItem UnequippedItem, R_ArpgItem EquippedItem)
 {
 	local Name InventorySlotName;
+	local R_ArpgItem Items[2];
 
 	InventorySlotName = GetItemContainerIdentifier(ItemSlot);
-	FireInventoryEvent(EVENT_INVENTORY_SLOT_CHANGED, InventorySlotName, NewItem);
+	Items[0] = UnequippedItem;
+	Items[1] = EquippedItem;
+	FireInventoryEvent(EVENT_INVENTORY_SLOT_CHANGED, InventorySlotName, Items);
 }
 
 function bool TryAddItem(R_ArpgItem Item)

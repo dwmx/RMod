@@ -16,14 +16,18 @@ const EVENT_ITEM_CHANGED = 'ItemChanged'; // Payload: New stored item
 
 function SetStoredItem(R_ArpgItem NewItem)
 {
+	local R_ArpgEventPayload EventPayload;
+
 	if(StoredItem == NewItem)
 	{
 		return;
 	}
 
+	EventPayload.ObjectArgs[0] = StoredItem;
+	EventPayload.ObjectArgs[1] = NewItem;
 	StoredItem = NewItem;
 
-	FireEvent(EVENT_ITEM_CHANGED, StoredItem);
+	FireEvent(EVENT_ITEM_CHANGED, EventPayload);
 }
 
 //------------------------------------------------------------------------------
@@ -120,13 +124,10 @@ function SetEventListener(R_ArpgObject NewEventListener)
 	EventListener = NewEventListener;
 }
 
-function FireEvent(Name EventName, optional Object OptionalPayload)
+function FireEvent(Name EventName, R_ArpgEventPayload EventPayload)
 {
-	local R_ArpgEventPayload Payload;
-
 	if(EventListener != None)
 	{
-		Payload.OptionalObject = OptionalPayload;
-		EventListener.ReceiveArpgEvent(EventName, Self, Payload);
+		EventListener.ReceiveArpgEvent(EventName, Self, EventPayload);
 	}
 }

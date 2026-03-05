@@ -4,6 +4,7 @@
 class R_ArpgItem extends R_ArpgObject;
 
 var private R_ArpgTag ItemTag;
+var private int ItemUID;
 
 var private int ItemGridSizeX;
 var private int ItemGridSizeY;
@@ -24,6 +25,9 @@ struct R_ArpgAffixInstance
 };
 var private R_ArpgAffixInstance AffixInstances[32];
 var private int AffixInstanceCount;
+
+function int GetItemUID() { return ItemUID; }
+function SetItemUID(int NewItemUID) { ItemUID = NewItemUID; }
 
 //------------------------------------------------------------------------------
 
@@ -53,6 +57,18 @@ function AddAffix(Class<R_ArpgAffix> AffixClass, int Parameters)
 function int GetAffixCount()
 {
 	return AffixInstanceCount;
+}
+
+function bool GetAffix(int Index, out Class<R_ArpgAffix> OutAffixClass, out int OutParameters)
+{
+	if(Index < 0 || Index >= AffixInstanceCount)
+	{
+		return false;
+	}
+
+	OutAffixClass = AffixInstances[Index].AffixClass;
+	OutParameters = AffixInstances[Index].Parameters;
+	return true;
 }
 
 function String GetAffixInspectionString(int AffixIndex)

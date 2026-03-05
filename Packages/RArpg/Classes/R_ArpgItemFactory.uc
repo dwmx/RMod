@@ -24,6 +24,10 @@ function R_ArpgItem InstantiateFromItemType(R_ArpgData_ItemType ItemType)
     Item = R_ArpgItem(ArpgLib.Static.CreateArpgObject(Class'RArpg.R_ArpgItem'));
     Item.SetItemTag(ItemType.ItemTag);
     Item.SetItemGridSize(ItemType.ItemSizeX, ItemType.ItemSizeY);
+    Item.SetItemUID(Rand(5000) + 3000);
+    Item.AddAffix(Class'RArpg.R_ArpgAffix_AllSkills', 2);
+    Item.AddAffix(Class'RArpg.R_ArpgAffix_MaxHealth', Rand(30) + 20);
+    Item.AddAffix(Class'RArpg.R_ArpgAffix_MaxHealthPercent', Rand(15) + 15);
     return Item;
 }
 

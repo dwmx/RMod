@@ -32,14 +32,14 @@ function R_ArpgPawn GetOwnerPawn()
 	return OwnerPawn;
 }
 
-function FireInventoryEvent(Name EventName, Name InventoryContainerName, optional R_ArpgItem OptionalItem)
+function FireInventoryEvent(Name EventName, Name InventoryContainerName, R_ArpgItem Items[2])
 {
 	if(OwnerPawn == None)
 	{
 		return;
 	}
 
-	OwnerPawn.ReceiveInventoryEvent(EventName, InventoryContainerName, Self, OptionalItem);
+	OwnerPawn.ReceiveInventoryEvent(EventName, InventoryContainerName, Self, Items);
 }
 
 // General entry point for any game events that attempt to give an Item to this set

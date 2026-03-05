@@ -45,21 +45,120 @@ event PostBeginPlay()
 	AddSkill(Class'RArpg.R_ArpgSkill_Attack');
 }
 
-function ReceiveInventoryEvent(Name EventName, Name InventoryContainerName, R_ArpgItemContainerSet Sender, optional R_ArpgItem OptionalItem)
+function ReceiveInventoryEvent(Name EventName, Name InventoryContainerName, R_ArpgItemContainerSet Sender, R_ArpgItem Items[2])
 {
 	if(EventName == EVENT_INVENTORY_SLOT_CHANGED)
 	{
-		HandleEvent_InventorySlotChanged(InventoryContainerName, OptionalItem);
+		HandleEvent_InventorySlotChanged(InventoryContainerName, Items[0], Items[1]);
 	}
 }
 
-function HandleEvent_InventorySlotChanged(Name InventorySlotName, R_ArpgItem NewItem)
+function bool IsEquipmentSlot(Name InventorySlot)
+{
+	switch(InventorySlot)
+	{
+	case INVENTORY_SLOT_MAIN_HAND:
+	case INVENTORY_SLOT_OFF_HAND:
+	case INVENTORY_SLOT_ARMOR:
+	case INVENTORY_SLOT_HELM:
+	case INVENTORY_SLOT_GLOVES:
+	case INVENTORY_SLOT_BOOTS:
+		return true;
+	}
+	return false;
+}
+
+function HandleEvent_InventorySlotChanged(Name InventorySlotName, R_ArpgItem OldItem, R_ArpgItem NewItem)
 {
 	switch(InventorySlotName)
 	{
 	case INVENTORY_SLOT_MAIN_HAND:	ItemActor_Weapon.SetItem(NewItem);	break;
 	case INVENTORY_SLOT_OFF_HAND:	ItemActor_Shield.SetItem(NewItem);	break;
 	}
+
+	// If this is an equipment slot, remove old and apply new affixes
+	if(IsEquipmentSlot(InventorySlotName))
+	{
+		RemoveItemAffixes(OldItem);
+		ApplyItemAffixes(NewItem);
+	}
+}
+
+function ApplyItemAffixes(R_ArpgItem Item)
+{
+	local R_ArpgEntity Entity;
+	local R_ArpgAttributeSet AttributeSet;
+	local int AffixCount;
+	local Class<R_ArpgAffix> AffixClass;
+	local int AffixParameters;
+	local Name ModifierAttributeNames[8];
+	local float ModifierMagnitudes[8];
+	local int ModifierOperators[8];
+	local int ModifierCount;
+	local int i, j;
+
+	if(Item == None)
+	{
+		return;
+	}
+
+	Entity = GetEntity();
+	if(Entity != None)
+	{
+		AttributeSet = Entity.GetEntityAttributeSet();
+	}
+	if(AttributeSet == None)
+	{
+		return;
+	}
+
+	AffixCount = Item.GetAffixCount();
+	for(i = 0; i < AffixCount; ++i)
+	{
+		if(!Item.GetAffix(i, AffixClass, AffixParameters))
+		{
+			continue;
+		}
+
+		AffixClass.Static.GetAttributeModifiers(
+			AffixParameters,
+			ModifierAttributeNames,
+			ModifierMagnitudes,
+			ModifierOperators,
+			ModifierCount);
+		
+		for(j = 0; j < ModifierCount; ++j)
+		{
+			AttributeSet.AddAttributeModifier(
+				ModifierAttributeNames[j],
+				ModifierMagnitudes[j],
+				ModifierOperators[j],
+				Item.GetItemUID());
+		}
+	}
+}
+
+function RemoveItemAffixes(R_ArpgItem Item)
+{
+	local R_ArpgEntity Entity;
+	local R_ArpgAttributeSet AttributeSet;
+
+	if(Item == None)
+	{
+		return;
+	}
+
+	Entity = GetEntity();
+	if(Entity != None)
+	{
+		AttributeSet = Entity.GetEntityAttributeSet();
+	}
+	if(AttributeSet == None)
+	{
+		return;
+	}
+
+	AttributeSet.RemoveAttributeModifiersBySource(Item.GetItemUID());
 }
 
 function R_ArpgItemContainerSet GetInventorySet()
