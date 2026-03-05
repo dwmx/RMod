@@ -1,10 +1,10 @@
 //==============================================================================
-//	R_ArpgItemModifier_AllSkills
+//	R_ArpgAffix_AllSkills
 //  Adds + all skills
 //==============================================================================
-class R_ArpgItemModifier_AllSkills extends R_ArpgItemModifier abstract;
+class R_ArpgAffix_AllSkills extends R_ArpgAffix abstract;
 
-static function String GetItemModifierInspectionString(int Parameters)
+static function String GetAffixInspectionString(int Parameters)
 {
     return "+" $ Parameters @ "to all skills";
 }

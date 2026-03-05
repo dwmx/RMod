@@ -1,6 +1,6 @@
 //==============================================================================
-//	R_ArpgItemModifier
+//	R_ArpgAffix
 //==============================================================================
-class R_ArpgItemModifier extends R_ArpgObject abstract;
+class R_ArpgAffix extends R_ArpgObject abstract;
 
-static function String GetItemModifierInspectionString(int Parameters) { return ""; }
+static function String GetAffixInspectionString(int Parameters) { return ""; }

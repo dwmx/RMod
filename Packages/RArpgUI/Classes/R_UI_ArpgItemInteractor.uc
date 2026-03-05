@@ -353,13 +353,13 @@ function PaintInspectedItemPanel(Canvas C, float PanelX, float PanelY, float Pan
 	}
 
 	// Draw item modifiers -----------------------------------------------------
-	Count = Item.GetItemModifierCount();
+	Count = Item.GetAffixCount();
 	C.Font = F_ItemDescriptor;
 	C.DrawColor = C_ItemModifier;
 	C.Style = 1;
 	for(i = 0; i < Count; ++i)
 	{
-		DrawString = Item.GetItemModifierInspectionString(i);
+		DrawString = Item.GetAffixInspectionString(i);
 		if(DrawString == "")
 		{
 			continue;

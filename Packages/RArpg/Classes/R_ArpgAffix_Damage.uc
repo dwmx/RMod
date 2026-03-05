@@ -1,10 +1,10 @@
 //==============================================================================
-//	R_ArpgItemModifier_Damage
+//	R_ArpgAffix_Damage
 //  Adds + to damage
 //==============================================================================
-class R_ArpgItemModifier_Damage extends R_ArpgItemModifier abstract;
+class R_ArpgAffix_Damage extends R_ArpgAffix abstract;
 
-static function String GetItemModifierInspectionString(int Parameters)
+static function String GetAffixInspectionString(int Parameters)
 {
     return "+" $ Parameters @ "to damage";
 }

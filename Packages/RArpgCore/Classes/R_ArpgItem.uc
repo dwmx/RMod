@@ -17,56 +17,56 @@ var private String ItemSpecialString;
 var private String ItemTypeString;
 var private int ItemRarity;
 
-struct R_ArpgItemModifierInstance
+struct R_ArpgAffixInstance
 {
-	var Class<R_ArpgItemModifier> ItemModifierClass;
+	var Class<R_ArpgAffix> AffixClass;
 	var int Parameters;
 };
-var private R_ArpgItemModifierInstance ItemModifierInstances[16];
-var private int ItemModifierInstanceCount;
+var private R_ArpgAffixInstance AffixInstances[32];
+var private int AffixInstanceCount;
 
 //------------------------------------------------------------------------------
 
-function AddItemModifier(Class<R_ArpgItemModifier> ItemModifierClass, int Parameters)
+function AddAffix(Class<R_ArpgAffix> AffixClass, int Parameters)
 {
 	local int i;
 
-	if(ItemModifierInstanceCount >= ArrayCount(ItemModifierInstances) || ItemModifierClass == None)
+	if(AffixInstanceCount >= ArrayCount(AffixInstances) || AffixClass == None)
 	{
 		return;
 	}
 
-	// Make sure an ItemModifier of this class is not already present
-	for(i = 0; i < ItemModifierInstanceCount; ++i)
+	// Make sure an Affix of this class is not already present
+	for(i = 0; i < AffixInstanceCount; ++i)
 	{
-		if(ItemModifierInstances[i].ItemModifierClass == ItemModifierClass)
+		if(AffixInstances[i].AffixClass == AffixClass)
 		{
 			return;
 		}
 	}
 
-	ItemModifierInstances[ItemModifierInstanceCount].ItemModifierClass = ItemModifierClass;
-	ItemModifierInstances[ItemModifierInstanceCount].Parameters = Parameters;
-	++ItemModifierInstanceCount;
+	AffixInstances[AffixInstanceCount].AffixClass = AffixClass;
+	AffixInstances[AffixInstanceCount].Parameters = Parameters;
+	++AffixInstanceCount;
 }
 
-function int GetItemModifierCount()
+function int GetAffixCount()
 {
-	return ItemModifierInstanceCount;
+	return AffixInstanceCount;
 }
 
-function String GetItemModifierInspectionString(int ItemModifierIndex)
+function String GetAffixInspectionString(int AffixIndex)
 {
-	local Class<R_ArpgItemModifier> ItemModifierClass;
+	local Class<R_ArpgAffix> AffixClass;
 	local int Parameters;
 
-	if(ItemModifierIndex >= 0 && ItemModifierIndex < ItemModifierInstanceCount)
+	if(AffixIndex >= 0 && AffixIndex < AffixInstanceCount)
 	{
-		ItemModifierClass = ItemModifierInstances[ItemModifierIndex].ItemModifierClass;
-		Parameters = ItemModifierInstances[ItemModifierIndex].Parameters;
-		if(ItemModifierClass != None)
+		AffixClass = AffixInstances[AffixIndex].AffixClass;
+		Parameters = AffixInstances[AffixIndex].Parameters;
+		if(AffixClass != None)
 		{
-			return ItemModifierClass.Static.GetItemModifierInspectionString(Parameters);
+			return AffixClass.Static.GetAffixInspectionString(Parameters);
 		}
 	}
 
@@ -100,8 +100,8 @@ function R_ArpgTag GetItemTag()
 
 function InitializeArpgObject()
 {
-	// Initialize ItemModifierInstances
-	ItemModifierInstanceCount = 0;
+	// Initialize AffixInstances
+	AffixInstanceCount = 0;
 
 	// Force clamping on defaultproperties
 	SetItemGridSize(ItemGridSizeX, ItemGridSizeY);
