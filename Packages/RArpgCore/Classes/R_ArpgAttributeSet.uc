@@ -8,7 +8,7 @@ class R_ArpgAttributeSet extends R_ArpgObject;
 const INVALID_SOURCE_UID = 0;
 const OPERATION_NO_OP = 0;
 const OPERATION_ADD = 1;
-const OPERATION_MULTIPLY = 2;
+const OPERATION_ADD_FRACTION = 2;
 struct R_ArpgAttributeModifier
 {
 	var float Magnitude;
@@ -75,7 +75,7 @@ function CreateAttribute(
 		}
 	}
 
-	if(OptionalMinimumValue > OptionalMaximumValue)
+	if(bUseMinimumValue && bUseMaximumValue && OptionalMinimumValue > OptionalMaximumValue)
 	{
 		OptionalMinimumValue = OptionalMaximumValue;
 	}
@@ -131,7 +131,7 @@ function AddAttributeModifier(Name AttributeName, float Magnitude, int Operation
 	local int ModifierArraySize;
 	local int i;
 
-	if(SourceUID == INVALID_SOURCE_UID || !GetAttributeIndex(AttributeName, Index))
+	if(Operation == OPERATION_NO_OP || SourceUID == INVALID_SOURCE_UID || !GetAttributeIndex(AttributeName, Index))
 	{
 		return;
 	}
@@ -186,9 +186,10 @@ function RemoveAttributeModifiersBySource(int SourceUID)
 	}
 
 	// All attributes that had at least one modifier removed need to be recalculated
-	for(Index = 0; Index < ModifiedAttributeCount; ++Index)
+	for(i = 0; i < ModifiedAttributeCount; ++i)
 	{
-		CalculateAttributeFromBaseValueViaIndex(ModifiedAttributeIndices[Index], Attributes[Index].BaseValue);
+		Index = ModifiedAttributeIndices[i];
+		CalculateAttributeFromBaseValueViaIndex(Index, Attributes[Index].BaseValue);
 	}
 }
 
@@ -215,39 +216,44 @@ function CalculateAttributeFromBaseValueViaIndex(int AttributeIndex, float BaseV
 	local Name AttributeName;
 	local float PreviousBase, PreviousAggregate;
 	local float NewBase, NewAggregate;
-	local float ModifierAdd, ModifierMultiply;
+	local float ModifierAdd, ModifierAddFraction;
 	local int i;
 
 	Index = AttributeIndex;
-	AttributeName = Attributes[i].AttributeName;
+	AttributeName = Attributes[Index].AttributeName;
 
 	PreviousBase = Attributes[Index].BaseValue;
 	PreviousAggregate = Attributes[Index].AggregateValue;
 
 	NewBase = BaseValue;
 
-	// Clamp new base value to attribute's inherent boundaries
+	// Clamp against inherent minimum and maximum
+	// Then allow child class to further modify or perform its own clamping
+	// Then clamp against inherent minimum and maximum again to ensure child class did not exceed the hard boundary
+	if(Attributes[Index].bUseMinimumValue)	NewBase = FMax(NewBase, Attributes[Index].MinimumValue);
+	if(Attributes[Index].bUseMaximumValue)	NewBase = FMin(NewBase, Attributes[Index].MaximumValue);
+	PreAttributeBaseValueChange(AttributeName, Index, PreviousBase, NewBase, NewBase);
 	if(Attributes[Index].bUseMinimumValue)	NewBase = FMax(NewBase, Attributes[Index].MinimumValue);
 	if(Attributes[Index].bUseMaximumValue)	NewBase = FMin(NewBase, Attributes[Index].MaximumValue);
 
-	// PreAttributeBaseValueChange may further clamp the attribute
-	PreAttributeBaseValueChange(AttributeName, Index, PreviousBase, NewBase, NewBase);
-
 	// Calculate the aggregate
 	ModifierAdd = 0.0;
-	ModifierMultiply = 0.0;
+	ModifierAddFraction = 0.0;
 	for(i = 0; i < ArrayCount(Attributes[Index].Modifiers); ++i)
 	{
 		switch(Attributes[Index].Modifiers[i].Operation)
 		{
-		case OPERATION_ADD:			ModifierAdd += Attributes[Index].Modifiers[i].Magnitude; 		break;
-		case OPERATION_MULTIPLY:	ModifierMultiply += Attributes[Index].Modifiers[i].Magnitude;	break;
+		case OPERATION_ADD:				ModifierAdd += Attributes[Index].Modifiers[i].Magnitude; 			break;
+		case OPERATION_ADD_FRACTION:	ModifierAddFraction += Attributes[Index].Modifiers[i].Magnitude;	break;
 		}
 	}
 
-	NewAggregate = (BaseValue + ModifierAdd) + (BaseValue + ModifierAdd) * ModifierMultiply;
+	NewAggregate = (NewBase + ModifierAdd) * (1 + ModifierAddFraction);
 
-	// Clamp the aggregate to attribute's inherent boundaries
+	// Perform the same clamping procedure with the aggregate value
+	if(Attributes[Index].bUseMinimumValue)	NewAggregate = FMax(NewAggregate, Attributes[Index].MinimumValue);
+	if(Attributes[Index].bUseMaximumValue)	NewAggregate = FMin(NewAggregate, Attributes[Index].MaximumValue);
+	PreAttributeAggregateValueChange(AttributeName, Index, PreviousAggregate, NewAggregate, NewAggregate);
 	if(Attributes[Index].bUseMinimumValue)	NewAggregate = FMax(NewAggregate, Attributes[Index].MinimumValue);
 	if(Attributes[Index].bUseMaximumValue)	NewAggregate = FMin(NewAggregate, Attributes[Index].MaximumValue);
 
@@ -255,8 +261,8 @@ function CalculateAttributeFromBaseValueViaIndex(int AttributeIndex, float BaseV
 	Attributes[Index].BaseValue = NewBase;
 	Attributes[Index].AggregateValue = NewAggregate;
 
-	// PreAttributeAggregateValueChange may further clamp the aggregate value
-	PreAttributeAggregateValueChange(AttributeName, Index, PreviousAggregate, NewAggregate, NewAggregate);
+	// PostAttributeChange fires event if it sees a change
+	PostAttributeChange(AttributeName, Index, PreviousBase, PreviousAggregate, NewBase, NewAggregate);
 }
 
 //	PreAttributeBaseValueChange

@@ -9,67 +9,101 @@ const ATTRIBUTE_HEALTH = 'Health';
 
 function InitializeAttributes()
 {
-	CreateAttribute('MaxHealth', 100.0, 0.0, true);
-	CreateAttribute('Health', 100.0, 0.0, true);
+	CreateAttribute(ATTRIBUTE_MAX_HEALTH, 100.0, 0.0, true);
+	CreateAttribute(ATTRIBUTE_HEALTH, 100.0, 0.0, true);
 }
 
-/*
-//	PreAttributeChange
-//	Perform clamping against Max attributes
-function bool PreAttributeChange(
+//	PreAttributeBaseValueChange
+//	Clip attributes against their max-value counterparts
+//	i.e. Clip Health against MaxHealth or Mana against MaxMana
+function PreAttributeBaseValueChange(
 	Name AttributeName,
-	float PreviousValue,
-	float NewValue,
-	out float OutModifiedNewValue)
+	int AttributeIndex,
+	float PreviousBaseValue,
+	float NewBaseValue,
+	out float OutModifiedNewBaseValue)
 {
-	local float ClampMin;
-	local float ClampMax;
-	local bool bPerformClamp;
-
-	ClampMin = 0.0;
-	bPerformClamp = false;
+	local float BaseValue, AggregateValue;
+	local float MaxValue;
+	local bool bPerformClip;
 
 	switch(AttributeName)
 	{
-	case ATTRIBUTE_HEALTH:	bPerformClamp = GetAttributeValue(ATTRIBUTE_MAX_HEALTH, ClampMax);	break;
+	case ATTRIBUTE_HEALTH:	bPerformClip = GetAttributeValue(ATTRIBUTE_MAX_HEALTH, BaseValue, AggregateValue);	break;
 	}
 
-	if(!bPerformClamp)
+	if(bPerformClip)
 	{
-		return Super.PreAttributeChange(AttributeName, PreviousValue, NewValue, OutModifiedNewValue);
+		// Clip attributes against the aggregate value of the max counterpart
+		// This means clip Health against MaxHealth after applying all of the +MaxHealth bonuses
+		MaxValue = AggregateValue;
+		OutModifiedNewBaseValue = FMin(NewBaseValue, MaxValue);
+	}
+	else
+	{
+		Super.PreAttributeBaseValueChange(
+			AttributeName, AttributeIndex,
+			PreviousBaseValue, NewBaseValue,
+			OutModifiedNewBaseValue);
+	}
+}
+
+//	PreAttributeAggregateValueChange
+//	Clip the attribute's aggregate value against its max-value counterpart
+function PreAttributeAggregateValueChange(
+	Name AttributeName,
+	int AttributeIndex,
+	float PreviousAggregateValue,
+	float NewAggregateValue,
+	out float OutModifiedNewAggregateValue)
+{
+	local float BaseValue, AggregateValue;
+	local float MaxValue;
+	local bool bPerformClip;
+
+	switch(AttributeName)
+	{
+	case ATTRIBUTE_HEALTH:	bPerformClip = GetAttributeValue(ATTRIBUTE_MAX_HEALTH, BaseValue, AggregateValue);	break;
 	}
 
-	OutModifiedNewValue = FClamp(NewValue, ClampMin, ClampMax);
-	return true;
+	if(bPerformClip)
+	{
+		// Clip attributes against the aggregate value of the max counterpart
+		// This means clip Health against MaxHealth after applying all of the +MaxHealth bonuses
+		MaxValue = AggregateValue;
+		OutModifiedNewAggregateValue = FMin(NewAggregateValue, MaxValue);
+	}
+	else
+	{
+		Super.PreAttributeAggregateValueChange(
+			AttributeName, AttributeIndex,
+			PreviousAggregateValue, NewAggregateValue,
+			OutModifiedNewAggregateValue);
+	}
 }
-	*/
 
-/*
-//	PostAttributeChange
-//	When Max attributes change, need to re-clamp the affected attributes
 function PostAttributeChange(
 	Name AttributeName,
-	float PreviousValue,
-	float NewValue)
+	int AttributeIndex,
+	float PreviousBaseValue, float PreviousAggregateValue,
+	float NewBaseValue, float NewAggregateValue)
 {
-	local float AffectedValue;
+	local float AffectedBaseValue, AffectedAggregateValue;
 	local float NewAffectedValue;
 
-	// When max health changes, re-clamp health
+	// Clamp Health to MaxHealth aggregated value
 	if(AttributeName == ATTRIBUTE_MAX_HEALTH)
 	{
-		if(GetAttributeValue(ATTRIBUTE_HEALTH, AffectedValue))
+		if(GetAttributeValue(ATTRIBUTE_HEALTH, AffectedBaseValue, AffectedAggregateValue))
 		{
-			NewAffectedValue = FClamp(AffectedValue, 0.0, NewValue);
+			NewAffectedValue = FMin(AffectedBaseValue, NewAggregateValue);
 			SetAttributeBaseValue(ATTRIBUTE_HEALTH, NewAffectedValue);
 		}
 	}
 
-	Super.PostAttributeChange(AttributeName, PreviousValue, NewValue);
-}
-*/
-
-function Tick(float DeltaSeconds)
-{
-	Super.Tick(DeltaSeconds);
+	Super.PostAttributeChange(
+		AttributeName,
+		AttributeIndex,
+		PreviousBaseValue, PreviousAggregateValue,
+		NewBaseValue, NewAggregateValue);
 }
