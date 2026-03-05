@@ -27,6 +27,7 @@ function R_ArpgItem InstantiateFromItemType(R_ArpgData_ItemType ItemType)
 
     Item = R_ArpgItem(ArpgLib.Static.CreateArpgObject(Class'RArpg.R_ArpgItem'));
     Item.SetItemTag(ItemType.ItemTag);
+	Item.SetItemTypeString(ItemType.ItemTypeString);
     Item.SetItemGridSize(ItemType.ItemSizeX, ItemType.ItemSizeY);
     Item.SetItemUID(Rand(5000) + 3000);
 

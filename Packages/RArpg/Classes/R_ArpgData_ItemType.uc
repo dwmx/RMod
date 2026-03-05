@@ -9,6 +9,7 @@ class R_ArpgData_ItemType extends R_ArpgObject;
 // It is used as a hierarchical index into data stores to get data associated with this item type
 // It is also used to determine what inventory slots the item is valid to be used in
 var R_ArpgTag ItemTag;
+var String ItemTypeString;
 
 var int ItemSizeX;	// Grid size X
 var int ItemSizeY;	// Grid size Y

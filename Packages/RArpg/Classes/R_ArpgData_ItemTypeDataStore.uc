@@ -35,12 +35,14 @@ function LogDumpArpgObject()
 
 function R_ArpgData_ItemType CreateItemType(
 	R_ArpgTag ItemTag,
+	String ItemTypeString,
 	int ItemSizeX, int ItemSizeY)
 {
 	local R_ArpgData_ItemType Data;
 
 	Data = R_ArpgData_ItemType(ArpgLib.Static.CreateArpgObject(Class'RArpg.R_ArpgData_ItemType', Self));
 	Data.ItemTag = ItemTag;
+	Data.ItemTypeString = ItemTypeString;
 	Data.ItemSizeX = ItemSizeX;
 	Data.ItemSizeY = ItemSizeY;
 	return Data;
@@ -57,15 +59,15 @@ function PopulateDataStore()
 
 	// BroadSword
 	ItemTag = TagLib.Static.MakeTag('Item','Weapon','Sword','BroadSword');
-	DataStore.AddData(ItemTag, CreateItemType(ItemTag, 1, 3));
+	DataStore.AddData(ItemTag, CreateItemType(ItemTag, "Broad Sword", 1, 3));
 
 	ItemTag = TagLib.Static.MakeTag('Item','Weapon','Axe','BattleAxe');
-	DataStore.AddData(ItemTag, CreateItemType(ItemTag, 2, 3));
+	DataStore.AddData(ItemTag, CreateItemType(ItemTag, "Battle Axe", 2, 3));
 	
 	//--------------------------------------------------------------------------
 	//	Shields
 
 	// WoodShield
 	ItemTag = TagLib.Static.MakeTag('Item','Shield','WoodShield');
-	DataStore.AddData(ItemTag, CreateItemType(ItemTag, 2, 3));
+	DataStore.AddData(ItemTag, CreateItemType(ItemTag, "Wood Shield", 2, 3));
 }
