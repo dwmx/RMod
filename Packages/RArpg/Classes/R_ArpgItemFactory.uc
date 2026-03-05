@@ -25,9 +25,15 @@ function R_ArpgItem InstantiateFromItemType(R_ArpgData_ItemType ItemType)
     Item.SetItemTag(ItemType.ItemTag);
     Item.SetItemGridSize(ItemType.ItemSizeX, ItemType.ItemSizeY);
     Item.SetItemUID(Rand(5000) + 3000);
+
+	// These are just some test affixes
+	// These need to be moved into a magical item property generator tree, and set up as R_ArpgAffixInstructions
     Item.AddAffix(Class'RArpg.R_ArpgAffix_AllSkills', 2);
     Item.AddAffix(Class'RArpg.R_ArpgAffix_MaxHealth', Rand(30) + 20);
     Item.AddAffix(Class'RArpg.R_ArpgAffix_MaxHealthPercent', Rand(15) + 15);
+    Item.AddAffix(Class'RArpg.R_ArpgAffix_MaxMana', Rand(30) + 20);
+	Item.AddAffix(Class'RArpg.R_ArpgAffix_MaxManaPercent', Rand(15) + 15);
+	
     return Item;
 }
 

@@ -6,11 +6,15 @@ class R_ArpgAttributeSet_Pawn extends R_ArpgAttributeSet;
 
 const ATTRIBUTE_MAX_HEALTH = 'MaxHealth';
 const ATTRIBUTE_HEALTH = 'Health';
+const ATTRIBUTE_MAX_MANA = 'MaxMana';
+const ATTRIBUTE_MANA = 'Mana';
 
 function InitializeAttributes()
 {
 	CreateAttribute(ATTRIBUTE_MAX_HEALTH, 100.0, 0.0, true);
 	CreateAttribute(ATTRIBUTE_HEALTH, 100.0, 0.0, true);
+	CreateAttribute(ATTRIBUTE_MAX_MANA, 100.0, 0.0, true);
+	CreateAttribute(ATTRIBUTE_MANA, 100.0, 0.0, true);
 }
 
 //	ClipToMaxAttribute
@@ -25,6 +29,7 @@ function float ClipToMaxAttribute(Name AttributeName, float Value)
 	switch(AttributeName)
 	{
 	case ATTRIBUTE_HEALTH:	bPerformClip = GetAttributeValue(ATTRIBUTE_MAX_HEALTH, BaseValue, AggregateValue);	break;
+	case ATTRIBUTE_MANA:	bPerformClip = GetAttributeValue(ATTRIBUTE_MAX_MANA, BaseValue, AggregateValue);	break;
 	}
 
 	if(bPerformClip)
