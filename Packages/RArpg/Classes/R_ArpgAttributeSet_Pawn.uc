@@ -13,9 +13,32 @@ function InitializeAttributes()
 	CreateAttribute(ATTRIBUTE_HEALTH, 100.0, 0.0, true);
 }
 
+//	ClipToMaxAttribute
+//	Clip a given attribute value against its max attribute if there is one
+//	Always clip against the aggregate value of the max
+function float ClipToMaxAttribute(Name AttributeName, float Value)
+{
+	local float BaseValue, AggregateValue;
+	local bool bPerformClip;
+
+	bPerformClip = false;
+	switch(AttributeName)
+	{
+	case ATTRIBUTE_HEALTH:	bPerformClip = GetAttributeValue(ATTRIBUTE_MAX_HEALTH, BaseValue, AggregateValue);	break;
+	}
+
+	if(bPerformClip)
+	{
+		return FMin(Value, AggregateValue);
+	}
+	else
+	{
+		return Value;
+	}
+}
+
 //	PreAttributeBaseValueChange
-//	Clip attributes against their max-value counterparts
-//	i.e. Clip Health against MaxHealth or Mana against MaxMana
+//	Clip attributes against their max attribute if there is one
 function PreAttributeBaseValueChange(
 	Name AttributeName,
 	int AttributeIndex,
@@ -23,33 +46,11 @@ function PreAttributeBaseValueChange(
 	float NewBaseValue,
 	out float OutModifiedNewBaseValue)
 {
-	local float BaseValue, AggregateValue;
-	local float MaxValue;
-	local bool bPerformClip;
-
-	switch(AttributeName)
-	{
-	case ATTRIBUTE_HEALTH:	bPerformClip = GetAttributeValue(ATTRIBUTE_MAX_HEALTH, BaseValue, AggregateValue);	break;
-	}
-
-	if(bPerformClip)
-	{
-		// Clip attributes against the aggregate value of the max counterpart
-		// This means clip Health against MaxHealth after applying all of the +MaxHealth bonuses
-		MaxValue = AggregateValue;
-		OutModifiedNewBaseValue = FMin(NewBaseValue, MaxValue);
-	}
-	else
-	{
-		Super.PreAttributeBaseValueChange(
-			AttributeName, AttributeIndex,
-			PreviousBaseValue, NewBaseValue,
-			OutModifiedNewBaseValue);
-	}
+	OutModifiedNewBaseValue = ClipToMaxAttribute(AttributeName, NewBaseValue);
 }
 
 //	PreAttributeAggregateValueChange
-//	Clip the attribute's aggregate value against its max-value counterpart
+//	Clip attribute aggregates against the max attribute if there is one
 function PreAttributeAggregateValueChange(
 	Name AttributeName,
 	int AttributeIndex,
@@ -57,29 +58,7 @@ function PreAttributeAggregateValueChange(
 	float NewAggregateValue,
 	out float OutModifiedNewAggregateValue)
 {
-	local float BaseValue, AggregateValue;
-	local float MaxValue;
-	local bool bPerformClip;
-
-	switch(AttributeName)
-	{
-	case ATTRIBUTE_HEALTH:	bPerformClip = GetAttributeValue(ATTRIBUTE_MAX_HEALTH, BaseValue, AggregateValue);	break;
-	}
-
-	if(bPerformClip)
-	{
-		// Clip attributes against the aggregate value of the max counterpart
-		// This means clip Health against MaxHealth after applying all of the +MaxHealth bonuses
-		MaxValue = AggregateValue;
-		OutModifiedNewAggregateValue = FMin(NewAggregateValue, MaxValue);
-	}
-	else
-	{
-		Super.PreAttributeAggregateValueChange(
-			AttributeName, AttributeIndex,
-			PreviousAggregateValue, NewAggregateValue,
-			OutModifiedNewAggregateValue);
-	}
+	OutModifiedNewAggregateValue = ClipToMaxAttribute(AttributeName, NewAggregateValue);
 }
 
 function PostAttributeChange(
