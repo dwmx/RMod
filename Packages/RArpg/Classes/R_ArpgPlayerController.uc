@@ -585,6 +585,16 @@ exec function TrySetAttribute(Name AttributeName, float Value)
 	ControlledPawn.GetEntity().GetEntityAttributeSet().SetAttributeBaseValue(AttributeName, Value);
 }
 
+exec function TryAddModifier(Name AttributeName, int Operator, float Magnitude)
+{
+	ControlledPawn.GetEntity().GetEntityAttributeSet().AddAttributeModifier(AttributeName, Magnitude, Operator, 100);
+}
+
+exec function TryRemoveAllModifiers()
+{
+	ControlledPawn.GetEntity().GetEntityAttributeSet().RemoveAttributeModifiersBySource(100);
+}
+
 auto state PlayerController
 {
 	event BeginState()

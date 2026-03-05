@@ -122,6 +122,76 @@ function IncrementAttributeBaseValue(Name AttributeName, float Amount)
 	CalculateAttributeFromBaseValue(AttributeName, Attributes[Index].BaseValue + Amount);
 }
 
+//	AddAttributeModifier
+//	Add a traceable modifier to the specified attribute
+//	Remove the modifier by calling RemoveAttributeModifiersBySource
+function AddAttributeModifier(Name AttributeName, float Magnitude, int Operation, int SourceUID)
+{
+	local int Index;
+	local int ModifierArraySize;
+	local int i;
+
+	if(SourceUID == INVALID_SOURCE_UID || !GetAttributeIndex(AttributeName, Index))
+	{
+		return;
+	}
+
+	ModifierArraySize = ArrayCount(Attributes[Index].Modifiers);
+	for(i = 0; i < ModifierArraySize; ++i)
+	{
+		if(Attributes[Index].Modifiers[i].Operation == OPERATION_NO_OP)
+		{
+			Attributes[Index].Modifiers[i].Magnitude = Magnitude;
+			Attributes[Index].Modifiers[i].Operation = Operation;
+			Attributes[Index].Modifiers[i].SourceUID = SourceUID;
+			CalculateAttributeFromBaseValueViaIndex(Index, Attributes[Index].BaseValue);
+			return;
+		}
+	}
+}
+
+//	RemoveAttributeModifiersBySource
+//	Remove all attribute modifiers matching the specified SourceUID
+function RemoveAttributeModifiersBySource(int SourceUID)
+{
+	local int ModifiedAttributeIndices[ArrayCount(Attributes)];
+	local int ModifiedAttributeCount;
+	local bool bAdded;
+	local int Index;
+	local int ModifierArraySize;
+	local int i;
+
+	// Remove all modifiers matching the SourceUID and keep reference
+	// to which attributes had at least one modifier removed
+	ModifiedAttributeCount = 0;
+	for(Index = 0; Index < AttributeCount; ++Index)
+	{
+		ModifierArraySize = ArrayCount(Attributes[Index].Modifiers);
+		bAdded = false;
+		for(i = 0; i < ModifierArraySize; ++i)
+		{
+			if(Attributes[Index].Modifiers[i].SourceUID == SourceUID)
+			{
+				Attributes[Index].Modifiers[i].Magnitude = 0.0;
+				Attributes[Index].Modifiers[i].Operation = OPERATION_NO_OP;
+				Attributes[Index].Modifiers[i].SourceUID = INVALID_SOURCE_UID;
+				if(!bAdded)
+				{
+					bAdded = true;
+					ModifiedAttributeIndices[ModifiedAttributeCount] = Index;
+					++ModifiedAttributeCount;
+				}
+			}
+		}
+	}
+
+	// All attributes that had at least one modifier removed need to be recalculated
+	for(Index = 0; Index < ModifiedAttributeCount; ++Index)
+	{
+		CalculateAttributeFromBaseValueViaIndex(ModifiedAttributeIndices[Index], Attributes[Index].BaseValue);
+	}
+}
+
 //	CalculateAttributeFromBaseValue
 //	Recalculates both the Base and Aggregate values of the given Attribute, using
 //	the provided BaseValue as a starting point
@@ -130,15 +200,26 @@ function IncrementAttributeBaseValue(Name AttributeName, float Amount)
 function CalculateAttributeFromBaseValue(Name AttributeName, float BaseValue)
 {
 	local int Index;
-	local float PreviousBase, PreviousAggregate;
-	local float NewBase, NewAggregate;
-	local float ModifierAdd, ModifierMultiply;
-	local int i;
 
 	if(!GetAttributeIndex(AttributeName, Index))
 	{
 		return;
 	}
+
+	CalculateAttributeFromBaseValueViaIndex(Index, BaseValue);
+}
+
+function CalculateAttributeFromBaseValueViaIndex(int AttributeIndex, float BaseValue)
+{
+	local int Index;
+	local Name AttributeName;
+	local float PreviousBase, PreviousAggregate;
+	local float NewBase, NewAggregate;
+	local float ModifierAdd, ModifierMultiply;
+	local int i;
+
+	Index = AttributeIndex;
+	AttributeName = Attributes[i].AttributeName;
 
 	PreviousBase = Attributes[Index].BaseValue;
 	PreviousAggregate = Attributes[Index].AggregateValue;

@@ -147,6 +147,6 @@ simulated function DrawAttributes(Canvas C, R_DBStringManager StringManager, R_A
 		AttributeSet.GetAttributeByIndex(i, AttributeName, AttributeBaseValue, AttributeAggregateValue);
 		BaseValueString = UtilityLib.Static.FloatToString(AttributeBaseValue, 1);
 		AggregateValueString = UtilityLib.Static.FloatToString(AttributeAggregateValue, 1);
-		StringManager.AddString(DebugCategoryAttributes, "{Base: " $ BaseValueString $ ", Aggregate: " $ AggregateValueString, "[" $ String(AttributeName) $ "]");
+		StringManager.AddString(DebugCategoryAttributes, "{Base: " $ BaseValueString $ ", Aggregate: " $ AggregateValueString $ "}", "[" $ String(AttributeName) $ "]");
 	}
 }
