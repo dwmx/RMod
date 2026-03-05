@@ -68,6 +68,11 @@ function PopulateDataStore()
 		CreateUIPresence(Texture'RArpg.UIBroadSword', 86.0, 0.0, 86.0, 256.0)
 	);
 	
+	DataStore.AddData(	// BattleAxe
+		TagLib.Static.MakeTag('Item','Weapon','Axe','BattleAxe'),
+		CreateUIPresence(Texture'RArpg.UIBattleAxe', 42.0, 0.0, 172.0, 256.0)
+	);
+
 	//--------------------------------------------------------------------------
 	//	Shields
 	DataStore.AddData(	// WoodShield

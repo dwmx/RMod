@@ -58,6 +58,9 @@ function PopulateDataStore()
 	// BroadSword
 	ItemTag = TagLib.Static.MakeTag('Item','Weapon','Sword','BroadSword');
 	DataStore.AddData(ItemTag, CreateItemType(ItemTag, 1, 3));
+
+	ItemTag = TagLib.Static.MakeTag('Item','Weapon','Axe','BattleAxe');
+	DataStore.AddData(ItemTag, CreateItemType(ItemTag, 2, 3));
 	
 	//--------------------------------------------------------------------------
 	//	Shields

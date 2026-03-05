@@ -57,9 +57,9 @@ function SpawnPawnForPlayer(R_ArpgPlayerController PlayerController)
 	PlayerController.SetControlledPawn(NewPawn);
 
 	// Grant a couple of test items
-	// TODO: Still need to implement the WorldPresence data store
 	NewPawn.TryAddItem(ItemFactory.CreateItemFromTag(TagLib.Static.MakeTag('Item','Weapon','Sword','BroadSword')));
 	NewPawn.TryAddItem(ItemFactory.CreateItemFromTag(TagLib.Static.MakeTag('Item','Shield','WoodShield')));
+	NewPawn.TryAddItem(ItemFactory.CreateItemFromTag(TagLib.Static.MakeTag('Item','Weapon','Axe','BattleAxe')));
 }
 
 function Killed( pawn killer, pawn Other, name damageType )

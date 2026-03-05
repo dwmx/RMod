@@ -59,6 +59,11 @@ function PopulateDataStore()
 		TagLib.Static.MakeTag('Item','Weapon','Sword','BroadSword'),
 		CreateWorldPresence(SkelModel'weapons.broadsword')
 	);
+
+	DataStore.AddData(
+		TagLib.Static.MakeTag('Item','Weapon','Axe','BattleAxe'),
+		CreateWorldPresence(SkelModel'weapons.battleaxe')
+	);
 	
 	//--------------------------------------------------------------------------
 	//	Shields
