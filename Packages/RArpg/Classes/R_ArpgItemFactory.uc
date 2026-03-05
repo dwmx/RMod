@@ -7,9 +7,13 @@ class R_ArpgItemFactory extends R_ArpgObject;
 const DataStoreClass_ItemTypes = Class'RArpg.R_ArpgData_ItemTypeDataStore';
 var private R_ArpgData_ItemTypeDataStore DataStore_ItemTypes;
 
+const DataStoreClass_ItemInstructions = Class'RArpg.R_ArpgData_ItemInstructionsDataStore';
+var private R_ArpgData_ItemInstructionsDataStore DataStore_ItemInstructions;
+
 function InitializeArpgObject()
 {
     DataStore_ItemTypes = R_ArpgData_ItemTypeDataStore(ArpgLib.Static.CreateArpgObject(DataStoreClass_ItemTypes, Self));
+	DataStore_ItemInstructions = R_ArpgData_ItemInstructionsDataStore(ArpgLib.Static.CreateArpgObject(DataStoreClass_ItemInstructions, Self));
 }
 
 function R_ArpgItem InstantiateFromItemType(R_ArpgData_ItemType ItemType)
