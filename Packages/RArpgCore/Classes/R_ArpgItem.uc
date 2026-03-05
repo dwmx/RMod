@@ -128,6 +128,16 @@ function InitializeArpgObject()
 	ItemRarity = ITEM_RARITY_UNIQUE;
 }
 
+function SetItemSpecialString(String NewItemSpecialString)
+{
+	ItemSpecialString = NewItemSpecialString;
+}
+
+function SetItemTypeString(String NewItemTypeString)
+{
+	ItemTypeString = NewItemTypeString;
+}
+
 function bool GetItemGridSize(out int OutItemGridSizeX, out int OutItemGridSizeY)
 {
 	OutItemGridSizeX = ItemGridSizeX;

@@ -30,15 +30,40 @@ function R_ArpgItem InstantiateFromItemType(R_ArpgData_ItemType ItemType)
     Item.SetItemGridSize(ItemType.ItemSizeX, ItemType.ItemSizeY);
     Item.SetItemUID(Rand(5000) + 3000);
 
-	// These are just some test affixes
-	// These need to be moved into a magical item property generator tree, and set up as R_ArpgAffixInstructions
-    Item.AddAffix(Class'RArpg.R_ArpgAffix_AllSkills', 2);
-    Item.AddAffix(Class'RArpg.R_ArpgAffix_MaxHealth', Rand(30) + 20);
-    Item.AddAffix(Class'RArpg.R_ArpgAffix_MaxHealthPercent', Rand(15) + 15);
-    Item.AddAffix(Class'RArpg.R_ArpgAffix_MaxMana', Rand(30) + 20);
-	Item.AddAffix(Class'RArpg.R_ArpgAffix_MaxManaPercent', Rand(15) + 15);
+	// Test -- Apply some magical properties to the item using item instructions
+	TestApplyItemInstructions(Item);
+
+	//// These are just some test affixes
+	//// These need to be moved into a magical item property generator tree, and set up as R_ArpgAffixInstructions
+    //Item.AddAffix(Class'RArpg.R_ArpgAffix_AllSkills', 2);
+    //Item.AddAffix(Class'RArpg.R_ArpgAffix_MaxHealth', Rand(30) + 20);
+    //Item.AddAffix(Class'RArpg.R_ArpgAffix_MaxHealthPercent', Rand(15) + 15);
+    //Item.AddAffix(Class'RArpg.R_ArpgAffix_MaxMana', Rand(30) + 20);
+	//Item.AddAffix(Class'RArpg.R_ArpgAffix_MaxManaPercent', Rand(15) + 15);
 	
     return Item;
+}
+
+function TestApplyItemInstructions(R_ArpgItem Item)
+{
+	local R_ArpgTag InstructionsTag;
+	local R_ArpgData_ItemInstructions ItemInstructions;
+	local int AffixInstructionCount;
+	local Class<R_ArpgAffix> AffixClass;
+	local int AffixParameters;
+	local int i;
+
+	InstructionsTag = TagLib.Static.MakeTag('Instruction','Unique','Weapon','OdinsBlade');
+	DataStore_ItemInstructions.GetItemInstructions(InstructionsTag, ItemInstructions);
+
+	AffixInstructionCount = ItemInstructions.GetAffixInstructionCount();
+	for(i = 0; i < AffixInstructionCount; ++i)
+	{
+		ItemInstructions.RollAffix(i, AffixClass, AffixParameters);
+		Item.AddAffix(AffixClass, AffixParameters);
+	}
+
+	Item.SetItemSpecialString(ItemInstructions.InstructionsString);
 }
 
 //------------------------------------------------------------------------------
