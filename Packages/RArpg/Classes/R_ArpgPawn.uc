@@ -28,6 +28,17 @@ var private bool bShouldDrawHealth;
 
 var Class<R_ArpgTraceProxy> TraceProxyClass;
 
+// Movement Direction consts for PlayMoving
+const MOVEDIR_NEUTRAL			= 0x0000;
+const MOVEDIR_FORWARD 			= 0x0001;
+const MOVEDIR_BACKWARD			= 0x0010;
+const MOVEDIR_RIGHT				= 0x0100;
+const MOVEDIR_LEFT				= 0x1000;
+const MOVEDIR_FORWARD_RIGHT		= 0x0101;
+const MOVEDIR_FORWARD_LEFT		= 0x1001;
+const MOVEDIR_BACKWARD_RIGHT	= 0x0110;
+const MOVEDIR_BACKWARD_LEFT		= 0x1010;
+
 //------------------------------------------------------------------------------
 //	Inventory events received from ItemContainerSets
 //	These must match what are in R_ArpgItemContainerSet.uc
@@ -151,31 +162,59 @@ function R_ArpgAnimationSet GetAnimationSet()
 		{
 			return None;
 		}
-		AnimationSet = new(Self) AnimationSetDefaultClass;
+		AnimationSet = R_ArpgAnimationSet(ArpgLib.Static.CreateArpgObject(AnimationSetDefaultClass, Self));
 	}
 	return AnimationSet;
 }
 
-function PlayWaiting(optional float tween)
+function int GetMovementDirection()
 {
-	local R_ArpgAnimationSet AnimSet;
+	local Vector RX, RY, RZ;
+	local Vector VelocityNormalized;
+	local float VelocityDotForward;
+	local float VelocityDotRight;
+	local int Result;
 
-	AnimSet = GetAnimationSet();
-	if(AnimSet != None)
-	{
-		LoopAnim(AnimSet.Idle, 1.0, 0.1);
-	}
+	if(VSIze(Velocity) <= 32.0)
+		return MOVEDIR_NEUTRAL;
+
+	GetAxes(Rotation, RX, RY, RZ);
+
+	VelocityNormalized = Normal(Velocity);
+	VelocityDotForward = VelocityNormalized Dot RX;
+	VelocityDotRight = VelocityNormalized Dot RY;
+
+	Result = MOVEDIR_NEUTRAL;
+	
+	if(VelocityDotForward >= 0.2)		Result = Result | MOVEDIR_FORWARD;
+	else if(VelocityDotForward <= -0.2)	Result = Result | MOVEDIR_BACKWARD;
+
+	if(VelocityDotRight >= 0.2)			Result = Result | MOVEDIR_RIGHT;
+	else if(VelocityDotRight <= -0.2)	Result = Result | MOVEDIR_LEFT;
+
+	return Result;
+}
+
+function PlayWaiting(optional float Tween)
+{
+	PlayMoving(Tween);
 }
 
 function PlayMoving(optional float Tween)
 {
 	local R_ArpgAnimationSet AnimSet;
+	local int MovementDirection;
+	local Name MovementAnimation;
 
 	AnimSet = GetAnimationSet();
-	if(AnimSet != None)
+	if(AnimSet == None)
 	{
-		LoopAnim(AnimSet.Forward, 1.0, 0.1);
+		return;
 	}
+
+	MovementDirection = GetMovementDirection();
+	MovementAnimation = AnimSet.GetAnimationForMovementDirection(MovementDirection);
+	LoopAnim(MovementAnimation, 1.0, 0.1);
 }
 
 function UpdateRotation(float DeltaTime, float maxPitch)
@@ -255,6 +294,12 @@ state PlayerWalking
 		else
 			ProcessMove(DeltaTime, NewAccel, DodgeMove, OldRotation - Rotation);
 		//bPressedJump = bSaveJump;
+	}
+
+	function ProcessMove(float DeltaTime, vector NewAccel, eDodgeDir DodgeMove, rotator DeltaRot)
+	{
+		Super.ProcessMove(DeltaTime, NewAccel, DodgeMove, DeltaRot);
+		PlayMoving();
 	}
 }
 
