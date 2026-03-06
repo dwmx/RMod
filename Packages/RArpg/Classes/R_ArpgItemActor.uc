@@ -17,6 +17,11 @@ event BeginPlay()
 	SetItem(LocalItem);
 }
 
+function R_ArpgItem GetItem()
+{
+	return Item;
+}
+
 function SetItem(R_ArpgItem NewItem)
 {
 	Item = NewItem;

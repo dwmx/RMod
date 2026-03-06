@@ -6,6 +6,7 @@ class R_ArpgPlayerController extends R_RunePlayer;
 
 const CanvasLib = Class'RBase.R_ACanvasLibrary';
 const MathLib = Class'RBase.R_AMathLibrary';
+const TagLib = Class'RArpg.R_ArpgTagLibrary';
 
 //------------------------------------------------------------------------------
 var private Class<R_ArpgPlayerCamera> PlayerCameraClass;
@@ -19,6 +20,8 @@ var private R_UI_ArpgGameUserInterface GameUI;
 // Commands that the GameUI needs to be able to handle
 // These should be reflected in any UI designed for Arpg
 const UICommand_Inventory = 'Inventory';
+const UICommand_ShowItems = 'ShowItems';
+const UICommand_HideItems = 'HideItems';
 
 //------------------------------------------------------------------------------
 const SessionEndPointClass = Class'RArpg.R_ArpgSessionEndPoint';
@@ -573,6 +576,7 @@ event PostRender(Canvas C)
 	Super.PostRender(C);
 }
 
+/*
 exec function SetAnimFrame(float Frame)
 {
 	ControlledPawn.AnimRate = 0.0;
@@ -593,6 +597,29 @@ exec function TryAddModifier(Name AttributeName, int Operator, float Magnitude)
 exec function TryRemoveAllModifiers()
 {
 	ControlledPawn.GetEntity().GetEntityAttributeSet().RemoveAttributeModifiersBySource(100);
+}
+	*/
+
+exec function TestItemPickup()
+{
+	local Vector SpawnLocation;
+	local R_ArpgItemActor_Pickup A;
+	local R_ArpgGameInfo GI;
+	local R_ArpgItemFactory ItemFactory;
+	local R_ArpgItem NewItem;
+
+	GI = R_ArpgGameInfo(Level.Game);
+	ItemFactory = GI.GetItemFactory();
+	NewItem = ItemFactory.CreateItemFromTag(TagLib.Static.MakeTag('Item','Weapon','Axe','BattleAxe'));
+
+	SpawnLocation = ControlledPawn.Location;
+	A = Spawn(Class'RArpg.R_ArpgItemActor_Pickup',,,SpawnLocation);
+	A.SetItem(NewItem);
+}
+
+exec function TestUICommand(Name UICommand)
+{
+	GameUI.InputCommand(UICommand);
 }
 
 auto state PlayerController

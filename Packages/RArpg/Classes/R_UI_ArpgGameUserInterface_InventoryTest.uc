@@ -4,6 +4,9 @@
 //==============================================================================
 class R_UI_ArpgGameUserInterface_InventoryTest extends R_UI_ArpgGameUserInterface;
 
+// In-World UI
+var private R_UI_ArpgInWorldWindow UIInWorldWindow;
+
 // UI Objects
 // These are the UI counter-parts that point to Data objects and know how to
 // draw and interact with them
@@ -36,6 +39,9 @@ function ConstructUI()
 	RootY = LocalRootWindow.WinTop;
 	RootW = LocalRootWindow.WinWidth;
 	RootH = LocalRootWindow.WinHeight;
+
+	// In-World Root UI Window
+	UIInWorldWindow = R_UI_ArpgInWorldWindow(CreateWindow(Class'RArpg.R_UI_ArpgInWorldWindow', RootX, RootY, RootW, RootH));
 
 	// Main Inventory window
 	W = RootW * 0.4;
@@ -102,6 +108,22 @@ function HandleCommand_Inventory()
 	else
 	{
 		UIInventoryWindow.ShowWindow();
+	}
+}
+
+function HandleCommand_ShowItems()
+{
+	if(UIInWorldWindow != None)
+	{
+		UIInWorldWindow.SetShowItems(true);
+	}
+}
+
+function HandleCommand_HideItems()
+{
+	if(UIInWorldWindow != None)
+	{
+		UIInWorldWindow.SetShowItems(false);
 	}
 }
 
