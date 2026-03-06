@@ -154,6 +154,16 @@ event Tick(float DeltaSeconds)
 	}
 }
 
+function SetAnimationSetClass(Class<R_ArpgAnimationSet> AnimationSetClass)
+{
+	if(AnimationSetClass == None || (AnimationSet != None && AnimationSet.Class == AnimationSetClass))
+	{
+		return;
+	}
+
+	AnimationSet = R_ArpgAnimationSet(ArpgLib.Static.CreateArpgObject(AnimationSetClass, Self));
+}
+
 function R_ArpgAnimationSet GetAnimationSet()
 {
 	if(AnimationSet == None)
@@ -162,7 +172,7 @@ function R_ArpgAnimationSet GetAnimationSet()
 		{
 			return None;
 		}
-		AnimationSet = R_ArpgAnimationSet(ArpgLib.Static.CreateArpgObject(AnimationSetDefaultClass, Self));
+		SetAnimationSetClass(AnimationSetDefaultClass);
 	}
 	return AnimationSet;
 }
@@ -359,7 +369,6 @@ defaultproperties
     CollisionHeight=32.000000
 	Mass=50.000000
     Buoyancy=35.000000
-	AnimationSetDefaultClass=Class'RArpg.R_ArpgAnimationSet_Ragnar_BattleAxe'
 	bLockDirection=false
 	bBlockMovementInput=false
 	bShouldDrawHealth=true

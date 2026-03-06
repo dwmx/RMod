@@ -1,6 +1,9 @@
+//==============================================================================
+//	R_ArpgPawn_Hero
+//==============================================================================
 class R_ArpgPawn_Hero extends R_ArpgPawn;
 
-//var private R_ArpgInventorySet InventorySet;
+var private Class<R_ArpgAnimationSetSelector> AnimationSetSelectorClass;
 var private R_ArpgItemContainerSet InventorySet;
 
 //------------------------------------------------------------------------------
@@ -70,6 +73,14 @@ function bool IsEquipmentSlot(Name InventorySlot)
 
 function HandleEvent_InventorySlotChanged(Name InventorySlotName, R_ArpgItem OldItem, R_ArpgItem NewItem)
 {
+	// Update the current animation set
+	if(InventorySlotName == INVENTORY_SLOT_MAIN_HAND)
+	{
+		if(NewItem == None)	SetAnimationSetClass(AnimationSetSelectorClass.Static.GetDefaultAnimationSetClass());
+		else				SetAnimationSetClass(AnimationSetSelectorClass.Static.GetAnimationSetClassFromTag(NewItem.GetItemTag()));
+	}
+
+	// Update the item actor if there is one
 	switch(InventorySlotName)
 	{
 	case INVENTORY_SLOT_MAIN_HAND:	ItemActor_Weapon.SetItem(NewItem);	break;
@@ -205,4 +216,6 @@ defaultproperties
 	WeaponJoint=attach_hand
     ShieldJoint=attach_shielda
 	bFrameNotifies=true
+	AnimationSetDefaultClass=Class'RArpg.R_ArpgAnimationSet_Ragnar_Default'
+	AnimationSetSelectorClass=Class'R_ArpgAnimationSetSelector_Ragnar'
 }
