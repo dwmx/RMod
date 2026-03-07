@@ -47,6 +47,7 @@ function HandleCommand_HideItems() {}
 function SetItemContainerSet(R_ArpgItemContainerSet NewItemContainerSet) {}
 
 function bool IsWindowVisible(Name WindowName) { return false; }
+function R_UI_ArpgWindow GetWindow(Name WindowName) { return None; }
 
 defaultproperties
 {

@@ -135,6 +135,16 @@ function bool IsWindowVisible(Name WindowName)
 	}
 }
 
+function R_UI_ArpgWindow GetWindow(Name WindowName)
+{
+	switch(WindowName)
+	{
+	case 'Inventory':	return UIInventoryWindow;
+	case 'InWorld':		return UIInWorldWindow;
+	}
+	return None;
+}
+
 function SetItemContainerSet(R_ArpgItemContainerSet NewItemContainerSet)
 {
 	// Clear all UIItemContainers

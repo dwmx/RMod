@@ -3,9 +3,55 @@
 //==============================================================================
 class R_UI_ArpgInWorldWindow extends R_UI_ArpgWindow;
 
+struct R_ArpgCachedInteractionProxy
+{
+	var R_ArpgInteractionProxy Proxy;
+
+};
+var private R_ArpgCachedInteractionProxy CachedInteractionProxies[256];
+var private int CachedInteractionProxyCount;
+
 var private bool bShowItems;
 
 var private Font F_ItemNameFont;
+
+//------------------------------------------------------------------------------
+function ClearCachedInteractionProxies()
+{
+	CachedInteractionProxyCount = 0;
+}
+
+function AddCachedInteractionProxy(R_ArpgInteractionProxy Proxy)
+{
+	if(CachedInteractionProxyCount >= ArrayCount(CachedInteractionProxies))
+	{
+		return;
+	}
+
+	CachedInteractionProxies[CachedInteractionProxyCount].Proxy = Proxy;
+	++CachedInteractionProxyCount;
+}
+
+function Tick(float DeltaSeconds)
+{
+	local PlayerPawn PlayerOwner;
+	local R_ArpgInteractionProxy Proxy;
+
+	Super.Tick(DeltaSeconds);
+
+	PlayerOwner = GetPlayerOwner();
+	if(PlayerOwner == None)
+	{
+		return;
+	}
+
+	ClearCachedInteractionProxies();
+	foreach PlayerOwner.AllActors(Class'RArpg.R_ArpgInteractionProxy', Proxy)
+	{
+		AddCachedInteractionProxy(Proxy);
+	}
+}
+//------------------------------------------------------------------------------
 
 function Created()
 {
@@ -28,18 +74,16 @@ function Paint(Canvas C, float X, float Y)
 
 function PaintItems(Canvas C, float X, float Y)
 {
-	local PlayerPawn PlayerOwner;
-	local R_ArpgItemActor_Pickup A;
+	local int i;
+	local R_ArpgItemActor_Pickup ItemActor;
 
-	PlayerOwner = GetPlayerOwner();
-	if(PlayerOwner == None)
+	for(i = 0; i < CachedInteractionProxyCount; ++i)
 	{
-		return;
-	}
-
-	foreach PlayerOwner.AllActors(Class'RArpg.R_ArpgItemActor_Pickup', A)
-	{
-		PaintBoxForItem(C, A);
+		ItemActor = R_ArpgItemActor_Pickup(CachedInteractionProxies[i].Proxy.GetProxyOwner());
+		if(ItemActor != None)
+		{
+			PaintBoxForItem(C, ItemActor);
+		}
 	}
 }
 

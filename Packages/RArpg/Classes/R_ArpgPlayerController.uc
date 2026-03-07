@@ -143,7 +143,7 @@ event Tick(float DeltaSeconds)
 
 	Super.Tick(DeltaSeconds);
 
-	TickSelectionTarget(DeltaSeconds);
+	//TickSelectionTarget(DeltaSeconds);
 	TickPawnRotation(DeltaSeconds);
 
 	/*
@@ -177,6 +177,8 @@ function TickSelectionTarget(float DeltaSeconds)
 		return;
 	}
 
+	// This is super, super slow
+	// It causes bad FPS drops and causes the game to take a while to load
 	TraceDistance = 10240.0;
 	TraceStart = TraceOrigin;
 	TraceEnd = TraceStart + TraceDirection * TraceDistance;
