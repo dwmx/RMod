@@ -26,7 +26,7 @@ var private bool bBlockMovementInput;
 
 var private bool bShouldDrawHealth;
 
-var Class<R_ArpgTraceProxy> TraceProxyClass;
+var Class<R_ArpgInteractionProxy> InteractionProxyClass;
 
 // Movement Direction consts for PlayMoving
 const MOVEDIR_NEUTRAL			= 0x0000;
@@ -62,7 +62,7 @@ event PostBeginPlay()
 	Entity = R_ArpgEntity(ArpgLib.Static.CreateArpgObject(Class'RArpg.R_ArpgEntity', Self));
 	Entity.CreateAttributeSet(Class'RArpg.R_ArpgAttributeSet_Pawn');
 
-	Spawn(TraceProxyClass, Self);
+	Spawn(InteractionProxyClass, Self);
 }
 
 function R_ArpgItemContainerSet GetInventorySet() { return None; }
@@ -372,5 +372,5 @@ defaultproperties
 	bLockDirection=false
 	bBlockMovementInput=false
 	bShouldDrawHealth=true
-	TraceProxyClass=Class'RArpg.R_ArpgTraceProxy'
+	InteractionProxyClass=Class'RArpg.R_ArpgInteractionProxy'
 }

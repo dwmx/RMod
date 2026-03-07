@@ -168,7 +168,7 @@ function TickSelectionTarget(float DeltaSeconds)
 	local Vector TraceOrigin, TraceDirection;
 	local float TraceDistance;
 	local Actor A;
-	local R_ArpgTraceProxy TraceProxy;
+	local R_ArpgInteractionProxy TraceProxy;
 	local Vector HitLoc, HitNorm;
 	local Vector TraceStart, TraceEnd;
 
@@ -182,7 +182,7 @@ function TickSelectionTarget(float DeltaSeconds)
 	TraceEnd = TraceStart + TraceDirection * TraceDistance;
 	foreach TraceActors(Class'Actor', A, HitLoc, HitNorm, TraceEnd, TraceStart,, false)
 	{
-		TraceProxy = R_ArpgTraceProxy(A);
+		TraceProxy = R_ArpgInteractionProxy(A);
 		if(TraceProxy == None)
 		{
 			continue;

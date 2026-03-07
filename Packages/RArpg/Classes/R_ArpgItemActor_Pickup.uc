@@ -5,16 +5,16 @@
 //==============================================================================
 class R_ArpgItemActor_Pickup extends R_ArpgItemActor;
 
-var Class<R_ArpgTraceProxy> TraceProxyClass;
+var Class<R_ArpgInteractionProxy> InteractionProxyClass;
 
 event PostBeginPlay()
 {
 	Super.PostBeginPlay();
 
-	Spawn(TraceProxyClass, Self);
+	Spawn(InteractionProxyClass, Self);
 }
 
 defaultproperties
 {
-	TraceProxyClass=Class'R_ArpgTraceProxy'
+	InteractionProxyClass=Class'R_ArpgInteractionProxy'
 }

@@ -1,9 +1,9 @@
 //==============================================================================
-//	R_ArpgTraceProxy
+//	R_ArpgInteractionProxy
 //	Actor which acts as a hit-detection proxy for another Actor
 //	Used for In-World UI interactions
 //==============================================================================
-class R_ArpgTraceProxy extends Actor;
+class R_ArpgInteractionProxy extends Actor;
 
 event PostBeginPlay()
 {
