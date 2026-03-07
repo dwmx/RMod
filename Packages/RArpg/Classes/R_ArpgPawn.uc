@@ -315,10 +315,10 @@ state PlayerWalking
 
 simulated function DrawInWorldHUD(Canvas C)
 {
-	if(bShouldDrawHealth)
-	{
-		DrawHealthBar(C);
-	}
+	//if(bShouldDrawHealth)
+	//{
+	//	DrawHealthBar(C);
+	//}
 }
 
 simulated function DrawHealthBar(Canvas C)
