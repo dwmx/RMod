@@ -61,7 +61,7 @@ function PaintBoxForItem(Canvas C, R_ArpgItemActor_Pickup ItemActor)
 		return;
 	}
 
-	CanvasLib.Static.GetScreenSpaceLocationAboveActor(C, ItemActor, DrawLocation, 16.0);
+	CanvasLib.Static.GetScreenSpaceLocationAboveActor(C, ItemActor, DrawLocation);
 
 	DrawString = Item.GetItemTypeString();
 	C.Font = F_ItemNameFont;
