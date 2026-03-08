@@ -55,6 +55,11 @@ event PostBeginPlay()
 	GotoState('PlayerController');
 }
 
+function R_UI_ArpgGameUserInterface GetGameUI()
+{
+	return GameUI;
+}
+
 function SpawnPlayerCamera()
 {
 	if(PlayerCameraClass != None)
@@ -309,6 +314,11 @@ event PlayerInput(float DeltaSeconds)
 		GameCursor.GetCursorPosition(CursorX, CursorY);
 		GameUI.InputMouseMove(CursorX, CursorY);
 	}
+}
+
+function Vector GetViewLocation()
+{
+	return SavedCameraLoc;
 }
 
 event PlayerCalcView(

@@ -6,6 +6,8 @@ class R_UI_ArpgInWorldWindow extends R_UI_ArpgWindow;
 struct R_ArpgCachedInteractionProxy
 {
 	var R_ArpgInteractionProxy Proxy;
+	var float MinX, MinY; // Screen-space bounding box min
+	var float MaxX, MaxY; // Screen-space bounding box max
 
 };
 var private R_ArpgCachedInteractionProxy CachedInteractionProxies[256];
@@ -16,12 +18,81 @@ var private bool bShowItems;
 var private Font F_ItemNameFont;
 
 //------------------------------------------------------------------------------
+
+static function CalcScreenSpaceBoundingBoxForActor(
+	Canvas C,
+	Actor A,
+	Vector ViewLocation,
+	out Vector OutMin,
+	out Vector OutMax)
+{
+	local Vector LocationDelta;
+	local Vector BasisX, BasisY, BasisZ;
+	local Vector WorldPoints[6];
+	local int ScreenX, ScreenY;
+	local int i;
+
+	LocationDelta = A.Location - ViewLocation;
+	BasisX = Normal(Vect(1.0, 1.0, 0.0) * LocationDelta);
+	BasisZ = Vect(0.0, 0.0, 1.0);
+	BasisY = BasisX Cross BasisZ;
+
+	WorldPoints[0] = A.Location + BasisY * A.CollisionRadius *  1.0;
+	WorldPoints[1] = A.Location + BasisY * A.CollisionRadius * -1.0;
+	WorldPoints[2] = A.Location + BasisZ * A.CollisionHeight *  1.0 + BasisX * A.CollisionRadius *  1.0;
+	WorldPoints[3] = A.Location + BasisZ * A.CollisionHeight *  1.0 + BasisX * A.CollisionRadius * -1.0;
+	WorldPoints[4] = A.Location + BasisZ * A.CollisionHeight * -1.0 + BasisX * A.CollisionRadius *  1.0;
+	WorldPoints[5] = A.Location + BasisZ * A.CollisionHeight * -1.0 + BasisX * A.CollisionRadius * -1.0;
+
+	OutMin = Vect(1,1,0) *  100000000.0;
+	OutMax = Vect(1,1,0) * -100000000.0;
+	for(i = 0; i < 6; ++i)
+	{
+		C.TransformPoint(WorldPoints[i], ScreenX, ScreenY);
+		OutMin.X = FMin(OutMin.X, float(ScreenX));
+		OutMin.Y = FMin(OutMin.Y, float(ScreenY));
+		OutMax.X = FMax(OutMax.X, float(ScreenX));
+		OutMax.Y = FMax(OutMax.Y, float(ScreenY));
+	}
+}
+
+//------------------------------------------------------------------------------
+function int GetCachedInteractionProxyCount()
+{
+	return CachedInteractionProxyCount;
+}
+
+function bool GetCachedInteractionProxy(
+	int Index,
+	out R_ArpgInteractionProxy OutProxy,
+	out Vector OutAABBMin,
+	out Vector OutAABBMax)
+{
+	if(Index < 0 || Index >= CachedInteractionProxyCount)
+	{
+		return false;
+	}
+
+	OutProxy = CachedInteractionProxies[Index].Proxy;
+
+	OutAABBMin.X = CachedInteractionProxies[Index].MinX;
+	OutAABBMin.Y = CachedInteractionProxies[Index].MinY;
+	OutAABBMin.Z = 0.0;
+
+	OutAABBMax.X = CachedInteractionProxies[Index].MaxX;
+	OutAABBMax.Y = CachedInteractionProxies[Index].MaxY;
+	OutAABBMax.Z = 0.0;
+}
+
 function ClearCachedInteractionProxies()
 {
 	CachedInteractionProxyCount = 0;
 }
 
-function AddCachedInteractionProxy(R_ArpgInteractionProxy Proxy)
+function AddCachedInteractionProxy(
+	R_ArpgInteractionProxy Proxy,
+	float MinX, float MinY,
+	float MaxX, float MaxY)
 {
 	if(CachedInteractionProxyCount >= ArrayCount(CachedInteractionProxies))
 	{
@@ -29,28 +100,36 @@ function AddCachedInteractionProxy(R_ArpgInteractionProxy Proxy)
 	}
 
 	CachedInteractionProxies[CachedInteractionProxyCount].Proxy = Proxy;
+	CachedInteractionProxies[CachedInteractionProxyCount].MinX = MinX;
+	CachedInteractionProxies[CachedInteractionProxyCount].MinY = MinY;
+	CachedInteractionProxies[CachedInteractionProxyCount].MaxX = MaxX;
+	CachedInteractionProxies[CachedInteractionProxyCount].MaxY = MaxY;
 	++CachedInteractionProxyCount;
 }
 
-function Tick(float DeltaSeconds)
+function UpdateInteractionArray(Canvas C)
 {
-	local PlayerPawn PlayerOwner;
+	local R_ArpgPlayerController PlayerController;
+	local Vector ViewLocation;
 	local R_ArpgInteractionProxy Proxy;
+	local Vector AABBMin, AABBMax;
 
-	Super.Tick(DeltaSeconds);
+	ClearCachedInteractionProxies();
 
-	PlayerOwner = GetPlayerOwner();
-	if(PlayerOwner == None)
+	PlayerController = R_ArpgPlayerController(GetPlayerOwner());
+	if(PlayerController == None)
 	{
 		return;
 	}
 
-	ClearCachedInteractionProxies();
-	foreach PlayerOwner.AllActors(Class'RArpg.R_ArpgInteractionProxy', Proxy)
+	ViewLocation = PlayerController.GetViewLocation();
+	foreach PlayerController.AllActors(Class'RArpg.R_ArpgInteractionProxy', Proxy)
 	{
-		AddCachedInteractionProxy(Proxy);
+		CalcScreenSpaceBoundingBoxForActor(C, Proxy, ViewLocation, AABBMin, AABBMax);
+		AddCachedInteractionProxy(Proxy, AABBMin.X, AABBMin.Y, AABBMax.X, AABBMax.Y);
 	}
 }
+
 //------------------------------------------------------------------------------
 
 function Created()
@@ -66,6 +145,8 @@ function SetShowItems(bool bNewShowItems)
 
 function Paint(Canvas C, float X, float Y)
 {
+	UpdateInteractionArray(C);
+
 	if(bShowItems)
 	{
 		PaintItems(C, X, Y);

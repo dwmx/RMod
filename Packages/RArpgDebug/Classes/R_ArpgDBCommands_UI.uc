@@ -5,17 +5,20 @@
 class R_ArpgDBCommands_UI extends R_ArpgDBCommandManager;
 
 const Command_Toggle = "Toggle";
+const Command_ToggleProxies = "Proxies";
 
 function RegisterCommandList()
 {
 	RegisterCommand(Command_Toggle);
+	RegisterCommand(Command_ToggleProxies);
 }
 
 function bool TryHandleArpgCommand(String CommandString, R_ArpgDBMutator DebugMutator, PlayerPawn Sender)
 {
 	switch(CommandString)
 	{
-		case Command_Toggle:		HandleCommand_Toggle(DebugMutator, Sender);	return true;
+		case Command_Toggle:		HandleCommand_Toggle(DebugMutator, Sender);			return true;
+		case Command_ToggleProxies:	HandleCommand_ToggleProxies(DebugMutator, Sender);	return true;
 	}
 
 	return false;
@@ -39,5 +42,16 @@ function HandleCommand_Toggle(R_ArpgDBMutator DebugMutator, PlayerPawn Sender)
 	if(DebugMutator != None)
 	{
 		DebugMutator.ToggleDebugView(Class'RArpgDebug.R_ArpgDBView_UI');
+	}
+}
+
+function HandleCommand_ToggleProxies(R_ArpgDBMutator DebugMutator, PlayerPawn Sender)
+{
+	local R_ArpgDBView_UI DVUI;
+
+	DVUI = GetDVUI(DebugMutator);
+	if(DVUI != None)
+	{
+		DVUI.ToggleProxies();
 	}
 }
