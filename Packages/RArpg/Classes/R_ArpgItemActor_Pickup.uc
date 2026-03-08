@@ -16,5 +16,7 @@ event PostBeginPlay()
 
 defaultproperties
 {
+	CollisionHeight=32.0
+	CollisionRadus=32.0
 	InteractionProxyClass=Class'R_ArpgInteractionProxy'
 }
