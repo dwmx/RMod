@@ -517,9 +517,13 @@ exec function InputLMouseDown()
 	if(GameUI != None)
 	{
 		GameCursor.GetCursorPosition(CursorPosition.X, CursorPosition.Y);
-		GameUI.InputLMouseDown(CursorPosition.X, CursorPosition.Y);
+		if(GameUI.InputLMouseDown(CursorPosition.X, CursorPosition.Y))
+		{
+			return;
+		}
 	}
 
+	Log("Player controller L mouse down");
 	//Fire();
 }
 

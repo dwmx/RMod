@@ -377,15 +377,29 @@ function PaintInspectedItemPanel(Canvas C, float PanelX, float PanelY, float Pan
 
 function bool CheckConsumeMouseEvent(WinMessage Msg)
 {
-	// TODO:
-	// Only return true when interactor is in some inventory or item container panel
-	return true;
+	local R_ArpgItem LocalFloatingItem;
+	local R_UI_ArpgRootWindow LocalArpgRoot;
+
+	if(FloatingItemSlot != None && FloatingItemSlot.GetItem(0, LocalFloatingItem))
+	{	// Always consume if holding a floating item
+		return true;
+	}
+
+	LocalArpgRoot = R_UI_ArpgRootWindow(Root);
+	if(LocalArpgRoot != None && LocalArpgRoot.IsMouseInGameUI())
+	{	// Consume if the mouse is currently in a game UI panel
+		return true;
+	}
+
+	return false;
 }
 
-function LMouseDown(float X, float Y)
+function bool TryHandleLMouseDown()
 {
 	local R_ArpgItem LocalFloatingItem;
 	local float GlobalX, GlobalY, WindowX, WindowY;
+
+	Log("ITEM INTERACTOR L MOUSE DOWN");
 
 	if(FloatingItemSlot != None && FloatingItemSlot.GetItem(0, LocalFloatingItem))
 	{
@@ -395,6 +409,8 @@ function LMouseDown(float X, float Y)
 	{
 		TryPickUpItem();
 	}
+
+	return true;
 }
 
 // Attempts to the current floating item, and will perform swap if necessary

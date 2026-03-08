@@ -8,6 +8,11 @@ var private float GridPixelSizeY;
 
 var private R_UI_ArpgWindow MouseEventWindowStack[12];
 
+function bool IsMouseInGameUI()
+{
+	return true;
+}
+
 function PushMouseEventWindow(R_UI_ArpgWindow MouseEventWindow)
 {
 	local int i;

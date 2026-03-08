@@ -59,6 +59,9 @@ function bool CheckMousePassThrough(float X, float Y)
 	return Super.CheckMousePassThrough(X, Y);
 }
 
+function bool TryHandleLMouseDown();
+function bool TryHandleLMouseUp();
+
 function SetMousePassThrough(bool bNewMousePassThrough)
 {
 	bMousePassThrough = bNewMousePassThrough;

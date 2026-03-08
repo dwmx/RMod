@@ -104,19 +104,21 @@ function InputMouseMove(float MouseX, float MouseY)
 	}
 }
 
-function InputLMouseDown(float MouseX, float MouseY)
+function bool InputLMouseDown(float MouseX, float MouseY)
 {
 	if(RootWindow != None)
 	{
 		RootWindow.WindowEvent(WM_LMouseDown, None, MouseX, MouseY, 0);
+		return true;
 	}
 }
 
-function InputLMouseUp(float MouseX, float MouseY)
+function bool InputLMouseUp(float MouseX, float MouseY)
 {
 	if(RootWindow != None)
 	{
 		RootWindow.WindowEvent(WM_LMouseUp, None, MouseX, MouseY, 0);
+		return true;
 	}
 }
 

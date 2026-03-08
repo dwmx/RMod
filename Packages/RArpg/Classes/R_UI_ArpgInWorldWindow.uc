@@ -150,12 +150,17 @@ function UpdateInteractionArray(Canvas C)
 
 function bool CheckConsumeMouseEvent(WinMessage Msg)
 {
-	return true;
+	if(SelectedProxyIndex != INVALID_INDEX)
+	{	// Only consume mouse event if hovering over an interaction proxy
+		return true;
+	}
+	return false;
 }
 
-function LMouseDown(float X, float Y)
+function bool TryHandleLMouseDown()
 {
 	Log("InWorld L Mouse Down");
+	return true;
 }
 
 //------------------------------------------------------------------------------

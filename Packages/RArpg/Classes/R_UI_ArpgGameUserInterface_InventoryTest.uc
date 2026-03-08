@@ -18,6 +18,8 @@ var private R_UI_ArpgItemSlot UIItemSlotArmor;
 var private R_UI_ArpgItemSlot UIItemSlotHelm;
 var private R_UI_ArpgItemInteractor UIItemInteractor;
 
+var private R_UI_ArpgWindow MouseDownWindow;
+
 //------------------------------------------------------------------------------
 
 function ConstructUI()
@@ -97,8 +99,52 @@ function ConstructUI()
 
 	// Root window will route mouse input events to child windows according to this stack
 	// If a window's CheckConsumeMouseEvent() function returns false, it passes to the next stack index
-	LocalArpgRootWindow.PushMouseEventWindow(UIItemInteractor);
-	LocalArpgRootWindow.PushMouseEventWindow(UIInWorldWindow);
+	//LocalArpgRootWindow.PushMouseEventWindow(UIItemInteractor);
+	//LocalArpgRootWindow.PushMouseEventWindow(UIInWorldWindow);
+}
+
+function bool InputLMouseDown(float MouseX, float MouseY)
+{
+	local R_UI_ArpgWindow MouseEventWindows[2];
+	local R_UI_ArpgWindow Window;
+	local int i;
+
+	MouseEventWindows[0] = UIItemInteractor;
+	MouseEventWindows[1] = UIInWorldWindow;
+
+	for(i = 0; i < ArrayCount(MouseEventWindows); ++i)
+	{
+		Window = MouseEventWindows[i];
+		if(Window == None)
+		{
+			continue;
+		}
+
+		if(Window.CheckConsumeMouseEvent(WM_LMouseDown))
+		{
+			if(Window.TryHandleLMouseDown())
+			{
+				MouseDownWindow = Window;
+				return true;
+			}
+			return false;
+		}
+	}
+
+	return false;
+}
+
+function bool InputLMouseUp(float MouseX, float MouseY)
+{
+	local bool bResult;
+
+	if(MouseDownWindow != None)
+	{
+		bResult = MouseDownWindow.TryHandleLMouseUp();
+		MouseDownWindow = None;
+		return bResult;
+	}
+	return false;
 }
 
 function HandleCommand_Inventory()

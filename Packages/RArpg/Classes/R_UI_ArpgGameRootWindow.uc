@@ -57,3 +57,12 @@ function bool GetItemUITextureInfo(
 	OutTexH = 0.0;
 	return false;
 }
+
+function bool IsMouseInGameUI()
+{
+	if(R_UI_ArpgInWorldWindow(MouseWindow) != None)
+	{
+		return false;
+	}
+	return true;
+}
