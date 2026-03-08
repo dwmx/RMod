@@ -13,6 +13,8 @@ struct R_ArpgCachedInteractionProxy
 var private R_ArpgCachedInteractionProxy CachedInteractionProxies[256];
 var private int CachedInteractionProxyCount;
 
+var private int SelectedProxyIndex;
+
 var private bool bShowItems;
 
 var private Font F_ItemNameFont;
@@ -84,8 +86,14 @@ function bool GetCachedInteractionProxy(
 	OutAABBMax.Z = 0.0;
 }
 
+function int GetSelectedProxyIndex()
+{
+	return SelectedProxyIndex;
+}
+
 function ClearCachedInteractionProxies()
 {
+	SelectedProxyIndex = INVALID_INDEX;
 	CachedInteractionProxyCount = 0;
 }
 
@@ -113,6 +121,7 @@ function UpdateInteractionArray(Canvas C)
 	local Vector ViewLocation;
 	local R_ArpgInteractionProxy Proxy;
 	local Vector AABBMin, AABBMax;
+	local int SelectedIndex;
 
 	ClearCachedInteractionProxies();
 
@@ -122,12 +131,19 @@ function UpdateInteractionArray(Canvas C)
 		return;
 	}
 
+	SelectedIndex = INVALID_INDEX;
 	ViewLocation = PlayerController.GetViewLocation();
 	foreach PlayerController.AllActors(Class'RArpg.R_ArpgInteractionProxy', Proxy)
 	{
 		CalcScreenSpaceBoundingBoxForActor(C, Proxy, ViewLocation, AABBMin, AABBMax);
 		AddCachedInteractionProxy(Proxy, AABBMin.X, AABBMin.Y, AABBMax.X, AABBMax.Y);
+
+		// Checking mouse intersection
+		if(Root.MouseX < AABBMin.X || Root.MouseX > AABBMax.X) continue;
+		if(Root.MouseY < AABBMin.Y || Root.MouseY > AABBMax.Y) continue;
+		SelectedIndex = CachedInteractionProxyCount - 1;
 	}
+	SelectedProxyIndex = SelectedIndex;
 }
 
 //------------------------------------------------------------------------------

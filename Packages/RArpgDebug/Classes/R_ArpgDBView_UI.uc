@@ -63,6 +63,7 @@ simulated function DrawProxies(Canvas C, R_DBStringManager StringManager)
 	local R_ArpgInteractionProxy Proxy;
 	local Vector AABBMin, AABBMax;
 	local int ProxyCount;
+	local int SelectedIndex;
 	local int i;
 
 	StringManager.AddCategory(DebugCategory_Proxies);
@@ -75,6 +76,7 @@ simulated function DrawProxies(Canvas C, R_DBStringManager StringManager)
 	}
 
 	ProxyCount = InWorldWindow.GetCachedInteractionProxyCount();
+	SelectedIndex = InWorldWindow.GetSelectedProxyIndex();
 	StringManager.AddInt(DebugCategory_Proxies, "Proxy Count", ProxyCount);
 
 	for(i = 0; i < ProxyCount; ++i)
@@ -92,9 +94,18 @@ simulated function DrawProxies(Canvas C, R_DBStringManager StringManager)
 			0.0, 1.0, 1.0);
 
 		// Draw screen space AABB
-		CanvasLib.Static.DrawBoxOutline(
-			C, AABBMin, AABBMax, 2.0,
-			1.0, 1.0, 0.0, 1.0);
+		if(i == SelectedIndex)
+		{
+			CanvasLib.Static.DrawBoxOutline(
+				C, AABBMin, AABBMax, 4.0,
+				1.0, 1.0, 1.0, 1.0);
+		}
+		else
+		{
+			CanvasLib.Static.DrawBoxOutline(
+				C, AABBMin, AABBMax, 2.0,
+				1.0, 1.0, 0.0, 1.0);
+		}
 	}
 }
 
