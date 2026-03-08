@@ -375,6 +375,13 @@ function PaintInspectedItemPanel(Canvas C, float PanelX, float PanelY, float Pan
 
 //------------------------------------------------------------------------------
 
+function bool CheckConsumeMouseEvent(WinMessage Msg)
+{
+	// TODO:
+	// Only return true when interactor is in some inventory or item container panel
+	return true;
+}
+
 function LMouseDown(float X, float Y)
 {
 	local R_ArpgItem LocalFloatingItem;

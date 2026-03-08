@@ -6,28 +6,48 @@ class R_UI_ArpgRootWindow extends RGameUI.R_UIW_RootWindow;
 var private float GridPixelSizeX;
 var private float GridPixelSizeY;
 
-// If not none, this window will consume all mouse input
-var private UWindowWindow MouseEventWindow;
+var private R_UI_ArpgWindow MouseEventWindowStack[12];
 
-function SetMouseEventWindow(UWindowWindow NewMouseEventWindow)
+function PushMouseEventWindow(R_UI_ArpgWindow MouseEventWindow)
 {
-	MouseEventWindow = NewMouseEventWindow;
+	local int i;
+
+	for(i = 0; i < ArrayCount(MouseEventWindowStack); ++i)
+	{
+		if(MouseEventWindowStack[i] == None)
+		{
+			MouseEventWindowStack[i] = MouseEventWindow;
+			return;
+		}
+	}
 }
 
 function WindowEvent(WinMessage Msg, Canvas C, float X, float Y, int Key)
 {
-	if(MouseEventWindow != None)
+	local R_UI_ArpgWindow MouseEventWindow;
+	local int i;
+
+	switch(Msg)
 	{
-		switch(Msg)
+	case WM_LMouseDown:
+	case WM_LMouseUp:
+	case WM_RMouseDown:
+	case WM_RMouseUp:
+	case WM_MMouseDown:
+	case WM_MMouseUp:
+		for(i = 0; i < ArrayCount(MouseEventWindowStack); ++i)
 		{
-		case WM_LMouseDown:
-		case WM_LMouseUp:
-		case WM_RMouseDown:
-		case WM_RMouseUp:
-		case WM_MMouseDown:
-		case WM_MMouseUp:
-			MouseEventWindow.WindowEvent(Msg, C, X, Y, Key);
-			return;
+			MouseEventWindow = MouseEventWindowStack[i];
+			if(MouseEventWindow == None)
+			{
+				break;
+			}
+
+			if(MouseEventWindow.CheckConsumeMouseEvent(Msg))
+			{
+				MouseEventWindow.WindowEvent(Msg, C, X, Y, Key);
+				return;
+			}
 		}
 	}
 

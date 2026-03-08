@@ -44,6 +44,11 @@ function R_UI_ArpgRootWindow GetArpgRootWindow()
 	return R_UI_ArpgRootWindow(Root);
 }
 
+function bool CheckConsumeMouseEvent(WinMessage Msg)
+{
+	return true;
+}
+
 function bool CheckMousePassThrough(float X, float Y)
 {
 	if(bMousePassThrough)

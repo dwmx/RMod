@@ -96,7 +96,7 @@ function ConstructUI()
 	UIItemInteractor.SetMousePassThrough(true);
 
 	// Tell the root window to route mouse input to the ItemInteractor
-	R_UI_ArpgRootWindow(LocalRootWindow).SetMouseEventWindow(UIItemInteractor);
+	LocalArpgRootWindow.PushMouseEventWindow(UIItemInteractor);
 }
 
 function HandleCommand_Inventory()
