@@ -148,6 +148,18 @@ function UpdateInteractionArray(Canvas C)
 
 //------------------------------------------------------------------------------
 
+function bool CheckConsumeMouseEvent(WinMessage Msg)
+{
+	return true;
+}
+
+function LMouseDown(float X, float Y)
+{
+	Log("InWorld L Mouse Down");
+}
+
+//------------------------------------------------------------------------------
+
 function Created()
 {
 	Super.Created();

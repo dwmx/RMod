@@ -95,8 +95,10 @@ function ConstructUI()
 	UIItemInteractor.bAlwaysOnTop = true;
 	UIItemInteractor.SetMousePassThrough(true);
 
-	// Tell the root window to route mouse input to the ItemInteractor
+	// Root window will route mouse input events to child windows according to this stack
+	// If a window's CheckConsumeMouseEvent() function returns false, it passes to the next stack index
 	LocalArpgRootWindow.PushMouseEventWindow(UIItemInteractor);
+	LocalArpgRootWindow.PushMouseEventWindow(UIInWorldWindow);
 }
 
 function HandleCommand_Inventory()
