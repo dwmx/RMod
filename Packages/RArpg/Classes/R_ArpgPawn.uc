@@ -518,6 +518,12 @@ simulated event Destroyed()
 function ServerRestartGame(){}
 function ServerRestartPlayer(){}
 
+// Inventory functions
+// These need to do nothing -- Arpg uses completely different inventory system
+function bool AddInventory(Inventory NewItem) { return false; }
+function bool DeleteInventory(Inventory Item) { return false; }
+function AcquireInventory(Inventory Item) {}
+
 //------------------------------------------------------------------------------
 
 defaultproperties
