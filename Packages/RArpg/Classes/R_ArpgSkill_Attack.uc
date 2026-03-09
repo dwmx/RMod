@@ -4,13 +4,6 @@ var private bool bCollisionCheckActive;
 var private Actor StruckActors[16];
 var private int StruckActorsCount;
 
-event PostBeginPlay()
-{
-	// TODO: The observer should be in the debug package
-	SetObserver_Collision(None);
-	SetObserver_Collision(R_ArpgObserver_Collision(ArpgLib.Static.CreateArpgObject(Class'RArpgCore.R_ArpgObserver_Collision')));
-}
-
 function ActivateSkill()
 {
 }
@@ -29,17 +22,6 @@ auto state SkillNeutral
 
 state SkillActive
 {
-	function DrawDebug(Canvas C)
-	{
-		local R_ArpgObserver_Collision Observer;
-
-		Observer = GetObserver_Collision();
-		if(Observer != None)
-		{
-			Observer.DrawCollisions(C);
-		}
-	}
-
 	event BeginState()
 	{
 		local R_ArpgPawn RP;

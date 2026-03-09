@@ -7,9 +7,43 @@ class R_ArpgDBView_Pawns extends R_ArpgDBView config(RArpgDebug);
 const DebugCategory = 'Pawns';
 const DebugCategoryTags = 'PawnsTags';
 const DebugCategoryAttributes = 'PawnsAttributes';
+const DebugCategoryCollision = 'PawnsCollision';
 
 var config private bool bDrawTags;
 var config private bool bDrawAttributes;
+var config private bool bDrawCollision;
+
+//------------------------------------------------------------------------------
+
+const ObserverClass_Collision = Class'RArpgDebug.R_ArpgObserver_CollisionDebug';
+var private R_ArpgObserver_CollisionDebug Observer_Collision;
+
+//------------------------------------------------------------------------------
+
+function R_ArpgObserver_CollisionDebug GetObserver_Collision()
+{
+	local R_ArpgPlayerController PlayerController;
+	local R_ArpgPawn ControlledPawn;
+
+	if(Observer_Collision == None)
+	{
+		Observer_Collision = R_ArpgObserver_CollisionDebug(ArpgLib.Static.CreateArpgObject(ObserverClass_Collision));
+
+		PlayerController = R_ArpgPlayerController(GetPlayerPawnOwner());
+		if(PlayerController != None)
+		{
+			ControlledPawn = PlayerController.GetControlledPawn();
+			if(ControlledPawn != None)
+			{
+				ControlledPawn.SetObserver_Collision(Observer_Collision);
+			}
+		}
+	}
+
+	return Observer_Collision;
+}
+
+//------------------------------------------------------------------------------
 
 simulated function ToggleTags()
 {
@@ -20,6 +54,12 @@ simulated function ToggleTags()
 simulated function ToggleAttributes()
 {
 	bDrawAttributes = !bDrawAttributes;
+	SaveConfig();
+}
+
+simulated function ToggleCollision()
+{
+	bDrawCollision = !bDrawCollision;
 	SaveConfig();
 }
 
@@ -40,6 +80,7 @@ simulated function DrawDebugView(Canvas C, R_DBStringManager StringManager)
 
 	if(bDrawTags)		DrawTags(C, StringManager, DBM);
 	if(bDrawAttributes)	DrawAttributes(C, StringManager, DBM);
+	if(bDrawCollision)	DrawCollision(C, StringManager, DBM);
 }
 
 simulated function DrawAllPawns(Canvas C, R_DBStringManager StringManager, R_ArpgDBMutator DBM)
@@ -148,5 +189,22 @@ simulated function DrawAttributes(Canvas C, R_DBStringManager StringManager, R_A
 		BaseValueString = UtilityLib.Static.FloatToString(AttributeBaseValue, 1);
 		AggregateValueString = UtilityLib.Static.FloatToString(AttributeAggregateValue, 1);
 		StringManager.AddString(DebugCategoryAttributes, "{Base: " $ BaseValueString $ ", Aggregate: " $ AggregateValueString $ "}", "[" $ String(AttributeName) $ "]");
+	}
+}
+
+simulated function DrawCollision(Canvas C, R_DBStringManager StringManager, R_ArpgDBMutator DBM)
+{
+	local R_ArpgObserver_CollisionDebug LocalObserver;
+
+	StringManager.AddCategory(DebugCategoryCollision);
+
+	LocalObserver = GetObserver_Collision();
+	if(LocalObserver == None)
+	{
+		StringManager.AddWarning(DebugCategoryCollision, "Failed to retrieve collision observer object");
+	}
+	else
+	{
+		LocalObserver.DrawCollisions(C, StringManager, DBM);
 	}
 }

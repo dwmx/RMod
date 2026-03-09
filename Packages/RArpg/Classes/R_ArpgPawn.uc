@@ -53,10 +53,24 @@ var private Name ActiveAnimLowerBody;
 
 //------------------------------------------------------------------------------
 
+var private R_ArpgObserver_Collision Observer_Collision;
+
+//------------------------------------------------------------------------------
+
 replication
 {
 	reliable if(Role == ROLE_Authority && bNetOwner)
 		Skills;
+}
+
+function SetObserver_Collision(R_ArpgObserver_Collision NewObserver_Collision)
+{
+	Observer_Collision = NewObserver_Collision;
+}
+
+function R_ArpgObserver_Collision GetObserver_Collision()
+{
+	return Observer_Collision;
 }
 
 function R_ArpgEntity GetEntity() { return Entity; }
@@ -401,19 +415,6 @@ simulated function DrawInWorldHUD(Canvas C)
 	//{
 	//	DrawHealthBar(C);
 	//}
-}
-
-simulated function DrawSkillsDebug(Canvas C)
-{
-	// TODO: Move this information into the Debug package, it should be here
-	local int i;
-	for(i = 0; i < ArrayCount(Skills); ++i)
-	{
-		if(Skills[i] != None)
-		{
-			Skills[i].DrawDebug(C);
-		}
-	}
 }
 
 simulated function DrawHealthBar(Canvas C)

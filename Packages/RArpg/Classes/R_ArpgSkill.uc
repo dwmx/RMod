@@ -4,17 +4,21 @@ const ArpgLib = Class'RArpgCore.R_ArpgLibrary';
 
 var private float CooldownDurationSeconds;
 
-var private R_ArpgObserver_Collision Observer_Collision;
-
-function R_ArpgObserver_Collision GetObserver_Collision()	{ return Observer_Collision; }
-function SetObserver_Collision(R_ArpgObserver_Collision NewObserver_Collision)
-{
-	Observer_Collision = NewObserver_Collision;
-}
-
 function R_ArpgPawn GetArpgPawnOwner()
 {
 	return R_ArpgPawn(Owner);
+}
+
+function R_ArpgObserver_Collision GetObserver_Collision()
+{
+	local R_ArpgPawn PawnOwner;
+
+	PawnOwner = GetArpgPawnOwner();
+	if(PawnOwner != None)
+	{
+		return PawnOwner.GetObserver_Collision();
+	}
+	return None;
 }
 
 function InitializeSkill()
@@ -22,11 +26,6 @@ function InitializeSkill()
 
 function ActivateSkill()
 {}
-
-function DrawDebug(Canvas C)
-{
-	// TODO: Move this to debug package
-}
 
 auto state Idle
 {}
