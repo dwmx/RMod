@@ -185,15 +185,6 @@ function R_ArpgItemContainerSet GetInventorySet()
 	return InventorySet;
 }
 
-function bool TryAddItem(R_ArpgItem Item)
-{
-	if(InventorySet != None)
-	{
-		return InventorySet.TryAddItem(Item);
-	}
-	return false;
-}
-
 function bool TryTossFloatingItem()
 {
 	local R_ArpgItemContainer FloatingSlot;
@@ -263,12 +254,22 @@ function bool TryInteract(R_ArpgInteractionProxy InteractionProxy)
 		}
 	}
 
-	if(InventorySet.GetItemContainer(INVENTORY_SLOT_FLOAT).AddItem(Pickup.GetItem()))
+	if(TryAddItem(Pickup.GetItem()))
 	{
 		Pickup.Destroy();
+		return true;
 	}
 
-	return true;
+	return false;
+}
+
+function bool TryAddItem(R_ArpgItem Item)
+{
+	if(InventorySet != None)
+	{
+		return InventorySet.TryAddItem(Item);
+	}
+	return false;
 }
 
 function Input_Fire()
