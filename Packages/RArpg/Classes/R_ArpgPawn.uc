@@ -335,6 +335,14 @@ function AnimProxyAnimEnd()
 	ActiveAnimUpperBody = '';
 }
 
+function FrameNotify(int FramePassed)
+{
+}
+
+function AnimProxyFrameNotify(int FramePassed)
+{
+}
+
 //------------------------------------------------------------------------------
 
 function UpdateRotation(float DeltaTime, float maxPitch)
