@@ -90,7 +90,7 @@ state SkillActive
 	}
 
 Begin:
-	Owner.PlayAnim(GetAttackAnim(), 1.0, 0.1);
+	R_ArpgPawn(Owner).PlayPawnAnim(GetAttackAnim(), true, false, 1.0, 0.1);
 	Sleep(0.1);
 	WeaponActivate();
 	Sleep(1);

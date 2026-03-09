@@ -9,10 +9,6 @@ const ArpgLib = Class'RArpgCore.R_ArpgLibrary';
 
 const AnimProxyClass = Class'RArpg.R_ArpgPawnAnimProxy';
 
-// If true, this Pawn won't update its own animation
-// It assumes some other object is performing animation
-var private bool bExternalAnimationControl;
-
 var private R_ArpgEntity Entity;
 
 var private Class<R_ArpgAnimationSet> AnimationSetDefaultClass;
@@ -49,6 +45,11 @@ const MOVEDIR_BACKWARD_LEFT		= 0x1010;
 //	Inventory events received from ItemContainerSets
 //	These must match what are in R_ArpgItemContainerSet.uc
 const EVENT_INVENTORY_SLOT_CHANGED = 'InventorySlotChanged';
+
+//------------------------------------------------------------------------------
+
+var private Name ActiveAnimUpperBody;
+var private Name ActiveAnimLowerBody;
 
 //------------------------------------------------------------------------------
 
@@ -222,11 +223,6 @@ function int GetMovementDirection()
 	return Result;
 }
 
-function SetExternalAnimationControl(bool bNewExternalAnimationControl)
-{
-	bExternalAnimationControl = bNewExternalAnimationControl;
-}
-
 function PlayWaiting(optional float Tween)
 {
 	PlayMoving(Tween);
@@ -238,11 +234,6 @@ function PlayMoving(optional float Tween)
 	local int MovementDirection;
 	local Name MovementAnimation;
 
-	if(bExternalAnimationControl)
-	{
-		return;
-	}
-
 	AnimSet = GetAnimationSet();
 	if(AnimSet == None)
 	{
@@ -251,17 +242,100 @@ function PlayMoving(optional float Tween)
 
 	MovementDirection = GetMovementDirection();
 	MovementAnimation = AnimSet.GetAnimationForMovementDirection(MovementDirection);
-	LoopAnimWithProxy(MovementAnimation, 1.0, 0.1);
+	LoopPawnAnim(MovementAnimation, true, true, 1.0, 0.1);
 }
 
-function LoopAnimWithProxy(Name AnimName, optional float Rate, optional float Tween, optional float MinRate)
+//------------------------------------------------------------------------------
+
+function LoopPawnAnim(
+	Name AnimSequence,
+	optional bool bUpperBody,
+	optional bool bLowerBody,
+	optional float Rate,
+	optional float TweenTime,
+	optional float MinRate)
 {
-	LoopAnim(AnimName, Rate, Tween, MinRate);
-	if(AnimProxy != None)
+	if(bLowerBody && ActiveAnimLowerBody == '')
 	{
-		AnimProxy.LoopAnim(AnimName, Rate, Tween, MinRate);
+		LoopAnim(AnimSequence, Rate, TweenTime, MinRate);
+	}
+
+	if(bUpperBody && AnimProxy != None && ActiveAnimUpperBody == '')
+	{
+		AnimProxy.LoopAnim(AnimSequence, Rate, TweenTime, MinRate);
 	}
 }
+
+function PlayPawnAnim(
+	Name AnimSequence,
+	optional bool bUpperBody,
+	optional bool bLowerBody,
+	optional float Rate,
+	optional float TweenTime)
+{
+	if(bLowerBody)
+	{
+		PlayAnim(AnimSequence, Rate, TweenTime);
+		ActiveAnimLowerBody = AnimSequence;
+	}
+
+	if(bUpperBody && AnimProxy != None)
+	{
+		AnimProxy.PlayAnim(AnimSequence, Rate, TweenTime);
+		ActiveAnimUpperBody = AnimSequence;
+	}
+}
+
+function SetPawnAnim(
+	Name AnimSequence,
+	optional bool bUpperBody,
+	optional bool bLowerBody,
+	optional float Frame,
+	optional float Rate)
+{
+	if(bLowerBody)
+	{
+		AnimSequence = AnimSequence;
+		AnimFrame = Frame;
+		AnimRate = Rate;
+		ActiveAnimLowerBody = AnimSequence;
+	}
+
+	if(bUpperBody && AnimProxy != None)
+	{
+		AnimProxy.AnimSequence = AnimSequence;
+		AnimProxy.AnimFrame = Frame;
+		AnimProxy.AnimRate = Rate;
+		ActiveAnimUpperBody = AnimSequence;
+	}
+}
+
+function ClearPawnAnim(
+	optional bool bUpperBody,
+	optional bool bLowerBody)
+{
+	if(bLowerBody)
+	{
+		ActiveAnimLowerBody = '';
+	}
+
+	if(bUpperBody)
+	{
+		ActiveAnimUpperBody = '';
+	}
+}
+
+function AnimEnd()
+{
+	ActiveAnimLowerBody = '';
+}
+
+function AnimProxyAnimEnd()
+{
+	ActiveAnimUpperBody = '';
+}
+
+//------------------------------------------------------------------------------
 
 function UpdateRotation(float DeltaTime, float maxPitch)
 {}
@@ -273,11 +347,6 @@ function Died(pawn Killer, name damageType, vector HitLocation)
 {
 	Super.Died(Killer, DamageType, HitLocation);
 	Destroy();
-}
-
-function AnimEnd()
-{
-	PlayMoving();
 }
 
 state PlayerWalking

@@ -52,8 +52,8 @@ event PostBeginPlay()
 
 	// Add some test skills
 	AddSkill(Class'RArpg.R_ArpgSkill_Whirlwind');
-	AddSkill(Class'RArpg.R_ArpgSkill_Orb');
-	AddSkill(Class'RArpg.R_ArpgSkill_Attack');
+	//AddSkill(Class'RArpg.R_ArpgSkill_Orb');
+	//AddSkill(Class'RArpg.R_ArpgSkill_Attack');
 }
 
 function ReceiveInventoryEvent(Name EventName, Name InventoryContainerName, R_ArpgItemContainerSet Sender, R_ArpgItem Items[2])
