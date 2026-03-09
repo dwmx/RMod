@@ -9,12 +9,16 @@ var private R_ArpgItem Item;
 event BeginPlay()
 {
 	local R_ArpgItem LocalItem;
+	local Rotator Rot;
 
 	Super.BeginPlay();
 	// This is just a test and should not be here
 
 	LocalItem = new(Self) Class'RArpg.R_ArpgItem';
 	SetItem(LocalItem);
+
+	Rot.Roll = -65535 / 4;
+	SetRotation(Rot);
 }
 
 function R_ArpgItem GetItem()
@@ -72,6 +76,6 @@ defaultproperties
 {
 	RemoteRole=ROLE_SimulatedProxy
     DrawType=DT_SkeletalMesh
-    CollisionRadius=24.000000
-    CollisionHeight=46.000000
+    CollisionRadius=32.000000
+    CollisionHeight=32.000000
 }

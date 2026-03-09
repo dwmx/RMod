@@ -14,6 +14,7 @@ var private R_ArpgCachedInteractionProxy CachedInteractionProxies[256];
 var private int CachedInteractionProxyCount;
 
 var private int SelectedProxyIndex;
+var private R_ArpgInteractionProxy SelectedProxy;
 
 var private bool bShowItems;
 
@@ -143,7 +144,23 @@ function UpdateInteractionArray(Canvas C)
 		if(Root.MouseY < AABBMin.Y || Root.MouseY > AABBMax.Y) continue;
 		SelectedIndex = CachedInteractionProxyCount - 1;
 	}
-	SelectedProxyIndex = SelectedIndex;
+	SetSelectedProxyIndex(SelectedIndex);
+}
+
+function SetSelectedProxyIndex(int NewSelectedProxyIndex)
+{
+	SelectedProxyIndex = NewSelectedProxyIndex;
+
+	if(SelectedProxy != None)
+	{
+		SelectedProxy.NotifySelectionStateChanged(false);
+	}
+
+	if(SelectedProxyIndex != INVALID_INDEX)
+	{
+		SelectedProxy = CachedInteractionProxies[SelectedProxyIndex].Proxy;
+		SelectedProxy.NotifySelectionStateChanged(true);
+	}
 }
 
 //------------------------------------------------------------------------------
@@ -202,6 +219,11 @@ function Paint(Canvas C, float X, float Y)
 	{
 		PaintItems(C, X, Y);
 	}
+	else if(SelectedProxyIndex != INVALID_INDEX)
+	{
+		PaintBoxForItem(C, R_ArpgItemActor_Pickup(CachedInteractionProxies[SelectedProxyIndex].Proxy.GetProxyOwner()));
+		PaintCircleForItem(C, R_ArpgItemActor_Pickup(CachedInteractionProxies[SelectedProxyIndex].Proxy.GetProxyOwner()));
+	}
 }
 
 function PaintItems(Canvas C, float X, float Y)
@@ -217,6 +239,22 @@ function PaintItems(Canvas C, float X, float Y)
 			PaintBoxForItem(C, ItemActor);
 		}
 	}
+}
+
+function PaintCircleForItem(Canvas C, R_ArpgItemActor_Pickup ItemActor)
+{
+	if(ItemActor == None)
+	{
+		return;
+	}
+
+	CanvasLib.Static.DrawCircle3D(
+		C,
+		ItemActor.Location + Vect(0,0,-1) * ItemActor.CollisionHeight,
+		Vect(0,0,1),
+		ItemActor.CollisionRadius,
+		32,
+		0.25, 1.0, 1.0);
 }
 
 function PaintBoxForItem(Canvas C, R_ArpgItemActor_Pickup ItemActor)

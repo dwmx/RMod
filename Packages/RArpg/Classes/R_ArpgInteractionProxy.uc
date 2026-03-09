@@ -5,6 +5,10 @@
 //==============================================================================
 class R_ArpgInteractionProxy extends Actor;
 
+function NotifySelectionStateChanged(bool bNewSelectionState)
+{
+}
+
 event PostBeginPlay()
 {
 	Super.PostBeginPlay();
