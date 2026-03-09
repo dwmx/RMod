@@ -523,8 +523,10 @@ exec function InputLMouseDown()
 		}
 	}
 
-	Log("Player controller L mouse down");
-	//Fire();
+	if(ControlledPawn != None)
+	{
+		ControlledPawn.Input_Skill('Attack');
+	}
 }
 
 exec function InputLMouseUp()

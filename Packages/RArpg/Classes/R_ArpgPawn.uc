@@ -63,6 +63,7 @@ event PostBeginPlay()
 	Entity.CreateAttributeSet(Class'RArpg.R_ArpgAttributeSet_Pawn');
 
 	Spawn(InteractionProxyClass, Self);
+	SpawnAnimationProxy();
 }
 
 function R_ArpgItemContainerSet GetInventorySet() { return None; }
@@ -245,23 +246,9 @@ function Input_Fire()
 	Attack();
 }
 
-function Attack()
+function Input_Skill(Name SkillName)
 {
-	local Vector Start, End;
-	local Vector HitLocation, HitNormal;
-	local Actor HitActor;
-
-	PlayAnim('S3_AttackA', 1.0, 0.1);
-
-	Start = Location;
-	End = Location + Vector(Rotation) * 64.0;
-
-	HitActor = Trace(HitLocation, HitNormal, End, Start, true);
-
-	if(HitActor != None)
-	{
-		HitActor.JointDamaged(30, Self, HitLocation, Vect(0,0,0), '', 0);
-	}
+	AnimProxy.PlayAnim('X5_AttackA', 1.0, 0.1);
 }
 
 function Died(pawn Killer, name damageType, vector HitLocation)
