@@ -84,6 +84,17 @@ function Killed( pawn killer, pawn Other, name damageType )
 	}
 }
 
+function bool IsRelevant(Actor Other)
+{
+	// Never spawn Inventory types in Arpg
+	if(Inventory(Other) != None)
+	{
+		return false;
+	}
+
+	return Super.IsRelevant(Other);
+}
+
 defaultproperties
 {
 	RunePlayerClass=Class'RArpg.R_ArpgPlayerController'
