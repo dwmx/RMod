@@ -40,6 +40,16 @@ event PostLogin(PlayerPawn NewPlayer)
 	}
 }
 
+event Logout(Pawn P)
+{
+	if(P != None && R_ArpgPawn(P) != None)
+	{	// Ignore ArpgPawns, they're never human players
+		return;
+	}
+
+	Super.Logout(P);
+}
+
 function SpawnPawnForPlayer(R_ArpgPlayerController PlayerController)
 {
 	local R_ArpgPawn NewPawn;

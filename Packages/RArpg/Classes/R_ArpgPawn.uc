@@ -231,21 +231,6 @@ function PlayMoving(optional float Tween)
 function UpdateRotation(float DeltaTime, float maxPitch)
 {}
 
-/*
-auto state Neutral
-{
-	event BeginState()
-	{
-		SetPhysics(PHYS_Falling);
-	}
-}
-	*/
-
-function Input_Fire()
-{
-	Attack();
-}
-
 function Input_Skill(Name SkillName)
 {
 	AnimProxy.PlayAnim('X5_AttackA', 1.0, 0.1);
