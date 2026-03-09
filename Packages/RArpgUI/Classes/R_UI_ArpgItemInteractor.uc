@@ -111,6 +111,7 @@ function TickFloating(float DeltaSeconds)
 
 	FloatingItemContainerWindow = NewFloatingItemContainerWindow;
 
+	ClearFloatingRegion();
 	if(FloatingItemContainerWindow != None)
 	{
 		WindowToGlobal(PositionX, PositionY, GlobalX, GlobalY);
@@ -191,6 +192,11 @@ function Paint(Canvas C, float X, float Y)
 		PaintInspecting(C, X, Y);
 		break;
 	}
+}
+
+function ClearFloatingRegion()
+{
+	FloatingQueryResult = QUERY_RESULT_INVALID;
 }
 
 function PaintFloating(Canvas C, float X, float Y)

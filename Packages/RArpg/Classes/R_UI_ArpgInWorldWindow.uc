@@ -301,8 +301,3 @@ function PaintBoxForItem(Canvas C, R_ArpgItemActor_Pickup ItemActor)
 	C.Style = 1;
 	ClipText(C, DrawX, DrawY, DrawString);
 }
-
-defaultproperties
-{
-	bShowItems=true
-}
