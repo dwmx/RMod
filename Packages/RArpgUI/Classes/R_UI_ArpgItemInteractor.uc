@@ -3,7 +3,7 @@
 //==============================================================================
 class R_UI_ArpgItemInteractor extends R_UI_ArpgWindow;
 
-var private R_ArpgItemSlot FloatingItemSlot;
+var R_ArpgItemSlot FloatingItemSlot;
 var private float PositionX, PositionY;
 
 const STATE_INSPECTING = 'Inspecting';	// Inspecting items
@@ -398,8 +398,6 @@ function bool TryHandleLMouseDown()
 {
 	local R_ArpgItem LocalFloatingItem;
 	local float GlobalX, GlobalY, WindowX, WindowY;
-
-	Log("ITEM INTERACTOR L MOUSE DOWN");
 
 	if(FloatingItemSlot != None && FloatingItemSlot.GetItem(0, LocalFloatingItem))
 	{

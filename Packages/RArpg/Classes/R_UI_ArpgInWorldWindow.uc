@@ -159,8 +159,26 @@ function bool CheckConsumeMouseEvent(WinMessage Msg)
 
 function bool TryHandleLMouseDown()
 {
-	Log("InWorld L Mouse Down");
-	return true;
+	local R_ArpgPlayerController PlayerController;
+	local R_ArpgPawn_Hero HeroPawn;
+
+	if(SelectedProxyIndex == INVALID_INDEX)
+	{
+		return false;
+	}
+
+	PlayerController = R_ArpgPlayerController(GetPlayerOwner());
+	if(PlayerController != None)
+	{
+		HeroPawn = R_ArpgPawn_Hero(PlayerController.GetControlledPawn());
+	}
+
+	if(HeroPawn == None)
+	{
+		return false;
+	}
+
+	return HeroPawn.TryInteract(CachedInteractionProxies[SelectedProxyIndex].Proxy);
 }
 
 //------------------------------------------------------------------------------

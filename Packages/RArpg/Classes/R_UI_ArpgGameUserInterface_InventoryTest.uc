@@ -93,7 +93,7 @@ function ConstructUI()
 	Y = LocalRootWindow.WinTop;
 	W = LocalRootWindow.WinWidth;
 	H = LocalRootWindow.WinHeight;
-	UIItemInteractor = R_UI_ArpgItemInteractor(CreateWindow(Class'RArpgUI.R_UI_ArpgItemInteractor', X, Y, W, H));
+	UIItemInteractor = R_UI_ArpgItemInteractor(CreateWindow(Class'RArpg.R_UI_ArpgItemInteractor_Hero', X, Y, W, H));
 	UIItemInteractor.bAlwaysOnTop = true;
 	UIItemInteractor.SetMousePassThrough(true);
 

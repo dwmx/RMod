@@ -633,6 +633,11 @@ exec function TestItemPickup()
 	A.SetItem(NewItem);
 }
 
+exec function TestTossFloat()
+{
+	R_ArpgPawn_Hero(GetControlledPawn()).TryTossFloatingItem();
+}
+
 exec function TestUICommand(Name UICommand)
 {
 	GameUI.InputCommand(UICommand);

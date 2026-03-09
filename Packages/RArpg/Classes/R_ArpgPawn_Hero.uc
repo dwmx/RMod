@@ -19,6 +19,14 @@ const INVENTORY_SLOT_BOOTS = 'Boots';
 const INVENTORY_SLOT_FLOAT = 'Float';
 
 //------------------------------------------------------------------------------
+//	Interaction query responses
+//	The UI will ask the pawn, "what would happen if you tried to interact with X"
+//	UI then uses that information to draw more helpful visuals for proxies
+const INTERACTION_QUERY_SUCCESS = 1;		// Can perform interaction
+const INTERACTION_QUERY_FAIL_ACTOR = 4;		// Can't interact with this actor
+const INTERACTION_QUERY_FAIL_DISTANCE = 5;	// Too far away to perform interaction
+
+//------------------------------------------------------------------------------
 
 var private R_ArpgItemActor ItemActor_Weapon;
 var private R_ArpgItemActor ItemActor_Shield;
@@ -184,6 +192,83 @@ function bool TryAddItem(R_ArpgItem Item)
 		return InventorySet.TryAddItem(Item);
 	}
 	return false;
+}
+
+function bool TryTossFloatingItem()
+{
+	local R_ArpgItemContainer FloatingSlot;
+	local R_ArpgItem FloatingItem;
+	local R_ArpgItemActor_Pickup PickupActor;
+
+	if(InventorySet != None)
+	{
+		FloatingSlot = InventorySet.GetItemContainer(INVENTORY_SLOT_FLOAT);
+		if(FloatingSlot == None)
+		{
+			return false;
+		}
+
+		FloatingSlot.GetItem(0, FloatingItem);
+		if(FloatingItem == None)
+		{
+			return false;
+		}
+
+		PickupActor = Spawn(Class'RArpg.R_ArpgItemActor_Pickup', None,, Location);
+		if(PickupActor == None)
+		{
+			return false;
+		}
+
+		FloatingSlot.RemoveItem(FloatingItem);
+		PickupActor.SetItem(FloatingItem);
+		return true;
+	}
+
+	return false;
+}
+
+function int QueryInteraction(R_ArpgInteractionProxy InteractionProxy)
+{
+	local Actor A;
+	local Vector DeltaLocation;
+	local float Distance;
+
+	A = InteractionProxy.GetProxyOwner();
+	if(A == None)
+	{
+		return INTERACTION_QUERY_FAIL_ACTOR;
+	}
+
+	DeltaLocation = A.Location - Self.Location;
+	Distance = VSize(DeltaLocation) - A.CollisionRadius - Self.CollisionRadius;
+	if(Distance >= 128.0)
+	{
+		return INTERACTION_QUERY_FAIL_DISTANCE;
+	}
+
+	return INTERACTION_QUERY_SUCCESS;
+}
+
+function bool TryInteract(R_ArpgInteractionProxy InteractionProxy)
+{
+	local R_ArpgItemActor_Pickup Pickup;
+
+	if(InteractionProxy != None)
+	{
+		Pickup = R_ArpgItemActor_Pickup(InteractionProxy.GetProxyOwner());
+		if(Pickup == None)
+		{
+			return false;
+		}
+	}
+
+	if(InventorySet.GetItemContainer(INVENTORY_SLOT_FLOAT).AddItem(Pickup.GetItem()))
+	{
+		Pickup.Destroy();
+	}
+
+	return true;
 }
 
 function Input_Fire()
