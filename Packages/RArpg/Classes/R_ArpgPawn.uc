@@ -63,6 +63,8 @@ replication
 		Skills;
 }
 
+
+
 function SetObserver_Collision(R_ArpgObserver_Collision NewObserver_Collision)
 {
 	Observer_Collision = NewObserver_Collision;
@@ -74,18 +76,6 @@ function R_ArpgObserver_Collision GetObserver_Collision()
 }
 
 function R_ArpgEntity GetEntity() { return Entity; }
-
-event PostBeginPlay()
-{
-	Super.PostBeginPlay();
-
-	// Create ArpgEntity object
-	Entity = R_ArpgEntity(ArpgLib.Static.CreateArpgObject(Class'RArpg.R_ArpgEntity', Self));
-	Entity.CreateAttributeSet(Class'RArpg.R_ArpgAttributeSet_Pawn');
-
-	Spawn(InteractionProxyClass, Self);
-	SpawnAnimationProxy();
-}
 
 function SpawnAnimationProxy()
 {
@@ -454,6 +444,81 @@ simulated function DrawHealthBar(Canvas C)
 	Extent2.X = Extent1.X + Width * HealthRatio;
 	CanvasLib.Static.DrawBoxSolid(C, Extent1, Extent2, 1.0, 0.0, 0.0, 1.0);
 }
+
+//------------------------------------------------------------------------------
+//	Pawn and PlayerPawn overrides
+
+event PreBeginPlay()
+{
+	AddPawn();
+	// Skip Pawn.PreBeginPlay because it spawns a PRI
+	// Skip PlayerPawn.PreBeginPlay because it modifies the PRI
+	Super(Actor).PreBeginPlay();
+}
+
+event PostBeginPlay()
+{
+	// Skip all Super.PostBeginPlay calls, they set up human player stuff
+	bIsPlayer = false;
+
+	// Create ArpgEntity object
+	Entity = R_ArpgEntity(ArpgLib.Static.CreateArpgObject(Class'RArpg.R_ArpgEntity', Self));
+	Entity.CreateAttributeSet(Class'RArpg.R_ArpgAttributeSet_Pawn');
+
+	Spawn(InteractionProxyClass, Self);
+	SpawnAnimationProxy();
+}
+
+simulated event Destroyed()
+{
+	local Inventory Inv, NextInv;
+
+	if(Shadow != None)	Shadow.Destroy();
+
+	if(Role < ROLE_Authority)
+	{
+		return;
+	}
+
+	RemovePawn();
+
+	// Remove all inventory
+	// This should never get populated in the first place, but just in
+	// case it somehow does
+	for(Inv = Inventory; Inv != None; Inv = NextInv)
+	{
+		NextInv = Inv.Inventory;
+		Inv.Destroy();
+	}
+	Weapon = None;
+	Shield = None;
+	Inventory = None;
+
+	// Pawn.Destroy makes a call to GameInfo.Logout here -- avoid that
+
+	// None of these should be initialized to begin with, but just in case
+	// they somehow do
+	if(PlayerReplicationInfo != None)	PlayerReplicationInfo.Destroy();
+	if(MyHud != None)					MyHud.Destroy();
+	if(Scoring != None)					Scoring.Destroy();
+
+	while(FreeMoves != None)
+	{
+		FreeMoves.Destroy();
+		FreeMoves = FreeMoves.NextMove;
+	}
+
+	while(SavedMoves != None)
+	{
+		SavedMoves.Destroy();
+		SavedMoves = SavedMoves.NextMove;
+	}
+}
+
+function ServerRestartGame(){}
+function ServerRestartPlayer(){}
+
+//------------------------------------------------------------------------------
 
 defaultproperties
 {
