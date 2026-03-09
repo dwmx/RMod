@@ -11,11 +11,32 @@ function InitializeSkill()
 {}
 
 function ActivateSkill()
-{
-}
+{}
 
 function OwnerFrameNotify(int framepassed)
 {}
+
+function SetFullBodyAnim(Name AnimSequence, optional float Rate, optional float Frame)
+{
+	local R_ArpgPawn Pawn;
+	local R_ArpgPawnAnimProxy AnimProxy;
+
+	Pawn = GetOwnerPawn();
+	if(Pawn != None)
+	{
+		Pawn.AnimSequence = AnimSequence;
+		Pawn.AnimRate = Rate;
+		Pawn.AnimFrame = Frame;
+
+		AnimProxy = Pawn.GetAnimProxy();
+		if(AnimProxy != None)
+		{
+			AnimProxy.AnimSequence = AnimSequence;
+			AnimProxy.AnimRate = Rate;
+			AnimProxy.AnimFrame = Frame;
+		}
+	}
+}
 
 auto state Idle
 {}

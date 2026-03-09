@@ -66,6 +66,7 @@ state SkillActive
         OwnerPawn = GetOwnerPawn();
         if(OwnerPawn != None)
         {
+			OwnerPawn.SetExternalAnimationControl(true);
             OwnerPawn.SetBlockMovementInput(true);
             OwnerPawn.SetLockDirection(true);
             LookDirection = OwnerPawn.GetLookDirection();
@@ -92,6 +93,7 @@ state SkillActive
         OwnerPawn = GetOwnerPawn();
         if(OwnerPawn != None)
         {
+			OwnerPawn.SetExternalAnimationControl(false);
             OwnerPawn.SetBlockMovementInput(false);
             OwnerPawn.SetLockDirection(false);
             MoveDirection = Vect(0,0,0);
@@ -134,9 +136,10 @@ state SkillActive
             }
             OwnerPawn.SetRotation(NewRotation);
 
-            OwnerPawn.AnimSequence = 'X5_AttackB';
-            OwnerPawn.AnimRate = 0.0;
-            OwnerPawn.AnimFrame = 0.52;
+            //OwnerPawn.AnimSequence = 'X5_AttackB';
+            //OwnerPawn.AnimRate = 0.0;
+            //OwnerPawn.AnimFrame = 0.52;
+			SetFullBodyAnim('X5_AttackB', 0.0, 0.52);
             OwnerPawn.Weapon.FrameNotify(0.52);
             
             if(Particles != None)

@@ -7,6 +7,12 @@ class R_ArpgPawn extends PlayerPawn abstract;
 const CanvasLib = Class'RBase.R_ACanvasLibrary';
 const ArpgLib = Class'RArpgCore.R_ArpgLibrary';
 
+const AnimProxyClass = Class'RArpg.R_ArpgPawnAnimProxy';
+
+// If true, this Pawn won't update its own animation
+// It assumes some other object is performing animation
+var private bool bExternalAnimationControl;
+
 var private R_ArpgEntity Entity;
 
 var private Class<R_ArpgAnimationSet> AnimationSetDefaultClass;
@@ -64,6 +70,11 @@ event PostBeginPlay()
 
 	Spawn(InteractionProxyClass, Self);
 	SpawnAnimationProxy();
+}
+
+function SpawnAnimationProxy()
+{
+	AnimProxy = spawn(AnimProxyClass, Self);
 }
 
 function R_ArpgItemContainerSet GetInventorySet() { return None; }
@@ -178,6 +189,11 @@ function R_ArpgAnimationSet GetAnimationSet()
 	return AnimationSet;
 }
 
+function R_ArpgPawnAnimProxy GetAnimProxy()
+{
+	return R_ArpgPawnAnimProxy(AnimProxy);
+}
+
 function int GetMovementDirection()
 {
 	local Vector RX, RY, RZ;
@@ -206,6 +222,11 @@ function int GetMovementDirection()
 	return Result;
 }
 
+function SetExternalAnimationControl(bool bNewExternalAnimationControl)
+{
+	bExternalAnimationControl = bNewExternalAnimationControl;
+}
+
 function PlayWaiting(optional float Tween)
 {
 	PlayMoving(Tween);
@@ -217,6 +238,11 @@ function PlayMoving(optional float Tween)
 	local int MovementDirection;
 	local Name MovementAnimation;
 
+	if(bExternalAnimationControl)
+	{
+		return;
+	}
+
 	AnimSet = GetAnimationSet();
 	if(AnimSet == None)
 	{
@@ -225,16 +251,23 @@ function PlayMoving(optional float Tween)
 
 	MovementDirection = GetMovementDirection();
 	MovementAnimation = AnimSet.GetAnimationForMovementDirection(MovementDirection);
-	LoopAnim(MovementAnimation, 1.0, 0.1);
+	LoopAnimWithProxy(MovementAnimation, 1.0, 0.1);
+}
+
+function LoopAnimWithProxy(Name AnimName, optional float Rate, optional float Tween, optional float MinRate)
+{
+	LoopAnim(AnimName, Rate, Tween, MinRate);
+	if(AnimProxy != None)
+	{
+		AnimProxy.LoopAnim(AnimName, Rate, Tween, MinRate);
+	}
 }
 
 function UpdateRotation(float DeltaTime, float maxPitch)
 {}
 
 function Input_Skill(Name SkillName)
-{
-	AnimProxy.PlayAnim('X5_AttackA', 1.0, 0.1);
-}
+{}
 
 function Died(pawn Killer, name damageType, vector HitLocation)
 {
@@ -345,4 +378,5 @@ defaultproperties
 	bBlockMovementInput=false
 	bShouldDrawHealth=true
 	InteractionProxyClass=Class'RArpg.R_ArpgInteractionProxy'
+	bExternalAnimationControl=false
 }
