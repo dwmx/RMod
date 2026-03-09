@@ -16,6 +16,7 @@ static function Class<R_ArpgAnimationSet> GetDefaultAnimationSetClass()
 static function Class<R_ArpgAnimationSet> GetAnimationSetClassFromTag(R_ArpgTag Tag)
 {
 	if(TagLib.Static.MatchHierarchy(Tag, TagLib.Static.MakeTag('Item','Weapon','Axe')))		return ANIMSET_CLASS_BATTLE_AXE;
+	if(TagLib.Static.MatchHierarchy(Tag, TagLib.Static.MakeTag('Item','Weapon','Hammer')))	return ANIMSET_CLASS_BATTLE_AXE;
 	if(TagLib.Static.MatchHierarchy(Tag, TagLib.Static.MakeTag('Item','Weapon','Sword')))	return ANIMSET_CLASS_BROAD_SWORD;
 
 	return ANIMSET_CLASS_DEFAULT;

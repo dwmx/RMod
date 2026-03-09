@@ -60,9 +60,14 @@ function PopulateDataStore()
 		CreateWorldPresence(SkelModel'weapons.broadsword')
 	);
 
-	DataStore.AddData(
+	DataStore.AddData(	// BattleAxe
 		TagLib.Static.MakeTag('Item','Weapon','Axe','BattleAxe'),
 		CreateWorldPresence(SkelModel'weapons.battleaxe')
+	);
+
+	DataStore.AddData(	// BattleHammer
+		TagLib.Static.MakeTag('Item','Weapon','Hammer','BattleHammer'),
+		CreateWorldPresence(SkelModel'weapons.battlehammer')
 	);
 	
 	//--------------------------------------------------------------------------
