@@ -9,7 +9,7 @@ auto state Idle
         local R_ArpgPawn OwnerPawn;
         local Vector LookDirection;
 
-        OwnerPawn = GetOwnerPawn();
+        OwnerPawn = GetArpgPawnOwner();
         if(OwnerPawn == None)
         {
             return;

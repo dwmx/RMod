@@ -403,6 +403,19 @@ simulated function DrawInWorldHUD(Canvas C)
 	//}
 }
 
+simulated function DrawSkillsDebug(Canvas C)
+{
+	// TODO: Move this information into the Debug package, it should be here
+	local int i;
+	for(i = 0; i < ArrayCount(Skills); ++i)
+	{
+		if(Skills[i] != None)
+		{
+			Skills[i].DrawDebug(C);
+		}
+	}
+}
+
 simulated function DrawHealthBar(Canvas C)
 {
 	local Vector ScreenSpaceLocation;

@@ -290,12 +290,6 @@ function Input_Skill(Name SkillName)
 	ActivateSkill();
 }
 
-event FrameNotify(int framepassed)
-{
-	GetSkill(0).OwnerFrameNotify(framepassed);
-	Super.FrameNotify(framepassed);
-}
-
 defaultproperties
 {
 	//RemoteRole=ROLE_AutonomousProxy

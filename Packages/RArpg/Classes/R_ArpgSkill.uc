@@ -1,8 +1,18 @@
 class R_ArpgSkill extends Actor abstract;
 
+const ArpgLib = Class'RArpgCore.R_ArpgLibrary';
+
 var private float CooldownDurationSeconds;
 
-function R_ArpgPawn GetOwnerPawn()
+var private R_ArpgObserver_Collision Observer_Collision;
+
+function R_ArpgObserver_Collision GetObserver_Collision()	{ return Observer_Collision; }
+function SetObserver_Collision(R_ArpgObserver_Collision NewObserver_Collision)
+{
+	Observer_Collision = NewObserver_Collision;
+}
+
+function R_ArpgPawn GetArpgPawnOwner()
 {
 	return R_ArpgPawn(Owner);
 }
@@ -13,29 +23,9 @@ function InitializeSkill()
 function ActivateSkill()
 {}
 
-function OwnerFrameNotify(int framepassed)
-{}
-
-function SetFullBodyAnim(Name AnimSequence, optional float Rate, optional float Frame)
+function DrawDebug(Canvas C)
 {
-	local R_ArpgPawn Pawn;
-	local R_ArpgPawnAnimProxy AnimProxy;
-
-	Pawn = GetOwnerPawn();
-	if(Pawn != None)
-	{
-		Pawn.AnimSequence = AnimSequence;
-		Pawn.AnimRate = Rate;
-		Pawn.AnimFrame = Frame;
-
-		AnimProxy = Pawn.GetAnimProxy();
-		if(AnimProxy != None)
-		{
-			AnimProxy.AnimSequence = AnimSequence;
-			AnimProxy.AnimRate = Rate;
-			AnimProxy.AnimFrame = Frame;
-		}
-	}
+	// TODO: Move this to debug package
 }
 
 auto state Idle

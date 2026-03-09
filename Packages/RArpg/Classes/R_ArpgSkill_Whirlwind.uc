@@ -22,33 +22,6 @@ function ActivateSkill()
     GotoState('SkillActive');
 }
 
-function WeaponActivate()
-{
-	local Weapon W;
-
-	W = PlayerPawn(Owner).Weapon;
-	if(W == None)
-	{
-		return;
-	}
-
-	PlayerPawn(Owner).WeaponActivate();
-	W.PlaySwipeSound();
-}
-
-function WeaponDeactivate()
-{
-	local Weapon W;
-
-	W = PlayerPawn(Owner).Weapon;
-	if(W == None)
-	{
-		return;
-	}
-
-	PlayerPawn(Owner).WeaponDeactivate();
-}
-
 auto state Idle
 {
     
@@ -61,9 +34,7 @@ state SkillActive
         local R_ArpgPawn OwnerPawn;
         local Vector LookDirection;
 
-        WeaponActivate();
-
-        OwnerPawn = GetOwnerPawn();
+        OwnerPawn = GetArpgPawnOwner();
         if(OwnerPawn != None)
         {
             OwnerPawn.SetBlockMovementInput(true);
@@ -87,9 +58,7 @@ state SkillActive
     {
         local R_ArpgPawn OwnerPawn;
 
-        WeaponDeactivate();
-
-        OwnerPawn = GetOwnerPawn();
+        OwnerPawn = GetArpgPawnOwner();
         if(OwnerPawn != None)
         {
 			OwnerPawn.ClearPawnAnim(true, true);
@@ -108,21 +77,12 @@ state SkillActive
         }
     }
 
-    //function OwnerFrameNotify(int framepassed)
-	//{
-	//	local Weapon W;
-//
-    //    Log("YEAH");
-	//	W = Pawn(Owner).Weapon;
-	//	W.FrameNotify(framepassed);
-	//}
-
     event Tick(float DeltaSeconds)
     {
         local R_ArpgPawn OwnerPawn;
         local Rotator NewRotation;
 
-        OwnerPawn = GetOwnerPawn();
+        OwnerPawn = GetArpgPawnOwner();
         if(OwnerPawn != None)
         {
             OwnerPawn.Acceleration = MoveDirection * 1000.0;

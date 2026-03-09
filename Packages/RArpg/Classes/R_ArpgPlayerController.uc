@@ -591,6 +591,9 @@ event PostRender(Canvas C)
 		GameUI.PostRender(C);
 	}
 
+	// Test test
+	GetControlledPawn().DrawSkillsDebug(C);
+
 	Super.PostRender(C);
 }
 
