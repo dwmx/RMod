@@ -40,7 +40,7 @@ class R_ArpgImports_Textures extends R_ArpgObject abstract;
 // Using PF_NoSmooth because without it, the small UI textures get blurred badly
 //------------------------------------------------------------------------------
 
-#EXEC TEXTURE IMPORT NAME=UIBroadSword FILE=..\RArpg\Textures\BroadSword.bmp FLAGS=2050
+#EXEC TEXTURE IMPORT NAME=UIBroadSword FILE=..\RArpg\Textures\UI\UIBroadSword.pcx FLAGS=2050
 #EXEC TEXTURE IMPORT NAME=UIWoodShield FILE=..\RArpg\Textures\WoodShield.pcx FLAGS=2050
 #EXEC TEXTURE IMPORT NAME=UIBattleAxe FILE=..\RArpg\Textures\BattleAxe.pcx FLAGS=2050
 #EXEC TEXTURE IMPORT NAME=UIBattleHammer FILE=..\RArpg\Textures\UI\UIBattleHammer.pcx FLAGS=2050
