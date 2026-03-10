@@ -34,10 +34,6 @@ var private Actor InteractionActor;
 
 var private R_ArpgPawn ControlledPawn;
 
-var private Vector LastTraceStart;
-var private Vector LastTraceEnd;
-var private Vector LastHitLocation;
-
 replication
 {
 	reliable if(Role == ROLE_Authority)
@@ -316,26 +312,6 @@ exec function Fire(optional float F)
 		}
 	}
 		*/
-}
-
-exec function TestHit()
-{
-	local Vector Start, End;
-	local Vector HitLocation, HitNormal;
-	local Actor HitActor;
-
-	if(ControlledPawn == None)
-	{
-		return;
-	}
-
-	Start = ControlledPawn.Location;
-	End = ControlledPawn.Location + Vector(ControlledPawn.Rotation) * 128.0;
-
-	HitActor = Trace(HitLocation, HitNormal, End, Start, true);
-	LastTraceEnd = End;
-	LastTraceStart = Start;
-	LastHitLocation = HitLocation;
 }
 
 event PostRender(Canvas C)
