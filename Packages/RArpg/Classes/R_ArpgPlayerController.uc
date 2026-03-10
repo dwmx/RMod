@@ -27,11 +27,6 @@ const UICommand_HideItems = 'HideItems';
 const SessionEndPointClass = Class'RArpg.R_ArpgSessionEndPoint';
 var private R_ArpgSessionEndPoint SessionEndPoint;
 
-// The current selection target
-// i.e. what actor the mouse is currently hovered over
-var private Actor SelectionTarget;
-var private Actor InteractionActor;
-
 var private R_ArpgPawn ControlledPawn;
 
 replication
@@ -292,26 +287,6 @@ exec function InputLMouseUp()
 
 exec function Fire(optional float F)
 {
-	//if(ControlledPawn != None)
-	//{
-	//	ControlledPawn.Input_Fire();
-	//}
-
-	/*
-	// Determine context of the click
-	if(SelectionTarget != None && R_ArpgPawn_Merchant(SelectionTarget) != None)
-	{
-		GameUI.OpenInteractionMenu(SelectionTarget);
-		InteractionActor = SelectionTarget;
-	}
-	else
-	{
-		if(ControlledPawn != None)
-		{
-			ControlledPawn.Input_Fire();
-		}
-	}
-		*/
 }
 
 event PostRender(Canvas C)
