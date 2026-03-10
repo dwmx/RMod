@@ -18,6 +18,7 @@ var private R_ArpgInteractionProxy SelectedProxy;
 
 var private bool bShowItems;
 var private bool bShowInWorldHUD;
+var private bool bInteractionEnabled;
 
 var private Font F_ItemNameFont;
 
@@ -127,6 +128,11 @@ function UpdateInteractionArray(Canvas C)
 
 	ClearCachedInteractionProxies();
 
+	if(!bInteractionEnabled)
+	{
+		return;
+	}
+
 	PlayerController = R_ArpgPlayerController(GetPlayerOwner());
 	if(PlayerController == None)
 	{
@@ -215,6 +221,11 @@ function SetShowItems(bool bNewShowItems)
 function SetShowInWorldHUD(bool bNewShowInWorldHUD)
 {
 	bShowInWorldHUD = bNewShowInWorldHUD;
+}
+
+function SetInteractionEnabled(bool bNewInteractionEnabled)
+{
+	bInteractionEnabled = bNewInteractionEnabled;
 }
 
 function Paint(Canvas C, float X, float Y)

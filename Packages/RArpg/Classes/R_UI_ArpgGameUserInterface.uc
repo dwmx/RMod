@@ -15,6 +15,8 @@ const UICommand_ShowItems = 'ShowItems';
 const UICommand_HideItems = 'HideItems';
 const UICommand_ShowInWorldHUD = 'ShowInWorldHUD';
 const UICommand_HideInWorldHUD = 'HideInWorldHUD';
+const UICommand_EnableInteraction = 'EnableInteraction';
+const UICommand_DisableInteraction = 'DisableInteraction';
 
 function ConstructUI()
 {
@@ -37,19 +39,24 @@ function InputCommand(Name Command)
 {
 	switch(Command)
 	{
-		case UICommand_Inventory:		HandleCommand_Inventory();		break;
-		case UICommand_ShowItems:		HandleCommand_ShowItems();		break;
-		case UICommand_HideItems:		HandleCommand_HideItems();		break;
-		case UICommand_ShowInWorldHUD:	HandleCommand_ShowInWorldHUD();	break;
-		case UICommand_HideInWorldHUD:	HandleCommand_HideInWorldHUD();	break;
+		case UICommand_Inventory:			HandleCommand_Inventory();			break;
+		case UICommand_ShowItems:			HandleCommand_ShowItems();			break;
+		case UICommand_HideItems:			HandleCommand_HideItems();			break;
+		case UICommand_ShowInWorldHUD:		HandleCommand_ShowInWorldHUD();		break;
+		case UICommand_HideInWorldHUD:		HandleCommand_HideInWorldHUD();		break;
+		case UICommand_EnableInteraction:	HandleCommand_EnableInteraction();	break;
+		case UICommand_DisableInteraction:	HandleCommand_DisableInteraction();	break;
 	}	
 }
 
-function HandleCommand_Inventory() {}
-function HandleCommand_ShowItems() {}
-function HandleCommand_HideItems() {}
-function HandleCommand_ShowInWorldHUD() {}
-function HandleCommand_HideInWorldHUD() {}
+function HandleCommand_Inventory();
+function HandleCommand_ShowItems();
+function HandleCommand_HideItems();
+function HandleCommand_ShowInWorldHUD();
+function HandleCommand_HideInWorldHUD();
+function HandleCommand_EnableInteraction();
+function HandleCommand_DisableInteraction();
+
 function SetItemContainerSet(R_ArpgItemContainerSet NewItemContainerSet) {}
 
 function bool IsWindowVisible(Name WindowName) { return false; }

@@ -159,37 +159,12 @@ function HandleCommand_Inventory()
 	}
 }
 
-function HandleCommand_ShowItems()
-{
-	if(UIInWorldWindow != None)
-	{
-		UIInWorldWindow.SetShowItems(true);
-	}
-}
-
-function HandleCommand_HideItems()
-{
-	if(UIInWorldWindow != None)
-	{
-		UIInWorldWindow.SetShowItems(false);
-	}
-}
-
-function HandleCommand_ShowInWorldHUD()
-{
-	if(UIInWorldWindow != None)
-	{
-		UIInWorldWindow.SetShowInWorldHUD(true);
-	}
-}
-
-function HandleCommand_HideInWorldHUD()
-{
-	if(UIInWorldWindow != None)
-	{
-		UIInWorldWindow.SetShowInWorldHUD(false);
-	}
-}
+function HandleCommand_ShowItems()			{ if(UIInWorldWindow != None) UIInWorldWindow.SetShowItems(true); }
+function HandleCommand_HideItems()			{ if(UIInWorldWindow != None) UIInWorldWindow.SetShowItems(false); }
+function HandleCommand_ShowInWorldHUD()		{ if(UIInWorldWindow != None) UIInWorldWindow.SetShowInWorldHUD(true); }
+function HandleCommand_HideInWorldHUD()		{ if(UIInWorldWindow != None) UIInWorldWindow.SetShowInWorldHUD(false); }
+function HandleCommand_EnableInteraction()	{ if(UIInWorldWindow != None) UIInWorldWindow.SetInteractionEnabled(true); }
+function HandleCommand_DisableInteraction() { if(UIInWorldWindow != None) UIInWorldWindow.SetInteractionEnabled(false); }
 
 function bool IsWindowVisible(Name WindowName)
 {
