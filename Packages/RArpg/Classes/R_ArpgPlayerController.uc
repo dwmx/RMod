@@ -69,13 +69,6 @@ function R_ArpgPawn GetControlledPawn()
 	return ControlledPawn;
 }
 
-exec function TestHero()
-{
-	SetCollision(false, false, false);
-	DrawType = DT_None;
-	ControlledPawn = Spawn(Class'RArpg.R_ArpgPawn_Hero', Self,, Self.Location, Self.Rotation);
-}
-
 function SetControlledPawn(R_ArpgPawn NewControlledPawn)
 {
 	ControlledPawn = NewControlledPawn;
@@ -89,11 +82,6 @@ function SetControlledPawn(R_ArpgPawn NewControlledPawn)
 function InitializeSessionEndPoint()
 {
 	SessionEndPoint = Spawn(SessionEndPointClass, Self);
-}
-
-exec function TestSession()
-{
-	SessionEndPoint.TestSession();
 }
 
 function InitializePlayerAfterPossess(bool bIsLocallyControlled)
@@ -348,6 +336,11 @@ exec function TestTossFloat()
 exec function TestUICommand(Name UICommand)
 {
 	GameUI.InputCommand(UICommand);
+}
+
+exec function TestSession()
+{
+	SessionEndPoint.TestSession();
 }
 
 auto state PlayerController
