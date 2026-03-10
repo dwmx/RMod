@@ -10,7 +10,6 @@ simulated event PostRender(Canvas C)
 {
 	Super.PostRender(C);
 
-	DrawSelectionTarget(C);
 	DrawInWorldHUD(C);
 	DrawExperience(C);
 }
@@ -20,26 +19,6 @@ simulated function R_ArpgPlayerController GetArpgRunePlayer()
 	local R_ArpgPlayerController RP;
 	RP = R_ArpgPlayerController(Owner);
 	return RP;
-}
-
-simulated function DrawSelectionTarget(Canvas C)
-{
-	local R_ArpgPlayerController RP;
-	local Actor SelectionTarget;
-
-	SelectionTarget = None;
-	RP = GetArpgRunePlayer();
-	if(RP != None)
-	{
-		SelectionTarget = RP.GetSelectionTarget();
-	}
-
-	if(SelectionTarget == None)
-	{
-		return;
-	}
-
-	CanvasLib.Static.DrawCircle3D(C, SelectionTarget.Location, Vect(0,0,1), SelectionTarget.CollisionRadius, 32, 1.0, 1.0, 0.0);
 }
 
 simulated function DrawInWorldHUD(Canvas C)
