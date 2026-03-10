@@ -409,10 +409,10 @@ state PlayerWalking
 
 simulated function DrawInWorldHUD(Canvas C)
 {
-	//if(bShouldDrawHealth)
-	//{
-	//	DrawHealthBar(C);
-	//}
+	if(bShouldDrawHealth)
+	{
+		DrawHealthBar(C);
+	}
 }
 
 simulated function DrawHealthBar(Canvas C)
@@ -421,8 +421,11 @@ simulated function DrawHealthBar(Canvas C)
 	local Vector Extent1, Extent2;
 	local float Width, Height;
 	local float HealthRatio;
+	local float HealthBase, HealthAggregate;
+	local float MaxHealthBase, MaxHealthAggregate;
 
-	if(Health <= 0)
+	if(!GetAttributeValue('Health', HealthBase, HealthAggregate)
+	|| !GetAttributeValue('MaxHealth', MaxHealthBase, MaxHealthAggregate))
 	{
 		return;
 	}
@@ -432,7 +435,7 @@ simulated function DrawHealthBar(Canvas C)
 	Width = 64.0 * (C.ClipX / 1920.0);
 	Height = 4.0 * (C.ClipY / 1080.0);
 
-	HealthRatio = float(Health) / float(MaxHealth);
+	HealthRatio = HealthAggregate / MaxHealthAggregate;
 
 	C.Reset();
 	CanvasLib.Static.GetScreenSpaceLocationAboveActor(C, Self, ScreenSpaceLocation, 16.0);
@@ -455,7 +458,72 @@ simulated function DrawHealthBar(Canvas C)
 
 function ArpgTakeDamage(float Damage)
 {
+	local R_ArpgEntity LocalEntity;
+	local R_ArpgAttributeSet LocalAttributeSet;
+	
+	LocalEntity = GetEntity();
+	if(LocalEntity != None)
+	{
+		LocalAttributeSet = LocalEntity.GetEntityAttributeSet();
+	}
+	if(LocalAttributeSet != None)
+	{
+		LocalAttributeSet.IncrementAttributeBaseValue('Health', -1.0 * Damage);
+	}
+}
+
+function ArpgDie()
+{
 	Destroy();
+}
+
+//------------------------------------------------------------------------------
+//	Attributes
+//	These are passed up from AttributeSet, through Entity, and to this Pawn
+
+// ReceiveAttributeEvent
+function ReceiveAttributeEvent(
+	Name EventName,
+	Name AttributeName,
+	float PreviousBaseValue, float PreviousAggregateValue,
+	float NewBaseValue, float NewAggregateValue)
+{
+	if(AttributeName == 'Health')
+	{
+		if(NewAggregateValue <= 0.0)
+		{
+			ArpgDie();
+		}
+	}
+}
+
+//	GetAttributeValue
+//	Helper function for getting the current Base and Aggregate value of the
+//	specified attribute
+function bool GetAttributeValue(Name AttributeName, out float OutBaseValue, out float OutAggregateValue)
+{
+	local R_ArpgEntity LocalEntity;
+	local R_ArpgAttributeSet LocalAttributeSet;
+	local float BaseValue, AggregateValue;
+
+	LocalEntity = GetEntity();
+	if(LocalEntity != None)
+	{
+		LocalAttributeSet = LocalEntity.GetEntityAttributeSet();
+	}
+	if(LocalAttributeSet == None)
+	{
+		return false;
+	}
+
+	if(LocalAttributeSet.GetAttributeValue(AttributeName, BaseValue, AggregateValue))
+	{
+		OutBaseValue = BaseValue;
+		OutAggregateValue = AggregateValue;
+		return true;
+	}
+
+	return false;
 }
 
 //------------------------------------------------------------------------------
@@ -476,6 +544,7 @@ event PostBeginPlay()
 
 	// Create ArpgEntity object
 	Entity = R_ArpgEntity(ArpgLib.Static.CreateArpgObject(Class'RArpg.R_ArpgEntity', Self));
+	Entity.SetOwnerPawn(Self);
 	Entity.CreateAttributeSet(Class'RArpg.R_ArpgAttributeSet_Pawn');
 
 	Spawn(InteractionProxyClass, Self);
@@ -568,4 +637,5 @@ defaultproperties
 	bShouldDrawHealth=true
 	InteractionProxyClass=Class'RArpg.R_ArpgInteractionProxy'
 	bUseAnimProxy=false
+	AccelRate=2000.0
 }
