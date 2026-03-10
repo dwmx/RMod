@@ -175,6 +175,22 @@ function HandleCommand_HideItems()
 	}
 }
 
+function HandleCommand_ShowInWorldHUD()
+{
+	if(UIInWorldWindow != None)
+	{
+		UIInWorldWindow.SetShowInWorldHUD(true);
+	}
+}
+
+function HandleCommand_HideInWorldHUD()
+{
+	if(UIInWorldWindow != None)
+	{
+		UIInWorldWindow.SetShowInWorldHUD(false);
+	}
+}
+
 function bool IsWindowVisible(Name WindowName)
 {
 	if(WindowName == 'Inventory')

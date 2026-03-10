@@ -10,7 +10,6 @@ simulated event PostRender(Canvas C)
 {
 	Super.PostRender(C);
 
-	DrawInWorldHUD(C);
 	DrawExperience(C);
 }
 
@@ -19,21 +18,6 @@ simulated function R_ArpgPlayerController GetArpgRunePlayer()
 	local R_ArpgPlayerController RP;
 	RP = R_ArpgPlayerController(Owner);
 	return RP;
-}
-
-simulated function DrawInWorldHUD(Canvas C)
-{
-	local Pawn P;
-	local R_ArpgPawn RP;
-
-	for(P = Level.PawnList; P != None; P = P.NextPawn)
-	{
-		RP = R_ArpgPawn(P);
-		if(RP != None)
-		{
-			RP.DrawInWorldHUD(C);
-		}
-	}
 }
 
 simulated function DrawExperience(Canvas C)

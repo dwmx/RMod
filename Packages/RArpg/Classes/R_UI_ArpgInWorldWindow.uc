@@ -17,6 +17,7 @@ var private int SelectedProxyIndex;
 var private R_ArpgInteractionProxy SelectedProxy;
 
 var private bool bShowItems;
+var private bool bShowInWorldHUD;
 
 var private Font F_ItemNameFont;
 
@@ -211,6 +212,11 @@ function SetShowItems(bool bNewShowItems)
 	bShowItems = bNewShowItems;
 }
 
+function SetShowInWorldHUD(bool bNewShowInWorldHUD)
+{
+	bShowInWorldHUD = bNewShowInWorldHUD;
+}
+
 function Paint(Canvas C, float X, float Y)
 {
 	UpdateInteractionArray(C);
@@ -218,6 +224,10 @@ function Paint(Canvas C, float X, float Y)
 	if(bShowItems)
 	{
 		PaintItems(C, X, Y);
+	}
+	if(bShowInWorldHUD)
+	{
+		PaintInWorldHUD(C, X, Y);
 	}
 	else if(SelectedProxyIndex != INVALID_INDEX)
 	{
@@ -237,6 +247,30 @@ function PaintItems(Canvas C, float X, float Y)
 		if(ItemActor != None)
 		{
 			PaintBoxForItem(C, ItemActor);
+		}
+	}
+}
+
+function PaintInWorldHUD(Canvas C, float X, float Y)
+{
+	local Pawn LocalPlayerOwner;
+	local Pawn PawnIt;
+	local R_ArpgPawn ArpgPawnIt;
+	local float HealthBase, HealthAggregate;
+	local float MaxHealthBase, MaxHealthAggregate;
+
+	LocalPlayerOwner = GetPlayerOwner();
+	if(LocalPlayerOwner == None)
+	{
+		return;
+	}
+
+	for(PawnIt = LocalPlayerOwner.Level.PawnList; PawnIt != None; PawnIt = PawnIt.NextPawn)
+	{
+		ArpgPawnIt = R_ArpgPawn(PawnIt);
+		if(ArpgPawnIt != None)
+		{
+			ArpgPawnIt.DrawInWorldHUD(C);
 		}
 	}
 }
