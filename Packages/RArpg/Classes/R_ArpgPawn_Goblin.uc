@@ -3,41 +3,36 @@
 //==============================================================================
 class R_ArpgPawn_Goblin extends R_ArpgPawn;
 
-var private Vector TargetLocation;
-var private Actor TargetActor;
-
-auto state ChasePlayer
+function PlayMoving(optional float Tween)
 {
-	event BeginState()
-	{
-		SetPhysics(PHYS_Walking);
-	}
+	LoopPawnAnim('idleA', true, true, 1.0, 0.1);
+}
 
-	event Tick(float DeltaSeconds)
+function Actor FindTarget()
+{
+	local Pawn P;
+	
+	for(P = Level.PawnList; P != None; P = P.NextPawn)
 	{
-		//Velocity = Vect(0,100,0);
-		/*
-		local Pawn P;
-
-		Target = None;
-		TargetLocation = Self.Location;
-		for(P = Level.PawnList; P != None; P = P.NextPawn)
+		if(R_ArpgPawn_Hero(P) != None)
 		{
-			if(R_ArpgRunePlayer(P) != None)
-			{
-				TargetActor = P;
-				TargetLocation = P.Location;
-				break;
-			}
+			return P;
 		}
-			*/
+	}
+	return None;
+}
+
+event Tick(float DeltaSeconds)
+{
+	local Actor TargetActor;
+
+	Target = FindTarget();
+	if(Target != None)
+	{
+		AddMovementInput(Normal(Vect(1,1,0) * Target.Location - Self.Location));
 	}
 
-//Begin:
-//Chase:
-//	MoveTo(TargetLocation, 220.0);
-//	Sleep(0.01);
-//	GoTo('Chase');
+	Super.Tick(DeltaSeconds);
 }
 
 defaultproperties
@@ -47,5 +42,4 @@ defaultproperties
     CollisionHeight=32.000000
 	Mass=50.000000
     Buoyancy=35.000000
-	InitialState=ChasePlayer
 }

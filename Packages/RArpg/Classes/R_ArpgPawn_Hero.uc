@@ -303,4 +303,5 @@ defaultproperties
 	bFrameNotifies=true
 	AnimationSetDefaultClass=Class'RArpg.R_ArpgAnimationSet_Ragnar_Default'
 	AnimationSetSelectorClass=Class'R_ArpgAnimationSetSelector_Ragnar'
+	bUseAnimProxy=true
 }

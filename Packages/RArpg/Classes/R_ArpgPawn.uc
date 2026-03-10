@@ -8,6 +8,7 @@ const CanvasLib = Class'RBase.R_ACanvasLibrary';
 const ArpgLib = Class'RArpgCore.R_ArpgLibrary';
 
 const AnimProxyClass = Class'RArpg.R_ArpgPawnAnimProxy';
+var private bool bUseAnimProxy;
 
 var private R_ArpgEntity Entity;
 
@@ -63,8 +64,6 @@ replication
 		Skills;
 }
 
-
-
 function SetObserver_Collision(R_ArpgObserver_Collision NewObserver_Collision)
 {
 	Observer_Collision = NewObserver_Collision;
@@ -79,7 +78,10 @@ function R_ArpgEntity GetEntity() { return Entity; }
 
 function SpawnAnimationProxy()
 {
-	AnimProxy = spawn(AnimProxyClass, Self);
+	if(bUseAnimProxy)
+	{
+		AnimProxy = spawn(AnimProxyClass, Self);
+	}
 }
 
 function R_ArpgItemContainerSet GetInventorySet() { return None; }
@@ -540,5 +542,5 @@ defaultproperties
 	bBlockMovementInput=false
 	bShouldDrawHealth=true
 	InteractionProxyClass=Class'RArpg.R_ArpgInteractionProxy'
-	bExternalAnimationControl=false
+	bUseAnimProxy=false
 }
