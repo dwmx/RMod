@@ -43,6 +43,9 @@ function bool RollAffix(int AffixInstructionIndex, out Class<R_ArpgAffix> OutAff
 	}
 
 	OutAffixClass = AffixInstructions[AffixInstructionIndex].AffixClass;
-	OutParameters = AffixInstructions[AffixInstructionIndex].ParameterMin + Rand(AffixInstructions[AffixInstructionIndex].ParameterMax);
+
+	OutParameters =
+		AffixInstructions[AffixInstructionIndex].ParameterMin +
+		Rand(AffixInstructions[AffixInstructionIndex].ParameterMax - AffixInstructions[AffixInstructionIndex].ParameterMin);
 	return true;
 }
