@@ -22,6 +22,10 @@ var private R_UI_ArpgGameUserInterface GameUI;
 const UICommand_Inventory = 'Inventory';
 const UICommand_ShowItems = 'ShowItems';
 const UICommand_HideItems = 'HideItems';
+const UICommand_ShowInWorldHUD = 'ShowInWorldHUD';
+const UICommand_HideInWorldHUD = 'HideInWorldHUD';
+
+var private bool bAttacking;
 
 //------------------------------------------------------------------------------
 const SessionEndPointClass = Class'RArpg.R_ArpgSessionEndPoint';
@@ -132,6 +136,11 @@ event Tick(float DeltaSeconds)
 	if(GameUI != None)
 	{
 		GameUI.Tick(DeltaSeconds);
+	}
+
+	if(bAttacking)
+	{
+		GetControlledPawn().Input_Skill('Attack');
 	}
 }
 
@@ -258,7 +267,8 @@ exec function InputLMouseDown()
 
 	if(ControlledPawn != None)
 	{
-		ControlledPawn.Input_Skill('Attack');
+		bAttacking = true;
+		//ControlledPawn.Input_Skill('Attack');
 	}
 }
 
@@ -271,10 +281,17 @@ exec function InputLMouseUp()
 		GameCursor.GetCursorPosition(CursorPosition.X, CursorPosition.Y);
 		GameUI.InputLMouseUp(CursorPosition.X, CursorPosition.Y);
 	}
+
+	bAttacking = false;
 }
 
 exec function Fire(optional float F)
 {
+}
+
+exec function TestTakeDamage(float Amount)
+{
+	GetControlledPawn().ArpgTakeDamage(Amount);
 }
 
 event PostRender(Canvas C)

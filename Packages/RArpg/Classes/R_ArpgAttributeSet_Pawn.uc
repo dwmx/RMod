@@ -9,12 +9,17 @@ const ATTRIBUTE_HEALTH = 'Health';
 const ATTRIBUTE_MAX_MANA = 'MaxMana';
 const ATTRIBUTE_MANA = 'Mana';
 
+const ATTRIBUTE_ATTACK_RATE = 'AttackRate';
+
 function InitializeAttributes()
 {
 	CreateAttribute(ATTRIBUTE_MAX_HEALTH, 100.0, 0.0, true);
 	CreateAttribute(ATTRIBUTE_HEALTH, 100.0, 0.0, true);
 	CreateAttribute(ATTRIBUTE_MAX_MANA, 100.0, 0.0, true);
 	CreateAttribute(ATTRIBUTE_MANA, 100.0, 0.0, true);
+
+	// Combat
+	CreateAttribute(ATTRIBUTE_ATTACK_RATE, 1.0, 0.0, true);
 }
 
 //	ClipToMaxAttribute

@@ -3,6 +3,8 @@
 //==============================================================================
 class R_ArpgAffix extends R_ArpgObject abstract;
 
+const UtilityLib = Class'RBase.R_AUtilityLibrary';
+
 // These need to be reflect in R_ArpgAttributeSet
 const OPERATION_ADD = 1;
 const OPERATION_ADD_FRACTION = 2;

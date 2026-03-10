@@ -56,5 +56,6 @@ function PopulateUniqueData()
 	Data = CreateItemInstructions(Tag, "Odin's Blade");
 	Data.AddAffixInstruction(Class'RArpg.R_ArpgAffix_AllSkills', 2, 3);
 	Data.AddAffixInstruction(Class'RArpg.R_ArpgAffix_MaxHealthPercent', 25, 25);
+	Data.AddAffixInstruction(Class'RArpg.R_ArpgAffix_AttackRate', 100, 200);
 	DataStore.AddData(Tag, Data);
 }

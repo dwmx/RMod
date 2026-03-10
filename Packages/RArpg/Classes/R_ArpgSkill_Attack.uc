@@ -4,6 +4,8 @@ var private bool bCollisionCheckActive;
 var private Actor StruckActors[16];
 var private int StruckActorsCount;
 
+var private Name RecoverAnim;
+
 function ActivateSkill()
 {
 }
@@ -28,6 +30,9 @@ state SkillActive
 
 		RP = GetArpgPawnOwner();
 		RP.SetLockDirection(true);
+		//RP.SetBlockMovementInput(true);
+		//RP.Velocity = Vect(0,0,0);
+		//RP.Acceleration = Vect(0,0,0);
 
 		bCollisionCheckActive = false;
 		StruckActorsCount = 0;
@@ -39,6 +44,7 @@ state SkillActive
 
 		RP = GetArpgPawnOwner();
 		RP.SetLockDirection(false);
+		//RP.SetBlockMovementInput(false);
 
 		bCollisionCheckActive = false;
 		StruckActorsCount = 0;
@@ -48,6 +54,7 @@ state SkillActive
 	{
 		local R_ArpgPawn RP;
 		local R_ArpgAnimationSet AnimSet;
+		local Name AttackSequence, RecoverSequence;
 
 		RP = GetArpgPawnOwner();
 		if(RP != None)
@@ -60,7 +67,10 @@ state SkillActive
 			return '';
 		}
 
-		return AnimSet.AttackMoving;
+		//AnimSet.GetRandomAttackAnimation(AttackSequence, RecoverSequence);
+		//RecoverAnim = RecoverSequence;
+		//return AttackSequence;
+		return AnimSet.GetAttackAnimation();
 	}
 
 	function AddStruckActor(Actor A)
@@ -132,7 +142,7 @@ state SkillActive
 			}
 
 			AddStruckActor(PawnIt);
-			PawnIt.ArpgTakeDamage(100);
+			PawnIt.ArpgTakeDamage(20.0);
 		}
 
 		Observer = GetObserver_Collision();
@@ -143,16 +153,35 @@ state SkillActive
 		}
 	}
 
+	function float GetAttackRate()
+	{
+		local float BaseValue, AggregateValue;
+		local R_ArpgPawn PawnOwner;
+
+		PawnOwner = GetArpgPawnOwner();
+		if(PawnOwner != None)
+		{
+			PawnOwner.GetAttributeValue('AttackRate', BaseValue, AggregateValue);
+			return AggregateValue;
+		}
+		return 1.0;
+	}
+
 	event Tick(float DeltaSeconds)
 	{
 		TickCollisions(DeltaSeconds);
 	}
 
 Begin:
-	R_ArpgPawn(Owner).PlayPawnAnim(GetAttackAnim(), true, false, 1.0, 0.1);
-	Sleep(0.1);
+	R_ArpgPawn(Owner).PlayPawnAnim(GetAttackAnim(), true, false, GetAttackRate(), 0.1);
+	//R_ArpgPawn(Owner).AnimProxy.FinishAnim();
+	//R_ArpgPawn(Owner).FinishAnim();
+	//Log("FINISHED ANIM");
+	//R_ArpgPawn(Owner).PlayPawnAnim(RecoverAnim, true, false, 1.0, 0.1);
+	//R_ArpgPawn(Owner).AnimProxy.FinishAnim();
+	//Sleep(0.1);
 	//WeaponActivate();
-	Sleep(1);
+	Sleep(0.8 * (1.0 / GetAttackRate()));
 	//WeaponDeactivate();
 	GotoState('SkillNeutral');
 }
