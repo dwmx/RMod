@@ -51,9 +51,9 @@ event PostBeginPlay()
 	AttachActorToJoint(ItemActor_Shield, JointNamed(ShieldJoint));
 
 	// Add some test skills
-	//AddSkill(Class'RArpg.R_ArpgSkill_Whirlwind');
+	AddSkill(Class'RArpg.R_ArpgSkill_Whirlwind', 'Whirlwind');
 	//AddSkill(Class'RArpg.R_ArpgSkill_Orb');
-	AddSkill(Class'RArpg.R_ArpgSkill_Attack');
+	AddSkill(Class'RArpg.R_ArpgSkill_Attack', 'Attack');
 }
 
 function ReceiveInventoryEvent(Name EventName, Name InventoryContainerName, R_ArpgItemContainerSet Sender, R_ArpgItem Items[2])
@@ -272,11 +272,14 @@ function bool TryAddItem(R_ArpgItem Item)
 	return false;
 }
 
+/*
 function Input_Fire()
 {
 	ActivateSkill();
 }
+*/
 
+/*
 function ActivateSkill()
 {
 	if(GetSkill(0) != None)
@@ -289,6 +292,7 @@ function Input_Skill(Name SkillName)
 {
 	ActivateSkill();
 }
+	*/
 
 defaultproperties
 {

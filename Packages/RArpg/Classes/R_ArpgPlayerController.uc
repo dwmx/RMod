@@ -144,6 +144,11 @@ event Tick(float DeltaSeconds)
 	}
 }
 
+exec function TestSkill(Name SkillName)
+{
+	GetControlledPawn().Input_Skill(SkillName);
+}
+
 function TickPawnRotation(float DeltaSeconds)
 {
 	local Vector IntersectLocation;

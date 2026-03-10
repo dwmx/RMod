@@ -21,7 +21,12 @@ var private R_ArpgAnimationSet AnimationSet;
 var private Vector MovementInput;
 var private Vector LookDirection;
 
-var private R_ArpgSkill Skills[8];
+struct R_ArpgSkillInstance
+{
+	var R_ArpgSkill Skill;
+	var Name SkillName;
+};
+var private R_ArpgSkillInstance Skills[8];
 
 var private float Experience;
 //var private int Level;
@@ -58,12 +63,6 @@ var private Name ActiveAnimLowerBody;
 var private R_ArpgObserver_Collision Observer_Collision;
 
 //------------------------------------------------------------------------------
-
-replication
-{
-	reliable if(Role == ROLE_Authority && bNetOwner)
-		Skills;
-}
 
 function SetObserver_Collision(R_ArpgObserver_Collision NewObserver_Collision)
 {
@@ -110,24 +109,26 @@ function float GetExperience()
 	return Experience;
 }
 
-function AddSkill(Class<R_ArpgSkill> SkillClass)
+function AddSkill(Class<R_ArpgSkill> SkillClass, Name SkillName)
 {
 	local R_ArpgSkill Skill;
 	local int i;
 	
 	for(i = 0; i < ArrayCount(Skills); ++i)
 	{
-		if(Skills[i] == None)
+		if(Skills[i].Skill == None)
 		{
 			Skill = Spawn(SkillClass, Self);
-			Skills[i] = Skill;
+			Skills[i].Skill = Skill;
+			Skills[i].SkillName = SkillName;
+			return;
 		}
 	}
 }
 
 function R_ArpgSkill GetSkill(int Index)
 {
-	return Skills[Index];
+	return Skills[Index].Skill;
 }
 
 function SetLockDirection(bool bNewLockDirection)
@@ -359,7 +360,17 @@ function UpdateRotation(float DeltaTime, float maxPitch)
 {}
 
 function Input_Skill(Name SkillName)
-{}
+{
+	local int i;
+
+	for(i = 0; i < ArrayCount(Skills); ++i)
+	{
+		if(Skills[i].Skill != None && Skills[i].SkillName == SkillName)
+		{
+			Skills[i].Skill.ActivateSkill();
+		}
+	}
+}
 
 state PlayerWalking
 {
