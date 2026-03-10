@@ -111,7 +111,7 @@ state SkillActive
 	function TickCollisions(float DeltaSeconds)
 	{
 		local R_ArpgObserver_Collision Observer;
-		local R_ArpgPawn PawnOwner;
+		local R_ArpgPawn PawnOwner, PawnIt;
 		local Vector CollisionOrigin;
 		local float CollisionRadius;
 
@@ -123,6 +123,17 @@ state SkillActive
 
 		CollisionOrigin = PawnOwner.Location + Vector(PawnOwner.Rotation) * 32.0;
 		CollisionRadius = 32.0;
+
+		foreach RadiusActors(Class'RArpg.R_ArpgPawn', PawnIt, CollisionRadius, CollisionOrigin)
+		{
+			if(HasStruckActor(PawnIt) || PawnIt == PawnOwner)
+			{
+				continue;
+			}
+
+			AddStruckActor(PawnIt);
+			PawnIt.ArpgTakeDamage(100);
+		}
 
 		Observer = GetObserver_Collision();
 		if(Observer != None)

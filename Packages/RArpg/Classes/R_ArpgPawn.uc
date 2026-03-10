@@ -10,6 +10,9 @@ const ArpgLib = Class'RArpgCore.R_ArpgLibrary';
 const AnimProxyClass = Class'RArpg.R_ArpgPawnAnimProxy';
 var private bool bUseAnimProxy;
 
+const AIControllerClass = Class'RArpg.R_ArpgAIController';
+var private R_ArpgAIController AIController;
+
 var private R_ArpgEntity Entity;
 
 var private Class<R_ArpgAnimationSet> AnimationSetDefaultClass;
@@ -164,8 +167,11 @@ function AddMovementInput(Vector InputVector)
 
 event Tick(float DeltaSeconds)
 {
-	//aForward = MovementInput.X;
-	//aStrafe = MovementInput.Y;
+	if(AIController != None)
+	{
+		AIController.TickAI(DeltaSeconds);
+	}
+
 	PlayerTick(DeltaSeconds);
 	if(Entity != None)
 	{
@@ -447,6 +453,11 @@ simulated function DrawHealthBar(Canvas C)
 	CanvasLib.Static.DrawBoxSolid(C, Extent1, Extent2, 1.0, 0.0, 0.0, 1.0);
 }
 
+function ArpgTakeDamage(float Damage)
+{
+	Destroy();
+}
+
 //------------------------------------------------------------------------------
 //	Pawn and PlayerPawn overrides
 
@@ -469,6 +480,20 @@ event PostBeginPlay()
 
 	Spawn(InteractionProxyClass, Self);
 	SpawnAnimationProxy();
+
+	if(Owner == None)
+	{
+		InitializeAIController();
+	}
+}
+
+function InitializeAIController()
+{
+	if(AIController == None)
+	{
+		AIController = R_ArpgAIController(ArpgLib.Static.CreateArpgObject(AIControllerClass, Self));
+		AIController.SetControlledPawn(Self);
+	}
 }
 
 simulated event Destroyed()
