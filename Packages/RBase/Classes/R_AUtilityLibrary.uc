@@ -196,3 +196,43 @@ static function float RemapFloatToRange(float Value, float InRangeA, float InRan
 	Result = (1.0-t) * OutRangeA + t * OutRangeB;
 	return Result;
 }
+
+static function CopyActorVisualFeatures(Actor Source, Actor Dest)
+{
+	local int i;
+
+	if(Source == None || Dest == None)
+	{
+		return;
+	}
+
+	Dest.DrawType			= Source.DrawType;
+	Dest.Skeletal 			= Source.Skeletal;
+	Dest.SkelMesh 			= Source.SkelMesh;
+	Dest.SubstituteMesh 	= Source.SubstituteMesh;
+	Dest.DrawScale			= Source.DrawScale;
+	Dest.ScaleGlow			= Source.ScaleGlow;
+	Dest.Fatness			= Source.Fatness;
+	Dest.DesiredFatness		= Source.DesiredFatness;
+	Dest.DesiredColorAdjust	= Source.DesiredColorAdjust;
+
+	Dest.AnimSequence		= Source.AnimSequence;
+	Dest.AnimFrame			= Source.AnimFrame;
+	Dest.AnimRate			= Source.AnimRate;
+	Dest.TweenRate			= Source.TweenRate;
+	Dest.AnimMinRate		= Source.AnimMinRate;
+	Dest.AnimLast			= Source.AnimLast;
+	Dest.bAnimLoop			= Source.bAnimLoop;
+	Dest.bAnimFinished		= Source.bAnimFinished;
+	Dest.bMirrored			= Source.bMirrored;
+	Dest.PrePivot			= Source.PrePivot;
+
+	for(i = 0; i < ArrayCount(Source.SkelGroupSkins); ++i)
+	{
+		Dest.SkelGroupSkins[i] = Source.SkelGroupSkins[i];
+	}
+	for(i = 0; i < ArrayCount(Source.SkelGroupFlags); ++i)
+	{
+		Dest.SkelGroupFlags[i] = Source.SkelGroupFlags[i];
+	}
+}
