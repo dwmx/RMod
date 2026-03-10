@@ -30,8 +30,6 @@ var private bool bLockDirection;
 
 var private bool bBlockMovementInput;
 
-var private bool bShouldDrawHealth;
-
 var Class<R_ArpgInteractionProxy> InteractionProxyClass;
 
 // Movement Direction consts for PlayMoving
@@ -363,12 +361,6 @@ function UpdateRotation(float DeltaTime, float maxPitch)
 function Input_Skill(Name SkillName)
 {}
 
-function Died(pawn Killer, name damageType, vector HitLocation)
-{
-	Super.Died(Killer, DamageType, HitLocation);
-	Destroy();
-}
-
 state PlayerWalking
 {
 	function PlayerMove( float DeltaTime )
@@ -409,10 +401,7 @@ state PlayerWalking
 
 simulated function DrawInWorldHUD(Canvas C)
 {
-	if(bShouldDrawHealth)
-	{
-		DrawHealthBar(C);
-	}
+	DrawHealthBar(C);
 }
 
 simulated function DrawHealthBar(Canvas C)
@@ -474,7 +463,9 @@ function ArpgTakeDamage(float Damage)
 
 function ArpgDie()
 {
-	Destroy();
+	local R_ArpgCarcass LocalCarcass;
+
+	GotoState('ArpgDying');
 }
 
 //------------------------------------------------------------------------------
@@ -620,6 +611,55 @@ function bool AddInventory(Inventory NewItem) { return false; }
 function bool DeleteInventory(Inventory Item) { return false; }
 function AcquireInventory(Inventory Item) {}
 
+// Gameplay functions
+function Died(pawn Killer, name damageType, vector HitLocation) {}
+
+//------------------------------------------------------------------------------
+
+state ArpgDying
+{
+	event BeginState()
+	{
+		Acceleration = Vect(0,0,0);
+		if(AnimProxy != None)
+		{
+			AnimProxy.Destroy();
+		}
+	}
+
+	function Name GetDeathAnim()
+	{
+		local Name DeathAnims[12];
+		local int DeathCount;
+
+		DeathCount = 0;
+		//DeathAnims[DeathCount++] = 'Death';
+		DeathAnims[DeathCount++] = 'DeathB';
+		DeathAnims[DeathCount++] = 'Deaths';
+		DeathAnims[DeathCount++] = 'DeathR';
+		DeathAnims[DeathCount++] = 'DeathF';
+		return DeathAnims[Rand(DeathCount)];
+	}
+
+	function ReplaceWithCarcass()
+	{
+		local R_ArpgCarcass LocalCarcass;
+
+		AnimRate = 0.0;
+		LocalCarcass = Spawn(Class'RArpg.R_ArpgCarcass',,, Self.Location, Self.Rotation);
+		if(LocalCarcass != None)
+		{
+			LocalCarcass.InitCarcassFromPawn(Self);
+		}
+	}
+
+Begin:
+	PlayPawnAnim(GetDeathAnim(), true, true, 1.0, 0.1);
+	FinishAnim();
+	ReplaceWithCarcass();
+	Destroy();
+}
+
 //------------------------------------------------------------------------------
 
 defaultproperties
@@ -634,7 +674,6 @@ defaultproperties
     Buoyancy=35.000000
 	bLockDirection=false
 	bBlockMovementInput=false
-	bShouldDrawHealth=true
 	InteractionProxyClass=Class'RArpg.R_ArpgInteractionProxy'
 	bUseAnimProxy=false
 	AccelRate=2000.0
