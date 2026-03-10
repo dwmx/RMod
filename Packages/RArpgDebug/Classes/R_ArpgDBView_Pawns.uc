@@ -76,27 +76,9 @@ simulated function DrawDebugView(Canvas C, R_DBStringManager StringManager)
 
 	StringManager.AddWarning(DebugCategory, "Pawn view is good to go!");
 
-	DrawAllPawns(C, StringManager, DBM);
-
 	if(bDrawTags)		DrawTags(C, StringManager, DBM);
 	if(bDrawAttributes)	DrawAttributes(C, StringManager, DBM);
 	if(bDrawCollision)	DrawCollision(C, StringManager, DBM);
-}
-
-simulated function DrawAllPawns(Canvas C, R_DBStringManager StringManager, R_ArpgDBMutator DBM)
-{
-	local Pawn P;
-
-	P = DBM.Level.PawnList;
-	while(P != None)
-	{
-		if(R_ArpgPawn(P) != None)
-		{
-			DrawPawnBoundingBox(C, DBM, R_ArpgPawn(P));
-		}
-
-		P = P.NextPawn;
-	}
 }
 
 simulated function DrawPawnBoundingBox(Canvas C, R_ArpgDBMutator DBM, R_ArpgPawn P)
