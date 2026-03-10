@@ -42,3 +42,8 @@ function Name GetAnimationForMovementDirection(int MovementDirection)
 
 	return '';
 }
+
+function Name GetAttackAnimation()
+{
+	return AttackMoving;
+}

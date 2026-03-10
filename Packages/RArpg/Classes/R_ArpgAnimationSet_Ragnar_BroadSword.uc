@@ -1,5 +1,16 @@
 class R_ArpgAnimationSet_Ragnar_BroadSword extends R_ArpgAnimationSet;
 
+function Name GetAttackAnimation()
+{
+	local Name AttackAnimations[3];
+
+	AttackAnimations[0] = 'S3_StandingAttackA';
+	AttackAnimations[1] = 'S3_StrafeRightAttack';
+	AttackAnimations[2] = 'S3_StrafeLeftAttack';
+	
+	return AttackAnimations[Rand(ArrayCount(AttackAnimations))];
+}
+
 defaultproperties
 {
     Idle=S3_idle
