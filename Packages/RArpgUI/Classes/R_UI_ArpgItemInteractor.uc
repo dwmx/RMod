@@ -322,7 +322,7 @@ function PaintInspectedItemPanel(Canvas C, float PanelX, float PanelY, float Pan
 	DrawY = PanelY + BorderThickness + 16.0;
 
 	// Draw item special name --------------------------------------------------
-	DrawString = Item.GetItemSpecialName();
+	DrawString = Item.GetItemSpecialNameString();
 	if(DrawString != "")
 	{
 		switch(Item.GetItemRarity())

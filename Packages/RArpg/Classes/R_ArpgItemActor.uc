@@ -72,6 +72,25 @@ function ApplyItemVisualFeatures(R_ArpgItem NewItem)
 	}
 }
 
+function String GetItemDisplayString()
+{
+	local String Result;
+
+	if(Item != None)
+	{
+		Result = Item.GetItemSpecialNameString();
+		if(Result == "")
+		{
+			Result = Item.GetItemTypeString();
+		}
+	}
+	else
+	{
+		Result = "Invalid Item";
+	}
+	return Result;
+}
+
 defaultproperties
 {
 	RemoteRole=ROLE_SimulatedProxy

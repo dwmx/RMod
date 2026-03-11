@@ -16,7 +16,8 @@ const PROXY_TYPE_PICKUP = 'Pickup';
 
 //------------------------------------------------------------------------------
 
-function Name GetProxyType() { return PROXY_TYPE_PROXY; }
+function Name GetProxyType() 		{ return PROXY_TYPE_PROXY; }
+function String GetDisplayString()	{ return "Interaction Proxy"; }
 
 //------------------------------------------------------------------------------
 

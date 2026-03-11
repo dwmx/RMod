@@ -3,6 +3,10 @@
 //==============================================================================
 class R_UI_ArpgInWorldWindow extends R_UI_ArpgWindow;
 
+// Thse must match definitions in R_ArpgInteractionProxy
+const PROXY_TYPE_PROXY 	= 'Proxy';
+const PROXY_TYPE_PICKUP = 'Pickup';
+
 struct R_ArpgCachedInteractionProxy
 {
 	var R_ArpgInteractionProxy Proxy;
@@ -242,22 +246,86 @@ function Paint(Canvas C, float X, float Y)
 	}
 	else if(SelectedProxyIndex != INVALID_INDEX)
 	{
-		PaintBoxForItem(C, R_ArpgItemActor_Pickup(CachedInteractionProxies[SelectedProxyIndex].Proxy.GetProxyOwner()));
-		PaintCircleForItem(C, R_ArpgItemActor_Pickup(CachedInteractionProxies[SelectedProxyIndex].Proxy.GetProxyOwner()));
+		PaintProxyAsSelected(C, CachedInteractionProxies[SelectedProxyIndex].Proxy);
 	}
+}
+
+function PaintProxyAsSelected(Canvas C, R_ArpgInteractionProxy Proxy)
+{
+	local Name ProxyType;
+
+	if(Proxy == None)
+	{
+		return;
+	}
+
+	ProxyType = Proxy.GetProxyType();
+	switch(ProxyType)
+	{
+	case PROXY_TYPE_PICKUP:
+		PaintLabelBoxForProxy(C, CachedInteractionProxies[SelectedProxyIndex].Proxy);
+		PaintCircleForItem(C, R_ArpgItemActor_Pickup(CachedInteractionProxies[SelectedProxyIndex].Proxy.GetProxyOwner()));
+		break;
+	}
+}
+
+function PaintLabelBoxForProxy(Canvas C, R_ArpgInteractionProxy Proxy)
+{
+	local Vector DrawLocation;
+	local String DrawString;
+	local float StrW, StrH;
+	local float DrawX, DrawY;
+	local float DrawW, DrawH;
+
+	if(Proxy == None)
+	{
+		return;
+	}
+
+	CanvasLib.Static.GetScreenSpaceLocationAboveActor(C, Proxy, DrawLocation);
+
+	DrawString = Proxy.GetDisplayString();
+	C.Font = F_ItemNameFont;
+	C.StrLen(DrawString, StrW, StrH);
+
+	// Draw backdrop
+	DrawW = StrW + 4.0;
+	DrawH = StrH + 4.0;
+	DrawX = DrawLocation.X - DrawW * 0.5;
+	DrawY = DrawLocation.Y - DrawH * 0.5;
+	C.DrawColor.R = 25;
+	C.DrawColor.G = 25;
+	C.DrawColor.B = 25;
+	C.Style = 1;
+	DrawStretchedTexture(C, DrawX, DrawY, DrawW, DrawH, WhiteTexture);
+
+	// Draw item name
+	DrawX = DrawLocation.X - StrW * 0.5;
+	DrawY = DrawLocation.Y - StrH * 0.5;
+	C.DrawColor.R = 255;
+	C.DrawColor.G = 255;
+	C.DrawColor.B = 255;
+	C.Style = 1;
+	ClipText(C, DrawX, DrawY, DrawString);
 }
 
 function PaintItems(Canvas C, float X, float Y)
 {
 	local int i;
-	local R_ArpgItemActor_Pickup ItemActor;
+	local R_ArpgInteractionProxy Proxy;
+	//local R_ArpgItemActor_Pickup ItemActor;
 
 	for(i = 0; i < CachedInteractionProxyCount; ++i)
 	{
-		ItemActor = R_ArpgItemActor_Pickup(CachedInteractionProxies[i].Proxy.GetProxyOwner());
-		if(ItemActor != None)
+		Proxy = CachedInteractionProxies[i].Proxy;
+		if(Proxy == None)
 		{
-			PaintBoxForItem(C, ItemActor);
+			continue;
+		}
+
+		if(Proxy.GetProxyType() == PROXY_TYPE_PICKUP)
+		{
+			PaintLabelBoxForProxy(C, Proxy);
 		}
 	}
 }
@@ -300,51 +368,6 @@ function PaintCircleForItem(Canvas C, R_ArpgItemActor_Pickup ItemActor)
 		ItemActor.CollisionRadius,
 		32,
 		0.25, 1.0, 1.0);
-}
-
-function PaintBoxForItem(Canvas C, R_ArpgItemActor_Pickup ItemActor)
-{
-	local R_ArpgItem Item;
-	local String DrawString;
-	local float StrW, StrH;
-	local Vector DrawLocation;
-	local float DrawX, DrawY;
-	local float DrawW, DrawH;
-
-	if(ItemActor != None)
-	{
-		Item = ItemActor.GetItem();
-	}
-	if(Item == None)
-	{
-		return;
-	}
-
-	CanvasLib.Static.GetScreenSpaceLocationAboveActor(C, ItemActor, DrawLocation);
-
-	DrawString = Item.GetItemTypeString();
-	C.Font = F_ItemNameFont;
-	C.StrLen(DrawString, StrW, StrH);
-	
-	// Draw backdrop
-	DrawW = StrW + 4.0;
-	DrawH = StrH + 4.0;
-	DrawX = DrawLocation.X - DrawW * 0.5;
-	DrawY = DrawLocation.Y - DrawH * 0.5;
-	C.DrawColor.R = 25;
-	C.DrawColor.G = 25;
-	C.DrawColor.B = 25;
-	C.Style = 1;
-	DrawStretchedTexture(C, DrawX, DrawY, DrawW, DrawH, WhiteTexture);
-
-	// Draw item name
-	DrawX = DrawLocation.X - StrW * 0.5;
-	DrawY = DrawLocation.Y - StrH * 0.5;
-	C.DrawColor.R = 255;
-	C.DrawColor.G = 255;
-	C.DrawColor.B = 255;
-	C.Style = 1;
-	ClipText(C, DrawX, DrawY, DrawString);
 }
 
 defaultproperties

@@ -89,7 +89,7 @@ function String GetAffixInspectionString(int AffixIndex)
 	return "";
 }
 
-function String GetItemSpecialName()
+function String GetItemSpecialNameString()
 {
 	return ItemSpecialString;
 }
