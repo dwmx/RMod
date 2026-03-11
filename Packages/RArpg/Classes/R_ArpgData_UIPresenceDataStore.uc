@@ -63,6 +63,11 @@ function PopulateDataStore()
 {
 	//--------------------------------------------------------------------------
 	//	Weapons
+	DataStore.AddData(	// RomanSword
+		TagLib.Static.MakeTag('Item','Weapon','Sword','RomanSword'),
+		CreateUIPresence(Texture'RArpg.UILowCal', 86.0, 42.6, 86.0, 213.4)
+	);
+
 	DataStore.AddData(	// BroadSword
 		TagLib.Static.MakeTag('Item','Weapon','Sword','BroadSword'),
 		CreateUIPresence(Texture'RArpg.UIBroadSword', 86.0, 0.0, 86.0, 256.0)
@@ -73,6 +78,11 @@ function PopulateDataStore()
 		CreateUIPresence(Texture'RArpg.UIBattleSword', 42.0, 0.0, 172.0, 256.0)
 	);
 	
+	DataStore.AddData(	// HandAxe
+		TagLib.Static.MakeTag('Item','Weapon','Axe','HandAxe'),
+		CreateUIPresence(Texture'RArpg.UILowCal', 0.0, 42.6, 86.0, 213.4)
+	);
+
 	DataStore.AddData(	// BattleAxe
 		TagLib.Static.MakeTag('Item','Weapon','Axe','BattleAxe'),
 		CreateUIPresence(Texture'RArpg.UIBattleAxe', 42.0, 0.0, 172.0, 256.0)

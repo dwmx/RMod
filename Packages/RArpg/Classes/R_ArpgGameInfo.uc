@@ -72,6 +72,8 @@ function SpawnPawnForPlayer(R_ArpgPlayerController PlayerController)
 	NewPawn.TryAddItem(ItemFactory.CreateItemFromTag(TagLib.Static.MakeTag('Item','Weapon','Axe','BattleAxe')));
 	NewPawn.TryAddItem(ItemFactory.CreateItemFromTag(TagLib.Static.MakeTag('Item','Weapon','Hammer','BattleHammer')));
 	NewPawn.TryAddItem(ItemFactory.CreateItemFromTag(TagLib.Static.MakeTag('Item','Weapon','Sword','BattleSword')));
+	NewPawn.TryAddItem(ItemFactory.CreateItemFromTag(TagLib.Static.MakeTag('Item','Weapon','Sword','RomanSword')));
+	NewPawn.TryAddItem(ItemFactory.CreateItemFromTag(TagLib.Static.MakeTag('Item','Weapon','Axe','HandAxe')));
 }
 
 function Killed( pawn killer, pawn Other, name damageType )

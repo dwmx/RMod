@@ -55,6 +55,11 @@ function PopulateDataStore()
 {
 //--------------------------------------------------------------------------
 	//	Weapons
+	DataStore.AddData(	// RomanSword
+		TagLib.Static.MakeTag('Item','Weapon','Sword','RomanSword'),
+		CreateWorldPresence(SkelModel'weapons.romansword')
+	);
+
 	DataStore.AddData(	// BroadSword
 		TagLib.Static.MakeTag('Item','Weapon','Sword','BroadSword'),
 		CreateWorldPresence(SkelModel'weapons.broadsword')
@@ -63,6 +68,11 @@ function PopulateDataStore()
 	DataStore.AddData(	// BattleSword
 		TagLib.Static.MakeTag('Item','Weapon','Sword','BattleSword'),
 		CreateWorldPresence(SkelModel'weapons.battlesword')
+	);
+
+	DataStore.AddData(	// HandAxe
+		TagLib.Static.MakeTag('Item','Weapon','Axe','HandAxe'),
+		CreateWorldPresence(SkelModel'weapons.handaxe')
 	);
 
 	DataStore.AddData(	// BattleAxe

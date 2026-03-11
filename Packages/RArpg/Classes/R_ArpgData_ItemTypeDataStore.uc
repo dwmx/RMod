@@ -57,6 +57,10 @@ function PopulateDataStore()
 	//--------------------------------------------------------------------------
 	//	Weapons
 
+	// RomanSword
+	ItemTag = TagLib.Static.MakeTag('Item','Weapon','Sword','RomanSword');
+	DataStore.AddData(ItemTag, CreateItemType(ItemTag, "Roman Sword", 1, 2));
+
 	// BroadSword
 	ItemTag = TagLib.Static.MakeTag('Item','Weapon','Sword','BroadSword');
 	DataStore.AddData(ItemTag, CreateItemType(ItemTag, "Broad Sword", 1, 3));
@@ -64,6 +68,10 @@ function PopulateDataStore()
 	// BattleSword
 	ItemTag = TagLib.Static.MakeTag('Item','Weapon','Sword','BattleSword');
 	DataStore.AddData(ItemTag, CreateItemType(ItemTag, "Battle Sword", 2, 3));
+
+	// HandAxe
+	ItemTag = TagLib.Static.MakeTag('Item','Weapon','Axe','HandAxe');
+	DataStore.AddData(ItemTag, CreateItemType(ItemTag, "Hand Axe", 1, 2));
 
 	// BattleAxe
 	ItemTag = TagLib.Static.MakeTag('Item','Weapon','Axe','BattleAxe');
