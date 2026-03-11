@@ -281,6 +281,24 @@ function PaintInspecting(Canvas C, float X, float Y)
 	}
 }
 
+function Color GetSpecialNameDisplayColor(R_ArpgItem Item)
+{
+	local Color Result;
+	Result.R = 255;
+	Result.G = 255;
+	Result.B = 255;
+	return Result;
+}
+
+function Color GetItemTypeDisplayColor(R_ArpgItem Item)
+{
+	local Color Result;
+	Result.R = 255;
+	Result.G = 255;
+	Result.B = 255;
+	return Result;
+}
+
 function PaintInspectedItemPanel(Canvas C, float PanelX, float PanelY, float PanelW, float PanelH, R_ArpgItem Item)
 {
 	local Font ItemFont;
@@ -325,7 +343,7 @@ function PaintInspectedItemPanel(Canvas C, float PanelX, float PanelY, float Pan
 	DrawString = Item.GetItemSpecialNameString();
 	if(DrawString != "")
 	{
-		C.DrawColor = C_ItemNameNormal;
+		C.DrawColor = GetSpecialNameDisplayColor(Item);
 		C.Style = 1;
 		C.Font = F_ItemName;
 		C.StrLen(DrawString, StrW, StrH);
@@ -339,9 +357,7 @@ function PaintInspectedItemPanel(Canvas C, float PanelX, float PanelY, float Pan
 	DrawString = Item.GetItemTypeString();
 	if(DrawString != "")
 	{
-		C.DrawColor.R = 255;
-		C.DrawColor.G = 255;
-		C.DrawColor.B = 255;
+		C.DrawColor = GetItemTypeDisplayColor(Item);
 		C.Font = F_ItemName;
 		C.Style = 1;
 		

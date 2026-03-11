@@ -1,5 +1,7 @@
 class R_UI_ArpgItemInteractor_Hero extends R_UI_ArpgItemInteractor;
 
+const UIGameLib = Class'RArpg.R_UI_ArpgUIGameLib';
+
 function bool TryHandleLMouseDown()
 {
 	local R_UI_ArpgRootWindow LocalArpgRoot;
@@ -30,6 +32,17 @@ function bool TryHandleLMouseDown()
 		}
 	}
 	
-
 	return Super.TryHandleLMouseDown();
+}
+
+function Color GetSpecialNameDisplayColor(R_ArpgItem Item)
+{
+	local Name ItemRarityType;
+
+	if(Item == None)
+	{
+		return Super.GetSpecialNameDisplayColor(Item);
+	}
+
+	return UIGameLib.Static.GetItemRarityTypeDrawColor(Item.GetItemRarityType());
 }
