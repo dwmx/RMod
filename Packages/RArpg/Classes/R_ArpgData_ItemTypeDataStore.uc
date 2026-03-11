@@ -65,6 +65,10 @@ function PopulateDataStore()
 	ItemTag = TagLib.Static.MakeTag('Item','Weapon','Sword','BroadSword');
 	DataStore.AddData(ItemTag, CreateItemType(ItemTag, "Broad Sword", 1, 3));
 
+	// WorkSword
+	ItemTag = TagLib.Static.MakeTag('Item','Weapon','Sword','WorkSword');
+	DataStore.AddData(ItemTag, CreateItemType(ItemTag, "Work Sword", 2, 3));
+
 	// BattleSword
 	ItemTag = TagLib.Static.MakeTag('Item','Weapon','Sword','BattleSword');
 	DataStore.AddData(ItemTag, CreateItemType(ItemTag, "Battle Sword", 2, 3));
@@ -87,4 +91,11 @@ function PopulateDataStore()
 	// WoodShield
 	ItemTag = TagLib.Static.MakeTag('Item','Shield','WoodShield');
 	DataStore.AddData(ItemTag, CreateItemType(ItemTag, "Wood Shield", 2, 3));
+
+	//--------------------------------------------------------------------------
+	//	Heads
+
+	// SkullHead
+	ItemTag = TagLib.Static.MakeTag('Item','Head','SkullHead');
+	DataStore.AddData(ItemTag, CreateItemType(ItemTag, "Skull Head", 2, 2));
 }

@@ -68,12 +68,12 @@ function SpawnPawnForPlayer(R_ArpgPlayerController PlayerController)
 
 	// Grant a couple of test items
 	NewPawn.TryAddItem(ItemFactory.CreateItemFromTag(TagLib.Static.MakeTag('Item','Weapon','Sword','BroadSword')));
+	//NewPawn.TryAddItem(ItemFactory.CreateItemFromTag(TagLib.Static.MakeTag('Item','Weapon','Sword','WorkSword')));
 	NewPawn.TryAddItem(ItemFactory.CreateItemFromTag(TagLib.Static.MakeTag('Item','Shield','WoodShield')));
 	NewPawn.TryAddItem(ItemFactory.CreateItemFromTag(TagLib.Static.MakeTag('Item','Weapon','Axe','BattleAxe')));
 	NewPawn.TryAddItem(ItemFactory.CreateItemFromTag(TagLib.Static.MakeTag('Item','Weapon','Hammer','BattleHammer')));
 	NewPawn.TryAddItem(ItemFactory.CreateItemFromTag(TagLib.Static.MakeTag('Item','Weapon','Sword','BattleSword')));
-	NewPawn.TryAddItem(ItemFactory.CreateItemFromTag(TagLib.Static.MakeTag('Item','Weapon','Sword','RomanSword')));
-	NewPawn.TryAddItem(ItemFactory.CreateItemFromTag(TagLib.Static.MakeTag('Item','Weapon','Axe','HandAxe')));
+	NewPawn.TryAddItem(ItemFactory.CreateItemFromTag(TagLib.Static.MakeTag('Item','Head','SkullHead')));
 }
 
 function Killed( pawn killer, pawn Other, name damageType )

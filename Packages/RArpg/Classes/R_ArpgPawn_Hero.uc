@@ -30,6 +30,7 @@ const INTERACTION_QUERY_FAIL_DISTANCE = 5;	// Too far away to perform interactio
 
 var private R_ArpgItemActor ItemActor_Weapon;
 var private R_ArpgItemActor ItemActor_Shield;
+var private R_ArpgItemActor ItemActor_Head;
 
 //------------------------------------------------------------------------------
 
@@ -46,14 +47,32 @@ event PostBeginPlay()
 	// Create world-representation actors for the items
 	ItemActor_Weapon = Spawn(Class'RArpg.R_ArpgItemActor', Self);
 	ItemActor_Shield = Spawn(Class'RArpg.R_ArpgItemActor', Self);
+	ItemActor_Head   = Spawn(Class'RArpg.R_ArpgItemActor', Self);
 
 	AttachActorToJoint(ItemActor_Weapon, JointNamed(WeaponJoint));
 	AttachActorToJoint(ItemActor_Shield, JointNamed(ShieldJoint));
+	//AttachActorToJoint(ItemActor_Head,   JointNamed('Jaw'));
+
+	ItemActor_Head.DrawScale = 1.5;
 
 	// Add some test skills
 	AddSkill(Class'RArpg.R_ArpgSkill_Whirlwind', 'Whirlwind');
 	//AddSkill(Class'RArpg.R_ArpgSkill_Orb');
 	AddSkill(Class'RArpg.R_ArpgSkill_Attack', 'Attack');
+}
+
+event Tick(float DeltaSeconds)
+{
+	local Rotator JointRot;
+	local Vector JointLoc;
+
+	Super.Tick(DeltaSeconds);
+
+	JointRot = GetJointRot(JointNamed('Head'));
+	JointLoc = GetJointPos(JointNamed('Head'));
+	JointLoc += Vector(JointRot) * 4.0;
+	ItemActor_Head.SetLocation(JointLoc);
+	ItemActor_Head.SetRotation(JointRot);
 }
 
 function ReceiveInventoryEvent(Name EventName, Name InventoryContainerName, R_ArpgItemContainerSet Sender, R_ArpgItem Items[2])
@@ -93,6 +112,7 @@ function HandleEvent_InventorySlotChanged(Name InventorySlotName, R_ArpgItem Old
 	{
 	case INVENTORY_SLOT_MAIN_HAND:	ItemActor_Weapon.SetItem(NewItem);	break;
 	case INVENTORY_SLOT_OFF_HAND:	ItemActor_Shield.SetItem(NewItem);	break;
+	case INVENTORY_SLOT_HELM:		ItemActor_Head.SetItem(NewItem);	break;
 	}
 
 	// If this is an equipment slot, remove old and apply new affixes

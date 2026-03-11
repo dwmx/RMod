@@ -65,6 +65,11 @@ function PopulateDataStore()
 		CreateWorldPresence(SkelModel'weapons.broadsword')
 	);
 
+	DataStore.AddData(	// WorkSword
+		TagLib.Static.MakeTag('Item','Weapon','Sword','WorkSword'),
+		CreateWorldPresence(SkelModel'weapons.worksword')
+	);
+
 	DataStore.AddData(	// BattleSword
 		TagLib.Static.MakeTag('Item','Weapon','Sword','BattleSword'),
 		CreateWorldPresence(SkelModel'weapons.battlesword')
@@ -90,5 +95,12 @@ function PopulateDataStore()
 	DataStore.AddData(	// WoodShield
 		TagLib.Static.MakeTag('Item','Shield','WoodShield'),
 		CreateWorldPresence(SkelModel'weapons.woodshield')
+	);
+
+	//--------------------------------------------------------------------------
+	//	Heads
+	DataStore.AddData(	// SkullHead
+		TagLib.Static.MakeTag('Item','Head','SkullHead'),
+		CreateWorldPresence(SkelModel'objects.skull')
 	);
 }
