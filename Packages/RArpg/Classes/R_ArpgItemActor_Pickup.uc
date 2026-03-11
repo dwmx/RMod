@@ -5,7 +5,7 @@
 //==============================================================================
 class R_ArpgItemActor_Pickup extends R_ArpgItemActor;
 
-var Class<R_ArpgInteractionProxy> InteractionProxyClass;
+const InteractionProxyClass = Class'RArpg.R_ArpgInteractionProxy_ItemPickup';
 
 event PostBeginPlay()
 {
@@ -18,5 +18,4 @@ defaultproperties
 {
 	CollisionHeight=32.0
 	CollisionRadus=32.0
-	InteractionProxyClass=Class'R_ArpgInteractionProxy'
 }

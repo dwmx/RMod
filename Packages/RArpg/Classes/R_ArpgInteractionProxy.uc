@@ -5,6 +5,21 @@
 //==============================================================================
 class R_ArpgInteractionProxy extends Actor;
 
+//------------------------------------------------------------------------------
+
+// Proxy Types
+// To be returned by GetProxyType
+// InWorldUI uses the ProxyType to determine how to draw the proxy, how to
+// interact with it, and what parameters to request from it
+const PROXY_TYPE_PROXY 	= 'Proxy';
+const PROXY_TYPE_PICKUP = 'Pickup';
+
+//------------------------------------------------------------------------------
+
+function Name GetProxyType() { return PROXY_TYPE_PROXY; }
+
+//------------------------------------------------------------------------------
+
 function NotifySelectionStateChanged(bool bNewSelectionState)
 {
 }
