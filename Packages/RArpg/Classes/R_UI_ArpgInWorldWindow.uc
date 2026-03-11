@@ -3,6 +3,8 @@
 //==============================================================================
 class R_UI_ArpgInWorldWindow extends R_UI_ArpgWindow;
 
+const UIGameLib = Class'RArpg.R_UI_ArpgUIGameLib';
+
 // Thse must match definitions in R_ArpgInteractionProxy
 const PROXY_TYPE_PROXY 	= 'Proxy';
 const PROXY_TYPE_PICKUP = 'Pickup';
@@ -269,10 +271,33 @@ function PaintProxyAsSelected(Canvas C, R_ArpgInteractionProxy Proxy)
 	}
 }
 
+function Color GetLabelColorForProxy(R_ArpgInteractionProxy Proxy)
+{
+	local Color Result;
+	local Name ProxyType;
+
+	if(Proxy == None)
+	{
+		return UIGameLib.Static.MakeColor3(255,50,50);
+	}
+
+	ProxyType = Proxy.GetProxyType();
+	if(ProxyType == PROXY_TYPE_PICKUP)
+	{
+		if(Proxy.GetNameParam('PickupType') == 'Item')
+		{
+			return UIGameLib.Static.GetItemRarityTypeDrawColor(Proxy.GetNameParam('RarityType'));
+		}
+	}
+
+	return UIGameLib.Static.MakeColor3(255,255,255);
+}
+
 function PaintLabelBoxForProxy(Canvas C, R_ArpgInteractionProxy Proxy)
 {
 	local Vector DrawLocation;
 	local String DrawString;
+	local Color DrawColor;
 	local float StrW, StrH;
 	local float DrawX, DrawY;
 	local float DrawW, DrawH;
@@ -283,6 +308,7 @@ function PaintLabelBoxForProxy(Canvas C, R_ArpgInteractionProxy Proxy)
 	}
 
 	CanvasLib.Static.GetScreenSpaceLocationAboveActor(C, Proxy, DrawLocation);
+	DrawColor = GetLabelColorForProxy(Proxy);
 
 	DrawString = Proxy.GetDisplayString();
 	C.Font = F_ItemNameFont;
@@ -302,9 +328,7 @@ function PaintLabelBoxForProxy(Canvas C, R_ArpgInteractionProxy Proxy)
 	// Draw item name
 	DrawX = DrawLocation.X - StrW * 0.5;
 	DrawY = DrawLocation.Y - StrH * 0.5;
-	C.DrawColor.R = 255;
-	C.DrawColor.G = 255;
-	C.DrawColor.B = 255;
+	C.DrawColor = DrawColor;
 	C.Style = 1;
 	ClipText(C, DrawX, DrawY, DrawString);
 }

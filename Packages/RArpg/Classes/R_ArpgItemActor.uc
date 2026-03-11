@@ -91,6 +91,16 @@ function String GetItemDisplayString()
 	return Result;
 }
 
+function Name GetItemRarityType()
+{
+	if(Item == None)
+	{
+		return '';
+	}
+
+	return Item.GetItemRarityType();
+}
+
 defaultproperties
 {
 	RemoteRole=ROLE_SimulatedProxy

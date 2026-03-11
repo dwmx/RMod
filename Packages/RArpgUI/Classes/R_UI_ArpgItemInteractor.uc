@@ -325,13 +325,7 @@ function PaintInspectedItemPanel(Canvas C, float PanelX, float PanelY, float Pan
 	DrawString = Item.GetItemSpecialNameString();
 	if(DrawString != "")
 	{
-		switch(Item.GetItemRarity())
-		{
-		case ITEM_RARITY_UNIQUE:	C.DrawColor = C_ItemNameUnique;	break;
-		case ITEM_RARITY_RARE:		C.DrawColor = C_ItemNameRare;	break;
-		case ITEM_RARITY_MAGIC:		C.DrawColor = C_ItemNameMagic;	break;
-		default: 					C.DrawColor = C_ItemNameNormal;	break;
-		}
+		C.DrawColor = C_ItemNameNormal;
 		C.Style = 1;
 		C.Font = F_ItemName;
 		C.StrLen(DrawString, StrW, StrH);

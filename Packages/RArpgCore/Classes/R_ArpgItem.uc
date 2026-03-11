@@ -9,14 +9,10 @@ var private int ItemUID;
 var private int ItemGridSizeX;
 var private int ItemGridSizeY;
 
-const ITEM_RARITY_NORMAL = 0;
-const ITEM_RARITY_MAGIC = 1;
-const ITEM_RARITY_RARE = 2;
-const ITEM_RARITY_UNIQUE = 3;
-
 var private String ItemSpecialString;
 var private String ItemTypeString;
-var private int ItemRarity;
+
+var private Name ItemRarityType;
 
 struct R_ArpgAffixInstance
 {
@@ -99,9 +95,9 @@ function String GetItemTypeString()
 	return ItemTypeString;
 }
 
-function int GetItemRarity()
+function Name GetItemRarityType()
 {
-	return ItemRarity;
+	return ItemRarityType;
 }
 
 function SetItemTag(R_ArpgTag NewItemTag)
@@ -125,7 +121,8 @@ function InitializeArpgObject()
 	// Some test stuff
 	ItemTypeString = "Broad Sword";
 	ItemSpecialString = "Ragnar's Steel";
-	ItemRarity = ITEM_RARITY_UNIQUE;
+
+	ItemRarityType = 'Rare';
 }
 
 function SetItemSpecialString(String NewItemSpecialString)

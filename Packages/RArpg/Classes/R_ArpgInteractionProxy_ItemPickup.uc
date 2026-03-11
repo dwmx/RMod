@@ -26,3 +26,26 @@ function String GetDisplayString()
 	}
 	return Super.GetDisplayString();
 }
+
+function Name GetNameParam(Name ParamID)
+{
+	local R_ArpgItemActor LocalItemActor;
+
+	switch(ParamID)
+	{
+	case 'PickupType':	return 'Item';
+	}
+
+	LocalItemActor = GetProxyOwnerItemActor();
+	if(LocalItemActor == None)
+	{
+		return Super.GetNameParam(ParamID);
+	}
+
+	switch(ParamID)
+	{
+	case 'RarityType':	return LocalItemActor.GetItemRarityType();
+	}
+
+	return Super.GetNameParam(ParamID);
+}
