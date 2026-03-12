@@ -10,10 +10,13 @@ var private R_ArpgData_ItemTypeDataStore DataStore_ItemTypes;
 const DataStoreClass_ItemInstructions = Class'RArpg.R_ArpgData_ItemInstructionsDataStore';
 var private R_ArpgData_ItemInstructionsDataStore DataStore_ItemInstructions;
 
+var private int ItemInstantiationCount;
+
 function InitializeArpgObject()
 {
     DataStore_ItemTypes = R_ArpgData_ItemTypeDataStore(ArpgLib.Static.CreateArpgObject(DataStoreClass_ItemTypes, Self));
 	DataStore_ItemInstructions = R_ArpgData_ItemInstructionsDataStore(ArpgLib.Static.CreateArpgObject(DataStoreClass_ItemInstructions, Self));
+	ItemInstantiationCount = 0;
 }
 
 function R_ArpgItem InstantiateFromItemType(R_ArpgData_ItemType ItemType)
@@ -34,14 +37,17 @@ function R_ArpgItem InstantiateFromItemType(R_ArpgData_ItemType ItemType)
 	// Test -- Apply some magical properties to the item using item instructions
 	TestApplyItemInstructions(Item);
 
-	//// These are just some test affixes
-	//// These need to be moved into a magical item property generator tree, and set up as R_ArpgAffixInstructions
-    //Item.AddAffix(Class'RArpg.R_ArpgAffix_AllSkills', 2);
-    //Item.AddAffix(Class'RArpg.R_ArpgAffix_MaxHealth', Rand(30) + 20);
-    //Item.AddAffix(Class'RArpg.R_ArpgAffix_MaxHealthPercent', Rand(15) + 15);
-    //Item.AddAffix(Class'RArpg.R_ArpgAffix_MaxMana', Rand(30) + 20);
-	//Item.AddAffix(Class'RArpg.R_ArpgAffix_MaxManaPercent', Rand(15) + 15);
-	
+	// Test -- Cycle through the different rarities
+	switch(ItemInstantiationCount % 5)
+	{
+	case 0: Item.SetItemRarityType('Normal'); Item.SetItemSpecialString(""); break;
+	case 1: Item.SetItemRarityType('Magic'); break;
+	case 2: Item.SetItemRarityType('Rare'); break;
+	case 3: Item.SetItemRarityType('Unique'); break;
+	case 4: Item.SetItemRarityType('Crafted'); break;
+	}
+
+	++ItemInstantiationCount;
     return Item;
 }
 

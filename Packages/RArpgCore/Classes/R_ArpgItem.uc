@@ -117,12 +117,7 @@ function InitializeArpgObject()
 
 	// Force clamping on defaultproperties
 	SetItemGridSize(ItemGridSizeX, ItemGridSizeY);
-
-	// Some test stuff
-	ItemTypeString = "Broad Sword";
-	ItemSpecialString = "Ragnar's Steel";
-
-	ItemRarityType = 'Rare';
+	ItemRarityType = 'Normal';
 }
 
 function SetItemSpecialString(String NewItemSpecialString)
@@ -151,6 +146,11 @@ function SetItemGridSize(int NewItemGridSizeX, int NewItemGridSizeY)
 {
 	ItemGridSizeX = Max(1, NewItemGridSizeX);
 	ItemGridSizeY = Max(1, NewItemGridSizeY);
+}
+
+function SetItemRarityType(Name NewItemRarityType)
+{
+	ItemRarityType = NewItemRarityType;
 }
 
 defaultproperties

@@ -20,8 +20,9 @@ static function Color GetItemRarityTypeDrawColor(Name ItemRarityType)
 	{
 	case 'Normal':	return MakeColor3(255,255,255);
 	case 'Magic':	return MakeColor3(100,100,255);
-	case 'Rare':	return MakeColor3(255,255,100);
-	case 'Unique':	return MakeColor3(176, 28,230);
+	case 'Rare':	return MakeColor3(193,255,100);
+	case 'Unique':	return MakeColor3(197, 100,255);
+	case 'Crafted':	return MakeColor3(252, 87, 10);
 	}
 
 	return MakeColor3(255,255,255);

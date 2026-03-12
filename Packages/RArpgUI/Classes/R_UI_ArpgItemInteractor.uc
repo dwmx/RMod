@@ -508,5 +508,5 @@ defaultproperties
 	C_ItemNameRare=(R=155,G=155,B=155)
 	C_ItemNameMagic=(R=155,G=155,B=155)
 	C_ItemNameNormal=(R=155,G=155,B=155)
-	C_ItemModifier=(R=252,G=161,B=3)
+	C_ItemModifier=(R=255,G=125,B=38)
 }
