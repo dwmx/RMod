@@ -1,4 +1,4 @@
-class R_ArpgAnimationSet_Ragnar_BattleSword extends R_ArpgAnimationSet;
+class R_ArpgAnimationSet_Ragnar_BattleSword extends R_ArpgAnimationSet_Ragnar;
 
 defaultproperties
 {

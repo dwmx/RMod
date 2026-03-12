@@ -13,7 +13,7 @@ var private R_ArpgAIController AIController;
 var private R_ArpgEntity Entity;
 
 var private Class<R_ArpgAnimationSet> AnimationSetDefaultClass;
-var private R_ArpgAnimationSet AnimationSet;
+var private Class<R_ArpgAnimationSet> AnimationSetClass;
 
 var private Vector MovementInput;
 var private Vector LookDirection;
@@ -170,27 +170,22 @@ event Tick(float DeltaSeconds)
 	}
 }
 
-function SetAnimationSetClass(Class<R_ArpgAnimationSet> AnimationSetClass)
+function SetAnimationSetClass(Class<R_ArpgAnimationSet> NewAnimationSetClass)
 {
-	if(AnimationSetClass == None || (AnimationSet != None && AnimationSet.Class == AnimationSetClass))
+	if(AnimationSetClass == NewAnimationSetClass)
 	{
 		return;
 	}
-
-	AnimationSet = R_ArpgAnimationSet(ArpgLib.Static.CreateArpgObject(AnimationSetClass, Self));
+	AnimationSetClass = NewAnimationSetClass;
 }
 
-function R_ArpgAnimationSet GetAnimationSet()
+function Class<R_ArpgAnimationSet> GetAnimationSetClass()
 {
-	if(AnimationSet == None)
+	if(AnimationSetClass != None)
 	{
-		if(AnimationSetDefaultClass == None)
-		{
-			return None;
-		}
-		SetAnimationSetClass(AnimationSetDefaultClass);
+		return AnimationSetClass;
 	}
-	return AnimationSet;
+	return AnimationSetDefaultClass;
 }
 
 function R_ArpgPawnAnimProxy GetAnimProxy()
@@ -233,18 +228,16 @@ function PlayWaiting(optional float Tween)
 
 function PlayMoving(optional float Tween)
 {
-	local R_ArpgAnimationSet AnimSet;
 	local int MovementDirection;
+	local Class<R_ArpgAnimationSet> AnimSetClass;
 	local Name MovementAnimation;
 
-	AnimSet = GetAnimationSet();
-	if(AnimSet == None)
-	{
-		return;
-	}
-
 	MovementDirection = GetMovementDirection();
-	MovementAnimation = AnimSet.GetAnimationForMovementDirection(MovementDirection);
+	AnimSetClass = GetAnimationSetClass();
+	if(AnimSetClass != None)
+	{
+		MovementAnimation = AnimSetClass.Static.GetStaticAnimationForMovementDirection(MovementDirection);
+	}
 	LoopPawnAnim(MovementAnimation, true, true, 1.0, 0.1);
 }
 

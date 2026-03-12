@@ -1,3 +1,6 @@
+//==============================================================================
+//	R_ArpgAnimationSet
+//==============================================================================
 class R_ArpgAnimationSet extends R_ArpgObject;
 
 var Name Idle;
@@ -25,25 +28,27 @@ const MOVEDIR_FORWARD_LEFT		= 0x1001;
 const MOVEDIR_BACKWARD_RIGHT	= 0x0110;
 const MOVEDIR_BACKWARD_LEFT		= 0x1010;
 
-function Name GetAnimationForMovementDirection(int MovementDirection)
+//------------------------------------------------------------------------------
+
+static function Name GetStaticAttackAnimation(optional int Parameters)
+{
+	return Default.AttackMoving;
+}
+
+static function Name GetStaticAnimationForMovementDirection(int MovementDirection)
 {
 	switch(MovementDirection)
 	{
-	case MOVEDIR_NEUTRAL:			return Idle;
-	case MOVEDIR_FORWARD:			return Forward;
-	case MOVEDIR_BACKWARD:			return Backward;
-	case MOVEDIR_RIGHT:				return StrafeRight;
-	case MOVEDIR_LEFT:				return StrafeLeft;
-	case MOVEDIR_FORWARD_RIGHT:		return Forward45Right;
-	case MOVEDIR_FORWARD_LEFT:		return Forward45Left;
-	case MOVEDIR_BACKWARD_RIGHT:	return Backward45Right;
-	case MOVEDIR_BACKWARD_LEFT:		return Backward45Left;
+	case MOVEDIR_NEUTRAL:			return Default.Idle;
+	case MOVEDIR_FORWARD:			return Default.Forward;
+	case MOVEDIR_BACKWARD:			return Default.Backward;
+	case MOVEDIR_RIGHT:				return Default.StrafeRight;
+	case MOVEDIR_LEFT:				return Default.StrafeLeft;
+	case MOVEDIR_FORWARD_RIGHT:		return Default.Forward45Right;
+	case MOVEDIR_FORWARD_LEFT:		return Default.Forward45Left;
+	case MOVEDIR_BACKWARD_RIGHT:	return Default.Backward45Right;
+	case MOVEDIR_BACKWARD_LEFT:		return Default.Backward45Left;
 	}
 
 	return '';
-}
-
-function Name GetAttackAnimation()
-{
-	return AttackMoving;
 }

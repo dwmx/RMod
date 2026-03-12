@@ -53,24 +53,21 @@ state SkillActive
 	function Name GetAttackAnim()
 	{
 		local R_ArpgPawn RP;
-		local R_ArpgAnimationSet AnimSet;
+		local Class<R_ArpgAnimationSet> AnimSetClass;
 		local Name AttackSequence, RecoverSequence;
 
 		RP = GetArpgPawnOwner();
 		if(RP != None)
 		{
-			AnimSet = RP.GetAnimationSet();
+			AnimSetClass = RP.GetAnimationSetClass();
 		}
 
-		if(AnimSet == None)
+		if(AnimSetClass == None)
 		{
 			return '';
 		}
 
-		//AnimSet.GetRandomAttackAnimation(AttackSequence, RecoverSequence);
-		//RecoverAnim = RecoverSequence;
-		//return AttackSequence;
-		return AnimSet.GetAttackAnimation();
+		return AnimSetClass.Static.GetStaticAttackAnimation();
 	}
 
 	function AddStruckActor(Actor A)

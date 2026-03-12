@@ -334,7 +334,7 @@ defaultproperties
 	WeaponJoint=attach_hand
     ShieldJoint=attach_shielda
 	bFrameNotifies=true
-	AnimationSetDefaultClass=Class'RArpg.R_ArpgAnimationSet_Ragnar_Default'
+	AnimationSetDefaultClass=Class'RArpg.R_ArpgAnimationSet_Ragnar'
 	AnimationSetSelectorClass=Class'R_ArpgAnimationSetSelector_Ragnar'
 	bUseAnimProxy=true
 }

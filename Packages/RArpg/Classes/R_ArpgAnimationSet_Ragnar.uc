@@ -1,4 +1,8 @@
-class R_ArpgAnimationSet_Ragnar_Default extends R_ArpgAnimationSet;
+//==============================================================================
+//	R_ArpgAnimationSet_Ragnar
+//	Base class for Ragnar SkelModel animations
+//==============================================================================
+class R_ArpgAnimationSet_Ragnar extends R_ArpgAnimationSet;
 
 defaultproperties
 {

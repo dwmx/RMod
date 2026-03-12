@@ -1,6 +1,6 @@
-class R_ArpgAnimationSet_Ragnar_BroadSword extends R_ArpgAnimationSet;
+class R_ArpgAnimationSet_Ragnar_BroadSword extends R_ArpgAnimationSet_Ragnar;
 
-function Name GetAttackAnimation()
+static function Name GetStaticAttackAnimation(optional int Parameters)
 {
 	local Name AttackAnimations[3];
 

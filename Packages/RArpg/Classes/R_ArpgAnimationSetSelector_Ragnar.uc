@@ -4,7 +4,7 @@
 //==============================================================================
 class R_ArpgAnimationSetSelector_Ragnar extends R_ArpgAnimationSetSelector abstract;
 
-const ANIMSET_CLASS_DEFAULT		= Class'RArpg.R_ArpgAnimationSet_Ragnar_Default';
+const ANIMSET_CLASS_DEFAULT		= Class'RArpg.R_ArpgAnimationSet_Ragnar';
 const ANIMSET_CLASS_BATTLE_AXE 	= Class'RArpg.R_ArpgAnimationSet_Ragnar_BattleAxe';
 const ANIMSET_CLASS_BROAD_SWORD	= Class'RArpg.R_ArpgAnimationSet_Ragnar_BroadSword';
 const ANIMSET_CLASS_BATTLE_SWORD = Class'RArpg.R_ArpgAnimationSet_Ragnar_BattleSword';
