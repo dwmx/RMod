@@ -20,15 +20,6 @@ function int GetMovementDirection()
 	return MOVEDIR_FORWARD;
 }
 
-function PlayMoving(optional float Tween)
-{
-	switch(GetMovementDirection())
-	{
-	case MOVEDIR_FORWARD:	LoopPawnAnim('walkB', true, true, 1.0, 0.1);	break;
-	default:				LoopPawnAnim('idleA', true, true, 1.0, 0.1);	break;
-	}
-}
-
 defaultproperties
 {
 	Skeletal=SkelModel'creatures.Goblin'
@@ -37,4 +28,5 @@ defaultproperties
 	GroundSpeed=60.0
 	Mass=50.000000
     Buoyancy=35.000000
+	AnimationSetDefaultClass=Class'RArpg.R_ArpgAnimationSet_Goblin'
 }

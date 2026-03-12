@@ -621,6 +621,7 @@ state ArpgDying
 		if(AnimProxy != None)
 		{
 			AnimProxy.Destroy();
+			AnimProxy = None;
 		}
 
 		SetCollision(false, false, false);
@@ -628,16 +629,13 @@ state ArpgDying
 
 	function Name GetDeathAnim()
 	{
-		local Name DeathAnims[12];
-		local int DeathCount;
-
-		DeathCount = 0;
-		//DeathAnims[DeathCount++] = 'Death';
-		DeathAnims[DeathCount++] = 'DeathB';
-		DeathAnims[DeathCount++] = 'Deaths';
-		DeathAnims[DeathCount++] = 'DeathR';
-		DeathAnims[DeathCount++] = 'DeathF';
-		return DeathAnims[Rand(DeathCount)];
+		local Class<R_ArpgAnimationSet> AnimSetClass;
+		AnimSetClass = GetAnimationSetClass();
+		if(AnimSetClass != None)
+		{
+			return AnimSetClass.Static.GetStaticDeathAnimation();
+		}
+		return '';
 	}
 
 	function ReplaceWithCarcass()
