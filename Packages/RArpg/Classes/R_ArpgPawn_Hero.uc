@@ -3,6 +3,7 @@
 //==============================================================================
 class R_ArpgPawn_Hero extends R_ArpgPawn;
 
+const AnimProxyClass = Class'RArpg.R_ArpgPawnAnimProxy';
 var private Class<R_ArpgAnimationSetSelector> AnimationSetSelectorClass;
 var private R_ArpgItemContainerSet InventorySet;
 
@@ -59,6 +60,14 @@ event PostBeginPlay()
 	AddSkill(Class'RArpg.R_ArpgSkill_Whirlwind', 'Whirlwind');
 	//AddSkill(Class'RArpg.R_ArpgSkill_Orb');
 	AddSkill(Class'RArpg.R_ArpgSkill_Attack', 'Attack');
+}
+
+function SpawnAnimationProxy()
+{
+	if(AnimProxyClass != None)
+	{
+		AnimProxy = Spawn(AnimProxyClass, Self);
+	}
 }
 
 event Tick(float DeltaSeconds)

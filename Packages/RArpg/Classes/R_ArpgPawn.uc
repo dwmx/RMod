@@ -7,9 +7,6 @@ class R_ArpgPawn extends PlayerPawn abstract;
 const CanvasLib = Class'RBase.R_ACanvasLibrary';
 const ArpgLib = Class'RArpgCore.R_ArpgLibrary';
 
-const AnimProxyClass = Class'RArpg.R_ArpgPawnAnimProxy';
-var private bool bUseAnimProxy;
-
 const AIControllerClass = Class'RArpg.R_ArpgAIController';
 var private R_ArpgAIController AIController;
 
@@ -63,6 +60,9 @@ var private Name ActiveAnimLowerBody;
 var private R_ArpgObserver_Collision Observer_Collision;
 
 //------------------------------------------------------------------------------
+//	Functions to be defined in subclasses
+function SpawnAnimationProxy();
+//------------------------------------------------------------------------------
 
 function SetObserver_Collision(R_ArpgObserver_Collision NewObserver_Collision)
 {
@@ -75,14 +75,6 @@ function R_ArpgObserver_Collision GetObserver_Collision()
 }
 
 function R_ArpgEntity GetEntity() { return Entity; }
-
-function SpawnAnimationProxy()
-{
-	if(bUseAnimProxy)
-	{
-		AnimProxy = spawn(AnimProxyClass, Self);
-	}
-}
 
 function R_ArpgItemContainerSet GetInventorySet() { return None; }
 function bool TryAddItem(R_ArpgItem Item) { return false; }
@@ -474,8 +466,6 @@ function ArpgTakeDamage(float Damage)
 
 function ArpgDie()
 {
-	local R_ArpgCarcass LocalCarcass;
-
 	GotoState('ArpgDying');
 }
 
@@ -502,7 +492,10 @@ function ReceiveAttributeEvent(
 //	GetAttributeValue
 //	Helper function for getting the current Base and Aggregate value of the
 //	specified attribute
-function bool GetAttributeValue(Name AttributeName, out float OutBaseValue, out float OutAggregateValue)
+function bool GetAttributeValue(
+	Name AttributeName,
+	optional out float OutBaseValue,
+	optional out float OutAggregateValue)
 {
 	local R_ArpgEntity LocalEntity;
 	local R_ArpgAttributeSet LocalAttributeSet;
@@ -686,6 +679,5 @@ defaultproperties
 	bLockDirection=false
 	bBlockMovementInput=false
 	InteractionProxyClass=Class'RArpg.R_ArpgInteractionProxy'
-	bUseAnimProxy=false
 	AccelRate=2000.0
 }
