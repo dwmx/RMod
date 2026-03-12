@@ -3,9 +3,30 @@
 //==============================================================================
 class R_ArpgPawn_Goblin extends R_ArpgPawn;
 
+event Tick(float DeltaSeconds)
+{
+	Super.Tick(DeltaSeconds);
+
+	SetRotation(Rotator(Velocity * Vect(1,1,0)));
+}
+
+function int GetMovementDirection()
+{
+	if(VSize(Velocity * Vect(1,1,0)) <= 8.0)
+	{
+		return MOVEDIR_NEUTRAL;
+	}
+
+	return MOVEDIR_FORWARD;
+}
+
 function PlayMoving(optional float Tween)
 {
-	LoopPawnAnim('idleA', true, true, 1.0, 0.1);
+	switch(GetMovementDirection())
+	{
+	case MOVEDIR_FORWARD:	LoopPawnAnim('walkB', true, true, 1.0, 0.1);	break;
+	default:				LoopPawnAnim('idleA', true, true, 1.0, 0.1);	break;
+	}
 }
 
 defaultproperties
