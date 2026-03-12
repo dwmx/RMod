@@ -3,12 +3,24 @@
 //==============================================================================
 class R_ArpgAIController extends R_ArpgObject;
 
+var private Class<R_ArpgAITargetSelector> AITargetSelectorClass;
+var private R_ArpgAITargetSelector AITargetSelector;
+
 var private R_ArpgPawn ControlledPawn;
 var private Actor Target;
-var private float TargetTimeOut;
-var private float MinimumTargetDistance;
 
 var private Vector DesiredLocation;
+
+var private float Accumulator;
+
+function InitializeArpgObject()
+{
+    if(AITargetSelectorClass != None)
+    {
+        AITargetSelector = R_ArpgAITargetSelector(ArpgLib.Static.CreateArpgObject(AITargetSelectorClass, Self));
+        AITargetSelector.SetAIController(Self);
+    }
+}
 
 //------------------------------------------------------------------------------
 
@@ -25,7 +37,11 @@ function R_ArpgPawn GetControlledPawn()
 
 function TickAI(float DeltaSeconds)
 {
-    TickAITarget(DeltaSeconds);
+    local Actor NewTarget;
+
+    AITargetSelector.TickAI(DeltaSeconds);
+    NewTarget = AITargetSelector.GetTarget();
+    Target = NewTarget;
 
     if(Target != None)
     {
@@ -35,6 +51,15 @@ function TickAI(float DeltaSeconds)
     {
         MoveTowardDesiredLocation();
     }
+
+	Accumulator += DeltaSeconds;
+	if(Accumulator >= 4.0)
+	{
+		// Try to attack
+		ControlledPawn.Input_Skill('Attack');
+		Log("I try attack now");
+		Accumulator = 0.0;
+	}
 }
 
 function MoveTowardDesiredLocation()
@@ -70,81 +95,7 @@ function MoveTowardTarget()
 
 //------------------------------------------------------------------------------
 
-function TickAITarget(float DeltaSeconds)
-{
-    local R_ArpgPawn LocalPawn;
-    local Actor NewTarget;
-    local Vector DeltaLocation;
-
-    if(Target == None)
-    {
-        NewTarget = SelectTarget();
-        if(NewTarget != None)
-        {
-            Target = NewTarget;
-            TargetTimeOut = 5.0;
-        }
-    }
-    else
-    {
-        LocalPawn = GetControlledPawn();
-        if(LocalPawn != None)
-        {
-            DeltaLocation = Target.Location - LocalPawn.Location;
-            if(VSize(DeltaLocation) <= MinimumTargetDistance)
-            {
-                TargetTimeOut = 5.0;
-            }
-            else
-            {
-                TargetTimeOut -= DeltaSeconds;
-                TargetTimeOut = FMax(0.0, TargetTimeOut);
-                if(TargetTimeOut <= 0.0)
-                {
-                    Target = None;
-                }
-            }
-        }
-    }
-}
-
-function bool IsValidTarget(Actor A)
-{
-    if(R_ArpgPawn_Hero(A) != None)
-    {
-        return true;
-    }
-    return false;
-}
-
-function Actor SelectTarget()
-{
-    local R_ArpgPawn LocalPawn;
-    local Pawn PawnIt;
-    local Vector DeltaLocation;
-
-    LocalPawn = GetControlledPawn();
-    if(LocalPawn == None)
-    {
-        return None;
-    }
-
-    for(PawnIt = LocalPawn.Level.PawnList; PawnIt != None; PawnIt = PawnIt.NextPawn)
-    {
-        if(!IsValidTarget(PawnIt))
-        {
-            continue;
-        }
-
-        DeltaLocation = PawnIt.Location - LocalPawn.Location;
-        if(VSize(DeltaLocation) <= MinimumTargetDistance)
-        {
-            return PawnIt;
-        }
-    }
-}
-
 defaultproperties
 {
-    MinimumTargetDistance=256.0
+    AITargetSelectorClass=Class'RArpg.R_ArpgAITargetSelector'
 }

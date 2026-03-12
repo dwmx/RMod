@@ -32,7 +32,10 @@ var private bool bLockDirection;
 
 var private bool bBlockMovementInput;
 
-var Class<R_ArpgInteractionProxy> InteractionProxyClass;
+var private Class<R_ArpgInteractionProxy> InteractionProxyClass;
+
+var private byte TeamIndex;
+var private bool bIsDead;
 
 // Movement Direction consts for PlayMoving
 const MOVEDIR_NEUTRAL			= 0x0000;
@@ -63,6 +66,22 @@ var private R_ArpgObserver_Collision Observer_Collision;
 //	Functions to be defined in subclasses
 function SpawnAnimationProxy();
 //------------------------------------------------------------------------------
+
+function byte GetTeamIndex() { return TeamIndex; }
+function SetTeamIndex(byte NewTeamIndex)
+{
+	if(TeamIndex != NewTeamIndex)
+	{
+		TeamIndex = NewTeamIndex;
+		OnTeamIndexChanged();
+	}
+}
+function OnTeamIndexChanged();
+
+function bool IsDead()
+{
+	return bIsDead;
+}
 
 function SetObserver_Collision(R_ArpgObserver_Collision NewObserver_Collision)
 {
@@ -459,6 +478,7 @@ function ArpgTakeDamage(float Damage)
 
 function ArpgDie()
 {
+	bIsDead = true;
 	GotoState('ArpgDying');
 }
 
@@ -673,4 +693,6 @@ defaultproperties
 	bBlockMovementInput=false
 	InteractionProxyClass=Class'RArpg.R_ArpgInteractionProxy'
 	AccelRate=2000.0
+	TeamIndex=255
+	bIsDead=false
 }

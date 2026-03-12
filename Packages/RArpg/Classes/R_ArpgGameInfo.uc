@@ -5,6 +5,7 @@ class R_ArpgGameInfo extends R_GameInfo;
 
 const ArpgLib = Class'RArpg.R_ArpgLibrary';
 const TagLib = Class'RArpg.R_ArpgTagLibrary';
+const GameLib = Class'RArpg.R_ArpgGameLibrary';
 
 // ItemFactory
 var private R_ArpgItemFactory ItemFactory;
@@ -64,6 +65,7 @@ function SpawnPawnForPlayer(R_ArpgPlayerController PlayerController)
 		PlayerController,,
 		PlayerController.Location + Vect(0,0,1) * 200.0,
 		PlayerController.Rotation);
+	NewPawn.SetTeamIndex(GameLib.Static.GetTeamIndex('Human'));
 	PlayerController.SetControlledPawn(NewPawn);
 
 	// Grant a couple of test items

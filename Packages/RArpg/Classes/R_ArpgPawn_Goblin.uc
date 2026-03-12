@@ -3,6 +3,15 @@
 //==============================================================================
 class R_ArpgPawn_Goblin extends R_ArpgPawn;
 
+var private bool bAnimationPlaying;
+
+event PostBeginPlay()
+{
+	Super.PostBeginPlay();
+
+	AddSkill(Class'RArpg.R_ArpgSkill_Attack', 'Attack');
+}
+
 event Tick(float DeltaSeconds)
 {
 	Super.Tick(DeltaSeconds);
@@ -20,6 +29,37 @@ function int GetMovementDirection()
 	return MOVEDIR_FORWARD;
 }
 
+function PlayPawnAnim(
+	Name AnimSequence,
+	optional bool bUpperBody,
+	optional bool bLowerBody,
+	optional float Rate,
+	optional float TweenTime)
+{
+	// Ignore upper/lower
+	PlayAnim(AnimSequence, Rate, TweenTime);
+	bAnimationPlaying = true;
+}
+
+function LoopPawnAnim(
+	Name AnimSequence,
+	optional bool bUpperBody,
+	optional bool bLowerBody,
+	optional float Rate,
+	optional float TweenTime,
+	optional float MinRate)
+{
+	if(!bAnimationPlaying)
+	{
+		LoopAnim(AnimSequence, Rate, TweenTime, MinRate);
+	}
+}
+
+function AnimEnd()
+{
+	bAnimationPlaying = false;
+}
+
 defaultproperties
 {
 	Skeletal=SkelModel'creatures.Goblin'
@@ -29,4 +69,5 @@ defaultproperties
 	Mass=50.000000
     Buoyancy=35.000000
 	AnimationSetDefaultClass=Class'RArpg.R_ArpgAnimationSet_Goblin'
+	bAnimationPlaying=false
 }
