@@ -622,6 +622,8 @@ state ArpgDying
 		{
 			AnimProxy.Destroy();
 		}
+
+		SetCollision(false, false, false);
 	}
 
 	function Name GetDeathAnim()
