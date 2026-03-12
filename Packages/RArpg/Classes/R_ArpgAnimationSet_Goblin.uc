@@ -45,7 +45,12 @@ static function Name GetStaticAnimationForMovementDirection(int MovementDirectio
 }
 
 static function Name GetStaticAttackAnimation(optional int Parameters)
-{}
+{
+	local Name Options[2];
+	Options[0] = A_AttackB;
+	Options[1] = A_swipe;
+	return Options[Rand(ArrayCount(Options))];
+}
 
 static function Name GetStaticDeathAnimation(optional int Parameters)
 {
