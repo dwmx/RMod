@@ -8,19 +8,13 @@ class R_ArpgAnimationController_Pawn extends R_ArpgAnimationController;
 
 var private R_ArpgPawn PawnOwner;
 
-function SetActorOwner(Actor NewActorOwner)
+function InitializeArpgObject()
 {
-	local R_ArpgPawn LocalPawn;
-
-	Super.SetActorOwner(NewActorOwner);
-
-	LocalPawn = R_ArpgPawn(NewActorOwner);
-	if(LocalPawn != None)
-	{
-		PawnOwner = LocalPawn;
-	}
+	Super.InitializeArpgObject();
+	PawnOwner = R_ArpgPawn(Outer);
 }
 
+/*
 function Tick(float DeltaSeconds)
 {
 	local int MovementDirection;
@@ -46,3 +40,4 @@ function Tick(float DeltaSeconds)
 		}
 	}
 }
+	*/

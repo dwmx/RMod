@@ -511,7 +511,6 @@ event PostBeginPlay()
 	if(AnimationControllerClass != None)
 	{
 		AnimationController = R_ArpgAnimationController(ArpgLib.Static.CreateArpgObject(AnimationControllerClass, Self));
-		AnimationController.SetActorOwner(Self);
 	}
 
 	Spawn(InteractionProxyClass, Self);

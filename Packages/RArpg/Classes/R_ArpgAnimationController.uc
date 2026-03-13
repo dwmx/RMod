@@ -10,13 +10,80 @@ var private Class<R_ArpgAnimationSetSelector> AnimationSetSelectorClass;
 
 var private Actor ActorOwner;
 
-function SetActorOwner(Actor NewActorOwner)
+var private Name ActiveAnimation;
+var private Name ActiveProxyAnim;
+
+function InitializeArpgObject()
 {
-	ActorOwner = NewActorOwner;
+	ActorOwner = Actor(Outer);
 }
 
 function Tick(float DeltaSeconds)
-{}
+{
+	TickActiveAnimation(DeltaSeconds);
+}
+
+//------------------------------------------------------------------------------
+
+function PlayAnimation(Name AnimSequence, optional float Rate, optional float Tween)
+{
+	if(ActorOwner == None)
+	{
+		return;
+	}
+
+	if(ActiveAnimation != '')
+	{
+		Log("ANIMATION CANCELED");
+	}
+
+	ActiveAnimation = AnimSequence;
+	//ActorOwner.PlayAnim(AnimSequence, Rate, Tween);
+	ActorOwner.LoopAnim(AnimSequence, Rate, Tween);
+	if(ActorOwner.AnimProxy != None)
+	{
+		ActiveProxyAnim = AnimSequence;
+		//ActorOwner.AnimProxy.PlayAnim(AnimSequence, Rate, Tween);
+		ActorOwner.AnimProxy.LoopAnim(AnimSequence, Rate, Tween);
+	}
+}
+
+function TickActiveAnimation(float DeltaSeconds)
+{
+	if(ActorOwner != None)
+	{
+		if(ActiveAnimation != '')
+		{
+			if(ActorOwner.AnimSequence != ActiveAnimation)
+			{
+				ActiveAnimation = '';
+				Log("ANIMATION ENDED BECAUSE OWNERS ANIM CHANGED");
+			}
+
+			if(ActorOwner.AnimFrame >= ActorOwner.AnimLast)
+			{
+				ActiveAnimation = '';
+				Log("ANIMATION ENDED BECAUSE IT TIMED OUT");
+			}
+		}
+
+
+		if(ActorOwner.AnimProxy != None && ActiveProxyAnim != '')
+		{
+			if(ActorOwner.AnimProxy.AnimSequence != ActiveProxyAnim)
+			{
+				ActiveProxyAnim = '';
+				Log("anim proxy anim ended because anim chagned");
+			}
+
+			if(ActorOwner.AnimProxy.AnimFrame >= ActorOwner.AnimProxy.AnimLast)
+			{
+				ActiveProxyAnim = '';
+				Log("anim proxy anim ended because it timed out");
+			}
+		}
+	}
+}
 
 //------------------------------------------------------------------------------
 
@@ -52,11 +119,12 @@ function PlayStandardAnimation(Name StandardName, optional float Rate, optional 
 		}
 	}
 
-	ActorOwner.PlayAnim(LocalAnimName, Rate, Tween);
-	if(ActorOwner.AnimProxy != None)
-	{
-		ActorOwner.AnimProxy.PlayAnim(LocalAnimName, Rate, Tween);
-	}
+	PlayAnimation(LocalAnimName, Rate, Tween);
+	//ActorOwner.PlayAnim(LocalAnimName, Rate, Tween);
+	//if(ActorOwner.AnimProxy != None)
+	//{
+	//	ActorOwner.AnimProxy.PlayAnim(LocalAnimName, Rate, Tween);
+	//}
 }
 
 //------------------------------------------------------------------------------
