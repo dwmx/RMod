@@ -210,6 +210,9 @@ simulated function DrawAnimation(Canvas C, R_DBStringManager StringManager, R_Ar
 	local Class<R_ArpgAnimationController> AnimControllerClass;
 	local Class<R_ArpgAnimationSet> AnimSetClass;
 	local Class<R_ArpgAnimationSetSelector> AnimSetSelectorClass;
+	local Name AnimSequence, AnimSlot;
+	local String AnimStatusString;
+	local R_ArpgObject AnimCallbackObject;
 
 	StringManager.AddCategory(DebugCategoryAnimController);
 	StringManager.AddCategory(DebugCategoryAnimPawn);
@@ -230,14 +233,24 @@ simulated function DrawAnimation(Canvas C, R_DBStringManager StringManager, R_Ar
 	}
 	else
 	{
+		AnimController.GetPlayAnimState(AnimSequence, AnimSlot, AnimCallbackObject, AnimStatusString);
+
 		AnimControllerClass = AnimController.Class;
 		AnimSetClass = AnimController.GetAnimationSetClass();
 		AnimSetSelectorClass = AnimController.GetAnimationSetSelectorClass();
 	}
 
+	// AnimController
 	StringManager.AddClass(DebugCategoryAnimController, "AnimControllerClass", AnimControllerClass);
 	StringManager.AddClass(DebugCategoryAnimController, "AnimSetClass", AnimSetClass);
 	StringManager.AddClass(DebugCategoryAnimController, "AnimSetSelectorClass", AnimSetSelectorClass);
+
+	StringManager.AddString(DebugCategoryAnimController, "----------------------------------------");
+	StringManager.AddString(DebugCategoryAnimController, "PlayAnimState");
+	StringManager.AddName(DebugCategoryAnimController, "AnimSequence", AnimSequence);
+	StringManager.AddName(DebugCategoryAnimController, "Slot", AnimSlot);
+	StringManager.AddObject(DebugCategoryAnimController, "CallbackObject", AnimCallbackObject);
+	StringManager.AddString(DebugCategoryAnimController, AnimStatusString, "Status");
 
 	// AnimFrame
 	StringManager.AddName(DebugCategoryAnimPawn, "AnimSequence", LocalPawn.AnimSequence);

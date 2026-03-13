@@ -1,7 +1,7 @@
 //==============================================================================
 //	R_ArpgAnimationController
 //==============================================================================
-class R_ArpgAnimationController extends R_ArpgObject;
+class R_ArpgAnimationController extends R_ArpgAnimationInterface;
 
 var private Class<R_ArpgAnimationSet> AnimationSetDefaultClass;
 var private Class<R_ArpgAnimationSet> AnimationSetClass;
@@ -12,6 +12,45 @@ var private Actor ActorOwner;
 
 var private Name ActiveAnimation;
 var private Name ActiveProxyAnim;
+
+struct R_ArpgPlayAnimState
+{
+	var Name AnimSequence;
+	var Name Slot;
+	var R_ArpgObject CallbackObject;
+	var Name Status;
+};
+var private R_ArpgPlayAnimState PlayAnimState;
+
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// New stuff
+function GetPlayAnimState(
+	out Name AnimSequence,
+	out Name Slot,
+	out R_ArpgObject CallbackObject,
+	out String StatusString)
+{
+	AnimSequence = PlayAnimState.AnimSequence;
+	Slot = PlayAnimState.Slot;
+	CallbackObject = PlayAnimState.CallbackObject;
+	StatusString = String(PlayAnimState.Status);
+}
+
+function bool TryPlayAnim(
+	Name AnimName,
+	optional Name SlotName,
+	optional float Rate,
+	optional float Tween,
+	optional R_ArpgObject CallbackObject)
+{
+	return false;
+}
+
+
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+
 
 function InitializeArpgObject()
 {
