@@ -618,7 +618,7 @@ state ArpgDying
 	}
 
 Begin:
-	GetAnimationController().PlayStandardAnimation('Death', 1.0, 0.1);
+	GetAnimationController().TryPlayStandardAnim('Death', 'FullBody', 1.0, 0.1);
 	FinishAnim();
 	ReplaceWithCarcass();
 	Destroy();

@@ -149,6 +149,16 @@ exec function TestSkill(Name SkillName)
 	GetControlledPawn().Input_Skill(SkillName);
 }
 
+exec function TestAnim(Name AnimName)
+{
+	GetControlledPawn().GetAnimationController().TryPlayAnim(AnimName, 'UpperBody', 1.0, 0.1);
+}
+
+exec function TestCancelAnim()
+{
+	GetControlledPawn().GetAnimationController().FinishPlayAnimState('Canceled');
+}
+
 function TickPawnRotation(float DeltaSeconds)
 {
 	local Vector IntersectLocation;

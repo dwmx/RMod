@@ -13,6 +13,17 @@ var private Actor ActorOwner;
 var private Name ActiveAnimation;
 var private Name ActiveProxyAnim;
 
+//------------------------------------------------------------------------------
+// Event name sent to CallbackObject
+const ANIM_EVENT_CANCELED = 'AnimCanceled';
+const ANIM_EVENT_COMPLETED = 'AnimCompleted';
+
+// Internal animation completion result
+const ANIM_RESULT_CANCELED = 'Canceled';
+const ANIM_RESULT_COMPLETED = 'Completed';
+
+const ANIM_STATUS_IDLE = 'Idle';
+const ANIM_STATUS_PLAYING = 'Playing';
 struct R_ArpgPlayAnimState
 {
 	var Name AnimSequence;
@@ -21,10 +32,31 @@ struct R_ArpgPlayAnimState
 	var Name Status;
 };
 var private R_ArpgPlayAnimState PlayAnimState;
+//------------------------------------------------------------------------------
+
+function InitializeArpgObject()
+{
+	ActorOwner = Actor(Outer);
+	InitializePlayAnimState();
+}
+
+function InitializePlayAnimState()
+{
+	PlayAnimState.AnimSequence = 'None';
+	PlayAnimState.Slot = 'None';
+	PlayAnimState.CallbackObject = None;
+	PlayAnimState.Status = ANIM_STATUS_IDLE;
+}
 
 //------------------------------------------------------------------------------
+
+function Tick(float DeltaSeconds)
+{
+	TickPlayAnimState(DeltaSeconds);
+}
+
 //------------------------------------------------------------------------------
-// New stuff
+
 function GetPlayAnimState(
 	out Name AnimSequence,
 	out Name Slot,
@@ -37,92 +69,176 @@ function GetPlayAnimState(
 	StatusString = String(PlayAnimState.Status);
 }
 
+function FinishPlayAnimState(Name Result)
+{
+	local R_ArpgEventPayload Payload;
+	local Name EventName;
+
+	if(PlayAnimState.CallbackObject != None)
+	{
+		EventName = 'None';
+		switch(Result)
+		{
+		case ANIM_RESULT_CANCELED: EventName = ANIM_EVENT_CANCELED; break;
+		case ANIM_RESULT_COMPLETED: EventName = ANIM_EVENT_COMPLETED; break;
+		}
+		if(EventName != 'None')
+		{
+			Payload.NameArg = PlayAnimState.AnimSequence;
+			PlayAnimState.CallbackObject.ReceiveArpgEvent(EventName, Self, Payload);
+		}
+	}
+
+	InitializePlayAnimState();
+	if(ActorOwner != None)
+	{
+		ActorOwner.AnimSequence = 'None';
+		ActorOwner.AnimFrame = 0.0;
+		ActorOwner.AnimRate = 0.0;
+		if(ActorOwner.AnimProxy != None)
+		{
+			ActorOwner.AnimProxy.AnimSequence = 'None';
+			ActorOwner.AnimProxy.AnimFrame = 0.0;
+			ActorOwner.AnimProxy.AnimRate = 0.0;
+		}
+	}
+}
+
+// This function's job is to basically call FinishPlayAnimState with the
+// correct result when it notices that the animation is finished playing
+function TickPlayAnimState(float DeltaSeconds)
+{
+	local bool bIsAnimSetAnywhere;
+	local bool bIsAnimPlayingAnywhere;
+
+	if(PlayAnimState.Status == ANIM_STATUS_PLAYING)
+	{
+		if(ActorOwner == None)
+		{	// If actor owner was somehow lost, immediately cancel
+			FinishPlayAnimState(ANIM_RESULT_CANCELED);
+			return;
+		}
+
+		bIsAnimSetAnywhere = false;
+		bIsAnimPlayingAnywhere = false;
+
+		// Check if animation is set on the Actor
+		if(ActorOwner.AnimSequence == PlayAnimState.AnimSequence)
+		{
+			bIsAnimSetAnywhere = true;
+			// Check if the animation is playing on the Actor
+			if(ActorOwner.AnimFrame < ActorOwner.AnimLast)
+			{
+				bIsAnimPlayingAnywhere = true;
+			}
+		}
+
+		if(ActorOwner.AnimProxy != None)
+		{
+			// Check if the animation is active on the AnimProxy
+			if(ActorOwner.AnimProxy.AnimSequence == PlayAnimState.AnimSequence)
+			{
+				bIsAnimSetAnywhere = true;
+				// Check if the animation is playing on the AnimProxy
+				if(ActorOwner.AnimProxy.AnimFrame < ActorOwner.AnimProxy.AnimLast)
+				{
+					bIsAnimPlayingAnywhere = true;
+				}
+			}
+		}
+
+		// If the animation is playing anywhere, let it go
+		if(bIsAnimPlayingAnywhere)
+		{
+			return;
+		}
+
+		// If the anim is set anywhere but is not playing, that means it just finished
+		if(bIsAnimSetAnywhere)
+		{
+			FinishPlayAnimState(ANIM_RESULT_COMPLETED);
+			return;
+		}
+
+		// If the anim is both not set AND not playing, that means something else
+		// modified the actor's animation -- we have to cancel
+		FinishPlayAnimState(ANIM_EVENT_CANCELED);
+		return;
+	}
+}
+
 function bool TryPlayAnim(
-	Name AnimName,
-	optional Name SlotName,
-	optional float Rate,
-	optional float Tween,
+	Name AnimSequence,
+	Name SlotName,
+	float Rate,
+	float Tween,
 	optional R_ArpgObject CallbackObject)
-{
-	return false;
-}
-
-
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-
-
-function InitializeArpgObject()
-{
-	ActorOwner = Actor(Outer);
-}
-
-function Tick(float DeltaSeconds)
-{
-	TickActiveAnimation(DeltaSeconds);
-}
-
-//------------------------------------------------------------------------------
-
-function PlayAnimation(Name AnimSequence, optional float Rate, optional float Tween)
 {
 	if(ActorOwner == None)
 	{
-		return;
+		return false;
 	}
 
-	if(ActiveAnimation != '')
+	// If anim is already playing, cancel it
+	if(PlayAnimState.Status == ANIM_STATUS_PLAYING)
 	{
-		Log("ANIMATION CANCELED");
+		FinishPlayAnimState(ANIM_RESULT_CANCELED);
 	}
 
-	ActiveAnimation = AnimSequence;
-	//ActorOwner.PlayAnim(AnimSequence, Rate, Tween);
-	ActorOwner.LoopAnim(AnimSequence, Rate, Tween);
+	PlayAnimState.AnimSequence = AnimSequence;
+	PlayAnimState.Slot = SlotName;
+	PlayAnimState.CallbackObject = CallbackObject;
+	PlayAnimState.Status = ANIM_STATUS_PLAYING;
+
+	ActorOwner.PlayAnim(AnimSequence);//, Rate, Tween);
 	if(ActorOwner.AnimProxy != None)
 	{
-		ActiveProxyAnim = AnimSequence;
-		//ActorOwner.AnimProxy.PlayAnim(AnimSequence, Rate, Tween);
-		ActorOwner.AnimProxy.LoopAnim(AnimSequence, Rate, Tween);
+		ActorOwner.AnimProxy.PlayAnim(AnimSequence);//, Rate, Tween);
 	}
+
+	return true;
 }
 
-function TickActiveAnimation(float DeltaSeconds)
+function bool TryPlayStandardAnim(
+	Name StandardName,
+	Name SlotName,
+	float Rate,
+	float Tween,
+	optional R_ArpgObject CallbackObject)
 {
-	if(ActorOwner != None)
+	local Class<R_ArpgAnimationSet> LocalAnimSetClass;
+	local Name LocalAnimName;
+
+	if(ActorOwner == None)
 	{
-		if(ActiveAnimation != '')
+		return false;
+	}
+
+	LocalAnimSetClass = GetAnimationSetClass();
+	LocalAnimName = 'None';
+	if(LocalAnimSetClass != None)
+	{
+		switch(StandardName)
 		{
-			if(ActorOwner.AnimSequence != ActiveAnimation)
-			{
-				ActiveAnimation = '';
-				Log("ANIMATION ENDED BECAUSE OWNERS ANIM CHANGED");
-			}
-
-			if(ActorOwner.AnimFrame >= ActorOwner.AnimLast)
-			{
-				ActiveAnimation = '';
-				Log("ANIMATION ENDED BECAUSE IT TIMED OUT");
-			}
-		}
-
-
-		if(ActorOwner.AnimProxy != None && ActiveProxyAnim != '')
-		{
-			if(ActorOwner.AnimProxy.AnimSequence != ActiveProxyAnim)
-			{
-				ActiveProxyAnim = '';
-				Log("anim proxy anim ended because anim chagned");
-			}
-
-			if(ActorOwner.AnimProxy.AnimFrame >= ActorOwner.AnimProxy.AnimLast)
-			{
-				ActiveProxyAnim = '';
-				Log("anim proxy anim ended because it timed out");
-			}
+		case 'Death':	LocalAnimName = LocalAnimSetClass.Static.GetStaticDeathAnimation();		break;
+		case 'Attack':	LocalAnimName = LocalAnimSetClass.Static.GetStaticAttackAnimation();	break;
 		}
 	}
+
+	if(LocalAnimName == 'None')
+	{	// Failed to find a mapped animation for the name specified
+		return false;
+	}
+
+	TryPlayAnim(LocalAnimName, SlotName, Rate, Tween, CallbackObject);
 }
+
+
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+
+
+
 
 //------------------------------------------------------------------------------
 
@@ -132,38 +248,6 @@ function UpdateAnimationSetForTag(R_ArpgTag Tag)
 	{
 		SetAnimationSetClass(AnimationSetSelectorClass.Static.GetAnimationSetClassFromTag(Tag));
 	}
-}
-
-//------------------------------------------------------------------------------
-
-function PlayStandardAnimation(Name StandardName, optional float Rate, optional float Tween)
-{
-	local Class<R_ArpgAnimationSet> LocalAnimSetClass;
-	local Name LocalAnimName;
-
-	if(ActorOwner == None)
-	{
-		return;
-	}
-
-	LocalAnimSetClass = GetAnimationSetClass();
-	if(LocalAnimSetClass != None)
-	{
-		switch(StandardName)
-		{
-		case 'Death':	LocalAnimName = LocalAnimSetClass.Static.GetStaticDeathAnimation();		break;
-		case 'Attack':	LocalAnimName = LocalAnimSetClass.Static.GetStaticAttackAnimation();	break;
-		default:
-			LocalAnimName = '';
-		}
-	}
-
-	PlayAnimation(LocalAnimName, Rate, Tween);
-	//ActorOwner.PlayAnim(LocalAnimName, Rate, Tween);
-	//if(ActorOwner.AnimProxy != None)
-	//{
-	//	ActorOwner.AnimProxy.PlayAnim(LocalAnimName, Rate, Tween);
-	//}
 }
 
 //------------------------------------------------------------------------------

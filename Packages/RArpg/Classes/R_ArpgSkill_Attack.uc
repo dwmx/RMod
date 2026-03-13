@@ -171,7 +171,8 @@ state SkillActive
 
 Begin:
 	//R_ArpgPawn(Owner).GetAnimationController().PlayStandardAnimation('Attack', GetAttackRate(), 0.1);
-	R_ArpgPawn(Owner).GetAnimationController().PlayStandardAnimation('Attack', 1.0, 0.1);
+	//R_ArpgPawn(Owner).GetAnimationController().PlayStandardAnimation('Attack', 1.0, 0.1);
+	R_ArpgPawn(Owner).GetAnimationController().TryPlayStandardAnim('Attack', 'UpperBody', 1.0, 0.1);
 	Sleep(0.8 * (1.0 / GetAttackRate()));
 	//WeaponDeactivate();
 	GotoState('SkillNeutral');
