@@ -50,25 +50,25 @@ state SkillActive
 		StruckActorsCount = 0;
 	}
 
-	function Name GetAttackAnim()
-	{
-		local R_ArpgPawn RP;
-		local Class<R_ArpgAnimationSet> AnimSetClass;
-		local Name AttackSequence, RecoverSequence;
-
-		RP = GetArpgPawnOwner();
-		if(RP != None)
-		{
-			AnimSetClass = RP.GetAnimationSetClass();
-		}
-
-		if(AnimSetClass == None)
-		{
-			return '';
-		}
-
-		return AnimSetClass.Static.GetStaticAttackAnimation();
-	}
+	//function Name GetAttackAnim()
+	//{
+	//	local R_ArpgPawn RP;
+	//	local Class<R_ArpgAnimationSet> AnimSetClass;
+	//	local Name AttackSequence, RecoverSequence;
+//
+	//	RP = GetArpgPawnOwner();
+	//	if(RP != None)
+	//	{
+	//		AnimSetClass = RP.GetAnimationSetClass();
+	//	}
+//
+	//	if(AnimSetClass == None)
+	//	{
+	//		return '';
+	//	}
+//
+	//	return AnimSetClass.Static.GetStaticAttackAnimation();
+	//}
 
 	function AddStruckActor(Actor A)
 	{
@@ -170,14 +170,7 @@ state SkillActive
 	}
 
 Begin:
-	R_ArpgPawn(Owner).PlayPawnAnim(GetAttackAnim(), true, false, GetAttackRate(), 0.1);
-	//R_ArpgPawn(Owner).AnimProxy.FinishAnim();
-	//R_ArpgPawn(Owner).FinishAnim();
-	//Log("FINISHED ANIM");
-	//R_ArpgPawn(Owner).PlayPawnAnim(RecoverAnim, true, false, 1.0, 0.1);
-	//R_ArpgPawn(Owner).AnimProxy.FinishAnim();
-	//Sleep(0.1);
-	//WeaponActivate();
+	R_ArpgPawn(Owner).GetAnimationController().PlayStandardAnimation('Attack', GetAttackRate(), 0.1);
 	Sleep(0.8 * (1.0 / GetAttackRate()));
 	//WeaponDeactivate();
 	GotoState('SkillNeutral');

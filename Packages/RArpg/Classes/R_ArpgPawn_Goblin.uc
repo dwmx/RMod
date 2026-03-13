@@ -7,7 +7,15 @@ var private bool bAnimationPlaying;
 
 event PostBeginPlay()
 {
+	local R_ArpgAnimationController LocalAnimController;
+	
 	Super.PostBeginPlay();
+
+	LocalAnimController = GetAnimationController();
+	if(LocalAnimController != None)
+	{
+		LocalAnimController.SetAnimationSetClass(Class'RArpg.R_ArpgAnimationSet_Goblin');
+	}
 
 	AddSkill(Class'RArpg.R_ArpgSkill_Attack', 'Attack');
 }

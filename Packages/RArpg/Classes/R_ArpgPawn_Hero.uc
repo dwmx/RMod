@@ -4,7 +4,6 @@
 class R_ArpgPawn_Hero extends R_ArpgPawn;
 
 const AnimProxyClass = Class'RArpg.R_ArpgPawnAnimProxy';
-var private Class<R_ArpgAnimationSetSelector> AnimationSetSelectorClass;
 var private R_ArpgItemContainerSet InventorySet;
 
 //------------------------------------------------------------------------------
@@ -37,9 +36,18 @@ var private R_ArpgItemActor ItemActor_Head;
 
 event PostBeginPlay()
 {
-	local Weapon W;
+	local R_ArpgAnimationController LocalAnimController;
 
 	Super.PostBeginPlay();
+
+	// Super Initializes the animation controller
+	// This then sets the selector class, which tells the controller how to switch between anim sets
+	LocalAnimController = GetAnimationController();
+	if(LocalAnimController != None)
+	{
+		LocalAnimController.SetAnimationSetClass(Class'RArpg.R_ArpgAnimationSet_Ragnar');
+		LocalAnimController.SetAnimationSetSelectorClass(Class'RArpg.R_ArpgAnimationSetSelector_Ragnar');
+	}
 
 	// Initialize the InventorySet object which holds all of the ItemContainers
 	InventorySet = R_ArpgItemContainerSet(ArpgLib.Static.CreateArpgObject(Class'RArpg.R_ArpgItemContainerSet_HeroInventory', Self));
@@ -109,11 +117,13 @@ function bool IsEquipmentSlot(Name InventorySlot)
 
 function HandleEvent_InventorySlotChanged(Name InventorySlotName, R_ArpgItem OldItem, R_ArpgItem NewItem)
 {
-	// Update the current animation set
-	if(InventorySlotName == INVENTORY_SLOT_MAIN_HAND)
+	local R_ArpgAnimationController LocalAnimController;
+
+	LocalAnimController = GetAnimationController();
+	if(LocalAnimController != None && InventorySlotName == INVENTORY_SLOT_MAIN_HAND)
 	{
-		if(NewItem == None)	SetAnimationSetClass(AnimationSetSelectorClass.Static.GetDefaultAnimationSetClass());
-		else				SetAnimationSetClass(AnimationSetSelectorClass.Static.GetAnimationSetClassFromTag(NewItem.GetItemTag()));
+		if(NewItem == None)	LocalAnimController.UpdateAnimationSetForTag(TagLib.Static.EmptyTag());
+		else 				LocalAnimController.UpdateAnimationSetForTag(NewItem.GetItemTag());
 	}
 
 	// Update the item actor if there is one
@@ -334,7 +344,5 @@ defaultproperties
 	WeaponJoint=attach_hand
     ShieldJoint=attach_shielda
 	bFrameNotifies=true
-	AnimationSetDefaultClass=Class'RArpg.R_ArpgAnimationSet_Ragnar'
-	AnimationSetSelectorClass=Class'R_ArpgAnimationSetSelector_Ragnar'
 	bUseAnimProxy=true
 }

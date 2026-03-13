@@ -19,6 +19,7 @@ struct R_ArpgEventPayload
 	var Name NameArg;
 	var float FloatArgs[4];
 	var Object ObjectArgs[2];
+	var R_ArpgTag TagArg;
 };
 
 function InitializeArpgObject();
@@ -29,3 +30,4 @@ function LogDumpArpgObject()
 }
 
 function ReceiveArpgEvent(Name EventName, Object Sender, R_ArpgEventPayload Payload);
+function ReceiveArpgEvent_TagPayload(Name EventName, Object Sender, R_ArpgTag Payload);

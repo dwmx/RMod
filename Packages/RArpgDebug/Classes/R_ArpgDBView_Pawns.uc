@@ -9,9 +9,14 @@ const DebugCategoryTags = 'PawnsTags';
 const DebugCategoryAttributes = 'PawnsAttributes';
 const DebugCategoryCollision = 'PawnsCollision';
 
+const DebugCategoryAnimController = 'AnimController';
+const DebugCategoryAnimPawn = 'PawnAnim';
+const DebugCategoryAnimProxy = 'ProxyAnim';
+
 var config private bool bDrawTags;
 var config private bool bDrawAttributes;
 var config private bool bDrawCollision;
+var config private bool bDrawAnimation;
 
 //------------------------------------------------------------------------------
 
@@ -63,6 +68,12 @@ simulated function ToggleCollision()
 	SaveConfig();
 }
 
+simulated function ToggleAnimation()
+{
+	bDrawAnimation = !bDrawAnimation;
+	SaveConfig();
+}
+
 simulated function DrawDebugView(Canvas C, R_DBStringManager StringManager)
 {
 	local R_ArpgDBMutator DBM;
@@ -74,11 +85,12 @@ simulated function DrawDebugView(Canvas C, R_DBStringManager StringManager)
 		return;
 	}
 
-	StringManager.AddWarning(DebugCategory, "Pawn view is good to go!");
+	StringManager.AddString(DebugCategory, "mutate rarpg.pawns for list of commands");
 
 	if(bDrawTags)		DrawTags(C, StringManager, DBM);
 	if(bDrawAttributes)	DrawAttributes(C, StringManager, DBM);
 	if(bDrawCollision)	DrawCollision(C, StringManager, DBM);
+	if(bDrawAnimation)	DrawAnimation(C, StringManager, DBM);
 }
 
 simulated function DrawPawnBoundingBox(Canvas C, R_ArpgDBMutator DBM, R_ArpgPawn P)
@@ -188,5 +200,62 @@ simulated function DrawCollision(Canvas C, R_DBStringManager StringManager, R_Ar
 	else
 	{
 		LocalObserver.DrawCollisions(C, StringManager, DBM);
+	}
+}
+
+simulated function DrawAnimation(Canvas C, R_DBStringManager StringManager, R_ArpgDBMutator DBM)
+{
+	local R_ArpgPawn LocalPawn;
+	local R_ArpgAnimationController AnimController;
+	local Class<R_ArpgAnimationController> AnimControllerClass;
+	local Class<R_ArpgAnimationSet> AnimSetClass;
+	local Class<R_ArpgAnimationSetSelector> AnimSetSelectorClass;
+
+	StringManager.AddCategory(DebugCategoryAnimController);
+	StringManager.AddCategory(DebugCategoryAnimPawn);
+	StringManager.AddCategory(DebugCategoryAnimProxy);
+
+	LocalPawn = R_ArpgPawn(DBM.GetDebugTarget());
+	if(LocalPawn == None)
+	{
+		StringManager.AddWarning(DebugCategoryAttributes, "DebugTarget is not an R_ArpgPawn, cannot view animation");
+		return;
+	}
+
+	AnimController = LocalPawn.GetAnimationController();
+	if(AnimController == None)
+	{
+		StringManager.AddWarning(DebugCategoryAnimController, "AnimationController is None");
+		AnimControllerClass = None;
+	}
+	else
+	{
+		AnimControllerClass = AnimController.Class;
+		AnimSetClass = AnimController.GetAnimationSetClass();
+		AnimSetSelectorClass = AnimController.GetAnimationSetSelectorClass();
+	}
+
+	StringManager.AddClass(DebugCategoryAnimController, "AnimControllerClass", AnimControllerClass);
+	StringManager.AddClass(DebugCategoryAnimController, "AnimSetClass", AnimSetClass);
+	StringManager.AddClass(DebugCategoryAnimController, "AnimSetSelectorClass", AnimSetSelectorClass);
+
+	// AnimFrame
+	StringManager.AddName(DebugCategoryAnimPawn, "AnimSequence", LocalPawn.AnimSequence);
+	StringManager.AddFloat(DebugCategoryAnimPawn, "AnimFrame", LocalPawn.AnimFrame);
+	StringManager.AddFloat(DebugCategoryAnimPawn, "AnimRate", LocalPawn.AnimRate);
+	StringManager.AddFloat(DebugCategoryAnimPawn, "AnimLast", LocalPawn.AnimLast);
+
+	// Anim Proxy
+	if(LocalPawn.AnimProxy == None)
+	{
+		StringManager.AddString(DebugCategoryAnimProxy, "No AnimProxy for this Actor", "AnimProxy");
+	}
+	else
+	{
+		StringManager.AddClass(DebugCategoryAnimProxy, "AnimProxy", LocalPawn.AnimProxy.Class);
+		StringManager.AddName(DebugCategoryAnimProxy, "AnimSequence", LocalPawn.AnimProxy.AnimSequence);
+		StringManager.AddFloat(DebugCategoryAnimProxy, "AnimFrame", LocalPawn.AnimProxy.AnimFrame);
+		StringManager.AddFloat(DebugCategoryAnimProxy, "AnimRate", LocalPawn.AnimProxy.AnimRate);
+		StringManager.AddFloat(DebugCategoryAnimProxy, "AnimLast", LocalPawn.AnimProxy.AnimLast);
 	}
 }

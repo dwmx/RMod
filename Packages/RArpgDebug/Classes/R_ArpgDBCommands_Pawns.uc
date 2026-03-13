@@ -8,6 +8,7 @@ const Command_Toggle = "Toggle";
 const Command_Tags = "Tags";
 const Command_Attributes = "Attributes";
 const Command_Collision = "Collision";
+const Command_Animation = "Animation";
 
 function RegisterCommandList()
 {
@@ -15,6 +16,7 @@ function RegisterCommandList()
 	RegisterCommand(Command_Tags);
 	RegisterCommand(Command_Attributes);
 	RegisterCommand(Command_Collision);
+	RegisterCommand(Command_Animation);
 }
 
 function bool TryHandleArpgCommand(String CommandString, R_ArpgDBMutator DebugMutator, PlayerPawn Sender)
@@ -25,6 +27,7 @@ function bool TryHandleArpgCommand(String CommandString, R_ArpgDBMutator DebugMu
 		case Command_Tags:			HandleCommand_Tags(DebugMutator, Sender);	return true;
 		case Command_Attributes:	HandleCommand_Attributes(DebugMutator, Sender);	return true;
 		case Command_Collision:		HandleCommand_Collision(DebugMutator, Sender);	return true;
+		case Command_Animation:		HandleCommand_Animation(DebugMutator, Sender);	return true;
 	}
 
 	return false;
@@ -81,5 +84,16 @@ function HandleCommand_Collision(R_ArpgDBMutator DebugMutator, PlayerPawn Sender
 	if(View != None)
 	{
 		View.ToggleCollision();
+	}
+}
+
+function HandleCommand_Animation(R_ArpgDBMutator DebugMutator, PlayerPawn Sender)
+{
+	local R_ArpgDBView_Pawns View;
+
+	View = GetDVPawns(DebugMutator);
+	if(View != None)
+	{
+		View.ToggleAnimation();
 	}
 }

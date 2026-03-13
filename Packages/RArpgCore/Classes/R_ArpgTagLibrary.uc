@@ -14,6 +14,15 @@ static function R_ArpgTag MakeTag(Name T0, optional Name T1, optional Name T2, o
 	return Tag;
 }
 
+static function R_ArpgTag EmptyTag()
+{
+	local R_ArpgTag Tag;
+	Tag.T[0] = '';
+	Tag.T[1] = '';
+	Tag.T[2] = '';
+	Tag.T[3] = '';
+}
+
 static function String ToString(R_ArpgTag Tag)
 {
 	local int i;

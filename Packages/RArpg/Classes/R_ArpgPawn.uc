@@ -6,14 +6,15 @@ class R_ArpgPawn extends PlayerPawn abstract;
 
 const CanvasLib = Class'RBase.R_ACanvasLibrary';
 const ArpgLib = Class'RArpgCore.R_ArpgLibrary';
+const TagLib = Class'RArpgCore.R_ArpgTagLibrary';
 
 const AIControllerClass = Class'RArpg.R_ArpgAIController';
 var private R_ArpgAIController AIController;
 
 var private R_ArpgEntity Entity;
 
-var private Class<R_ArpgAnimationSet> AnimationSetDefaultClass;
-var private Class<R_ArpgAnimationSet> AnimationSetClass;
+var private Class<R_ArpgAnimationController> AnimationControllerClass;
+var private R_ArpgAnimationController AnimationController;
 
 var private Vector MovementInput;
 var private Vector LookDirection;
@@ -52,11 +53,6 @@ const MOVEDIR_BACKWARD_LEFT		= 0x1010;
 //	Inventory events received from ItemContainerSets
 //	These must match what are in R_ArpgItemContainerSet.uc
 const EVENT_INVENTORY_SLOT_CHANGED = 'InventorySlotChanged';
-
-//------------------------------------------------------------------------------
-
-var private Name ActiveAnimUpperBody;
-var private Name ActiveAnimLowerBody;
 
 //------------------------------------------------------------------------------
 
@@ -182,6 +178,11 @@ event Tick(float DeltaSeconds)
 		AIController.TickAI(DeltaSeconds);
 	}
 
+	if(AnimationController != None)
+	{
+		AnimationController.Tick(DeltaSeconds);
+	}
+
 	PlayerTick(DeltaSeconds);
 	if(Entity != None)
 	{
@@ -189,22 +190,9 @@ event Tick(float DeltaSeconds)
 	}
 }
 
-function SetAnimationSetClass(Class<R_ArpgAnimationSet> NewAnimationSetClass)
+function R_ArpgAnimationController GetAnimationController()
 {
-	if(AnimationSetClass == NewAnimationSetClass)
-	{
-		return;
-	}
-	AnimationSetClass = NewAnimationSetClass;
-}
-
-function Class<R_ArpgAnimationSet> GetAnimationSetClass()
-{
-	if(AnimationSetClass != None)
-	{
-		return AnimationSetClass;
-	}
-	return AnimationSetDefaultClass;
+	return AnimationController;
 }
 
 function R_ArpgPawnAnimProxy GetAnimProxy()
@@ -240,28 +228,12 @@ function int GetMovementDirection()
 	return Result;
 }
 
-function PlayWaiting(optional float Tween)
-{
-	PlayMoving(Tween);
-}
-
-function PlayMoving(optional float Tween)
-{
-	local int MovementDirection;
-	local Class<R_ArpgAnimationSet> AnimSetClass;
-	local Name MovementAnimation;
-
-	MovementDirection = GetMovementDirection();
-	AnimSetClass = GetAnimationSetClass();
-	if(AnimSetClass != None)
-	{
-		MovementAnimation = AnimSetClass.Static.GetStaticAnimationForMovementDirection(MovementDirection);
-	}
-	LoopPawnAnim(MovementAnimation, true, true, 1.0, 0.1);
-}
+function PlayWaiting(optional float Tween) {}
+function PlayMoving(optional float Tween) {}
 
 //------------------------------------------------------------------------------
 
+/*
 function LoopPawnAnim(
 	Name AnimSequence,
 	optional bool bUpperBody,
@@ -300,6 +272,7 @@ function PlayPawnAnim(
 		ActiveAnimUpperBody = AnimSequence;
 	}
 }
+	*/
 
 function SetPawnAnim(
 	Name AnimSequence,
@@ -313,7 +286,6 @@ function SetPawnAnim(
 		AnimSequence = AnimSequence;
 		AnimFrame = Frame;
 		AnimRate = Rate;
-		ActiveAnimLowerBody = AnimSequence;
 	}
 
 	if(bUpperBody && AnimProxy != None)
@@ -321,7 +293,6 @@ function SetPawnAnim(
 		AnimProxy.AnimSequence = AnimSequence;
 		AnimProxy.AnimFrame = Frame;
 		AnimProxy.AnimRate = Rate;
-		ActiveAnimUpperBody = AnimSequence;
 	}
 }
 
@@ -329,25 +300,6 @@ function ClearPawnAnim(
 	optional bool bUpperBody,
 	optional bool bLowerBody)
 {
-	if(bLowerBody)
-	{
-		ActiveAnimLowerBody = '';
-	}
-
-	if(bUpperBody)
-	{
-		ActiveAnimUpperBody = '';
-	}
-}
-
-function AnimEnd()
-{
-	ActiveAnimLowerBody = '';
-}
-
-function AnimProxyAnimEnd()
-{
-	ActiveAnimUpperBody = '';
 }
 
 function FrameNotify(int FramePassed)
@@ -407,11 +359,11 @@ state PlayerWalking
 		//bPressedJump = bSaveJump;
 	}
 
-	function ProcessMove(float DeltaTime, vector NewAccel, eDodgeDir DodgeMove, rotator DeltaRot)
-	{
-		Super.ProcessMove(DeltaTime, NewAccel, DodgeMove, DeltaRot);
-		PlayMoving();
-	}
+	//function ProcessMove(float DeltaTime, vector NewAccel, eDodgeDir DodgeMove, rotator DeltaRot)
+	//{
+	//	Super.ProcessMove(DeltaTime, NewAccel, DodgeMove, DeltaRot);
+	//	PlayMoving();
+	//}
 }
 
 simulated function DrawInWorldHUD(Canvas C)
@@ -555,6 +507,13 @@ event PostBeginPlay()
 	Entity.SetOwnerPawn(Self);
 	Entity.CreateAttributeSet(Class'RArpg.R_ArpgAttributeSet_Pawn');
 
+	// Create AnimationController object
+	if(AnimationControllerClass != None)
+	{
+		AnimationController = R_ArpgAnimationController(ArpgLib.Static.CreateArpgObject(AnimationControllerClass, Self));
+		AnimationController.SetActorOwner(Self);
+	}
+
 	Spawn(InteractionProxyClass, Self);
 	SpawnAnimationProxy();
 
@@ -647,17 +606,6 @@ state ArpgDying
 		SetCollision(false, false, false);
 	}
 
-	function Name GetDeathAnim()
-	{
-		local Class<R_ArpgAnimationSet> AnimSetClass;
-		AnimSetClass = GetAnimationSetClass();
-		if(AnimSetClass != None)
-		{
-			return AnimSetClass.Static.GetStaticDeathAnimation();
-		}
-		return '';
-	}
-
 	function ReplaceWithCarcass()
 	{
 		local R_ArpgCarcass LocalCarcass;
@@ -671,7 +619,7 @@ state ArpgDying
 	}
 
 Begin:
-	PlayPawnAnim(GetDeathAnim(), true, true, 1.0, 0.1);
+	GetAnimationController().PlayStandardAnimation('Death', 1.0, 0.1);
 	FinishAnim();
 	ReplaceWithCarcass();
 	Destroy();
@@ -695,4 +643,5 @@ defaultproperties
 	AccelRate=2000.0
 	TeamIndex=255
 	bIsDead=false
+	AnimationControllerClass=Class'RArpg.R_ArpgAnimationController_Pawn'
 }
