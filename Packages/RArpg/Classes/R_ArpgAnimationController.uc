@@ -233,6 +233,11 @@ function bool TryPlayStandardAnim(
 	TryPlayAnim(LocalAnimName, SlotName, Rate, Tween, CallbackObject);
 }
 
+function Name GetActiveAnimSlot()
+{
+	return PlayAnimState.Slot;
+}
+
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
