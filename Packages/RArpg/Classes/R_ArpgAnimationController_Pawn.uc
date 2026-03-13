@@ -16,6 +16,11 @@ function InitializeArpgObject()
 
 function Tick(float DeltaSeconds)
 {
+	if(!GetControllerEnabled())
+	{
+		return;
+	}
+
 	Super.Tick(DeltaSeconds);
 	TickLocomotion(DeltaSeconds);
 }
@@ -38,6 +43,11 @@ function TickLocomotion(float DeltaSeconds)
 		return;
 	}
 
+	if(ActiveAnimSlot == 'UpperBody' && PawnOwner.AnimProxy == None)
+	{	// If UpperBody slot is active but there's no proxy, don't play locomotion
+		return;
+	}
+
 	MovementDirection = PawnOwner.GetMovementDirection();
 	AnimSetClass = GetAnimationSetClass();
 	if(AnimSetClass != None)
@@ -45,11 +55,20 @@ function TickLocomotion(float DeltaSeconds)
 		LocomotionAnim = AnimSetClass.Static.GetStaticAnimationForMovementDirection(MovementDirection);
 	}
 
-	// At this point, locomotion definitely plays on at least the lower body
-	PawnOwner.LoopAnim(LocomotionAnim, 1.0, 0.1);
-	if(PawnOwner.AnimProxy != None && ActiveAnimSlot != 'UpperBody')
-	{
-		// Nothing playing on the upper body slot, so AnimProxy plays it too
-		PawnOwner.AnimProxy.LoopAnim(LocomotionAnim, 1.0, 0.1);
+	if(ActiveAnimSlot == 'UpperBody')
+	{	// If UpperBody is active, only play locomotion on the lower body if owner has an AnimProxy
+		if(PawnOwner.AnimProxy != None)
+		{
+			PawnOwner.LoopAnim(LocomotionAnim, 1.0, 0.1);
+		}
+	}
+	else
+	{	// All other cases, play full-body locomotion
+		PawnOwner.LoopAnim(LocomotionAnim, 1.0, 0.1);
+		if(PawnOwner.AnimProxy != None)
+		{
+			// Nothing playing on the upper body slot, so AnimProxy plays it too
+			PawnOwner.AnimProxy.LoopAnim(LocomotionAnim, 1.0, 0.1);
+		}
 	}
 }

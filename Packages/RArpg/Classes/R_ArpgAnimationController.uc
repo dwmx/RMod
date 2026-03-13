@@ -9,9 +9,7 @@ var private Class<R_ArpgAnimationSet> AnimationSetClass;
 var private Class<R_ArpgAnimationSetSelector> AnimationSetSelectorClass;
 
 var private Actor ActorOwner;
-
-var private Name ActiveAnimation;
-var private Name ActiveProxyAnim;
+var private bool bControllerEnabled;
 
 //------------------------------------------------------------------------------
 // Event name sent to CallbackObject
@@ -48,10 +46,32 @@ function InitializePlayAnimState()
 	PlayAnimState.Status = ANIM_STATUS_IDLE;
 }
 
+function SetControllerEnabled(bool bNewControllerEnabled)
+{
+	if(bControllerEnabled == bNewControllerEnabled)
+	{
+		return;
+	}
+	bControllerEnabled = bNewControllerEnabled;
+	if(!bControllerEnabled)
+	{
+		InitializePlayAnimState();
+	}
+}
+
+function bool GetControllerEnabled()
+{
+	return bControllerEnabled;
+}
+
 //------------------------------------------------------------------------------
 
 function Tick(float DeltaSeconds)
 {
+	if(!GetControllerEnabled())
+	{
+		return;
+	}
 	TickPlayAnimState(DeltaSeconds);
 }
 
@@ -73,6 +93,11 @@ function FinishPlayAnimState(Name Result)
 {
 	local R_ArpgEventPayload Payload;
 	local Name EventName;
+
+	if(!GetControllerEnabled())
+	{
+		return;
+	}
 
 	if(PlayAnimState.CallbackObject != None)
 	{
@@ -174,7 +199,7 @@ function bool TryPlayAnim(
 	float Tween,
 	optional R_ArpgObject CallbackObject)
 {
-	if(ActorOwner == None)
+	if(ActorOwner == None || !GetControllerEnabled())
 	{
 		return false;
 	}
@@ -209,7 +234,7 @@ function bool TryPlayStandardAnim(
 	local Class<R_ArpgAnimationSet> LocalAnimSetClass;
 	local Name LocalAnimName;
 
-	if(ActorOwner == None)
+	if(ActorOwner == None || !GetControllerEnabled())
 	{
 		return false;
 	}
@@ -297,4 +322,5 @@ defaultproperties
 {
 	AnimationSetClass=Class'RArpg.R_ArpgAnimationSet'
 	AnimationSetSelectorClass=Class'RArpg.R_ArpgAnimationSetSelector'
+	bControllerEnabled=true
 }
