@@ -508,6 +508,22 @@ function InitializeAIController()
 }
 
 //------------------------------------------------------------------------------
+// Sounds
+
+// Returns the sound that should play when this Pawn strikes another Actor
+// of the specified material type
+function GetStruckActorSound(Name MaterialType)
+{
+	
+}
+
+// Returns the sound that should play when this Pawn gets struck by something
+// with the specified material type
+function GetStruckByActorSound(Name MaterialType)
+{}
+
+
+//------------------------------------------------------------------------------
 //	Cleaup
 
 simulated event Destroyed()
@@ -673,6 +689,22 @@ state ArpgDying
 		}
 
 		SetCollision(false, false, false);
+
+		// PlayDyingSound
+		PlaySound(GetDyingSound());
+	}
+
+	function Sound GetDyingSound()
+	{
+		local Sound Options[3];
+		local int Count;
+
+		Count = 0;
+		if(Die  != None) Options[Count++] = Die;
+		if(Die2 != None) Options[Count++] = Die2;
+		if(Die3 != None) Options[Count++] = Die3;
+
+		return Options[Rand(Count)];
 	}
 
 	function ReplaceWithCarcass()

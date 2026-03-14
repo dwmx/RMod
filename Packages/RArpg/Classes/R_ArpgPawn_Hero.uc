@@ -323,4 +323,7 @@ defaultproperties
     ShieldJoint=attach_shielda
 	bFrameNotifies=true
 	bUseAnimProxy=true
+	Die=Sound'CreaturesSnd.Ragnar.ragdeath01'
+    Die2=Sound'CreaturesSnd.Ragnar.ragdeath02'
+    Die3=Sound'CreaturesSnd.Ragnar.ragdeath03'
 }
