@@ -14,6 +14,8 @@ const ANIM_PARAM_WHIRLWIND	= 'WhirlwindAlpha';		var float WhirlwindAlpha;
 //------------------------------------------------------------------------------
 
 var private R_ArpgPawn PawnOwner;
+var private Rotator ControlledRotation;
+var private bool bIsRequestingRotationControl;
 
 //------------------------------------------------------------------------------
 
@@ -58,6 +60,12 @@ function InitializeArpgObject()
 	WhirlwindAlpha = 0.0;
 }
 
+function bool IsRequestingRotationControl(out Rotator RequestedRotation)
+{
+	RequestedRotation = ControlledRotation;
+	return bIsRequestingRotationControl;
+}
+
 function Tick(float DeltaSeconds)
 {
 	if(!GetControllerEnabled())
@@ -67,12 +75,67 @@ function Tick(float DeltaSeconds)
 
 	Super.Tick(DeltaSeconds);
 
+	// If whirlwind is active, play only that and request rotation control
+	// from the owning Pawn
+	if(WhirlwindAlpha > 0.5)
+	{
+		bIsRequestingRotationControl = true;
+		TickWhirlwind(DeltaSeconds);
+		return;
+	}
+	else
+	{
+		bIsRequestingRotationControl = false;
+	}
+
 	if(LocomotionAlpha > 0.5)
 	{
 		TickLocomotion(DeltaSeconds);
+		return;
 	}
 }
 
+function TickWhirlwind(float DeltaSeconds)
+{
+	local Class<R_ArpgAnimationSet> LocalAnimSetClass;
+	local Name AnimSequence;
+	local float AnimFrame;
+
+	if(PawnOwner != None)
+	{
+		LocalAnimSetClass = GetAnimationSetClass();
+		if(LocalAnimSetClass != None)
+		{
+			if(LocalAnimSetClass.Static.GetStaticWhirlwindAnimation(AnimSequence, AnimFrame))
+			{
+				PawnOwner.AnimSequence = AnimSequence;
+				PawnOwner.AnimFrame = AnimFrame;
+				PawnOwner.AnimRate = 0.0;
+				if(PawnOwner.AnimProxy != None)
+				{
+					PawnOwner.AnimProxy.AnimSequence = AnimSequence;
+					PawnOwner.AnimProxy.AnimFrame = AnimFrame;
+					PawnOwner.AnimProxy.AnimRate = 0.0;
+				}
+			}
+		}
+
+		ControlledRotation = PawnOwner.Rotation;
+		ControlledRotation.Yaw += 65535 * DeltaSeconds * 5.0;
+	}
+}
+
+// Plays looping animation on the Owner and its AnimProxy if there is one,
+// based on the Slot any active animation is playing in
+//
+// Pawns with no AnimProxy will play:
+//	- No locomotion if either FullBody or UpperBody slots are active
+//	- Full body locomotion otherwise
+//
+// Pawns with an AnimProxy will play:
+//	- No locomotion if FullBody slot is active
+//	- Lower body locomotion only if UpperBody slot is active
+//	- Full body locomotion in all other cases
 function TickLocomotion(float DeltaSeconds)
 {
 	local Name ActiveAnimSlot;
@@ -119,4 +182,9 @@ function TickLocomotion(float DeltaSeconds)
 			PawnOwner.AnimProxy.LoopAnim(LocomotionAnim, 1.0, 0.1);
 		}
 	}
+}
+
+defaultproperties
+{
+	bIsRequestingRotationControl=false
 }

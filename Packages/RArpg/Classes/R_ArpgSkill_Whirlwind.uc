@@ -40,7 +40,7 @@ state SkillActive
         if(OwnerPawn != None)
         {
             OwnerPawn.SetBlockMovementInput(true);
-            OwnerPawn.SetLockDirection(true);
+            //OwnerPawn.SetLockDirection(true);
             LookDirection = OwnerPawn.GetLookDirection();
             MoveDirection = LookDirection;
             SavedGroundSpeed = OwnerPawn.GroundSpeed;
@@ -48,6 +48,8 @@ state SkillActive
             StartingYaw = OwnerPawn.Rotation.Yaw;
             //OwnerPawn.Weapon.Damage *= 0.5;
             OwnerPawn.SetCollision(false, true, true);
+
+            OwnerPawn.GetAnimInterface().SetAnimParameter('WhirlwindAlpha', 1.0);
         }
 
         if(Particles != None)
@@ -67,12 +69,14 @@ state SkillActive
         {
 			OwnerPawn.ClearPawnAnim(true, true);
             OwnerPawn.SetBlockMovementInput(false);
-            OwnerPawn.SetLockDirection(false);
+            //OwnerPawn.SetLockDirection(false);
             MoveDirection = Vect(0,0,0);
             OwnerPawn.GroundSpeed = SavedGroundSpeed;
             OwnerPawn.AnimRate = 1.0;
             //OwnerPawn.Weapon.Damage *= 2.0;
             OwnerPawn.SetCollision(true, true, true);
+
+            OwnerPawn.GetAnimInterface().SetAnimParameter('WhirlwindAlpha', 0.0);
         }
 
         if(Particles != None)
@@ -93,30 +97,10 @@ state SkillActive
 
             OwnerPawn.Acceleration = MoveDirection * 1000.0;
 
-            NewRotation = OwnerPawn.Rotation;
-            NewRotation.Yaw += 65535 * DeltaSeconds * 5.0;
-            /*
-            if(OwnerPawn.Rotation.Yaw <= StartingYaw && NewRotation.Yaw >= StartingYaw)
-            {
-                OwnerPawn.Weapon.ClearSwipeArray();
-            }
-                */
-            OwnerPawn.SetRotation(NewRotation);
-
-            //OwnerPawn.AnimSequence = 'X5_AttackB';
-            //OwnerPawn.AnimRate = 0.0;
-            //OwnerPawn.AnimFrame = 0.52;
-			//SetFullBodyAnim('X5_AttackB', 0.0, 0.52);
-			OwnerPawn.SetPawnAnim('X5_AttackB', true, true, 0.52, 0.0);
-            //OwnerPawn.Weapon.FrameNotify(0.52);
-            
             if(Particles != None)
             {
                 Particles.SetLocation(OwnerPawn.Location);
             }
-            //OwnerPawn.AnimFrame = 0.2;
-            //OwnerPawn.AnimRate = 0.2;
-            //Log(OwnerPawn.AnimFrame);
         }
     }
 

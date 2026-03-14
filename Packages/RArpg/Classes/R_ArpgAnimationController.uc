@@ -64,6 +64,14 @@ function bool GetControllerEnabled()
 	return bControllerEnabled;
 }
 
+// Owning Actor checks this before updating its rotation due to gameplay code
+// If this returns true, the Owning Actor will attempt to allow this Controller
+// to control its rotation, but it's not top priority
+function bool IsRequestingRotationControl(out Rotator RequestedRotation)
+{
+	return false;
+}
+
 //------------------------------------------------------------------------------
 
 function Tick(float DeltaSeconds)
@@ -328,4 +336,5 @@ defaultproperties
 	AnimationSetClass=Class'RArpg.R_ArpgAnimationSet'
 	AnimationSetSelectorClass=Class'RArpg.R_ArpgAnimationSetSelector'
 	bControllerEnabled=true
+	bRequestRotationControl=false
 }

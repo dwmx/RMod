@@ -147,11 +147,23 @@ function SetLookDirection(Vector NewLookDirection)
 {
 	local Rotator NewRotation;
 
+	// Skills (mainly) can lock the Pawn's rotation control
+	// via SetLockDirection
 	if(bLockDirection)
 	{
 		return;
 	}
 
+	// Animation controller will not directly set the rotation, but it
+	// may request a rotation value
+	if(AnimationController != None
+	&& AnimationController.IsRequestingRotationControl(NewRotation))
+	{
+		SetRotation(NewRotation);
+		return;
+	}
+
+	// Otherwise, look where the player's mouse is pointing
 	LookDirection = NewLookDirection;
 
 	NewRotation = Rotator(LookDirection);
