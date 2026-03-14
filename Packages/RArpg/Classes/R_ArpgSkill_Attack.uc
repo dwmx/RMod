@@ -1,6 +1,7 @@
 class R_ArpgSkill_Attack extends R_ArpgSkill;
 
-var bool bPerformedCollisionCheck;
+var private bool bPerformedCollisionCheck;
+var private bool bDidLockMovement;
 
 function ActivateSkill()
 {
@@ -27,6 +28,12 @@ state SkillActive
 		RP = GetArpgPawnOwner();
 		RP.SetLockDirection(true);
 
+		if(!RP.CanMoveWhileAttacking())
+		{
+			bDidLockMovement = true;
+			RP.LockMovement();
+		}
+
 		bPerformedCollisionCheck = false;
 	}
 
@@ -36,6 +43,11 @@ state SkillActive
 
 		RP = GetArpgPawnOwner();
 		RP.SetLockDirection(false);
+
+		if(bDidLockMovement)
+		{
+			RP.UnlockMovement();
+		}
 
 		if(!bPerformedCollisionCheck)
 		{

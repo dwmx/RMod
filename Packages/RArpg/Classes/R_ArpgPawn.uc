@@ -30,8 +30,7 @@ var private float Experience;
 //var private int Level;
 
 var private bool bLockDirection;
-
-var private bool bBlockMovementInput;
+var private int LockMovementCount;
 
 var private Class<R_ArpgInteractionProxy> InteractionProxyClass;
 
@@ -95,11 +94,6 @@ function R_ArpgItemContainerSet GetInventorySet() { return None; }
 function bool TryAddItem(R_ArpgItem Item) { return false; }
 
 function ReceiveInventoryEvent(Name EventName, Name InventoryContainerName, R_ArpgItemContainerSet Sender, R_ArpgItem Items[2]);
-
-function SetBlockMovementInput(bool bNewBlockMovementInput)
-{
-	bBlockMovementInput = bNewBlockMovementInput;
-}
 
 function IncrementExperience(float Amount)
 {
@@ -251,47 +245,6 @@ function PlayMoving(optional float Tween) {}
 
 //------------------------------------------------------------------------------
 
-/*
-function LoopPawnAnim(
-	Name AnimSequence,
-	optional bool bUpperBody,
-	optional bool bLowerBody,
-	optional float Rate,
-	optional float TweenTime,
-	optional float MinRate)
-{
-	if(bLowerBody && ActiveAnimLowerBody == '')
-	{
-		LoopAnim(AnimSequence, Rate, TweenTime, MinRate);
-	}
-
-	if(bUpperBody && AnimProxy != None && ActiveAnimUpperBody == '')
-	{
-		AnimProxy.LoopAnim(AnimSequence, Rate, TweenTime, MinRate);
-	}
-}
-
-function PlayPawnAnim(
-	Name AnimSequence,
-	optional bool bUpperBody,
-	optional bool bLowerBody,
-	optional float Rate,
-	optional float TweenTime)
-{
-	if(bLowerBody)
-	{
-		PlayAnim(AnimSequence, Rate, TweenTime);
-		ActiveAnimLowerBody = AnimSequence;
-	}
-
-	if(bUpperBody && AnimProxy != None)
-	{
-		AnimProxy.PlayAnim(AnimSequence, Rate, TweenTime);
-		ActiveAnimUpperBody = AnimSequence;
-	}
-}
-	*/
-
 function SetPawnAnim(
 	Name AnimSequence,
 	optional bool bUpperBody,
@@ -330,6 +283,30 @@ function AnimProxyFrameNotify(int FramePassed)
 
 //------------------------------------------------------------------------------
 
+function LockMovement()
+{
+	if(LockMovementCount == 0)
+	{
+		Acceleration = Vect(0,0,0);
+	}
+	LockMovementCount++;
+}
+
+function UnlockMovement()
+{
+	LockMovementCount--;
+}
+
+function bool IsMovementLocked()
+{
+	return LockMovementCount > 0;
+}
+
+function bool CanMoveWhileAttacking()
+{
+	return false;
+}
+
 function UpdateRotation(float DeltaTime, float maxPitch)
 {}
 
@@ -358,7 +335,7 @@ state PlayerWalking
 		local bool	bSaveJump;
 		local name AnimGroupName;
 
-		if(!bBlockMovementInput)
+		if(!IsMovementLocked())
 		{
 			NewAccel = MovementInput * 300.0;
 			NewAccel.Z = 0.0;
@@ -374,14 +351,7 @@ state PlayerWalking
 			ReplicateMove(DeltaTime, NewAccel, DodgeMove, OldRotation - Rotation);
 		else
 			ProcessMove(DeltaTime, NewAccel, DodgeMove, OldRotation - Rotation);
-		//bPressedJump = bSaveJump;
 	}
-
-	//function ProcessMove(float DeltaTime, vector NewAccel, eDodgeDir DodgeMove, rotator DeltaRot)
-	//{
-	//	Super.ProcessMove(DeltaTime, NewAccel, DodgeMove, DeltaRot);
-	//	PlayMoving();
-	//}
 }
 
 simulated function DrawInWorldHUD(Canvas C)
@@ -656,10 +626,10 @@ defaultproperties
 	Mass=50.000000
     Buoyancy=35.000000
 	bLockDirection=false
-	bBlockMovementInput=false
 	InteractionProxyClass=Class'RArpg.R_ArpgInteractionProxy'
 	AccelRate=2000.0
 	TeamIndex=255
 	bIsDead=false
 	AnimationControllerClass=Class'RArpg.R_ArpgAnimationController_Pawn'
+	LockMovementCount=0
 }

@@ -311,28 +311,6 @@ function bool TryAddItem(R_ArpgItem Item)
 	return false;
 }
 
-/*
-function Input_Fire()
-{
-	ActivateSkill();
-}
-*/
-
-/*
-function ActivateSkill()
-{
-	if(GetSkill(0) != None)
-	{
-		GetSkill(0).ActivateSkill();
-	}
-}
-
-function Input_Skill(Name SkillName)
-{
-	ActivateSkill();
-}
-	*/
-
 defaultproperties
 {
 	//RemoteRole=ROLE_AutonomousProxy

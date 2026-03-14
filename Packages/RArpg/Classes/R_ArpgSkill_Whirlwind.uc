@@ -39,7 +39,8 @@ state SkillActive
         OwnerPawn = GetArpgPawnOwner();
         if(OwnerPawn != None)
         {
-            OwnerPawn.SetBlockMovementInput(true);
+			OwnerPawn.LockMovement();
+            //OwnerPawn.SetBlockMovementInput(true);
             //OwnerPawn.SetLockDirection(true);
             LookDirection = OwnerPawn.GetLookDirection();
             MoveDirection = LookDirection;
@@ -67,8 +68,9 @@ state SkillActive
         OwnerPawn = GetArpgPawnOwner();
         if(OwnerPawn != None)
         {
+			OwnerPawn.UnlockMovement();
 			OwnerPawn.ClearPawnAnim(true, true);
-            OwnerPawn.SetBlockMovementInput(false);
+           // OwnerPawn.SetBlockMovementInput(false);
             //OwnerPawn.SetLockDirection(false);
             MoveDirection = Vect(0,0,0);
             OwnerPawn.GroundSpeed = SavedGroundSpeed;
