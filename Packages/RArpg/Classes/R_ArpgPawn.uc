@@ -29,7 +29,7 @@ var private R_ArpgSkillInstance Skills[8];
 var private float Experience;
 //var private int Level;
 
-var private bool bLockDirection;
+var private int LockDirectionCount;
 var private int LockMovementCount;
 
 var private Class<R_ArpgInteractionProxy> InteractionProxyClass;
@@ -132,18 +132,13 @@ function R_ArpgSkill GetSkill(int Index)
 	return Skills[Index].Skill;
 }
 
-function SetLockDirection(bool bNewLockDirection)
-{
-	bLockDirection = bNewLockDirection;
-}
-
 function SetLookDirection(Vector NewLookDirection)
 {
 	local Rotator NewRotation;
 
 	// Skills (mainly) can lock the Pawn's rotation control
 	// via SetLockDirection
-	if(bLockDirection)
+	if(IsDirectionLocked())
 	{
 		return;
 	}
@@ -282,6 +277,8 @@ function AnimProxyFrameNotify(int FramePassed)
 }
 
 //------------------------------------------------------------------------------
+// Locks
+// Skills call these functions to increment and decrement the lock counts
 
 function LockMovement()
 {
@@ -306,6 +303,23 @@ function bool CanMoveWhileAttacking()
 {
 	return false;
 }
+
+function LockDirection()
+{
+	LockDirectionCount++;
+}
+
+function UnlockDirection()
+{
+	LockDirectionCount--;
+}
+
+function bool IsDirectionLocked()
+{
+	return LockDirectionCount > 0;
+}
+
+//------------------------------------------------------------------------------
 
 function UpdateRotation(float DeltaTime, float maxPitch)
 {}
@@ -625,11 +639,11 @@ defaultproperties
     CollisionHeight=32.000000
 	Mass=50.000000
     Buoyancy=35.000000
-	bLockDirection=false
 	InteractionProxyClass=Class'RArpg.R_ArpgInteractionProxy'
 	AccelRate=2000.0
 	TeamIndex=255
 	bIsDead=false
 	AnimationControllerClass=Class'RArpg.R_ArpgAnimationController_Pawn'
 	LockMovementCount=0
+	LockRotationCount=0
 }

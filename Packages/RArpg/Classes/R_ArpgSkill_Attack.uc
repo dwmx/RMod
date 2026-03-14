@@ -26,7 +26,7 @@ state SkillActive
 		local R_ArpgPawn RP;
 
 		RP = GetArpgPawnOwner();
-		RP.SetLockDirection(true);
+		RP.LockDirection();
 
 		if(!RP.CanMoveWhileAttacking())
 		{
@@ -42,7 +42,7 @@ state SkillActive
 		local R_ArpgPawn RP;
 
 		RP = GetArpgPawnOwner();
-		RP.SetLockDirection(false);
+		RP.UnlockDirection();
 
 		if(bDidLockMovement)
 		{
