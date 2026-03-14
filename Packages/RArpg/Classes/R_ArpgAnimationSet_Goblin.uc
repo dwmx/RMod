@@ -61,3 +61,8 @@ static function Name GetStaticDeathAnimation(optional int Parameters)
 	Options[3] = A_DeathF;
 	return Options[Rand(ArrayCount(Options))];
 }
+
+static function Name GetStaticPainAnimation(optional int Parameters)
+{
+	return A_Pain;
+}

@@ -61,6 +61,10 @@ static function Name GetStaticDeathAnimation(optional int Parameters)
 	return Options[Rand(ArrayCount(Options))];
 }
 
+static function Name GetStaticPainAnimation(optional int Parameters)
+{
+}
+
 static function bool GetStaticWhirlwindAnimation(out Name AnimSequence, out float Frame)
 {
 	AnimSequence = 'X5_AttackB';

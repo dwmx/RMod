@@ -337,37 +337,6 @@ function Input_Skill(Name SkillName)
 	}
 }
 
-state PlayerWalking
-{
-	function PlayerMove( float DeltaTime )
-	{
-		local vector X,Y,Z, NewAccel;
-		local EDodgeDir OldDodge;
-		local eDodgeDir DodgeMove;
-		local rotator OldRotation;
-		local float Speed2D;
-		local bool	bSaveJump;
-		local name AnimGroupName;
-
-		if(!IsMovementLocked())
-		{
-			NewAccel = MovementInput * 300.0;
-			NewAccel.Z = 0.0;
-		}
-		else
-		{
-			NewAccel = Acceleration;
-			NewAccel.Z = 0.0;
-		}
-		MovementInput = Vect(0,0,0);
-
-		if ( Role < ROLE_Authority ) // then save this move and replicate it
-			ReplicateMove(DeltaTime, NewAccel, DodgeMove, OldRotation - Rotation);
-		else
-			ProcessMove(DeltaTime, NewAccel, DodgeMove, OldRotation - Rotation);
-	}
-}
-
 simulated function DrawInWorldHUD(Canvas C)
 {
 	DrawHealthBar(C);
@@ -427,6 +396,11 @@ function ArpgTakeDamage(float Damage)
 	if(LocalAttributeSet != None)
 	{
 		LocalAttributeSet.IncrementAttributeBaseValue('Health', -1.0 * Damage);
+	}
+
+	if(!IsDead())
+	{
+		GotoState('ArpgPain');
 	}
 }
 
@@ -592,9 +566,69 @@ function AcquireInventory(Inventory Item) {}
 function Died(pawn Killer, name damageType, vector HitLocation) {}
 
 //------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+
+state PlayerWalking
+{
+	function PlayerMove( float DeltaTime )
+	{
+		local vector X,Y,Z, NewAccel;
+		local EDodgeDir OldDodge;
+		local eDodgeDir DodgeMove;
+		local rotator OldRotation;
+		local float Speed2D;
+		local bool	bSaveJump;
+		local name AnimGroupName;
+
+		if(!IsMovementLocked())
+		{
+			NewAccel = MovementInput * 300.0;
+			NewAccel.Z = 0.0;
+		}
+		else
+		{
+			NewAccel = Acceleration;
+			NewAccel.Z = 0.0;
+		}
+		MovementInput = Vect(0,0,0);
+
+		if ( Role < ROLE_Authority ) // then save this move and replicate it
+			ReplicateMove(DeltaTime, NewAccel, DodgeMove, OldRotation - Rotation);
+		else
+			ProcessMove(DeltaTime, NewAccel, DodgeMove, OldRotation - Rotation);
+	}
+}
+
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+
+state ArpgPain extends PlayerWalking
+{
+	event BeginState()
+	{
+		LockDirection();
+		LockMovement();
+	}
+
+	event EndState()
+	{
+		UnlockDirection();
+		UnlockMovement();
+	}
+
+Begin:
+	AnimationController.TryPlayStandardAnim('Pain', 'FullBody', 1.0, 0.1);
+	Sleep(0.5);
+	GotoState('PlayerWalking');
+}
+
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 state ArpgDying
 {
+	ignores ArpgTakeDamage;
+
 	event BeginState()
 	{
 		Acceleration = Vect(0,0,0);

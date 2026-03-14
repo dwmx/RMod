@@ -258,6 +258,7 @@ function bool TryPlayStandardAnim(
 	{
 		switch(StandardName)
 		{
+		case 'Pain':	LocalAnimName = LocalAnimSetClass.Static.GetStaticPainAnimation();		break;
 		case 'Death':	LocalAnimName = LocalAnimSetClass.Static.GetStaticDeathAnimation();		break;
 		case 'Attack':	LocalAnimName = LocalAnimSetClass.Static.GetStaticAttackAnimation();	break;
 		}

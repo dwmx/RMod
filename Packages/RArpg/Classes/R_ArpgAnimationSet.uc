@@ -20,4 +20,5 @@ const MOVEDIR_BACKWARD_LEFT		= 0x1010;
 static function Name GetStaticAnimationForMovementDirection(int MovementDirection);
 static function Name GetStaticAttackAnimation(optional int Parameters);
 static function Name GetStaticDeathAnimation(optional int Parameters);
+static function Name GetStaticPainAnimation(optional int Parameters);
 static function bool GetStaticWhirlwindAnimation(out Name AnimSequence, out float Frame);

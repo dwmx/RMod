@@ -11,6 +11,16 @@ static function Name GetStaticAttackAnimation(optional int Parameters)
 	return AttackAnimations[Rand(ArrayCount(AttackAnimations))];
 }
 
+static function Name GetStaticPainAnimation(optional int Parameters)
+{
+	local Name PainAnimations[4];
+	PainAnimations[0] = 'S3_painFront';
+	PainAnimations[1] = 'S3_painBack';
+	PainAnimations[2] = 'S3_painLeft';
+	PainAnimations[3] = 'S3_painRight';
+	return PainAnimations[Rand(ArrayCount(PainAnimations))];
+}
+
 defaultproperties
 {
     Idle=S3_idle
