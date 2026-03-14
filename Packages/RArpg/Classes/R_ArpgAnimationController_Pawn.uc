@@ -77,7 +77,7 @@ function Tick(float DeltaSeconds)
 
 	// If whirlwind is active, play only that and request rotation control
 	// from the owning Pawn
-	if(WhirlwindAlpha > 0.5)
+	if(WhirlwindAlpha > 0.01)
 	{
 		bIsRequestingRotationControl = true;
 		TickWhirlwind(DeltaSeconds);
@@ -121,7 +121,7 @@ function TickWhirlwind(float DeltaSeconds)
 		}
 
 		ControlledRotation = PawnOwner.Rotation;
-		ControlledRotation.Yaw += 65535 * DeltaSeconds * 5.0;
+		ControlledRotation.Yaw += 65535 * DeltaSeconds * 5.0 * FClamp(WhirlwindAlpha, 0.0, 1.0);
 	}
 }
 
