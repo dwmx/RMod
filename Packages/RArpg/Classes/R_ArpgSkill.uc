@@ -27,6 +27,32 @@ function InitializeSkill()
 function ActivateSkill()
 {}
 
+//------------------------------------------------------------------------------
+// Helpers
+
+function TryPlayStandardAnim(
+	Name StandardName,
+	Name Slot,
+	float Rate,
+	float Tween,
+	optional R_ArpgObject CallbackObject)
+{
+	local R_ArpgPawn LocalPawn;
+	local R_ArpgAnimationInterface LocalAnimInterface;
+
+	LocalPawn = R_ArpgPawn(Owner);
+	if(LocalPawn != None)
+	{
+		LocalAnimInterface = LocalPawn.GetAnimInterface();
+		if(LocalAnimInterface != None)
+		{
+			LocalAnimInterface.TryPlayStandardAnim(StandardName, Slot, Rate, Tween, CallbackObject);
+		}
+	}
+}
+
+//------------------------------------------------------------------------------
+
 auto state Idle
 {}
 

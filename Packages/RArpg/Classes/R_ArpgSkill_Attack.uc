@@ -114,7 +114,7 @@ state SkillActive
 	}
 
 Begin:
-	R_ArpgPawn(Owner).GetAnimInterface().TryPlayStandardAnim('Attack', 'UpperBody', 1.0, 0.1);
+	TryPlayStandardAnim('Attack', 'UpperBody', 1.0, 0.1);
 	Sleep(0.5 * (1.0 / GetAttackRate()));
 	PerformCollisionCheck();
 	Sleep(0.5 * (1.0 / GetAttackRate()));
