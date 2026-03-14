@@ -642,7 +642,10 @@ event PlayerPawn Login(
 	local PlayerPawn P;
 	
 	IncomingClass = SpawnClass;
-	SpawnClass = RunePlayerClass;
+	if(!ClassIsChildOf(SpawnClass, RunePlayerClass))
+	{
+		SpawnClass = RunePlayerClass;
+	}
 
     UtilitiesClass.Static.RModLog("Incoming class:" @ IncomingClass @ "SpawnClass:" @ SpawnClass);
 

@@ -111,11 +111,8 @@ function InitializeGameUserInterface()
 	GameUI.Initialize(Self.Player);
 }
 
-
 exec function ArpgInventory()
 {
-	Log(GameUIClass);
-	Log(GameUI);
 	if(GameUI != None)
 	{
 		GameUI.InputCommand(UICommand_Inventory);
@@ -142,21 +139,6 @@ event Tick(float DeltaSeconds)
 	{
 		GetControlledPawn().Input_Skill('Attack');
 	}
-}
-
-exec function TestSkill(Name SkillName)
-{
-	GetControlledPawn().Input_Skill(SkillName);
-}
-
-exec function TestAnim(Name AnimName)
-{
-	GetControlledPawn().GetAnimInterface().TryPlayAnim(AnimName, 'UpperBody', 1.0, 0.1);
-}
-
-exec function TestCancelAnim()
-{
-	GetControlledPawn().GetAnimInterface().CancelCurrentAnim();
 }
 
 function TickPawnRotation(float DeltaSeconds)
@@ -304,11 +286,6 @@ exec function Fire(optional float F)
 {
 }
 
-exec function TestTakeDamage(float Amount)
-{
-	GetControlledPawn().ArpgTakeDamage(Amount);
-}
-
 event PostRender(Canvas C)
 {
 	if(GameUI != None)
@@ -317,62 +294,6 @@ event PostRender(Canvas C)
 	}
 
 	Super.PostRender(C);
-}
-
-/*
-exec function SetAnimFrame(float Frame)
-{
-	ControlledPawn.AnimRate = 0.0;
-	ControlledPawn.AnimFrame = Frame;
-}
-
-exec function TrySetAttribute(Name AttributeName, float Value)
-{
-	Log("Attempting to set Attribute" @ AttributeName @ "to a value of" @ Value);
-	ControlledPawn.GetEntity().GetEntityAttributeSet().SetAttributeBaseValue(AttributeName, Value);
-}
-
-exec function TryAddModifier(Name AttributeName, int Operator, float Magnitude)
-{
-	ControlledPawn.GetEntity().GetEntityAttributeSet().AddAttributeModifier(AttributeName, Magnitude, Operator, 100);
-}
-
-exec function TryRemoveAllModifiers()
-{
-	ControlledPawn.GetEntity().GetEntityAttributeSet().RemoveAttributeModifiersBySource(100);
-}
-	*/
-
-exec function TestItemPickup()
-{
-	local Vector SpawnLocation;
-	local R_ArpgItemActor_Pickup A;
-	local R_ArpgGameInfo GI;
-	local R_ArpgItemFactory ItemFactory;
-	local R_ArpgItem NewItem;
-
-	GI = R_ArpgGameInfo(Level.Game);
-	ItemFactory = GI.GetItemFactory();
-	NewItem = ItemFactory.CreateItemFromTag(TagLib.Static.MakeTag('Item','Weapon','Axe','BattleAxe'));
-
-	SpawnLocation = ControlledPawn.Location;
-	A = Spawn(Class'RArpg.R_ArpgItemActor_Pickup',,,SpawnLocation);
-	A.SetItem(NewItem);
-}
-
-exec function TestTossFloat()
-{
-	R_ArpgPawn_Hero(GetControlledPawn()).TryTossFloatingItem();
-}
-
-exec function TestUICommand(Name UICommand)
-{
-	GameUI.InputCommand(UICommand);
-}
-
-exec function TestSession()
-{
-	SessionEndPoint.TestSession();
 }
 
 auto state PlayerController
