@@ -78,6 +78,9 @@ defaultproperties
     Buoyancy=35.000000
 	AnimationSetDefaultClass=Class'RArpg.R_ArpgAnimationSet_Goblin'
 	bAnimationPlaying=false
+	HitSound1=Sound'CreaturesSnd.Goblin.goblinhit08'
+    HitSound2=Sound'CreaturesSnd.Goblin.goblinhit16'
+    HitSound3=Sound'CreaturesSnd.Goblin.goblinhit28'
 	Die=Sound'CreaturesSnd.Goblin.goblindeath06'
     Die2=Sound'CreaturesSnd.Goblin.goblindeath13'
     Die3=Sound'CreaturesSnd.Goblin.goblindeath16'

@@ -383,6 +383,16 @@ simulated function DrawHealthBar(Canvas C)
 	CanvasLib.Static.DrawBoxSolid(C, Extent1, Extent2, 1.0, 0.0, 0.0, 1.0);
 }
 
+function ArpgStruckBy(Actor Other, float Damage, Name MaterialType)
+{
+	PlayStruckBySound(MaterialType);
+
+	if(Damage > 0.0)
+	{
+		ArpgTakeDamage(Damage);
+	}
+}
+
 function ArpgTakeDamage(float Damage)
 {
 	local R_ArpgEntity LocalEntity;
@@ -510,18 +520,28 @@ function InitializeAIController()
 //------------------------------------------------------------------------------
 // Sounds
 
-// Returns the sound that should play when this Pawn strikes another Actor
-// of the specified material type
-function GetStruckActorSound(Name MaterialType)
+function PlayStruckSound(Name MaterialType)
 {
 	
 }
 
-// Returns the sound that should play when this Pawn gets struck by something
-// with the specified material type
-function GetStruckByActorSound(Name MaterialType)
-{}
+function PlayStruckBySound(Name MaterialType)
+{
+	local Sound Options[3];
+	local int Count;
+	local Sound Selection;
 
+	Count = 0;
+	if(HitSound1 != None) Options[Count++] = HitSound1;
+	if(HitSound2 != None) Options[Count++] = HitSound2;
+	if(HitSound3 != None) Options[Count++] = HitSound3;
+	
+	Selection = Options[Rand(Count)];
+	if(Selection != None)
+	{
+		PlaySound(Selection);
+	}
+}
 
 //------------------------------------------------------------------------------
 //	Cleaup

@@ -128,7 +128,7 @@ state SkillActive
 		}
 
         CollisionOrigin = PawnOwner.Location;
-        CollisionRadius = 128.0;
+        CollisionRadius = 64.0;
 
         RadiusPawnCount = 0;
         foreach RadiusActors(Class'RArpg.R_ArpgPawn', PawnIt, CollisionRadius, CollisionOrigin)
@@ -150,7 +150,7 @@ state SkillActive
         if(RadiusPawnCount > 0)
         {
             PawnIt = RadiusPawns[Rand(RadiusPawnCount)];
-            PawnIt.ArpgTakeDamage(20.0);
+            PawnIt.ArpgStruckBy(PawnOwner, 20.0, 'Metal');
         }
         
         Observer = GetObserver_Collision();

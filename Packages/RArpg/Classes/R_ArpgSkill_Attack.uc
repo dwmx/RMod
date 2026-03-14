@@ -98,7 +98,7 @@ state SkillActive
 		{
 			if(IsValidTarget(PawnIt))
 			{
-				PawnIt.ArpgTakeDamage(20.0);
+				PawnIt.ArpgStruckBy(PawnOwner, 20.0, 'Metal');
 				break;
 			}
 		}
