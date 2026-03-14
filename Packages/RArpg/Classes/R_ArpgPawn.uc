@@ -409,7 +409,18 @@ function PlayStruckBySound(Name MaterialType)
 }
 
 //------------------------------------------------------------------------------
+// Effects
 
+function PlayStruckByEffects(Name MaterialType)
+{
+	Spawn(Class'RuneI.BloodMist');
+}
+
+//------------------------------------------------------------------------------
+
+// This Pawn struct another Pawn
+// Skills should call this function rather than directly calling ArpgTakeDamage,
+// so that effects are able to play
 function ArpgStruckOther(R_ArpgPawn Victim, float Damage)
 {
 	if(Victim == None)
@@ -421,9 +432,11 @@ function ArpgStruckOther(R_ArpgPawn Victim, float Damage)
 	Victim.ArpgStruckBy(Self, Damage, 'Metal');
 }
 
+// This Pawn was struck by another Pawn
 function ArpgStruckBy(R_ArpgPawn Instigator, float Damage, Name MaterialType)
 {
 	PlayStruckBySound(MaterialType);
+	PlayStruckByEffects(MaterialType);
 
 	if(Damage > 0.0)
 	{
@@ -431,6 +444,9 @@ function ArpgStruckBy(R_ArpgPawn Instigator, float Damage, Name MaterialType)
 	}
 }
 
+// Basic TakeDamage function, does not play any effects, just performs health
+// reduction
+// This is where attribute-based damage reduction comes into play
 function ArpgTakeDamage(float Damage)
 {
 	local R_ArpgEntity LocalEntity;
