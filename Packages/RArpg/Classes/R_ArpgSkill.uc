@@ -73,5 +73,6 @@ Begin:
 
 defaultproperties
 {
+	DrawType=DT_None
 	CooldownDurationSeconds=0.0
 }

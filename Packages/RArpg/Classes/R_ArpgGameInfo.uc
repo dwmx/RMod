@@ -51,6 +51,23 @@ event Logout(Pawn P)
 	Super.Logout(P);
 }
 
+function bool PlayerRequestRespawn(R_ArpgPlayerController PlayerController)
+{
+	local NavigationPoint PlayerStart;
+
+	PlayerStart = FindPlayerStart(PlayerController);
+	if(PlayerStart == None)
+	{
+		return false;
+	}
+
+	PlayerController.SetLocation(PlayerStart.Location);
+	PlayerController.SetRotation(PlayerStart.Rotation);
+	SpawnPawnForPlayer(PlayerController);
+
+	return true;
+}
+
 function SpawnPawnForPlayer(R_ArpgPlayerController PlayerController)
 {
 	local R_ArpgPawn NewPawn;

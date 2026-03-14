@@ -249,15 +249,23 @@ event PlayerCalcView(
 	}
 }
 
+function ReleaseControlledPawn()
+{
+	ControlledPawn = None;
+}
+
 exec function InputLMouseDown()
 {
 	local Vector CursorPosition;
+
+	Log("L mouse down");
 	//Log("LMouseDown");
 	if(GameUI != None)
 	{
 		GameCursor.GetCursorPosition(CursorPosition.X, CursorPosition.Y);
 		if(GameUI.InputLMouseDown(CursorPosition.X, CursorPosition.Y))
 		{
+			Log("L mouse donw consumed by ui");
 			return;
 		}
 	}
@@ -266,6 +274,22 @@ exec function InputLMouseDown()
 	{
 		bAttacking = true;
 		//ControlledPawn.Input_Skill('Attack');
+	}
+	else
+	{
+		RequestRespawn();
+	}
+}
+
+function RequestRespawn()
+{
+	local R_ArpgGameInfo GI;
+
+	Log("Requestion respawn");
+	GI = R_ArpgGameInfo(Level.Game);
+	if(GI != None)
+	{
+		GI.PlayerRequestRespawn(Self);
 	}
 }
 

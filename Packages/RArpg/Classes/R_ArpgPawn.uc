@@ -507,8 +507,12 @@ function InitializeAIController()
 	}
 }
 
+//------------------------------------------------------------------------------
+//	Cleaup
+
 simulated event Destroyed()
 {
+	local R_ArpgPlayerController OwningController;
 	local Inventory Inv, NextInv;
 
 	if(Shadow != None)	Shadow.Destroy();
@@ -551,7 +555,37 @@ simulated event Destroyed()
 		SavedMoves.Destroy();
 		SavedMoves = SavedMoves.NextMove;
 	}
+
+	DestroyAllSkills();
+
+	OwningController = R_ArpgPlayerController(Owner);
+	if(OwningController != None)
+	{
+		OwningController.ReleaseControlledPawn();
+	}
+
+	// Clean up object references
+	AIController = None;
+	Entity = None;
+	AnimationController = None;
+	Observer_Collision = None;
 }
+
+function DestroyAllSkills()
+{
+	local int i;
+
+	for(i = 0; i < ArrayCount(Skills); ++i)
+	{
+		if(Skills[i].Skill != None)
+		{
+			Skills[i].Skill.Destroy();
+			Skills[i].Skill = None;
+		}
+	}
+}
+
+//------------------------------------------------------------------------------
 
 function ServerRestartGame(){}
 function ServerRestartPlayer(){}
