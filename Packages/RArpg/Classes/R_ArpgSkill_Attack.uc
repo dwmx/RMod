@@ -1,10 +1,6 @@
 class R_ArpgSkill_Attack extends R_ArpgSkill;
 
-var private bool bCollisionCheckActive;
-var private Actor StruckActors[16];
-var private int StruckActorsCount;
-
-var private Name RecoverAnim;
+var bool bPerformedCollisionCheck;
 
 function ActivateSkill()
 {
@@ -30,12 +26,8 @@ state SkillActive
 
 		RP = GetArpgPawnOwner();
 		RP.SetLockDirection(true);
-		//RP.SetBlockMovementInput(true);
-		//RP.Velocity = Vect(0,0,0);
-		//RP.Acceleration = Vect(0,0,0);
 
-		bCollisionCheckActive = false;
-		StruckActorsCount = 0;
+		bPerformedCollisionCheck = false;
 	}
 
 	event EndState()
@@ -44,83 +36,42 @@ state SkillActive
 
 		RP = GetArpgPawnOwner();
 		RP.SetLockDirection(false);
-		//RP.SetBlockMovementInput(false);
 
-		bCollisionCheckActive = false;
-		StruckActorsCount = 0;
+		if(!bPerformedCollisionCheck)
+		{
+			PerformCollisionCheck();
+		}
 	}
 
-	//function Name GetAttackAnim()
-	//{
-	//	local R_ArpgPawn RP;
-	//	local Class<R_ArpgAnimationSet> AnimSetClass;
-	//	local Name AttackSequence, RecoverSequence;
-//
-	//	RP = GetArpgPawnOwner();
-	//	if(RP != None)
-	//	{
-	//		AnimSetClass = RP.GetAnimationSetClass();
-	//	}
-//
-	//	if(AnimSetClass == None)
-	//	{
-	//		return '';
-	//	}
-//
-	//	return AnimSetClass.Static.GetStaticAttackAnimation();
-	//}
-
-	function AddStruckActor(Actor A)
+	function bool IsValidTarget(R_ArpgPawn TargetPawn)
 	{
-		if(A == None)
-		{
-			return;
-		}
+		local R_ArpgPawn PawnOwner;
 
-		if(StruckActorsCount >= ArrayCount(StruckActors))
-		{
-			return;
-		}
-
-		StruckActors[StruckActorsCount] = A;
-		++StruckActorsCount;
-	}
-
-	function bool HasStruckActor(Actor A)
-	{
-		local int i;
-
-		if(A == None)
+		PawnOwner = GetArpgPawnOwner();
+		if(PawnOwner == None || TargetPawn == None || PawnOwner == TargetPawn)
 		{
 			return false;
 		}
 
-		for(i = 0; i < StruckActorsCount; ++i)
+		if(TargetPawn.GetTeamIndex() != PawnOwner.GetTeamIndex())
 		{
-			if(StruckActors[i] == A)
-			{
-				return true;
-			}
+			return true;
 		}
 		return false;
 	}
 
-	function EnableCollisionCheck()
-	{
-		bCollisionCheckActive = true;
-	}
-
-	function DisableCollisionCheck()
-	{
-		bCollisionCheckActive = false;
-	}
-
-	function TickCollisions(float DeltaSeconds)
+	function PerformCollisionCheck()
 	{
 		local R_ArpgObserver_Collision Observer;
 		local R_ArpgPawn PawnOwner, PawnIt;
 		local Vector CollisionOrigin;
 		local float CollisionRadius;
+
+		if(bPerformedCollisionCheck)
+		{
+			return;
+		}
+		bPerformedCollisionCheck = true;
 
 		PawnOwner = GetArpgPawnOwner();
 		if(PawnOwner == None)
@@ -129,17 +80,15 @@ state SkillActive
 		}
 
 		CollisionOrigin = PawnOwner.Location + Vector(PawnOwner.Rotation) * 32.0;
-		CollisionRadius = 32.0;
+		CollisionRadius = 16.0;
 
 		foreach RadiusActors(Class'RArpg.R_ArpgPawn', PawnIt, CollisionRadius, CollisionOrigin)
 		{
-			if(HasStruckActor(PawnIt) || PawnIt == PawnOwner)
+			if(IsValidTarget(PawnIt))
 			{
-				continue;
+				PawnIt.ArpgTakeDamage(20.0);
+				break;
 			}
-
-			AddStruckActor(PawnIt);
-			PawnIt.ArpgTakeDamage(20.0);
 		}
 
 		Observer = GetObserver_Collision();
@@ -164,16 +113,10 @@ state SkillActive
 		return 1.0;
 	}
 
-	event Tick(float DeltaSeconds)
-	{
-		TickCollisions(DeltaSeconds);
-	}
-
 Begin:
-	//R_ArpgPawn(Owner).GetAnimInterface().PlayStandardAnimation('Attack', GetAttackRate(), 0.1);
-	//R_ArpgPawn(Owner).GetAnimInterface().PlayStandardAnimation('Attack', 1.0, 0.1);
 	R_ArpgPawn(Owner).GetAnimInterface().TryPlayStandardAnim('Attack', 'UpperBody', 1.0, 0.1);
-	Sleep(0.8 * (1.0 / GetAttackRate()));
-	//WeaponDeactivate();
+	Sleep(0.5 * (1.0 / GetAttackRate()));
+	PerformCollisionCheck();
+	Sleep(0.5 * (1.0 / GetAttackRate()));
 	GotoState('SkillNeutral');
 }

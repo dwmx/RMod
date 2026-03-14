@@ -25,24 +25,33 @@ var private R_ArpgObserver_CollisionDebug Observer_Collision;
 
 //------------------------------------------------------------------------------
 
+function DebugTargetChanged(Actor OldDebugTarget, Actor NewDebugTarget)
+{
+	local R_ArpgObserver_CollisionDebug LocalCollisionObserver;
+	local R_ArpgPawn LocalPawn;
+
+	LocalPawn = R_ArpgPawn(OldDebugTarget);
+	if(LocalPawn != None)
+	{
+		LocalPawn.SetObserver_Collision(None);
+	}
+
+	LocalCollisionObserver = GetObserver_Collision();
+	if(LocalCollisionObserver != None)
+	{
+		LocalPawn = R_ArpgPawn(NewDebugTarget);
+		if(LocalPawn != None)
+		{
+			LocalPawn.SetObserver_Collision(LocalCollisionObserver);
+		}
+	}
+}
+
 function R_ArpgObserver_CollisionDebug GetObserver_Collision()
 {
-	local R_ArpgPlayerController PlayerController;
-	local R_ArpgPawn ControlledPawn;
-
 	if(Observer_Collision == None)
 	{
 		Observer_Collision = R_ArpgObserver_CollisionDebug(ArpgLib.Static.CreateArpgObject(ObserverClass_Collision));
-
-		PlayerController = R_ArpgPlayerController(GetPlayerPawnOwner());
-		if(PlayerController != None)
-		{
-			ControlledPawn = PlayerController.GetControlledPawn();
-			if(ControlledPawn != None)
-			{
-				ControlledPawn.SetObserver_Collision(Observer_Collision);
-			}
-		}
 	}
 
 	return Observer_Collision;
