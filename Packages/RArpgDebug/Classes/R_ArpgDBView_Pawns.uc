@@ -213,6 +213,10 @@ simulated function DrawAnimation(Canvas C, R_DBStringManager StringManager, R_Ar
 	local Name AnimSequence, AnimSlot;
 	local String AnimStatusString;
 	local R_ArpgObject AnimCallbackObject;
+	local Name AnimParameters[32];
+	local int AnimParameterCount;
+	local float AnimParameterValue;
+	local int i;
 
 	StringManager.AddCategory(DebugCategoryAnimController);
 	StringManager.AddCategory(DebugCategoryAnimPawn);
@@ -235,6 +239,8 @@ simulated function DrawAnimation(Canvas C, R_DBStringManager StringManager, R_Ar
 	{
 		AnimController.GetPlayAnimState(AnimSequence, AnimSlot, AnimCallbackObject, AnimStatusString);
 
+		AnimController.GetAvailableAnimParameters(AnimParameters, AnimParameterCount);
+
 		AnimControllerClass = AnimController.Class;
 		AnimSetClass = AnimController.GetAnimationSetClass();
 		AnimSetSelectorClass = AnimController.GetAnimationSetSelectorClass();
@@ -245,12 +251,26 @@ simulated function DrawAnimation(Canvas C, R_DBStringManager StringManager, R_Ar
 	StringManager.AddClass(DebugCategoryAnimController, "AnimSetClass", AnimSetClass);
 	StringManager.AddClass(DebugCategoryAnimController, "AnimSetSelectorClass", AnimSetSelectorClass);
 
+	// Add the AnimPlayState from the AnimController -- This is the object that tracks the current animation of its owner and proxy
+	StringManager.AddString(DebugCategoryAnimController, "");
 	StringManager.AddString(DebugCategoryAnimController, "----------------------------------------");
 	StringManager.AddString(DebugCategoryAnimController, "PlayAnimState");
 	StringManager.AddName(DebugCategoryAnimController, "AnimSequence", AnimSequence);
 	StringManager.AddName(DebugCategoryAnimController, "Slot", AnimSlot);
 	StringManager.AddObject(DebugCategoryAnimController, "CallbackObject", AnimCallbackObject);
 	StringManager.AddString(DebugCategoryAnimController, AnimStatusString, "Status");
+
+	// Add as many AnimParameters as the target has
+	StringManager.AddString(DebugCategoryAnimController, "");
+	StringManager.AddString(DebugCategoryAnimController, "----------------------------------------");
+	StringManager.AddString(DebugCategoryAnimController, "AnimController Parameters");
+	for(i = 0; i < AnimParameterCount; ++i)
+	{
+		if(AnimController.GetAnimParameter(AnimParameters[i], AnimParameterValue))
+		{
+			StringManager.AddFloat(DebugCategoryAnimController, String(AnimParameters[i]), AnimParameterValue);
+		}
+	}
 
 	// AnimFrame
 	StringManager.AddName(DebugCategoryAnimPawn, "AnimSequence", LocalPawn.AnimSequence);

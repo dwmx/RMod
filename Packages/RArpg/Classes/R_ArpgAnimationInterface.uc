@@ -19,4 +19,6 @@ function bool TryPlayAnim(
 
 function CancelCurrentAnim();
 
-function SetAnimParameter(Name AnimParameter, float Value);
+function bool SetAnimParameter(Name AnimParameter, float Value);
+function bool GetAnimParameter(Name AnimParameter, out float Value);
+function GetAvailableAnimParameters(out Name AnimParameters[32], out int Count);
