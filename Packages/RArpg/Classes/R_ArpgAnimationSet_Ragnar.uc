@@ -63,6 +63,10 @@ static function Name GetStaticDeathAnimation(optional int Parameters)
 
 static function Name GetStaticPainAnimation(optional int Parameters)
 {
+	local Name PainAnimations[2];
+	PainAnimations[0] = 'N_PainFront';
+	PainAnimations[1] = 'N_PainBack';
+	return PainAnimations[Rand(ArrayCount(PainAnimations))];
 }
 
 static function bool GetStaticWhirlwindAnimation(out Name AnimSequence, out float Frame)
