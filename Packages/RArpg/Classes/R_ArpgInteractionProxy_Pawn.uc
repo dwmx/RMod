@@ -24,3 +24,14 @@ function bool GetAttributeValue(
 	}
 	return Super.GetAttributeValue(AttributeName, BaseValue, AggregateValue);
 }
+
+function DrawInWorldHUD(Canvas C)
+{
+	local R_ArpgPawn LocalPawn;
+
+	LocalPawn = R_ArpgPawn(Owner);
+	if(LocalPawn != None)
+	{
+		LocalPawn.DrawInWorldHUD(C);
+	}
+}

@@ -65,6 +65,8 @@ function Actor GetProxyOwner()
 	return Owner;
 }
 
+function DrawInWorldHUD(Canvas C);
+
 defaultproperties
 {
 	RemoteRole=ROLE_None

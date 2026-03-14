@@ -23,9 +23,19 @@ var private int CachedInteractionProxyCount;
 var private int SelectedProxyIndex;
 var private R_ArpgInteractionProxy SelectedProxy;
 
+// When true, draw all item names as box labels
 var private bool bShowItems;
+
+// When true, calls DrawInWorldHUD on all InteractionProxies
+// Proxies are reponsible for implementing their own HUD drawing
 var private bool bShowInWorldHUD;
+
+// When true, Proxies are selectable and interactable
+// When false, all selection and interaction is disabled
 var private bool bInteractionEnabled;
+
+// When true, the owning player's controlled pawn is not selectable
+var private bool bDontSelectControlledPawn;
 
 var private Font F_ItemNameFont;
 var private Font F_TargetNameFont;
@@ -129,6 +139,7 @@ function AddCachedInteractionProxy(
 function UpdateInteractionArray(Canvas C)
 {
 	local R_ArpgPlayerController PlayerController;
+	local R_ArpgPawn ControlledPawn;
 	local Vector ViewLocation;
 	local R_ArpgInteractionProxy Proxy;
 	local Vector AABBMin, AABBMax;
@@ -146,11 +157,20 @@ function UpdateInteractionArray(Canvas C)
 	{
 		return;
 	}
+	ControlledPawn = PlayerController.GetControlledPawn();
 
 	SelectedIndex = INVALID_INDEX;
 	ViewLocation = PlayerController.GetViewLocation();
 	foreach PlayerController.AllActors(Class'RArpg.R_ArpgInteractionProxy', Proxy)
 	{
+		if(bDontSelectControlledPawn)
+		{
+			if(Proxy.GetProxyOwner() == ControlledPawn)
+			{
+				continue;
+			}
+		}
+
 		CalcScreenSpaceBoundingBoxForActor(C, Proxy, ViewLocation, AABBMin, AABBMax);
 		AddCachedInteractionProxy(Proxy, AABBMin.X, AABBMin.Y, AABBMax.X, AABBMax.Y);
 
@@ -402,7 +422,6 @@ function PaintItems(Canvas C, float X, float Y)
 {
 	local int i;
 	local R_ArpgInteractionProxy Proxy;
-	//local R_ArpgItemActor_Pickup ItemActor;
 
 	for(i = 0; i < CachedInteractionProxyCount; ++i)
 	{
@@ -421,25 +440,18 @@ function PaintItems(Canvas C, float X, float Y)
 
 function PaintInWorldHUD(Canvas C, float X, float Y)
 {
-	local Pawn LocalPlayerOwner;
-	local Pawn PawnIt;
-	local R_ArpgPawn ArpgPawnIt;
-	local float HealthBase, HealthAggregate;
-	local float MaxHealthBase, MaxHealthAggregate;
+	local int i;
+	local R_ArpgInteractionProxy Proxy;
 
-	LocalPlayerOwner = GetPlayerOwner();
-	if(LocalPlayerOwner == None)
+	for(i = 0; i < CachedInteractionProxyCount; ++i)
 	{
-		return;
-	}
-
-	for(PawnIt = LocalPlayerOwner.Level.PawnList; PawnIt != None; PawnIt = PawnIt.NextPawn)
-	{
-		ArpgPawnIt = R_ArpgPawn(PawnIt);
-		if(ArpgPawnIt != None)
+		Proxy = CachedInteractionProxies[i].Proxy;
+		if(Proxy == None)
 		{
-			ArpgPawnIt.DrawInWorldHUD(C);
+			continue;
 		}
+
+		Proxy.DrawInWorldHUD(C);
 	}
 }
 
@@ -462,4 +474,5 @@ function PaintCircleForItem(Canvas C, R_ArpgItemActor_Pickup ItemActor)
 defaultproperties
 {
 	bInteractionEnabled=true
+	bDontSelectControlledPawn=true
 }
