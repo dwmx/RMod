@@ -8,6 +8,7 @@ const UIGameLib = Class'RArpg.R_UI_ArpgUIGameLib';
 // Thse must match definitions in R_ArpgInteractionProxy
 const PROXY_TYPE_PROXY 	= 'Proxy';
 const PROXY_TYPE_PICKUP = 'Pickup';
+const PROXY_TYPE_TARGET = 'Target';
 
 struct R_ArpgCachedInteractionProxy
 {
@@ -27,6 +28,7 @@ var private bool bShowInWorldHUD;
 var private bool bInteractionEnabled;
 
 var private Font F_ItemNameFont;
+var private Font F_TargetNameFont;
 
 //------------------------------------------------------------------------------
 
@@ -217,6 +219,7 @@ function Created()
 {
 	Super.Created();
 	F_ItemNameFont = Font(DynamicLoadObject("RArpgFonts.Marcellus16", Class'Font'));
+	F_TargetNameFont = Font(DynamicLoadObject("RArpgFonts.Marcellus16", Class'Font'));
 }
 
 function SetShowItems(bool bNewShowItems)
@@ -268,7 +271,69 @@ function PaintProxyAsSelected(Canvas C, R_ArpgInteractionProxy Proxy)
 		PaintLabelBoxForProxy(C, CachedInteractionProxies[SelectedProxyIndex].Proxy);
 		PaintCircleForItem(C, R_ArpgItemActor_Pickup(CachedInteractionProxies[SelectedProxyIndex].Proxy.GetProxyOwner()));
 		break;
+	case PROXY_TYPE_TARGET:
+		PaintProxyAsTarget(C, Proxy);
+		break;
 	}
+}
+
+function PaintProxyAsTarget(Canvas C, R_ArpgInteractionProxy Proxy)
+{
+	local float BaseW, BaseH;
+	local float BaseX, BaseY;
+	local float DrawW, DrawH;
+	local float DrawX, DrawY;
+	local float Padding;
+	local String DrawString;
+	local float StrW, StrH;
+	local float Health, MaxHealth;
+	local float BarRatio;
+
+	if(Proxy.GetAttributeValue('Health',,Health)
+	&& Proxy.GetAttributeValue('MaxHealth',,MaxHealth))
+	{
+		if(Health <= 0.0)
+			BarRatio = 0.0;
+		else
+			BarRatio = FClamp(Health / MaxHealth, 0.0, 1.0);
+	}
+	else
+	{
+		BarRatio = 0.0;
+	}
+
+	// Draw Backdrop
+	BaseW = 512.0;
+	BaseH = 32.0;
+	BaseX = C.ClipX * 0.5 - BaseW * 0.5;
+	BaseY = 0.0;
+
+	DrawW = BaseW;
+	DrawH = BaseH;
+	DrawX = BaseX;
+	DrawY = BaseY;
+	C.DrawColor = UIGameLib.Static.MakeColor3(0,0,0);
+	DrawStretchedTexture(C, DrawX, DrawY, DrawW, DrawH, WhiteTexture);
+
+	// Draw Fill bar
+	Padding = 4.0;
+	DrawX = BaseX + Padding;
+	DrawY = BaseY + Padding;
+	DrawW = BaseW - Padding * 2.0;
+	DrawH = BaseH - Padding * 2.0;
+
+	DrawW = DrawW * BarRatio;
+	C.DrawColor = UIGameLib.Static.MakeColor3(255,0,0);
+	DrawStretchedTexture(C, DrawX, DrawY, DrawW, DrawH, WhiteTexture);
+
+	// Draw the dude's name
+	DrawString = Proxy.GetDisplayString();
+	C.Font = F_TargetNameFont;
+	C.StrLen(DrawString, StrW, StrH);
+	DrawX = BaseX + BaseW * 0.5 - StrW * 0.5;
+	DrawY = BaseY + BaseH * 0.5 - StrH * 0.5;
+	C.DrawColor = UIGameLib.Static.MakeColor3(255,255,255);
+	ClipText(C, DrawX, DrawY, DrawString);
 }
 
 function Color GetLabelColorForProxy(R_ArpgInteractionProxy Proxy)

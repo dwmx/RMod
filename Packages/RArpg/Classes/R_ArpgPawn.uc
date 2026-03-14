@@ -774,7 +774,7 @@ defaultproperties
     CollisionHeight=32.000000
 	Mass=50.000000
     Buoyancy=35.000000
-	InteractionProxyClass=Class'RArpg.R_ArpgInteractionProxy'
+	InteractionProxyClass=Class'RArpg.R_ArpgInteractionProxy_Pawn'
 	AccelRate=2000.0
 	TeamIndex=255
 	bIsDead=false

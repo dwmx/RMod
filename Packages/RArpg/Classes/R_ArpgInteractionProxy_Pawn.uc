@@ -1,0 +1,26 @@
+//==============================================================================
+//	R_ArpgInteractionProxy_Pawnn
+//==============================================================================
+class R_ArpgInteractionProxy_Pawn extends R_ArpgInteractionProxy;
+
+function Name GetProxyType() { return PROXY_TYPE_TARGET; }
+
+function String GetDisplayString()
+{
+	return "Pawn";
+}
+
+function bool GetAttributeValue(
+	Name AttributeName,
+	optional out float BaseValue,
+	optional out float AggregateValue)
+{
+	local R_ArpgPawn LocalPawn;
+
+	LocalPawn = R_ArpgPawn(Owner);
+	if(LocalPawn != None)
+	{
+		return LocalPawn.GetAttributeValue(AttributeName, BaseValue, AggregateValue);
+	}
+	return Super.GetAttributeValue(AttributeName, BaseValue, AggregateValue);
+}

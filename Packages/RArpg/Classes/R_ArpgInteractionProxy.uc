@@ -13,6 +13,7 @@ class R_ArpgInteractionProxy extends Actor;
 // interact with it, and what parameters to request from it
 const PROXY_TYPE_PROXY 	= 'Proxy';
 const PROXY_TYPE_PICKUP = 'Pickup';
+const PROXY_TYPE_TARGET = 'Target';
 
 //------------------------------------------------------------------------------
 
@@ -20,6 +21,16 @@ function Name GetProxyType() 		{ return PROXY_TYPE_PROXY; }
 function String GetDisplayString()	{ return "Interaction Proxy"; }
 
 function Name GetNameParam(Name ParamID);
+
+// For Actors that implement the attribute system, this passes a call through
+// to them. By default, returns false
+function bool GetAttributeValue(
+	Name AttributeName,
+	optional out float BaseValue,
+	optional out float AggregateValue)
+{
+	return false;
+}
 
 //------------------------------------------------------------------------------
 
