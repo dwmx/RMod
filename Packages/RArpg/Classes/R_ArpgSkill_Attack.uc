@@ -55,23 +55,6 @@ state SkillActive
 		}
 	}
 
-	function bool IsValidTarget(R_ArpgPawn TargetPawn)
-	{
-		local R_ArpgPawn PawnOwner;
-
-		PawnOwner = GetArpgPawnOwner();
-		if(PawnOwner == None || TargetPawn == None || PawnOwner == TargetPawn)
-		{
-			return false;
-		}
-
-		if(TargetPawn.GetTeamIndex() != PawnOwner.GetTeamIndex())
-		{
-			return true;
-		}
-		return false;
-	}
-
 	function PerformCollisionCheck()
 	{
 		local R_ArpgObserver_Collision Observer;
@@ -98,7 +81,7 @@ state SkillActive
 		{
 			if(IsValidTarget(PawnIt))
 			{
-				PawnIt.ArpgStruckBy(PawnOwner, 20.0, 'Metal');
+				PawnOwner.ArpgStruckOther(PawnIt, 20.0);
 				break;
 			}
 		}

@@ -133,10 +133,10 @@ state SkillActive
         RadiusPawnCount = 0;
         foreach RadiusActors(Class'RArpg.R_ArpgPawn', PawnIt, CollisionRadius, CollisionOrigin)
         {
-            if(PawnIt == PawnOwner)
-            {
-                continue;
-            }
+			if(!IsValidTarget(PawnIt))
+			{
+				continue;
+			}
             if(RadiusPawnCount >= ArrayCount(RadiusPawns))
             {
                 break;
@@ -150,7 +150,7 @@ state SkillActive
         if(RadiusPawnCount > 0)
         {
             PawnIt = RadiusPawns[Rand(RadiusPawnCount)];
-            PawnIt.ArpgStruckBy(PawnOwner, 20.0, 'Metal');
+			PawnOwner.ArpgStruckOther(PawnIt, 20.0);
         }
         
         Observer = GetObserver_Collision();

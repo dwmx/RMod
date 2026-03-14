@@ -383,7 +383,45 @@ simulated function DrawHealthBar(Canvas C)
 	CanvasLib.Static.DrawBoxSolid(C, Extent1, Extent2, 1.0, 0.0, 0.0, 1.0);
 }
 
-function ArpgStruckBy(Actor Other, float Damage, Name MaterialType)
+//------------------------------------------------------------------------------
+// Sounds
+
+function PlayStruckOtherSound(Name MaterialType)
+{
+}
+
+function PlayStruckBySound(Name MaterialType)
+{
+	local Sound Options[3];
+	local int Count;
+	local Sound Selection;
+
+	Count = 0;
+	if(HitSound1 != None) Options[Count++] = HitSound1;
+	if(HitSound2 != None) Options[Count++] = HitSound2;
+	if(HitSound3 != None) Options[Count++] = HitSound3;
+	
+	Selection = Options[Rand(Count)];
+	if(Selection != None)
+	{
+		PlaySound(Selection);
+	}
+}
+
+//------------------------------------------------------------------------------
+
+function ArpgStruckOther(R_ArpgPawn Victim, float Damage)
+{
+	if(Victim == None)
+	{
+		return;
+	}
+
+	PlayStruckOtherSound('Metal');
+	Victim.ArpgStruckBy(Self, Damage, 'Metal');
+}
+
+function ArpgStruckBy(R_ArpgPawn Instigator, float Damage, Name MaterialType)
 {
 	PlayStruckBySound(MaterialType);
 
@@ -514,32 +552,6 @@ function InitializeAIController()
 	{
 		AIController = R_ArpgAIController(ArpgLib.Static.CreateArpgObject(AIControllerClass, Self));
 		AIController.SetControlledPawn(Self);
-	}
-}
-
-//------------------------------------------------------------------------------
-// Sounds
-
-function PlayStruckSound(Name MaterialType)
-{
-	
-}
-
-function PlayStruckBySound(Name MaterialType)
-{
-	local Sound Options[3];
-	local int Count;
-	local Sound Selection;
-
-	Count = 0;
-	if(HitSound1 != None) Options[Count++] = HitSound1;
-	if(HitSound2 != None) Options[Count++] = HitSound2;
-	if(HitSound3 != None) Options[Count++] = HitSound3;
-	
-	Selection = Options[Rand(Count)];
-	if(Selection != None)
-	{
-		PlaySound(Selection);
 	}
 }
 
@@ -697,7 +709,10 @@ Begin:
 
 state ArpgDying
 {
-	ignores ArpgTakeDamage;
+	ignores
+		ArpgStruckOther,
+		ArpgStruckBy,
+		ArpgTakeDamage;
 
 	event BeginState()
 	{

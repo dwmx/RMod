@@ -27,6 +27,29 @@ function InitializeSkill()
 function ActivateSkill()
 {}
 
+function bool IsValidTarget(R_ArpgPawn TargetPawn)
+{
+	local R_ArpgPawn PawnOwner;
+
+	if(TargetPawn == None || TargetPawn.IsDead())
+	{
+		return false;
+	}
+
+	PawnOwner = GetArpgPawnOwner();
+	if(PawnOwner == None || PawnOwner == TargetPawn)
+	{
+		return false;
+	}
+
+	if(TargetPawn.GetTeamIndex() == PawnOwner.GetTeamIndex())
+	{
+		return false;
+	}
+	
+	return true;
+}
+
 //------------------------------------------------------------------------------
 // Helpers
 
