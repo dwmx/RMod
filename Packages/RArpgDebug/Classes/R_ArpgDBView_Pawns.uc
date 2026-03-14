@@ -225,7 +225,7 @@ simulated function DrawAnimation(Canvas C, R_DBStringManager StringManager, R_Ar
 		return;
 	}
 
-	AnimController = LocalPawn.GetAnimationController();
+	AnimController = LocalPawn.GetAnimController();
 	if(AnimController == None)
 	{
 		StringManager.AddWarning(DebugCategoryAnimController, "AnimationController is None");

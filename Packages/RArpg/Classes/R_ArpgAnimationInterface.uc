@@ -17,4 +17,6 @@ function bool TryPlayAnim(
 	optional float Tween,
 	optional R_ArpgObject CallbackObject);
 
+function CancelCurrentAnim();
+
 function SetAnimParameter(Name AnimParameter, float Value);

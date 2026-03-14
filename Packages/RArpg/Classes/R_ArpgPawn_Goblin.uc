@@ -11,7 +11,7 @@ event PostBeginPlay()
 	
 	Super.PostBeginPlay();
 
-	LocalAnimController = GetAnimationController();
+	LocalAnimController = GetAnimController();
 	if(LocalAnimController != None)
 	{
 		LocalAnimController.SetAnimationSetClass(Class'RArpg.R_ArpgAnimationSet_Goblin');

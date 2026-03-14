@@ -129,6 +129,11 @@ function FinishPlayAnimState(Name Result)
 	}
 }
 
+function CancelCurrentAnim()
+{
+	FinishPlayAnimState(ANIM_RESULT_CANCELED);
+}
+
 // This function's job is to basically call FinishPlayAnimState with the
 // correct result when it notices that the animation is finished playing
 function TickPlayAnimState(float DeltaSeconds)

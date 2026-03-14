@@ -151,12 +151,12 @@ exec function TestSkill(Name SkillName)
 
 exec function TestAnim(Name AnimName)
 {
-	GetControlledPawn().GetAnimationController().TryPlayAnim(AnimName, 'UpperBody', 1.0, 0.1);
+	GetControlledPawn().GetAnimInterface().TryPlayAnim(AnimName, 'UpperBody', 1.0, 0.1);
 }
 
 exec function TestCancelAnim()
 {
-	GetControlledPawn().GetAnimationController().FinishPlayAnimState('Canceled');
+	GetControlledPawn().GetAnimInterface().CancelCurrentAnim();
 }
 
 function TickPawnRotation(float DeltaSeconds)

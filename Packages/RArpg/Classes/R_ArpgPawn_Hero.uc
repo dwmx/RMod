@@ -42,7 +42,7 @@ event PostBeginPlay()
 
 	// Super Initializes the animation controller
 	// This then sets the selector class, which tells the controller how to switch between anim sets
-	LocalAnimController = GetAnimationController();
+	LocalAnimController = GetAnimController();
 	if(LocalAnimController != None)
 	{
 		LocalAnimController.SetAnimationSetClass(Class'RArpg.R_ArpgAnimationSet_Ragnar');
@@ -119,7 +119,7 @@ function HandleEvent_InventorySlotChanged(Name InventorySlotName, R_ArpgItem Old
 {
 	local R_ArpgAnimationController LocalAnimController;
 
-	LocalAnimController = GetAnimationController();
+	LocalAnimController = GetAnimController();
 	if(LocalAnimController != None && InventorySlotName == INVENTORY_SLOT_MAIN_HAND)
 	{
 		if(NewItem == None)	LocalAnimController.UpdateAnimationSetForTag(TagLib.Static.EmptyTag());

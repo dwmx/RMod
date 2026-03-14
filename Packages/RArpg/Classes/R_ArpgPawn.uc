@@ -190,7 +190,13 @@ event Tick(float DeltaSeconds)
 	}
 }
 
-function R_ArpgAnimationController GetAnimationController()
+function R_ArpgAnimationInterface GetAnimInterface()
+{
+	return AnimationController;
+}
+
+// For internal use ony
+function R_ArpgAnimationController GetAnimController()
 {
 	return AnimationController;
 }
@@ -618,8 +624,8 @@ state ArpgDying
 	}
 
 Begin:
-	GetAnimationController().TryPlayStandardAnim('Death', 'FullBody', 1.0, 0.1);
-	GetAnimationController().SetControllerEnabled(false);
+	AnimationController.TryPlayStandardAnim('Death', 'FullBody', 1.0, 0.1);
+	AnimationController.SetControllerEnabled(false);
 	FinishAnim();
 	ReplaceWithCarcass();
 	Destroy();
