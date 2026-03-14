@@ -3,8 +3,6 @@
 //==============================================================================
 class R_ArpgPawn_Goblin extends R_ArpgPawn;
 
-var private bool bAnimationPlaying;
-
 event PostBeginPlay()
 {
 	local R_ArpgAnimationController LocalAnimController;
@@ -37,37 +35,6 @@ function int GetMovementDirection()
 	return MOVEDIR_FORWARD;
 }
 
-function PlayPawnAnim(
-	Name AnimSequence,
-	optional bool bUpperBody,
-	optional bool bLowerBody,
-	optional float Rate,
-	optional float TweenTime)
-{
-	// Ignore upper/lower
-	PlayAnim(AnimSequence, Rate, TweenTime);
-	bAnimationPlaying = true;
-}
-
-function LoopPawnAnim(
-	Name AnimSequence,
-	optional bool bUpperBody,
-	optional bool bLowerBody,
-	optional float Rate,
-	optional float TweenTime,
-	optional float MinRate)
-{
-	if(!bAnimationPlaying)
-	{
-		LoopAnim(AnimSequence, Rate, TweenTime, MinRate);
-	}
-}
-
-function AnimEnd()
-{
-	bAnimationPlaying = false;
-}
-
 defaultproperties
 {
 	Skeletal=SkelModel'creatures.Goblin'
@@ -76,12 +43,11 @@ defaultproperties
 	GroundSpeed=60.0
 	Mass=50.000000
     Buoyancy=35.000000
-	AnimationSetDefaultClass=Class'RArpg.R_ArpgAnimationSet_Goblin'
-	bAnimationPlaying=false
 	HitSound1=Sound'CreaturesSnd.Goblin.goblinhit08'
     HitSound2=Sound'CreaturesSnd.Goblin.goblinhit16'
     HitSound3=Sound'CreaturesSnd.Goblin.goblinhit28'
 	Die=Sound'CreaturesSnd.Goblin.goblindeath06'
     Die2=Sound'CreaturesSnd.Goblin.goblindeath13'
     Die3=Sound'CreaturesSnd.Goblin.goblindeath16'
+	DisplayNameString="Goblin"
 }

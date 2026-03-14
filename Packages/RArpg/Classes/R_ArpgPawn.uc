@@ -37,6 +37,8 @@ var private Class<R_ArpgInteractionProxy> InteractionProxyClass;
 var private byte TeamIndex;
 var private bool bIsDead;
 
+var private String DisplayNameString;
+
 // Movement Direction consts for PlayMoving
 const MOVEDIR_NEUTRAL			= 0x0000;
 const MOVEDIR_FORWARD 			= 0x0001;
@@ -61,6 +63,11 @@ var private R_ArpgObserver_Collision Observer_Collision;
 //	Functions to be defined in subclasses
 function SpawnAnimationProxy();
 //------------------------------------------------------------------------------
+
+function String GetDisplayNameString()
+{
+	return DisplayNameString;
+}
 
 function byte GetTeamIndex() { return TeamIndex; }
 function SetTeamIndex(byte NewTeamIndex)
@@ -237,44 +244,6 @@ function int GetMovementDirection()
 
 function PlayWaiting(optional float Tween) {}
 function PlayMoving(optional float Tween) {}
-
-//------------------------------------------------------------------------------
-
-function SetPawnAnim(
-	Name AnimSequence,
-	optional bool bUpperBody,
-	optional bool bLowerBody,
-	optional float Frame,
-	optional float Rate)
-{
-	if(bLowerBody)
-	{
-		AnimSequence = AnimSequence;
-		AnimFrame = Frame;
-		AnimRate = Rate;
-	}
-
-	if(bUpperBody && AnimProxy != None)
-	{
-		AnimProxy.AnimSequence = AnimSequence;
-		AnimProxy.AnimFrame = Frame;
-		AnimProxy.AnimRate = Rate;
-	}
-}
-
-function ClearPawnAnim(
-	optional bool bUpperBody,
-	optional bool bLowerBody)
-{
-}
-
-function FrameNotify(int FramePassed)
-{
-}
-
-function AnimProxyFrameNotify(int FramePassed)
-{
-}
 
 //------------------------------------------------------------------------------
 // Locks
@@ -680,7 +649,7 @@ state PlayerWalking
 
 		if(!IsMovementLocked())
 		{
-			NewAccel = MovementInput * 300.0;
+			NewAccel = ConsumeMovementInput() * 300.0;
 			NewAccel.Z = 0.0;
 		}
 		else
@@ -695,6 +664,14 @@ state PlayerWalking
 		else
 			ProcessMove(DeltaTime, NewAccel, DodgeMove, OldRotation - Rotation);
 	}
+}
+
+function Vector ConsumeMovementInput()
+{
+	local Vector Result;
+	Result = MovementInput;
+	MovementInput = Vect(0,0,0);
+	return Result;
 }
 
 //------------------------------------------------------------------------------
@@ -797,4 +774,5 @@ defaultproperties
 	AnimationControllerClass=Class'RArpg.R_ArpgAnimationController_Pawn'
 	LockMovementCount=0
 	LockRotationCount=0
+	PawnDisplayNameString="Pawn"
 }

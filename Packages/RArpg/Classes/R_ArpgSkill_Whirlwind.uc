@@ -69,7 +69,6 @@ state SkillActive
         if(OwnerPawn != None)
         {
 			OwnerPawn.UnlockMovement();
-			OwnerPawn.ClearPawnAnim(true, true);
            // OwnerPawn.SetBlockMovementInput(false);
             //OwnerPawn.SetLockDirection(false);
             MoveDirection = Vect(0,0,0);

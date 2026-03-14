@@ -7,7 +7,14 @@ function Name GetProxyType() { return PROXY_TYPE_TARGET; }
 
 function String GetDisplayString()
 {
-	return "Pawn";
+	local R_ArpgPawn LocalPawn;
+
+	LocalPawn = R_ArpgPawn(Owner);
+	if(LocalPawn != None)
+	{
+		return LocalPawn.GetDisplayNameString();
+	}
+	return Super.GetDisplayString();
 }
 
 function bool GetAttributeValue(

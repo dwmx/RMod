@@ -8,14 +8,3 @@ function R_ArpgPawn GetArpgPawnOwner()
 {
 	return R_ArpgPawn(Owner);
 }
-
-function FrameNotify(int FramePassed)
-{
-	local R_ArpgPawn LocalPawn;
-
-	LocalPawn = GetArpgPawnOwner();
-	if(LocalPawn != None)
-	{
-		LocalPawn.AnimProxyFrameNotify(FramePassed);
-	}
-}
