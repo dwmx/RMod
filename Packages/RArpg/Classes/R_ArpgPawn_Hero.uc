@@ -327,4 +327,5 @@ defaultproperties
     Die2=Sound'CreaturesSnd.Ragnar.ragdeath02'
     Die3=Sound'CreaturesSnd.Ragnar.ragdeath03'
 	DisplayNameString="Hero"
+	bDirectionFollowsVelocity=false
 }

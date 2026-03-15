@@ -45,13 +45,23 @@ function TickAI(float DeltaSeconds)
 
     if(Target != None)
     {
-        MoveTowardTarget();
+        TickLookAtTarget(DeltaSeconds);
+
+        if(IsInRangeOfTarget())
+        {
+
+        }
+        else
+        {
+            MoveTowardTarget();
+        }
     }
     else
     {
         MoveTowardDesiredLocation();
     }
 
+    /*
 	Accumulator += DeltaSeconds;
 	if(Accumulator >= 4.0)
 	{
@@ -60,6 +70,23 @@ function TickAI(float DeltaSeconds)
 		Log("I try attack now");
 		Accumulator = 0.0;
 	}
+        */
+}
+
+function TickLookAtTarget(float DeltaSeconds)
+{
+    local R_ArpgPawn LocalPawn;
+    local Vector DeltaLocation;
+
+    LocalPawn = GetControlledPawn();
+    if(LocalPawn == None || Target == None)
+    {
+        return;
+    }
+
+    DeltaLocation = Target.Location - LocalPawn.Location;
+    DeltaLocation = Normal(DeltaLocation * Vect(1,1,0));
+    LocalPawn.SetDesiredLookDirection(DeltaLocation);
 }
 
 function MoveTowardDesiredLocation()
@@ -79,18 +106,28 @@ function MoveTowardTarget()
 {
     local R_ArpgPawn LocalPawn;
 
-    if(Target == None)
-    {
-        return;
-    }
-
     LocalPawn = GetControlledPawn();
-    if(LocalPawn == None)
+    if(LocalPawn == None || Target == None)
     {
         return;
     }
 
     LocalPawn.AddMovementInput(Normal(Target.Location - LocalPawn.Location) * Vect(1,1,0));
+}
+
+function bool IsInRangeOfTarget()
+{
+    local R_ArpgPawn LocalPawn;
+    local float Distance;
+
+    LocalPawn = GetControlledPawn();
+    if(LocalPawn == None || Target == None)
+    {
+        return false;
+    }
+
+    Distance = VSize(Target.Location - LocalPawn.Location);
+    return Distance <= 64.0;
 }
 
 //------------------------------------------------------------------------------

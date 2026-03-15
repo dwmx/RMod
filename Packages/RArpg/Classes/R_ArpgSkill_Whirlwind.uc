@@ -34,7 +34,6 @@ state SkillActive
     event BeginState()
     {
         local R_ArpgPawn OwnerPawn;
-        local Vector LookDirection;
 
         OwnerPawn = GetArpgPawnOwner();
         if(OwnerPawn != None)
@@ -42,8 +41,8 @@ state SkillActive
 			OwnerPawn.LockMovement();
             //OwnerPawn.SetBlockMovementInput(true);
             //OwnerPawn.SetLockDirection(true);
-            LookDirection = OwnerPawn.GetLookDirection();
-            MoveDirection = LookDirection;
+            //MoveDirection = OwnerPawn.GetLookDirection();
+            MoveDirection = Vector(OwnerPawn.Rotation);
             SavedGroundSpeed = OwnerPawn.GroundSpeed;
             OwnerPawn.GroundSpeed *= 0.5;
             StartingYaw = OwnerPawn.Rotation.Yaw;

@@ -173,7 +173,7 @@ function TickPawnRotation(float DeltaSeconds)
 	Delta = Vect(1,1,0) * Normal(IntersectLocation - BasisLocation);
 	if(ControlledPawn != None)
 	{
-		ControlledPawn.SetLookDirection(Delta);
+		ControlledPawn.SetDesiredLookDirection(Delta);
 	}
 
 	NewRotation = Rotator(Delta);
@@ -182,7 +182,6 @@ function TickPawnRotation(float DeltaSeconds)
 
 	SetRotation(NewRotation);
 	ViewRotation = NewRotation;
-	//Log(NewRotation);
 }
 
 function GetMovementOrienation(out Vector OutX, out Vector OutY, out Vector OutZ)

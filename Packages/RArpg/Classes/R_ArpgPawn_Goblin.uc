@@ -22,7 +22,7 @@ event Tick(float DeltaSeconds)
 {
 	Super.Tick(DeltaSeconds);
 
-	SetRotation(Rotator(Velocity * Vect(1,1,0)));
+	//SetRotation(Rotator(Velocity * Vect(1,1,0)));
 }
 
 function int GetMovementDirection()

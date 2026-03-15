@@ -17,7 +17,6 @@ var private Class<R_ArpgAnimationController> AnimationControllerClass;
 var private R_ArpgAnimationController AnimationController;
 
 var private Vector MovementInput;
-var private Vector LookDirection;
 
 struct R_ArpgSkillInstance
 {
@@ -31,6 +30,9 @@ var private float Experience;
 
 var private int LockDirectionCount;
 var private int LockMovementCount;
+
+var private bool bDirectionFollowsVelocity;
+var private Vector DesiredLookDirection;
 
 var private Class<R_ArpgInteractionProxy> InteractionProxyClass;
 
@@ -139,13 +141,20 @@ function R_ArpgSkill GetSkill(int Index)
 	return Skills[Index].Skill;
 }
 
-function SetLookDirection(Vector NewLookDirection)
+//------------------------------------------------------------------------------
+
+function SetDesiredLookDirection(Vector NewDesiredLookDirection)
+{
+	DesiredLookDirection = NewDesiredLookDirection;
+}
+
+function TickRotation(float DeltaSeconds)
 {
 	local Rotator NewRotation;
 
 	// Skills (mainly) can lock the Pawn's rotation control
 	// via SetLockDirection
-	if(IsDirectionLocked())
+	if(IsDirectionLocked() || IsDead())
 	{
 		return;
 	}
@@ -159,20 +168,22 @@ function SetLookDirection(Vector NewLookDirection)
 		return;
 	}
 
-	// Otherwise, look where the player's mouse is pointing
-	LookDirection = NewLookDirection;
+	// If Pawn's rotation needs to follow Velocity, do that
+	if(bDirectionFollowsVelocity && VSize(Velocity) > 4.0)
+	{
+		SetRotation(Rotator(Velocity * Vect(1,1,0)));
+		return;
+	}
 
-	NewRotation = Rotator(LookDirection);
+	// Otherwise, look at the desired location set by the controller
+	NewRotation = Rotator(DesiredLookDirection);
 	NewRotation.Pitch = 0;
 	NewRotation.Roll = 9000;
 
 	SetRotation(NewRotation);
 }
 
-function Vector GetLookDirection()
-{
-	return LookDirection;
-}
+//------------------------------------------------------------------------------
 
 function AddMovementInput(Vector InputVector)
 {
@@ -196,6 +207,8 @@ event Tick(float DeltaSeconds)
 	{
 		Entity.Tick(DeltaSeconds);
 	}
+
+	TickRotation(DeltaSeconds);
 }
 
 function R_ArpgAnimationInterface GetAnimInterface()
@@ -775,4 +788,5 @@ defaultproperties
 	LockMovementCount=0
 	LockRotationCount=0
 	PawnDisplayNameString="Pawn"
+	bDirectionFollowsVelocity=true
 }
